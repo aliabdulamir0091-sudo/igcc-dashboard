@@ -475,6 +475,10 @@ export default function App() {
     window.speechSynthesis?.cancel();
     setShowWelcome(false);
   };
+  const enterDashboard = () => {
+    playWelcomeVoice();
+    setShowWelcome(false);
+  };
   const openWelcome = () => {
     window.speechSynthesis?.cancel();
     setShowWelcome(true);
@@ -482,20 +486,29 @@ export default function App() {
   const playWelcomeVoice = () => {
     if (!("speechSynthesis" in window)) return;
 
-    window.speechSynthesis.cancel();
-    const message = new SpeechSynthesisUtterance(WELCOME_VOICE_MESSAGE);
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find((voice) => /female|zira|samantha|victoria|karen|serena|susan|aria|jenny|natural/i.test(voice.name)) ??
-      voices.find((voice) => voice.lang?.toLowerCase().startsWith("en"));
+    const speak = () => {
+      window.speechSynthesis.cancel();
+      const message = new SpeechSynthesisUtterance(WELCOME_VOICE_MESSAGE);
+      const voices = window.speechSynthesis.getVoices();
+      const preferredVoice = voices.find((voice) => /female|zira|samantha|victoria|karen|serena|susan|aria|jenny|natural/i.test(voice.name)) ??
+        voices.find((voice) => voice.lang?.toLowerCase().startsWith("en"));
 
-    if (preferredVoice) {
-      message.voice = preferredVoice;
+      if (preferredVoice) {
+        message.voice = preferredVoice;
+      }
+
+      message.rate = 0.88;
+      message.pitch = 1.12;
+      message.volume = 1;
+      window.speechSynthesis.speak(message);
+    };
+
+    if (window.speechSynthesis.getVoices().length) {
+      speak();
+      return;
     }
 
-    message.rate = 0.88;
-    message.pitch = 1.12;
-    message.volume = 1;
-    window.speechSynthesis.speak(message);
+    window.speechSynthesis.onvoiceschanged = speak;
   };
 
   useEffect(() => {
@@ -1158,7 +1171,7 @@ export default function App() {
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
                 <button
                   type="button"
-                  onClick={dismissWelcome}
+                  onClick={enterDashboard}
                   style={{ border: "none", borderRadius: 8, padding: "11px 18px", cursor: "pointer", background: theme.accentStrong, color: "#fff", fontWeight: 900 }}
                 >
                   Enter Dashboard
