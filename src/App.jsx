@@ -1110,6 +1110,27 @@ export default function App() {
   const maxPortfolioCost = Math.max(...portfolioSummaries.map((item) => Math.abs(item.cost)), 0);
   const maxCommercialValue = Math.max(visibleTotal, submittedRevenue, approvedRevenue, 1);
   const donutSubmittedShare = submittedRevenue ? Math.min((approvedRevenue / submittedRevenue) * 100, 100) : 0;
+  const portfolioWithCost = portfolioSummaries.filter((portfolio) => portfolio.cost || portfolio.approved || portfolio.submitted);
+  const bestPortfolio = [...portfolioWithCost].sort((a, b) => b.recovery - a.recovery)[0];
+  const weakestPortfolio = [...portfolioWithCost].sort((a, b) => a.recovery - b.recovery)[0];
+  const highestSpendHub = [...hubCostCenterBreakdown].filter((hub) => hub.amount).sort((a, b) => b.amount - a.amount)[0];
+  const largestApprovalGapHub = [...hubCostCenterBreakdown]
+    .map((hub) => ({ ...hub, approvalGap: hub.submitted - hub.approved }))
+    .filter((hub) => hub.approvalGap > 0)
+    .sort((a, b) => b.approvalGap - a.approvalGap)[0];
+  const lowestRecoveryHub = [...hubCostCenterBreakdown]
+    .filter((hub) => hub.amount || hub.approved)
+    .map((hub) => ({ ...hub, recovery: hub.amount ? hub.approved / hub.amount : 0 }))
+    .sort((a, b) => a.recovery - b.recovery)[0];
+  const commercialHealth =
+    revenueSurplus < 0
+      ? { label: "Critical", color: theme.danger, message: "Approved revenue is below selected cost." }
+      : approvalGap > approvedRevenue * 0.08
+        ? { label: "Watch", color: theme.accentWarm, message: "Submitted AFP has material value pending approval." }
+        : { label: "Strong", color: theme.accentStrong, message: "Approved revenue is covering the selected cost base." };
+  const executiveInsight = approvedRevenue
+    ? `Approved revenue covers ${formatPercent(recoveryRatio)} of selected cost, with ${highestSpendHub?.label ?? "no hub"} carrying the largest cost exposure.`
+    : "No approved revenue is available for the current selection.";
 
   if (isLoading) {
     return loadingView;
@@ -1290,6 +1311,34 @@ export default function App() {
               <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Visual commercial summary for spend, AFP revenue, portfolio recovery, and period trends.</p>
             </div>
             {renderPeriodToggleFor(overviewPeriodView, setOverviewPeriodView)}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(min(100%, 280px), 0.85fr) minmax(min(100%, 520px), 1.65fr)", gap: 14, marginBottom: 14 }}>
+            <div style={{ border: `1px solid ${commercialHealth.color}55`, borderLeft: `6px solid ${commercialHealth.color}`, borderRadius: 8, padding: 16, background: theme.panelBg }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+                <div style={{ color: theme.subtext, fontSize: 12, fontWeight: 900, textTransform: "uppercase" }}>CEO Attention</div>
+                <span style={{ color: commercialHealth.color, background: themeMode === "light" ? `${commercialHealth.color}16` : "rgba(255,255,255,0.08)", borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 950 }}>{commercialHealth.label}</span>
+              </div>
+              <div style={{ marginTop: 12, color: theme.text, fontSize: 20, fontWeight: 950 }}>{formatCurrency(revenueSurplus)}</div>
+              <p style={{ margin: "8px 0 0", color: theme.subtext, fontSize: 13, lineHeight: 1.45 }}>{commercialHealth.message}</p>
+              <p style={{ margin: "12px 0 0", color: theme.text, fontSize: 13, lineHeight: 1.45, fontWeight: 750 }}>{executiveInsight}</p>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: 10 }}>
+              {[
+                ["Best Portfolio", bestPortfolio?.label ?? "N/A", bestPortfolio ? formatPercent(bestPortfolio.recovery) : "0.0%", bestPortfolio?.accent ?? theme.accentStrong],
+                ["Weakest Portfolio", weakestPortfolio?.label ?? "N/A", weakestPortfolio ? formatPercent(weakestPortfolio.recovery) : "0.0%", weakestPortfolio?.accent ?? theme.danger],
+                ["Highest Spend Hub", highestSpendHub?.label ?? "N/A", highestSpendHub ? formatCurrency(highestSpendHub.amount) : "$0.00", theme.accentWarm],
+                ["Approval Gap", largestApprovalGapHub?.label ?? "No gap", largestApprovalGapHub ? formatCurrency(largestApprovalGapHub.approvalGap) : "$0.00", "#2563eb"],
+                ["Lowest Recovery", lowestRecoveryHub?.label ?? "N/A", lowestRecoveryHub ? formatPercent(lowestRecoveryHub.recovery) : "0.0%", theme.danger],
+              ].map(([label, value, detail, accent]) => (
+                <div key={label} style={{ border: `1px solid ${theme.border}`, borderTop: `4px solid ${accent}`, borderRadius: 8, padding: 13, background: theme.inputBg }}>
+                  <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 900, textTransform: "uppercase" }}>{label}</div>
+                  <div style={{ marginTop: 8, color: theme.text, fontSize: 16, fontWeight: 950, lineHeight: 1.1 }}>{value}</div>
+                  <div style={{ marginTop: 7, color: theme.subtext, fontSize: 12, fontWeight: 800 }}>{detail}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "minmax(min(100%, 420px), 1.25fr) minmax(min(100%, 300px), 0.75fr)", gap: 14, marginBottom: 14 }}>
