@@ -1438,6 +1438,7 @@ export default function App() {
         </div>
       )}
 
+      {activePage !== "overview" && (
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 20, backgroundColor: theme.panelBg, padding: 18, borderRadius: 8, border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
         <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <div>
@@ -1487,6 +1488,7 @@ export default function App() {
           </select>
         </label>
       </div>
+      )}
 
       {activePage === "performance" && (
         <>
