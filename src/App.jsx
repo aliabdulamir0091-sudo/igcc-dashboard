@@ -469,8 +469,21 @@ export default function App() {
 
   const toggleTheme = () => setThemeMode((current) => (current === "light" ? "dark" : "light"));
   const dismissWelcome = () => {
+    window.speechSynthesis?.cancel();
     localStorage.setItem("igcc-dashboard-welcome-seen", "true");
     setShowWelcome(false);
+  };
+  const playWelcomeVoice = () => {
+    if (!("speechSynthesis" in window)) return;
+
+    window.speechSynthesis.cancel();
+    const message = new SpeechSynthesisUtterance(
+      "Welcome to the IGCC Commercial Dashboard for Iraq Gate Contracting Company. Use the tabs to review overview, performance, cost center details, and the commercial statement. Expand portfolios and hubs to view more detail."
+    );
+    message.rate = 0.92;
+    message.pitch = 1;
+    message.volume = 1;
+    window.speechSynthesis.speak(message);
   };
 
   const loadingView = (
@@ -1093,7 +1106,14 @@ export default function App() {
                   <span>{line}</span>
                 </div>
               ))}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={playWelcomeVoice}
+                  style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: "11px 18px", cursor: "pointer", background: theme.inputBg, color: theme.text, fontWeight: 900 }}
+                >
+                  Play Welcome
+                </button>
                 <button
                   type="button"
                   onClick={dismissWelcome}
