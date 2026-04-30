@@ -43,7 +43,7 @@ const IGCC_LEVEL_LABEL = "IGCC Level 1 - IRAQ GATE CONTRACTING COMPANY";
 const NAV_ITEMS = [
   ["overview", "Overview"],
   ["performance", "Performance"],
-  ["detail", "Cost Center Detail"],
+  ["detail", "Cost Details"],
   ["income", "Commercial Statement"],
 ];
 const PERIOD_OPTIONS = [
@@ -1583,7 +1583,66 @@ export default function App() {
           <details style={panelStyle}>
             <summary style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 16, cursor: "pointer", listStyle: "none" }}>
               <div>
-                <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Cost Center Detail</h2>
+                <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Company Cost Details</h2>
+                <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Cost-only analysis by period and hub, separated from commercial revenue performance.</p>
+              </div>
+              {renderPeriodToggle()}
+            </summary>
+
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(min(100%, 380px), 1fr) minmax(min(100%, 380px), 1fr)", gap: 14 }}>
+              <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 }}>
+                  <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Cost by Period</h3>
+                  <strong style={{ color: theme.text }}>{formatCurrency(visibleTotal)}</strong>
+                </div>
+                <div style={{ display: "grid", gap: 10 }}>
+                  {periodTotals.map((period) => {
+                    const width = maxPeriodAmount ? `${Math.max(3, (Math.abs(period.amount) / maxPeriodAmount) * 100)}%` : "0%";
+                    return (
+                      <div key={period.key} style={{ display: "grid", gridTemplateColumns: "92px minmax(0, 1fr) 130px", gap: 10, alignItems: "center" }}>
+                        <span style={{ color: theme.text, fontSize: 12, fontWeight: 850 }}>{period.label}</span>
+                        <div style={{ height: 10, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                          <div style={{ width, height: "100%", background: theme.accentStrong, borderRadius: 999 }} />
+                        </div>
+                        <span style={{ textAlign: "right", color: theme.text, fontSize: 12, fontWeight: 850 }}>{formatCurrency(period.amount)}</span>
+                      </div>
+                    );
+                  })}
+                  {!periodTotals.length && <div style={{ color: theme.subtext }}>No cost data matches the current filters.</div>}
+                </div>
+              </div>
+
+              <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 }}>
+                  <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Cost by Hub</h3>
+                  <span style={{ color: theme.subtext, fontSize: 13 }}>{hubHistogramRows.length} hubs</span>
+                </div>
+                <div style={{ display: "grid", gap: 10 }}>
+                  {hubHistogramRows.map((hub) => {
+                    const section = HUB_SECTIONS.find((item) => item.hubs.includes(hub.label));
+                    const accent = section?.accent ?? theme.accentStrong;
+                    const width = `${Math.max(3, (Math.abs(hub.amount) / (maxHubHistogramAmount || 1)) * 100)}%`;
+
+                    return (
+                      <div key={hub.label} style={{ display: "grid", gridTemplateColumns: "120px minmax(0, 1fr) 130px", gap: 10, alignItems: "center" }}>
+                        <span style={{ color: accent, fontSize: 12, fontWeight: 900 }}>{hub.label}</span>
+                        <div style={{ height: 13, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                          <div style={{ width, height: "100%", borderRadius: 999, background: accent }} />
+                        </div>
+                        <span style={{ textAlign: "right", color: theme.text, fontSize: 12, fontWeight: 850 }}>{formatCurrency(hub.amount)}</span>
+                      </div>
+                    );
+                  })}
+                  {!hubHistogramRows.length && <div style={{ color: theme.subtext }}>No hub cost data matches the current filters.</div>}
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details style={panelStyle}>
+            <summary style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 16, cursor: "pointer", listStyle: "none" }}>
+              <div>
+                <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Cost Center Commercial Snapshot</h2>
                 <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Detailed spend categories and revenue performance for one normalized cost center.</p>
               </div>
               <select value={detailCostCenter} onClick={(event) => event.stopPropagation()} onChange={(event) => setDetailCostCenter(event.target.value)} style={{ minWidth: 240, padding: 11, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, fontWeight: 800 }}>
