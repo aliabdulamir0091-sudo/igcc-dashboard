@@ -473,6 +473,10 @@ export default function App() {
     localStorage.setItem("igcc-dashboard-welcome-seen", "true");
     setShowWelcome(false);
   };
+  const openWelcome = () => {
+    window.speechSynthesis?.cancel();
+    setShowWelcome(true);
+  };
   const playWelcomeVoice = () => {
     if (!("speechSynthesis" in window)) return;
 
@@ -1193,6 +1197,21 @@ export default function App() {
             View-only access
           </span>
         )}
+        <button
+          type="button"
+          onClick={openWelcome}
+          style={{
+            padding: "10px 16px",
+            cursor: "pointer",
+            backgroundColor: theme.inputBg,
+            color: theme.text,
+            border: `1px solid ${theme.border}`,
+            borderRadius: 8,
+            fontWeight: 850,
+          }}
+        >
+          Welcome
+        </button>
         {!VIEW_ONLY_MODE && (
           <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFile} style={{ padding: 10, borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
         )}
