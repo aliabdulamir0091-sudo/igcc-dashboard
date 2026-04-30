@@ -676,31 +676,6 @@ export default function App() {
   const approvalGap = submittedRevenue - approvedRevenue;
   const revenueSurplus = approvedRevenue - visibleTotal;
   const recoveryRatio = visibleTotal ? approvedRevenue / visibleTotal : 0;
-  const igccGroupTotal = {
-    label: IGCC_LEVEL_LABEL,
-    total,
-    rowCount: data.length,
-    filteredTotal: visibleTotal,
-    filteredCount: filteredData.length,
-  };
-
-  const groupTotals = COST_CENTER_GROUPS.map((group) => {
-    const groupRows = data.filter((item) => group.centers.includes(item.costCenter));
-    const filteredGroupRows = filteredData.filter((item) => group.centers.includes(item.costCenter));
-
-    return {
-      label: group.label,
-      total: groupRows.reduce((sum, item) => sum + item.amount, 0),
-      rowCount: groupRows.length,
-      filteredTotal: filteredGroupRows.reduce((sum, item) => sum + item.amount, 0),
-      filteredCount: filteredGroupRows.length,
-    };
-  });
-  const groupTotalsBySection = HUB_SECTIONS.map((section) => ({
-    ...section,
-    groups: section.hubs.map((hub) => groupTotals.find((group) => group.label === hub)).filter(Boolean),
-  })).filter((section) => section.groups.length > 0);
-
   const groupedCenterSet = new Set(COST_CENTER_GROUPS.flatMap((group) => group.centers));
   const unmappedRevenueCenters = Array.from(
     new Set(filteredRevenueData.map((item) => item.costCenter).filter((center) => center && !groupedCenterSet.has(center)))
@@ -1463,47 +1438,6 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ marginBottom: 20, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 18, boxShadow: theme.cardShadow }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
-          <div>
-            <h2 style={{ margin: 0, color: theme.text, fontSize: 20, fontWeight: 900, letterSpacing: 0 }}>Portfolio Command View</h2>
-            <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>IGCC Level 1 grouped by portfolio, hubs, and commercial recovery.</p>
-          </div>
-          <span style={{ color: theme.subtext, fontSize: 13 }}>{portfolioSummaries.length} portfolios monitored</span>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 12 }}>
-          {portfolioSummaries.map((portfolio) => (
-            <details key={portfolio.label} style={{ border: `1px solid ${portfolio.accent}55`, borderRadius: 8, background: `linear-gradient(180deg, ${portfolio.soft}, ${theme.panelBg} 52%)`, overflow: "hidden" }}>
-              <summary style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", padding: 16, cursor: "pointer", listStyle: "none" }}>
-                <div style={{ color: portfolio.accent, fontSize: 13, fontWeight: 950, textTransform: "uppercase" }}>{portfolio.label}</div>
-                <div style={{ color: portfolio.accent, background: portfolio.soft, borderRadius: 999, padding: "4px 8px", fontSize: 12, fontWeight: 900 }}>{portfolio.hubCount} hubs</div>
-              </summary>
-              <div style={{ padding: "0 16px 16px", display: "grid", gap: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                  <span style={{ color: theme.subtext }}>Cost</span>
-                  <strong style={{ color: theme.text }}>{formatCurrency(portfolio.cost)}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                  <span style={{ color: theme.subtext }}>Approved</span>
-                  <strong style={{ color: theme.text }}>{formatCurrency(portfolio.approved)}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                  <span style={{ color: theme.subtext }}>Profit / Loss</span>
-                  <strong style={{ color: profitColor(portfolio.profit) }}>{formatCurrency(portfolio.profit)}</strong>
-                </div>
-                <div style={{ marginTop: 5, height: 7, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
-                  <div style={{ width: `${Math.min(Math.max(portfolio.recovery * 100, 0), 140)}%`, height: "100%", background: portfolio.accent, borderRadius: 999 }} />
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", color: theme.subtext, fontSize: 12 }}>
-                  <span>{formatPercent(portfolio.recovery)} recovery</span>
-                  <span>{portfolio.rows.toLocaleString()} rows</span>
-                </div>
-              </div>
-            </details>
-          ))}
-        </div>
-      </div>
-
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 20, backgroundColor: theme.panelBg, padding: 18, borderRadius: 8, border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
         <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <div>
@@ -1553,122 +1487,6 @@ export default function App() {
           </select>
         </label>
       </div>
-
-      {activePage === "overview" && (
-        <>
-      <details style={{ marginBottom: 24, backgroundColor: theme.panelBg, padding: 18, borderRadius: 8, border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
-        <summary style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 16, cursor: "pointer", listStyle: "none" }}>
-          <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Cost by Period</h2>
-          {renderPeriodToggle()}
-        </summary>
-
-        <div style={{ display: "grid", gap: 10 }}>
-          {periodTotals.map((period) => {
-            const width = maxPeriodAmount ? `${Math.max(3, (Math.abs(period.amount) / maxPeriodAmount) * 100)}%` : "0%";
-            return (
-              <div key={period.key} style={{ display: "grid", gridTemplateColumns: "110px minmax(0, 1fr) 150px 70px", gap: 12, alignItems: "center" }}>
-                <div style={{ fontWeight: 700, color: theme.text }}>{period.label}</div>
-                <div style={{ height: 12, background: theme.accentSoft, borderRadius: 999, overflow: "hidden" }}>
-                  <div style={{ width, height: "100%", background: theme.accentStrong, borderRadius: 999 }} />
-                </div>
-                <div style={{ textAlign: "right", fontWeight: 800, color: theme.text }}>{formatCurrency(period.amount)}</div>
-                <div style={{ textAlign: "right", color: theme.subtext, fontSize: 13 }}>{period.rows} rows</div>
-              </div>
-            );
-          })}
-          {!periodTotals.length && <div style={{ color: theme.subtext }}>No data matches the current filters.</div>}
-        </div>
-      </details>
-
-      <details style={{ marginBottom: 24, backgroundColor: theme.panelBg, padding: 18, borderRadius: 8, border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
-        <summary style={{ margin: "0 0 12px", color: theme.text, fontSize: 18, fontWeight: 900, cursor: "pointer", listStyle: "none" }}>Hub Breakdown</summary>
-        <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>
-          <thead>
-            <tr>
-              <th style={{ border: `1px solid ${theme.border}`, padding: 10, textAlign: "left", background: theme.accentSoft, color: theme.text }}>Hub</th>
-              <th style={{ border: `1px solid ${theme.border}`, padding: 10, textAlign: "right", background: theme.accentSoft, color: theme.text }}>Loaded Amount</th>
-              <th style={{ border: `1px solid ${theme.border}`, padding: 10, textAlign: "right", background: theme.accentSoft, color: theme.text }}>Loaded Rows</th>
-              <th style={{ border: `1px solid ${theme.border}`, padding: 10, textAlign: "right", background: theme.accentSoft, color: theme.text }}>Visible Rows</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style={{ background: theme.accentSoft }}>
-              <td style={{ border: `1px solid ${theme.border}`, padding: 10, color: theme.text, fontWeight: 900 }}>{igccGroupTotal.label}</td>
-              <td style={{ border: `1px solid ${theme.border}`, padding: 10, textAlign: "right", color: theme.text, fontWeight: 900 }}>{formatCurrency(igccGroupTotal.total)}</td>
-              <td style={{ border: `1px solid ${theme.border}`, padding: 10, textAlign: "right", color: theme.subtext, fontWeight: 800 }}>{igccGroupTotal.rowCount}</td>
-              <td style={{ border: `1px solid ${theme.border}`, padding: 10, textAlign: "right", color: theme.subtext, fontWeight: 800 }}>{igccGroupTotal.filteredCount}</td>
-            </tr>
-            {groupTotalsBySection.flatMap((section) => [
-              <tr key={`${section.label}-section`} style={{ background: section.soft }}>
-                <td colSpan={4} style={{ border: `1px solid ${theme.border}`, borderLeft: `5px solid ${section.accent}`, padding: "11px 10px", color: section.accent, fontWeight: 900, textTransform: "uppercase", fontSize: 12 }}>
-                  {section.label}
-                </td>
-              </tr>,
-              ...section.groups.map((group) => (
-                <tr key={group.label} style={{ background: theme.panelBg }}>
-                  <td style={{ border: `1px solid ${theme.border}`, borderLeft: `5px solid ${section.accent}`, padding: 10, color: theme.text, fontWeight: 800 }}>{group.label}</td>
-                  <td style={{ border: `1px solid ${theme.border}`, padding: 10, textAlign: "right", color: theme.text }}>{formatCurrency(group.total)}</td>
-                  <td style={{ border: `1px solid ${theme.border}`, padding: 10, textAlign: "right", color: theme.subtext }}>{group.rowCount}</td>
-                  <td style={{ border: `1px solid ${theme.border}`, padding: 10, textAlign: "right", color: theme.subtext }}>{group.filteredCount}</td>
-                </tr>
-              )),
-            ])}
-          </tbody>
-        </table>
-      </details>
-
-      <details style={{ marginBottom: 24, backgroundColor: theme.panelBg, padding: 18, borderRadius: 8, border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
-        <summary style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 14, cursor: "pointer", listStyle: "none" }}>
-          <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Cost Centers by Hub</h3>
-          <div style={{ color: theme.subtext, fontSize: 14 }}>{filteredData.length.toLocaleString()} rows summarized</div>
-        </summary>
-
-        <div style={{ display: "grid", gap: 10 }}>
-          {[...hubBreakdownBySection, ...(unsectionedHubBreakdown.length ? [{ label: "Other", hubs: unsectionedHubBreakdown }] : [])].map((section) => {
-            const visibleHubs = section.hubs.filter((hub) => hub.centers.length > 0);
-            if (!visibleHubs.length) return null;
-
-            return (
-              <details key={section.label} style={{ display: "grid", gap: 10, border: `1px solid ${section.accent}`, borderLeft: `5px solid ${section.accent}`, background: `linear-gradient(90deg, ${section.soft}, transparent 55%)`, borderRadius: 8, overflow: "hidden" }}>
-                <summary style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", padding: 12, cursor: "pointer", listStyle: "none" }}>
-                  <h4 style={{ margin: 0, color: section.accent, fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: 0 }}>{section.label}</h4>
-                  <span style={{ color: section.accent, background: section.soft, borderRadius: 999, padding: "4px 9px", fontSize: 12, fontWeight: 900 }}>{visibleHubs.length} hubs</span>
-                </summary>
-                <div style={{ display: "grid", gap: 10, padding: "0 12px 12px" }}>
-                {visibleHubs.map((hub) => (
-                  <details key={hub.label} style={{ border: `1px solid ${section.accent}`, borderRadius: 8, overflow: "hidden", background: theme.panelBg }}>
-                    <summary style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 150px 150px 150px 80px", gap: 12, alignItems: "center", padding: 14, cursor: "pointer", background: section.soft, color: theme.text, fontWeight: 800 }}>
-                      <span style={{ color: section.accent }}>{hub.label}</span>
-                      <span style={{ textAlign: "right" }}>Cost {formatCurrency(hub.amount)}</span>
-                      <span style={{ textAlign: "right" }}>Submitted {formatCurrency(hub.submitted)}</span>
-                      <span style={{ textAlign: "right" }}>Approved {formatCurrency(hub.approved)}</span>
-                      <span style={{ textAlign: "right", color: theme.subtext, fontWeight: 700 }}>{hub.rows} rows</span>
-                    </summary>
-
-                    <div style={{ display: "grid" }}>
-                      {hub.centers.map((center, centerIndex) => (
-                        <div key={center.center} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 150px 150px 150px 80px", gap: 12, alignItems: "center", padding: "11px 14px", background: centerIndex % 2 === 0 ? theme.panelBg : theme.rowAlt, borderTop: `1px solid ${theme.border}` }}>
-                          <span style={{ color: theme.text, fontWeight: 700, borderLeft: `4px solid ${section.accent}`, paddingLeft: 8 }}>{center.center}</span>
-                          <span style={{ textAlign: "right", color: theme.text }}>{formatCurrency(center.amount)}</span>
-                          <span style={{ textAlign: "right", color: theme.text }}>{formatCurrency(center.submitted)}</span>
-                          <span style={{ textAlign: "right", color: theme.text }}>{formatCurrency(center.approved)}</span>
-                          <span style={{ textAlign: "right", color: theme.subtext, fontSize: 13 }}>{center.rows} rows</span>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                ))}
-                </div>
-              </details>
-            );
-          })}
-          {!hubCostCenterBreakdown.some((hub) => hub.centers.length > 0) && (
-            <div style={{ color: theme.subtext }}>No cost centers match the current filters.</div>
-          )}
-        </div>
-      </details>
-        </>
-      )}
 
       {activePage === "performance" && (
         <>
