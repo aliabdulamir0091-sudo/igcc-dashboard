@@ -432,6 +432,7 @@ export default function App() {
   const [periodView, setPeriodView] = useState("monthly");
   const [activePage, setActivePage] = useState("overview");
   const [themeMode, setThemeMode] = useState("light");
+  const [showWelcome, setShowWelcome] = useState(() => localStorage.getItem("igcc-dashboard-welcome-seen") !== "true");
 
   const theme = {
     light: {
@@ -467,6 +468,10 @@ export default function App() {
   }[themeMode];
 
   const toggleTheme = () => setThemeMode((current) => (current === "light" ? "dark" : "light"));
+  const dismissWelcome = () => {
+    localStorage.setItem("igcc-dashboard-welcome-seen", "true");
+    setShowWelcome(false);
+  };
 
   const loadingView = (
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, fontFamily: "Inter, system-ui, sans-serif", color: theme.text, backgroundColor: theme.pageBg }}>
@@ -1069,6 +1074,39 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh", padding: "28px 24px 40px", fontFamily: "Inter, system-ui, sans-serif", maxWidth: 1280, margin: "0 auto", color: theme.text, backgroundColor: theme.pageBg }}>
+      {showWelcome && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "grid", placeItems: "center", padding: 20, background: themeMode === "light" ? "rgba(15, 23, 42, 0.42)" : "rgba(2, 6, 23, 0.68)" }}>
+          <div style={{ width: "min(620px, 100%)", overflow: "hidden", borderRadius: 8, background: theme.panelBg, border: `1px solid ${theme.border}`, boxShadow: "0 24px 70px rgba(15,23,42,0.28)" }}>
+            <div style={{ padding: 22, color: "#fff", background: "linear-gradient(135deg, #0f766e, #12324f)" }}>
+              <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.82, textTransform: "uppercase" }}>Welcome to IGCC Commercial Dashboard</div>
+              <h2 style={{ margin: "10px 0 0", color: "#fff", fontSize: 28, fontWeight: 950, letterSpacing: 0 }}>IRAQ GATE CONTRACTING COMPANY</h2>
+              <p style={{ margin: "10px 0 0", color: "rgba(255,255,255,0.82)", fontSize: 15, lineHeight: 1.5 }}>View cost, AFP revenue, portfolio recovery, hub performance, and cost-center details in one place.</p>
+            </div>
+            <div style={{ padding: 20, display: "grid", gap: 12 }}>
+              {[
+                "Use the top tabs to move between Overview, Performance, Cost Center Detail, and Commercial Statement.",
+                "Expand each portfolio or hub to drill into more detail.",
+                "Use filters to narrow the dashboard by cost center or month.",
+              ].map((line) => (
+                <div key={line} style={{ display: "flex", gap: 10, alignItems: "flex-start", color: theme.text, fontSize: 14, lineHeight: 1.45 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: theme.accentStrong, marginTop: 6, flex: "0 0 auto" }} />
+                  <span>{line}</span>
+                </div>
+              ))}
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6 }}>
+                <button
+                  type="button"
+                  onClick={dismissWelcome}
+                  style={{ border: "none", borderRadius: 8, padding: "11px 18px", cursor: "pointer", background: theme.accentStrong, color: "#fff", fontWeight: 900 }}
+                >
+                  Enter Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.55fr) minmax(300px, 0.75fr)", gap: 18, alignItems: "stretch", marginBottom: 18 }}>
         <div style={{ position: "relative", overflow: "hidden", background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 24, boxShadow: theme.cardShadow }}>
           <div style={{ position: "absolute", inset: "0 0 auto", height: 5, background: "linear-gradient(90deg, #0f766e, #7c3aed, #b45309)" }} />
