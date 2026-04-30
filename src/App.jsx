@@ -1303,50 +1303,64 @@ export default function App() {
         <div style={{ marginBottom: 18, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 18, boxShadow: theme.cardShadow }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
             <div>
-              <h2 style={{ margin: 0, color: theme.text, fontSize: 22, fontWeight: 950, letterSpacing: 0 }}>Overview Analytics</h2>
-              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Visual commercial summary for spend, AFP revenue, portfolio recovery, and period trends.</p>
+              <h2 style={{ margin: 0, color: theme.text, fontSize: 24, fontWeight: 950, letterSpacing: 0 }}>CEO Commercial Cockpit</h2>
+              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Executive view of commercial health, risk exposure, and portfolio movement.</p>
             </div>
             {renderPeriodToggleFor(overviewPeriodView, setOverviewPeriodView)}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(min(100%, 280px), 0.85fr) minmax(min(100%, 520px), 1.65fr)", gap: 14, marginBottom: 14 }}>
-            <div style={{ border: `1px solid ${commercialHealth.color}55`, borderLeft: `6px solid ${commercialHealth.color}`, borderRadius: 8, padding: 16, background: theme.panelBg }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
-                <div style={{ color: theme.subtext, fontSize: 12, fontWeight: 900, textTransform: "uppercase" }}>CEO Attention</div>
-                <span style={{ color: commercialHealth.color, background: themeMode === "light" ? `${commercialHealth.color}16` : "rgba(255,255,255,0.08)", borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 950 }}>{commercialHealth.label}</span>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(min(100%, 360px), 1.05fr) minmax(min(100%, 520px), 1.35fr)", gap: 14, marginBottom: 14 }}>
+            <div style={{ position: "relative", overflow: "hidden", borderRadius: 8, padding: 22, color: "#fff", background: `linear-gradient(135deg, ${commercialHealth.color}, #12324f)`, boxShadow: "0 18px 42px rgba(15,23,42,0.16)" }}>
+              <div style={{ position: "absolute", right: -60, top: -60, width: 170, height: 170, borderRadius: "50%", background: "rgba(255,255,255,0.12)" }} />
+              <div style={{ position: "relative" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+                  <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.82, textTransform: "uppercase" }}>Commercial Health</div>
+                  <span style={{ color: "#fff", background: "rgba(255,255,255,0.16)", borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 950 }}>{commercialHealth.label}</span>
+                </div>
+                <div style={{ marginTop: 20, fontSize: 13, opacity: 0.82, fontWeight: 850 }}>Commercial Result</div>
+                <div style={{ marginTop: 5, fontSize: 34, lineHeight: 1, fontWeight: 950, overflowWrap: "anywhere" }}>{formatCurrency(revenueSurplus)}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 18 }}>
+                  <div>
+                    <div style={{ fontSize: 22, fontWeight: 950 }}>{formatPercent(recoveryRatio)}</div>
+                    <div style={{ fontSize: 12, opacity: 0.78 }}>Recovery</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 22, fontWeight: 950 }}>{formatCurrency(approvalGap)}</div>
+                    <div style={{ fontSize: 12, opacity: 0.78 }}>Approval Gap</div>
+                  </div>
+                </div>
+                <p style={{ margin: "18px 0 0", color: "rgba(255,255,255,0.86)", fontSize: 13, lineHeight: 1.45 }}>{executiveInsight}</p>
               </div>
-              <div style={{ marginTop: 12, color: theme.text, fontSize: 20, fontWeight: 950 }}>{formatCurrency(revenueSurplus)}</div>
-              <p style={{ margin: "8px 0 0", color: theme.subtext, fontSize: 13, lineHeight: 1.45 }}>{commercialHealth.message}</p>
-              <p style={{ margin: "12px 0 0", color: theme.text, fontSize: 13, lineHeight: 1.45, fontWeight: 750 }}>{executiveInsight}</p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))", gap: 10 }}>
               {[
-                ["Best Portfolio", bestPortfolio?.label ?? "N/A", bestPortfolio ? formatPercent(bestPortfolio.recovery) : "0.0%", bestPortfolio?.accent ?? theme.accentStrong],
-                ["Weakest Portfolio", weakestPortfolio?.label ?? "N/A", weakestPortfolio ? formatPercent(weakestPortfolio.recovery) : "0.0%", weakestPortfolio?.accent ?? theme.danger],
-                ["Highest Spend Hub", highestSpendHub?.label ?? "N/A", highestSpendHub ? formatCurrency(highestSpendHub.amount) : "$0.00", theme.accentWarm],
-                ["Approval Gap", largestApprovalGapHub?.label ?? "No gap", largestApprovalGapHub ? formatCurrency(largestApprovalGapHub.approvalGap) : "$0.00", "#2563eb"],
-                ["Lowest Recovery", lowestRecoveryHub?.label ?? "N/A", lowestRecoveryHub ? formatPercent(lowestRecoveryHub.recovery) : "0.0%", theme.danger],
-              ].map(([label, value, detail, accent]) => (
-                <div key={label} style={{ border: `1px solid ${theme.border}`, borderTop: `4px solid ${accent}`, borderRadius: 8, padding: 13, background: theme.inputBg }}>
+                ["Best Portfolio", bestPortfolio?.label ?? "N/A", bestPortfolio ? formatPercent(bestPortfolio.recovery) : "0.0%", bestPortfolio?.accent ?? theme.accentStrong, "Strongest recovery"],
+                ["Weakest Portfolio", weakestPortfolio?.label ?? "N/A", weakestPortfolio ? formatPercent(weakestPortfolio.recovery) : "0.0%", weakestPortfolio?.accent ?? theme.danger, "Lowest recovery"],
+                ["Highest Spend Hub", highestSpendHub?.label ?? "N/A", highestSpendHub ? formatCurrency(highestSpendHub.amount) : "$0.00", theme.accentWarm, "Largest exposure"],
+                ["Approval Gap", largestApprovalGapHub?.label ?? "No gap", largestApprovalGapHub ? formatCurrency(largestApprovalGapHub.approvalGap) : "$0.00", "#2563eb", "Pending value"],
+                ["Lowest Recovery", lowestRecoveryHub?.label ?? "N/A", lowestRecoveryHub ? formatPercent(lowestRecoveryHub.recovery) : "0.0%", theme.danger, "Needs attention"],
+              ].map(([label, value, detail, accent, note]) => (
+                <div key={label} style={{ border: `1px solid ${theme.border}`, borderTop: `4px solid ${accent}`, borderRadius: 8, padding: 13, background: theme.inputBg, boxShadow: "0 8px 20px rgba(15,23,42,0.04)" }}>
                   <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 900, textTransform: "uppercase" }}>{label}</div>
                   <div style={{ marginTop: 8, color: theme.text, fontSize: 16, fontWeight: 950, lineHeight: 1.1 }}>{value}</div>
                   <div style={{ marginTop: 7, color: theme.subtext, fontSize: 12, fontWeight: 800 }}>{detail}</div>
+                  <div style={{ marginTop: 7, color: accent, fontSize: 11, fontWeight: 900 }}>{note}</div>
                 </div>
               ))}
             </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "minmax(min(100%, 420px), 1.25fr) minmax(min(100%, 300px), 0.75fr)", gap: 14, marginBottom: 14 }}>
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 18, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 }}>
                 <div>
-                  <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Accumulated Cost by Hub</h3>
-                  <p style={{ margin: "4px 0 0", color: theme.subtext, fontSize: 12 }}>Histogram of selected cost accumulated by hub</p>
+                  <h3 style={{ margin: 0, color: theme.text, fontSize: 17, fontWeight: 950 }}>Hub Cost Exposure</h3>
+                  <p style={{ margin: "4px 0 0", color: theme.subtext, fontSize: 12 }}>Accumulated cost by hub for the current view</p>
                 </div>
                 <strong style={{ color: theme.text }}>{formatCurrency(visibleTotal)}</strong>
               </div>
-              <div style={{ display: "grid", gap: 10, minHeight: 210, alignContent: "center" }}>
+              <div style={{ display: "grid", gap: 12, minHeight: 210, alignContent: "center" }}>
                 {hubHistogramRows.map((hub) => {
                   const section = HUB_SECTIONS.find((item) => item.hubs.includes(hub.label));
                   const accent = section?.accent ?? theme.accentStrong;
@@ -1355,8 +1369,8 @@ export default function App() {
                   return (
                     <div key={hub.label} style={{ display: "grid", gridTemplateColumns: "130px minmax(0, 1fr) 135px", gap: 10, alignItems: "center" }}>
                       <span style={{ color: theme.text, fontSize: 12, fontWeight: 900 }}>{hub.label}</span>
-                      <div style={{ height: 18, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
-                        <div style={{ width, height: "100%", borderRadius: 999, background: accent }} />
+                      <div style={{ height: 22, borderRadius: 999, background: theme.accentSoft, overflow: "hidden", boxShadow: "inset 0 1px 2px rgba(15,23,42,0.08)" }}>
+                        <div style={{ width, height: "100%", borderRadius: 999, background: `linear-gradient(90deg, ${accent}, ${accent}bb)` }} />
                       </div>
                       <span style={{ color: theme.text, fontSize: 12, fontWeight: 900, textAlign: "right" }}>{formatCurrency(hub.amount)}</span>
                     </div>
@@ -1366,11 +1380,11 @@ export default function App() {
               </div>
             </div>
 
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
-              <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Commercial Mix</h3>
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 18, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)" }}>
+              <h3 style={{ margin: 0, color: theme.text, fontSize: 17, fontWeight: 950 }}>Commercial Mix</h3>
               <p style={{ margin: "4px 0 12px", color: theme.subtext, fontSize: 12 }}>Approved AFP against submitted AFP</p>
               <div style={{ display: "grid", placeItems: "center" }}>
-                <svg viewBox="0 0 150 150" role="img" aria-label="Commercial mix donut chart" style={{ width: 190, maxWidth: "100%" }}>
+                <svg viewBox="0 0 150 150" role="img" aria-label="Commercial mix donut chart" style={{ width: 205, maxWidth: "100%" }}>
                   <circle cx="75" cy="75" r="52" fill="none" stroke={theme.accentSoft} strokeWidth="18" />
                   <circle cx="75" cy="75" r="52" fill="none" stroke="#059669" strokeWidth="18" strokeLinecap="round" strokeDasharray={`${donutSubmittedShare * 3.27} 327`} transform="rotate(-90 75 75)" />
                   <text x="75" y="70" textAnchor="middle" fill={theme.text} fontSize="22" fontWeight="900">{donutSubmittedShare.toFixed(1)}%</text>
@@ -1398,8 +1412,8 @@ export default function App() {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 270px), 1fr))", gap: 14 }}>
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
-              <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Portfolio Recovery</h3>
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 18, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg }}>
+              <h3 style={{ margin: 0, color: theme.text, fontSize: 17, fontWeight: 950 }}>Portfolio Recovery</h3>
               <p style={{ margin: "4px 0 14px", color: theme.subtext, fontSize: 12 }}>Approved revenue compared with cost by portfolio</p>
               <div style={{ display: "grid", gap: 12 }}>
                 {portfolioSummaries.map((portfolio) => (
@@ -1409,7 +1423,7 @@ export default function App() {
                       <span>{formatPercent(portfolio.recovery)}</span>
                     </div>
                     <div style={{ display: "grid", gap: 5 }}>
-                      <div style={{ height: 8, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                      <div style={{ height: 11, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
                         <div style={{ width: `${Math.max(3, (portfolio.cost / (maxPortfolioCost || 1)) * 100)}%`, height: "100%", background: portfolio.accent, borderRadius: 999 }} />
                       </div>
                       <div style={{ color: theme.subtext, fontSize: 12 }}>{formatCurrency(portfolio.cost)} cost | {formatCurrency(portfolio.approved)} approved</div>
@@ -1419,14 +1433,14 @@ export default function App() {
               </div>
             </div>
 
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
-              <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Spend by Period</h3>
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 18, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg }}>
+              <h3 style={{ margin: 0, color: theme.text, fontSize: 17, fontWeight: 950 }}>Spend by Period</h3>
               <p style={{ margin: "4px 0 14px", color: theme.subtext, fontSize: 12 }}>Cost distribution by {overviewPeriodView} view</p>
               <div style={{ display: "grid", gap: 10 }}>
                 {chartPeriods.map((period) => (
                   <div key={period.key} style={{ display: "grid", gridTemplateColumns: "78px minmax(0, 1fr) 118px", gap: 10, alignItems: "center" }}>
                     <span style={{ color: theme.text, fontSize: 12, fontWeight: 850 }}>{period.label}</span>
-                    <div style={{ height: 10, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                    <div style={{ height: 12, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
                       <div style={{ width: `${Math.max(3, (Math.abs(period.amount) / (maxChartPeriodAmount || 1)) * 100)}%`, height: "100%", borderRadius: 999, background: theme.accentStrong }} />
                     </div>
                     <span style={{ color: theme.text, fontSize: 12, fontWeight: 850, textAlign: "right" }}>{formatCurrency(period.amount)}</span>
