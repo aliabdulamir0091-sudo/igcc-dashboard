@@ -484,8 +484,16 @@ export default function App() {
 
     window.speechSynthesis.cancel();
     const message = new SpeechSynthesisUtterance(WELCOME_VOICE_MESSAGE);
-    message.rate = 0.92;
-    message.pitch = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find((voice) => /female|zira|samantha|victoria|karen|serena|susan|aria|jenny|natural/i.test(voice.name)) ??
+      voices.find((voice) => voice.lang?.toLowerCase().startsWith("en"));
+
+    if (preferredVoice) {
+      message.voice = preferredVoice;
+    }
+
+    message.rate = 0.88;
+    message.pitch = 1.12;
     message.volume = 1;
     window.speechSynthesis.speak(message);
   };
