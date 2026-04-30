@@ -52,7 +52,7 @@ const PERIOD_OPTIONS = [
   ["yearly", "Yearly"],
 ];
 const VIEW_ONLY_MODE = true;
-const WELCOME_MESSAGE = "Welcome to this dashboard; Ali Abdulamir is developing this application, and this is not the final revision.";
+const WELCOME_MESSAGE = "Welcome to this dashboard. This application is developed by Ali Abdulamir, and this is not the final revision.";
 const COST_CATEGORY_ORDER = [
   "Accommodation",
   "Air ticket & travel",
@@ -1105,7 +1105,7 @@ export default function App() {
                   onClick={playWelcomeVoice}
                   style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: "11px 18px", cursor: "pointer", background: theme.inputBg, color: theme.text, fontWeight: 900 }}
                 >
-                  Play Welcome
+                  Read Welcome Message
                 </button>
                 <button
                   type="button"
