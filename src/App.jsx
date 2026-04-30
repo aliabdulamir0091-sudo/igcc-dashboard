@@ -432,7 +432,7 @@ export default function App() {
   const [periodView, setPeriodView] = useState("monthly");
   const [activePage, setActivePage] = useState("overview");
   const [themeMode, setThemeMode] = useState("light");
-  const [showWelcome, setShowWelcome] = useState(() => localStorage.getItem("igcc-dashboard-welcome-seen") !== "true");
+  const [showWelcome, setShowWelcome] = useState(true);
 
   const theme = {
     light: {
@@ -470,12 +470,12 @@ export default function App() {
   const toggleTheme = () => setThemeMode((current) => (current === "light" ? "dark" : "light"));
   const dismissWelcome = () => {
     window.speechSynthesis?.cancel();
-    localStorage.setItem("igcc-dashboard-welcome-seen", "true");
     setShowWelcome(false);
   };
   const openWelcome = () => {
     window.speechSynthesis?.cancel();
     setShowWelcome(true);
+    playWelcomeVoice();
   };
   const playWelcomeVoice = () => {
     if (!("speechSynthesis" in window)) return;
