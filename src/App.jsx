@@ -52,7 +52,8 @@ const PERIOD_OPTIONS = [
   ["yearly", "Yearly"],
 ];
 const VIEW_ONLY_MODE = true;
-const WELCOME_MESSAGE = "Welcome to this dashboard. This application is developed by Ali Abdulamir, and this is not the final revision.";
+const WELCOME_MESSAGE = "Welcome to this dashboard; Ali Abdulamir is developing this application, and this is not the final revision.";
+const WELCOME_VOICE_MESSAGE = "Welcome to this dashboard. This application is developed by Ali Abdulamir, and this is not the final revision.";
 const COST_CATEGORY_ORDER = [
   "Accommodation",
   "Air ticket & travel",
@@ -482,7 +483,7 @@ export default function App() {
     if (!("speechSynthesis" in window)) return;
 
     window.speechSynthesis.cancel();
-    const message = new SpeechSynthesisUtterance(WELCOME_MESSAGE);
+    const message = new SpeechSynthesisUtterance(WELCOME_VOICE_MESSAGE);
     message.rate = 0.92;
     message.pitch = 1;
     message.volume = 1;
