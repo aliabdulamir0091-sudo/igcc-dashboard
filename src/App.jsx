@@ -477,7 +477,6 @@ export default function App() {
   const openWelcome = () => {
     window.speechSynthesis?.cancel();
     setShowWelcome(true);
-    playWelcomeVoice();
   };
   const playWelcomeVoice = () => {
     if (!("speechSynthesis" in window)) return;
@@ -489,6 +488,19 @@ export default function App() {
     message.volume = 1;
     window.speechSynthesis.speak(message);
   };
+
+  useEffect(() => {
+    if (!showWelcome || isLoading) return;
+
+    const timer = window.setTimeout(() => {
+      playWelcomeVoice();
+    }, 500);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.speechSynthesis?.cancel();
+    };
+  }, [showWelcome, isLoading]);
 
   const loadingView = (
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, fontFamily: "Inter, system-ui, sans-serif", color: theme.text, backgroundColor: theme.pageBg }}>
@@ -1101,13 +1113,6 @@ export default function App() {
             </div>
             <div style={{ padding: 20, display: "grid", gap: 12 }}>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  onClick={playWelcomeVoice}
-                  style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: "11px 18px", cursor: "pointer", background: theme.inputBg, color: theme.text, fontWeight: 900 }}
-                >
-                  Read Welcome Message
-                </button>
                 <button
                   type="button"
                   onClick={dismissWelcome}
