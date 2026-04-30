@@ -1098,14 +1098,13 @@ export default function App() {
   ];
   const chartPeriods = periodTotals.slice(-8);
   const maxChartPeriodAmount = Math.max(...chartPeriods.map((item) => Math.abs(item.amount)), 0);
+  const hubHistogramRows = hubCostCenterBreakdown
+    .filter((hub) => hub.amount)
+    .sort((a, b) => b.amount - a.amount);
+  const maxHubHistogramAmount = Math.max(...hubHistogramRows.map((hub) => Math.abs(hub.amount)), 0);
   const maxPortfolioCost = Math.max(...portfolioSummaries.map((item) => Math.abs(item.cost)), 0);
   const maxCommercialValue = Math.max(visibleTotal, submittedRevenue, approvedRevenue, 1);
   const donutSubmittedShare = submittedRevenue ? Math.min((approvedRevenue / submittedRevenue) * 100, 100) : 0;
-  const trendPoints = chartPeriods.map((period, index) => {
-    const x = chartPeriods.length <= 1 ? 50 : 36 + (index * 328) / (chartPeriods.length - 1);
-    const y = 154 - ((Math.abs(period.amount) / (maxChartPeriodAmount || 1)) * 118);
-    return `${x},${y}`;
-  }).join(" ");
 
   if (isLoading) {
     return loadingView;
@@ -1292,27 +1291,29 @@ export default function App() {
             <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 }}>
                 <div>
-                  <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Cost Trend</h3>
-                  <p style={{ margin: "4px 0 0", color: theme.subtext, fontSize: 12 }}>Latest {chartPeriods.length} {periodView} periods</p>
+                  <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Accumulated Cost by Hub</h3>
+                  <p style={{ margin: "4px 0 0", color: theme.subtext, fontSize: 12 }}>Histogram of selected cost accumulated by hub</p>
                 </div>
                 <strong style={{ color: theme.text }}>{formatCurrency(visibleTotal)}</strong>
               </div>
-              <svg viewBox="0 0 400 180" role="img" aria-label="Cost trend chart" style={{ width: "100%", height: 210, display: "block" }}>
-                {[0, 1, 2, 3].map((line) => (
-                  <line key={line} x1="32" x2="380" y1={36 + line * 38} y2={36 + line * 38} stroke={theme.border} strokeWidth="1" />
-                ))}
-                {trendPoints && <polyline points={trendPoints} fill="none" stroke={theme.accentStrong} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />}
-                {chartPeriods.map((period, index) => {
-                  const x = chartPeriods.length <= 1 ? 50 : 36 + (index * 328) / (chartPeriods.length - 1);
-                  const y = 154 - ((Math.abs(period.amount) / (maxChartPeriodAmount || 1)) * 118);
+              <div style={{ display: "grid", gap: 10, minHeight: 210, alignContent: "center" }}>
+                {hubHistogramRows.map((hub) => {
+                  const section = HUB_SECTIONS.find((item) => item.hubs.includes(hub.label));
+                  const accent = section?.accent ?? theme.accentStrong;
+                  const width = `${Math.max(3, (Math.abs(hub.amount) / (maxHubHistogramAmount || 1)) * 100)}%`;
+
                   return (
-                    <g key={period.key}>
-                      <circle cx={x} cy={y} r="5" fill={theme.panelBg} stroke={theme.accentStrong} strokeWidth="3" />
-                      <text x={x} y="172" textAnchor="middle" fill={theme.subtext} fontSize="10" fontWeight="700">{period.label.split(" ")[0]}</text>
-                    </g>
+                    <div key={hub.label} style={{ display: "grid", gridTemplateColumns: "130px minmax(0, 1fr) 135px", gap: 10, alignItems: "center" }}>
+                      <span style={{ color: theme.text, fontSize: 12, fontWeight: 900 }}>{hub.label}</span>
+                      <div style={{ height: 18, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                        <div style={{ width, height: "100%", borderRadius: 999, background: accent }} />
+                      </div>
+                      <span style={{ color: theme.text, fontSize: 12, fontWeight: 900, textAlign: "right" }}>{formatCurrency(hub.amount)}</span>
+                    </div>
                   );
                 })}
-              </svg>
+                {!hubHistogramRows.length && <div style={{ color: theme.subtext }}>No hub cost data matches the current filters.</div>}
+              </div>
             </div>
 
             <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
