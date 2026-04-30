@@ -1096,6 +1096,16 @@ export default function App() {
       progress: highestPeriod?.amount ? Math.min((averagePeriod / highestPeriod.amount) * 100, 100) : 0,
     },
   ];
+  const chartPeriods = periodTotals.slice(-8);
+  const maxChartPeriodAmount = Math.max(...chartPeriods.map((item) => Math.abs(item.amount)), 0);
+  const maxPortfolioCost = Math.max(...portfolioSummaries.map((item) => Math.abs(item.cost)), 0);
+  const maxCommercialValue = Math.max(visibleTotal, submittedRevenue, approvedRevenue, 1);
+  const donutSubmittedShare = submittedRevenue ? Math.min((approvedRevenue / submittedRevenue) * 100, 100) : 0;
+  const trendPoints = chartPeriods.map((period, index) => {
+    const x = chartPeriods.length <= 1 ? 50 : 36 + (index * 328) / (chartPeriods.length - 1);
+    const y = 154 - ((Math.abs(period.amount) / (maxChartPeriodAmount || 1)) * 118);
+    return `${x},${y}`;
+  }).join(" ");
 
   if (isLoading) {
     return loadingView;
@@ -1268,63 +1278,114 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ marginBottom: 18, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, boxShadow: theme.cardShadow }}>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(260px, 1.1fr) minmax(220px, 0.9fr) minmax(180px, 0.7fr)", gap: 12, alignItems: "stretch", marginBottom: 12 }}>
-          <div style={{ borderRadius: 8, padding: 16, color: "#fff", background: "linear-gradient(135deg, #0f766e, #12324f)", boxShadow: "0 10px 24px rgba(15,23,42,0.14)" }}>
-            <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.82, textTransform: "uppercase" }}>Executive Snapshot</div>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "flex-end", flexWrap: "wrap", marginTop: 8 }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 850, opacity: 0.9 }}>Total Spend</div>
-                <div style={{ marginTop: 3, fontSize: 31, lineHeight: 1, fontWeight: 950, letterSpacing: 0, overflowWrap: "anywhere" }}>{formatCurrency(total)}</div>
-              </div>
-              <div style={{ textAlign: "right", fontSize: 13, opacity: 0.86 }}>
-                <div>{data.length.toLocaleString()} transactions</div>
-                <div>{yearsLoaded.length ? yearsLoaded.join(", ") : "No years loaded"}</div>
-              </div>
+      {activePage === "overview" && (
+        <div style={{ marginBottom: 18, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 18, boxShadow: theme.cardShadow }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
+            <div>
+              <h2 style={{ margin: 0, color: theme.text, fontSize: 22, fontWeight: 950, letterSpacing: 0 }}>Overview Analytics</h2>
+              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Visual commercial summary for spend, AFP revenue, portfolio recovery, and period trends.</p>
             </div>
+            {renderPeriodToggle()}
           </div>
-          <div style={{ borderRadius: 8, padding: 16, background: theme.accentSoft, border: `1px solid ${theme.border}` }}>
-            <div style={{ color: theme.subtext, fontSize: 12, fontWeight: 900, textTransform: "uppercase" }}>Commercial Result</div>
-            <div style={{ marginTop: 7, color: profitColor(revenueSurplus), fontSize: 26, lineHeight: 1, fontWeight: 950 }}>{formatCurrency(revenueSurplus)}</div>
-            <div style={{ marginTop: 8, color: theme.subtext, fontSize: 13 }}>{formatPercent(recoveryRatio)} approved revenue coverage</div>
-          </div>
-          <div style={{ borderRadius: 8, padding: 16, background: theme.panelBg, border: `1px solid ${theme.border}` }}>
-            <div style={{ color: theme.subtext, fontSize: 12, fontWeight: 900, textTransform: "uppercase" }}>Period View</div>
-            <div style={{ marginTop: 10 }}>{renderPeriodToggle()}</div>
-          </div>
-        </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 185px), 1fr))", gap: 10 }}>
-          {summaryMetrics.map((metric) => (
-            <div
-              key={metric.label}
-              style={{
-                position: "relative",
-                overflow: "hidden",
-                minHeight: 118,
-                background: theme.panelBg,
-                border: `1px solid ${theme.border}`,
-                borderRadius: 8,
-                padding: 13,
-                boxShadow: "0 6px 16px rgba(15,23,42,0.06)",
-              }}
-            >
-              <div style={{ position: "absolute", inset: "0 0 auto", height: 4, background: metric.accent }} />
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginTop: 3 }}>
-                <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 900, lineHeight: 1.25, textTransform: "uppercase" }}>{metric.label}</div>
-                <div style={{ flex: "0 0 auto", borderRadius: 999, padding: "3px 7px", color: metric.accent, background: themeMode === "light" ? `${metric.accent}16` : "rgba(255,255,255,0.08)", fontSize: 10, fontWeight: 900 }}>
-                  {metric.tone}
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(min(100%, 420px), 1.25fr) minmax(min(100%, 300px), 0.75fr)", gap: 14, marginBottom: 14 }}>
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 }}>
+                <div>
+                  <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Cost Trend</h3>
+                  <p style={{ margin: "4px 0 0", color: theme.subtext, fontSize: 12 }}>Latest {chartPeriods.length} {periodView} periods</p>
                 </div>
+                <strong style={{ color: theme.text }}>{formatCurrency(visibleTotal)}</strong>
               </div>
-              <div style={{ color: theme.text, fontSize: 21, fontWeight: 950, marginTop: 10, lineHeight: 1.05, overflowWrap: "anywhere" }}>{metric.value}</div>
-              <div style={{ marginTop: 10, height: 6, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
-                <div style={{ width: `${metric.progress}%`, height: "100%", borderRadius: 999, background: metric.accent }} />
-              </div>
-              <div style={{ color: theme.subtext, fontSize: 12, lineHeight: 1.35, marginTop: 8 }}>{metric.detail}</div>
+              <svg viewBox="0 0 400 180" role="img" aria-label="Cost trend chart" style={{ width: "100%", height: 210, display: "block" }}>
+                {[0, 1, 2, 3].map((line) => (
+                  <line key={line} x1="32" x2="380" y1={36 + line * 38} y2={36 + line * 38} stroke={theme.border} strokeWidth="1" />
+                ))}
+                {trendPoints && <polyline points={trendPoints} fill="none" stroke={theme.accentStrong} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />}
+                {chartPeriods.map((period, index) => {
+                  const x = chartPeriods.length <= 1 ? 50 : 36 + (index * 328) / (chartPeriods.length - 1);
+                  const y = 154 - ((Math.abs(period.amount) / (maxChartPeriodAmount || 1)) * 118);
+                  return (
+                    <g key={period.key}>
+                      <circle cx={x} cy={y} r="5" fill={theme.panelBg} stroke={theme.accentStrong} strokeWidth="3" />
+                      <text x={x} y="172" textAnchor="middle" fill={theme.subtext} fontSize="10" fontWeight="700">{period.label.split(" ")[0]}</text>
+                    </g>
+                  );
+                })}
+              </svg>
             </div>
-          ))}
+
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
+              <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Commercial Mix</h3>
+              <p style={{ margin: "4px 0 12px", color: theme.subtext, fontSize: 12 }}>Approved AFP against submitted AFP</p>
+              <div style={{ display: "grid", placeItems: "center" }}>
+                <svg viewBox="0 0 150 150" role="img" aria-label="Commercial mix donut chart" style={{ width: 190, maxWidth: "100%" }}>
+                  <circle cx="75" cy="75" r="52" fill="none" stroke={theme.accentSoft} strokeWidth="18" />
+                  <circle cx="75" cy="75" r="52" fill="none" stroke="#059669" strokeWidth="18" strokeLinecap="round" strokeDasharray={`${donutSubmittedShare * 3.27} 327`} transform="rotate(-90 75 75)" />
+                  <text x="75" y="70" textAnchor="middle" fill={theme.text} fontSize="22" fontWeight="900">{donutSubmittedShare.toFixed(1)}%</text>
+                  <text x="75" y="91" textAnchor="middle" fill={theme.subtext} fontSize="11" fontWeight="700">approved</text>
+                </svg>
+              </div>
+              <div style={{ display: "grid", gap: 9, marginTop: 8 }}>
+                {[
+                  ["Submitted", submittedRevenue, "#2563eb"],
+                  ["Approved", approvedRevenue, "#059669"],
+                  ["Cost", visibleTotal, theme.accentWarm],
+                ].map(([label, value, color]) => (
+                  <div key={label}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, color: theme.subtext, fontSize: 12, marginBottom: 4 }}>
+                      <span>{label}</span>
+                      <strong style={{ color: theme.text }}>{formatCurrency(value)}</strong>
+                    </div>
+                    <div style={{ height: 7, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                      <div style={{ width: `${Math.max(3, (value / maxCommercialValue) * 100)}%`, height: "100%", borderRadius: 999, background: color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 270px), 1fr))", gap: 14 }}>
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
+              <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Portfolio Recovery</h3>
+              <p style={{ margin: "4px 0 14px", color: theme.subtext, fontSize: 12 }}>Approved revenue compared with cost by portfolio</p>
+              <div style={{ display: "grid", gap: 12 }}>
+                {portfolioSummaries.map((portfolio) => (
+                  <div key={portfolio.label}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, color: theme.text, fontSize: 13, fontWeight: 850, marginBottom: 6 }}>
+                      <span style={{ color: portfolio.accent }}>{portfolio.label}</span>
+                      <span>{formatPercent(portfolio.recovery)}</span>
+                    </div>
+                    <div style={{ display: "grid", gap: 5 }}>
+                      <div style={{ height: 8, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                        <div style={{ width: `${Math.max(3, (portfolio.cost / (maxPortfolioCost || 1)) * 100)}%`, height: "100%", background: portfolio.accent, borderRadius: 999 }} />
+                      </div>
+                      <div style={{ color: theme.subtext, fontSize: 12 }}>{formatCurrency(portfolio.cost)} cost | {formatCurrency(portfolio.approved)} approved</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
+              <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Spend by Period</h3>
+              <p style={{ margin: "4px 0 14px", color: theme.subtext, fontSize: 12 }}>Cost distribution for selected period view</p>
+              <div style={{ display: "grid", gap: 10 }}>
+                {chartPeriods.map((period) => (
+                  <div key={period.key} style={{ display: "grid", gridTemplateColumns: "78px minmax(0, 1fr) 118px", gap: 10, alignItems: "center" }}>
+                    <span style={{ color: theme.text, fontSize: 12, fontWeight: 850 }}>{period.label}</span>
+                    <div style={{ height: 10, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                      <div style={{ width: `${Math.max(3, (Math.abs(period.amount) / (maxChartPeriodAmount || 1)) * 100)}%`, height: "100%", borderRadius: 999, background: theme.accentStrong }} />
+                    </div>
+                    <span style={{ color: theme.text, fontSize: 12, fontWeight: 850, textAlign: "right" }}>{formatCurrency(period.amount)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       <div style={{ marginBottom: 20, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 18, boxShadow: theme.cardShadow }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
