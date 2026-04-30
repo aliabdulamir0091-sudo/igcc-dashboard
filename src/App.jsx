@@ -432,6 +432,7 @@ export default function App() {
   const [selectedCostCenter, setSelectedCostCenter] = useState("");
   const [detailCostCenter, setDetailCostCenter] = useState("KAZ_23");
   const [periodView, setPeriodView] = useState("monthly");
+  const [overviewPeriodView, setOverviewPeriodView] = useState("monthly");
   const [activePage, setActivePage] = useState("overview");
   const [themeMode, setThemeMode] = useState("light");
   const [showWelcome, setShowWelcome] = useState(true);
@@ -1006,28 +1007,31 @@ export default function App() {
   const leftCellStyle = { ...tableCellStyle, textAlign: "left", fontWeight: 700 };
   const profitColor = (value) => (value >= 0 ? theme.accentStrong : theme.danger);
   const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
-  const renderPeriodToggle = () => (
+  const renderPeriodToggleFor = (value, onChange) => (
     <div onClick={(event) => event.stopPropagation()} style={{ display: "inline-flex", gap: 4, padding: 4, background: theme.accentSoft, borderRadius: 8 }}>
-      {PERIOD_OPTIONS.map(([value, label]) => (
+      {PERIOD_OPTIONS.map(([optionValue, label]) => (
         <button
-          key={value}
+          key={optionValue}
           type="button"
-          onClick={() => setPeriodView(value)}
+          onClick={() => onChange(optionValue)}
           style={{
             border: "none",
             borderRadius: 6,
             padding: "9px 14px",
             cursor: "pointer",
             fontWeight: 700,
-            background: periodView === value ? theme.panelBg : "transparent",
-            color: periodView === value ? theme.accentStrong : theme.text,
-            boxShadow: periodView === value ? "0 1px 4px rgba(15,23,42,0.12)" : "none",
+            background: value === optionValue ? theme.panelBg : "transparent",
+            color: value === optionValue ? theme.accentStrong : theme.text,
+            boxShadow: value === optionValue ? "0 1px 4px rgba(15,23,42,0.12)" : "none",
           }}
         >
           {label}
         </button>
       ))}
     </div>
+  );
+  const renderPeriodToggle = () => (
+    renderPeriodToggleFor(periodView, setPeriodView)
   );
   const revenueCoverage = Math.min(Math.max(recoveryRatio * 100, 0), 140);
   const approvedShare = submittedRevenue ? Math.min(Math.max((approvedRevenue / submittedRevenue) * 100, 0), 100) : 0;
@@ -1096,7 +1100,8 @@ export default function App() {
       progress: highestPeriod?.amount ? Math.min((averagePeriod / highestPeriod.amount) * 100, 100) : 0,
     },
   ];
-  const chartPeriods = periodTotals.slice(-8);
+  const overviewPeriodTotals = aggregateByPeriod(filteredData, overviewPeriodView);
+  const chartPeriods = overviewPeriodTotals.slice(-8);
   const maxChartPeriodAmount = Math.max(...chartPeriods.map((item) => Math.abs(item.amount)), 0);
   const hubHistogramRows = hubCostCenterBreakdown
     .filter((hub) => hub.amount)
@@ -1284,7 +1289,7 @@ export default function App() {
               <h2 style={{ margin: 0, color: theme.text, fontSize: 22, fontWeight: 950, letterSpacing: 0 }}>Overview Analytics</h2>
               <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Visual commercial summary for spend, AFP revenue, portfolio recovery, and period trends.</p>
             </div>
-            {renderPeriodToggle()}
+            {renderPeriodToggleFor(overviewPeriodView, setOverviewPeriodView)}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "minmax(min(100%, 420px), 1.25fr) minmax(min(100%, 300px), 0.75fr)", gap: 14, marginBottom: 14 }}>
@@ -1371,7 +1376,7 @@ export default function App() {
 
             <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
               <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Spend by Period</h3>
-              <p style={{ margin: "4px 0 14px", color: theme.subtext, fontSize: 12 }}>Cost distribution for selected period view</p>
+              <p style={{ margin: "4px 0 14px", color: theme.subtext, fontSize: 12 }}>Cost distribution by {overviewPeriodView} view</p>
               <div style={{ display: "grid", gap: 10 }}>
                 {chartPeriods.map((period) => (
                   <div key={period.key} style={{ display: "grid", gridTemplateColumns: "78px minmax(0, 1fr) 118px", gap: 10, alignItems: "center" }}>
