@@ -542,7 +542,7 @@ export default function App() {
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, fontFamily: "Inter, system-ui, sans-serif", color: theme.text, backgroundColor: theme.pageBg }}>
       <div style={{ width: "min(520px, 100%)", background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 24, boxShadow: theme.cardShadow, textAlign: "center" }}>
         <div style={{ color: theme.accentStrong, fontSize: 13, fontWeight: 900, textTransform: "uppercase" }}>Loading Dashboard</div>
-        <h1 style={{ margin: "10px 0", fontSize: 28, letterSpacing: 0, color: theme.text }}>Preparing cost and revenue data</h1>
+        <h1 style={{ margin: "10px 0", fontSize: 28, letterSpacing: 0, color: theme.text }}>Preparing executive dashboard</h1>
         <p style={{ margin: 0, color: theme.subtext }}>Preparing the executive financial view.</p>
         {error && <p style={{ marginTop: 14, color: theme.danger }}>{error}</p>}
       </div>
@@ -1432,7 +1432,7 @@ export default function App() {
     {
       label: "Top cost driver",
       icon: "GL",
-      value: topCostDriver?.glName ?? "No GL data",
+      value: topCostDriver?.glName ?? "No GL performance",
       detail: topCostDriver ? formatCompactCurrency(topCostDriver.cost) : "No cost category available",
       color: theme.accentStrong,
     },
@@ -1440,7 +1440,7 @@ export default function App() {
       label: "Highest spending hub",
       icon: "HUB",
       value: highestSpendHub?.label ?? "No hub",
-      detail: highestSpendHub ? formatCompactCurrency(highestSpendHub.amount) : "No hub cost data available",
+      detail: highestSpendHub ? formatCompactCurrency(highestSpendHub.amount) : "No hub cost information available",
       color: theme.accentWarm,
     },
     {
@@ -1769,7 +1769,7 @@ export default function App() {
                   })}
                 </svg>
               ) : (
-                <div style={{ color: theme.subtext }}>No monthly trend data matches the current filters.</div>
+                <div style={{ color: theme.subtext }}>No trend information matches the current filters.</div>
               )}
             </div>
 
@@ -1792,7 +1792,7 @@ export default function App() {
                     </div>
                   );
                 })}
-                {!hubHistogramRows.length && <div style={{ color: theme.subtext }}>No hub data matches the current filters.</div>}
+                {!hubHistogramRows.length && <div style={{ color: theme.subtext }}>No hub performance matches the current filters.</div>}
               </div>
             </div>
           </div>
@@ -1824,7 +1824,7 @@ export default function App() {
                         </div>
                       </div>
                     ))}
-                    {!rows.length && <div style={{ color: theme.subtext, fontSize: 12 }}>No hubs in this class.</div>}
+                    {!rows.length && <div style={{ color: theme.subtext, fontSize: 12 }}>No hubs in this classification.</div>}
                   </div>
                 ))}
               </div>
@@ -1845,7 +1845,7 @@ export default function App() {
                     <span style={{ color: index === 0 ? theme.accentStrong : theme.text, fontSize: 12, fontWeight: index === 0 ? 950 : 900, textAlign: "right" }}>{formatCompactCurrency(row.cost)} <span style={{ color: theme.subtext, fontSize: 10 }}>({formatPercent(visibleTotal ? row.cost / visibleTotal : 0)})</span></span>
                   </div>
                 ))}
-                {!costByGlRows.length && <div style={{ color: theme.subtext }}>No GL cost data matches the current filters.</div>}
+                {!costByGlRows.length && <div style={{ color: theme.subtext }}>No GL cost performance matches the current filters.</div>}
               </div>
             </div>
           </div>
@@ -1896,14 +1896,14 @@ export default function App() {
                   highestCostRevenueHub?.label ?? "N/A",
                   highestCostRevenueHub ? formatCostRevenueBurden(highestCostRevenueHub) : "0.0x",
                   theme.danger,
-                  highestCostRevenueHub ? `${formatCurrency(highestCostRevenueHub.amount)} cost | ${formatCurrency(highestCostRevenueHub.approved)} approved` : "No hub data",
+                  highestCostRevenueHub ? `${formatCurrency(highestCostRevenueHub.amount)} cost | ${formatCurrency(highestCostRevenueHub.approved)} approved` : "No hub performance",
                 ],
                 [
                   "Center Cost vs Rev",
                   highestCostRevenueCenter?.label ?? "N/A",
                   highestCostRevenueCenter ? formatCostRevenueBurden(highestCostRevenueCenter) : "0.0x",
                   "#dc2626",
-                  highestCostRevenueCenter ? `${highestCostRevenueCenter.hub} | ${formatCurrency(highestCostRevenueCenter.amount)} cost` : "No center data",
+                  highestCostRevenueCenter ? `${highestCostRevenueCenter.hub} | ${formatCurrency(highestCostRevenueCenter.amount)} cost` : "No center performance",
                 ],
                 ["Approval Gap", largestApprovalGapHub?.label ?? "No gap", largestApprovalGapHub ? formatCurrency(largestApprovalGapHub.approvalGap) : "$0.00", "#2563eb", "Pending value"],
                 ["Lowest Recovery", lowestRecoveryHub?.label ?? "N/A", lowestRecoveryHub ? formatPercent(lowestRecoveryHub.recovery) : "0.0%", theme.danger, "Needs attention"],
@@ -1943,7 +1943,7 @@ export default function App() {
                     </div>
                   );
                 })}
-                {!hubHistogramRows.length && <div style={{ color: theme.subtext }}>No hub cost data matches the current filters.</div>}
+                {!hubHistogramRows.length && <div style={{ color: theme.subtext }}>No hub cost performance matches the current filters.</div>}
               </div>
             </div>
 
@@ -2111,7 +2111,7 @@ export default function App() {
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
             <div>
               <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Cost Analysis</h2>
-              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>GL cost story: where the spend is concentrated, then how it moves by month.</p>
+              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Cost concentration by GL name and movement by month.</p>
             </div>
             <strong style={{ color: theme.text }}>{formatCurrency(visibleTotal)}</strong>
           </div>
@@ -2188,7 +2188,7 @@ export default function App() {
       {activePage === "portfolio" && (
         <div style={panelStyle}>
           <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Portfolio Performance</h2>
-          <p style={{ margin: "5px 0 16px", color: theme.subtext, fontSize: 13 }}>Basra, Kirkuk, and Head Office rolled up from the master cost-center mapping.</p>
+          <p style={{ margin: "5px 0 16px", color: theme.subtext, fontSize: 13 }}>Basra, Kirkuk, and Head Office shown through the IGCC portfolio structure.</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 14 }}>
             {portfolioPerformanceRows.map((row) => (
               <div key={row.label} style={{ border: `1px solid ${theme.border}`, borderTop: `4px solid ${row.accent}`, borderRadius: 8, padding: 16, background: theme.inputBg }}>
@@ -2296,7 +2296,7 @@ export default function App() {
                     </div>
                   );
                 })}
-                {!afpTrendRows.length && <div style={{ color: theme.subtext }}>No AFP gap data matches the current filters.</div>}
+                {!afpTrendRows.length && <div style={{ color: theme.subtext }}>No approval gap information matches the current filters.</div>}
               </div>
             </div>
 
@@ -2345,7 +2345,7 @@ export default function App() {
                     ))}
                     {!worstApprovalRows.length && (
                       <tr>
-                        <td colSpan={5} style={{ ...leftCellStyle, color: theme.subtext }}>No AFP cost-center data matches the current filters.</td>
+                        <td colSpan={5} style={{ ...leftCellStyle, color: theme.subtext }}>No AFP performance matches the current filters.</td>
                       </tr>
                     )}
                   </tbody>
@@ -2536,7 +2536,7 @@ export default function App() {
                                           <tr key={`${periodKey}:breakdown:${breakdown.label}`} style={{ background: theme.accentSoft }}>
                                             <td style={{ ...leftCellStyle, paddingLeft: 140, color: theme.text }}>
                                               {breakdown.label}
-                                              <span style={{ marginLeft: 8, color: theme.subtext, fontSize: 12, fontWeight: 700 }}>GL name | {breakdown.rows} rows</span>
+                                              <span style={{ marginLeft: 8, color: theme.subtext, fontSize: 12, fontWeight: 700 }}>GL name | {breakdown.rows} entries</span>
                                             </td>
                                             <td style={{ ...tableCellStyle, fontWeight: 900 }}>{formatCurrency(breakdown.cost)}</td>
                                             <td style={{ ...tableCellStyle, color: theme.subtext }}>-</td>
@@ -2552,7 +2552,7 @@ export default function App() {
                                     <tr key={`${centerKey}:breakdown:${breakdown.label}`} style={{ background: theme.accentSoft }}>
                                       <td style={{ ...leftCellStyle, paddingLeft: 102, color: theme.text }}>
                                         {breakdown.label}
-                                        <span style={{ marginLeft: 8, color: theme.subtext, fontSize: 12, fontWeight: 700 }}>GL name | {breakdown.rows} rows</span>
+                                        <span style={{ marginLeft: 8, color: theme.subtext, fontSize: 12, fontWeight: 700 }}>GL name | {breakdown.rows} entries</span>
                                       </td>
                                       {profitTimeColumns.map((period) => {
                                         const periodCost = centerRowsForPeriods.costRows
@@ -2577,12 +2577,12 @@ export default function App() {
 
                 {!hasActiveGlobalFilter && (
                   <tr>
-                    <td colSpan={periodView === "monthly" ? 6 : profitTimeColumns.length + 1} style={{ ...leftCellStyle, color: theme.subtext }}>Choose at least one global filter to show Profit &amp; Loss data.</td>
+                    <td colSpan={periodView === "monthly" ? 6 : profitTimeColumns.length + 1} style={{ ...leftCellStyle, color: theme.subtext }}>Choose at least one global filter to show Profit &amp; Loss performance.</td>
                   </tr>
                 )}
                 {hasActiveGlobalFilter && !portfolioPerformanceRows.length && (
                   <tr>
-                    <td colSpan={periodView === "monthly" ? 6 : profitTimeColumns.length + 1} style={{ ...leftCellStyle, color: theme.subtext }}>No profit and loss data matches the current filters.</td>
+                    <td colSpan={periodView === "monthly" ? 6 : profitTimeColumns.length + 1} style={{ ...leftCellStyle, color: theme.subtext }}>No profit and loss performance matches the current filters.</td>
                   </tr>
                 )}
               </tbody>
@@ -2653,7 +2653,7 @@ export default function App() {
                       <span style={{ textAlign: "right" }}>Cost {formatCurrency(portfolioCost)}</span>
                       <span style={{ textAlign: "right" }}>Submitted {formatCurrency(portfolioSubmitted)}</span>
                       <span style={{ textAlign: "right" }}>Approved {formatCurrency(portfolioApproved)}</span>
-                      <span style={{ textAlign: "right", color: theme.subtext }}>{portfolioRows} rows</span>
+                      <span style={{ textAlign: "right", color: theme.subtext }}>{portfolioRows} entries</span>
                     </summary>
 
                     <div style={{ display: "grid", gap: 10, padding: 12 }}>
@@ -2674,7 +2674,7 @@ export default function App() {
                               <span style={{ textAlign: "right" }}>{formatCurrency(hubCost)}</span>
                               <span style={{ textAlign: "right" }}>{formatCurrency(hubSubmitted)}</span>
                               <span style={{ textAlign: "right" }}>{formatCurrency(hubApproved)}</span>
-                              <span style={{ textAlign: "right", color: theme.subtext }}>{hubRowsCount} rows</span>
+                              <span style={{ textAlign: "right", color: theme.subtext }}>{hubRowsCount} entries</span>
                             </summary>
 
                             <div style={{ overflowX: "auto" }}>
@@ -2688,7 +2688,7 @@ export default function App() {
                                     <th style={tableHeaderStyle}>Approved Rev</th>
                                     <th style={tableHeaderStyle}>Profit / Loss</th>
                                     <th style={tableHeaderStyle}>Recovery</th>
-                                    <th style={tableHeaderStyle}>Rows</th>
+                                    <th style={tableHeaderStyle}>Entries</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -2725,7 +2725,7 @@ export default function App() {
             <summary style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 16, cursor: "pointer", listStyle: "none" }}>
               <div>
                 <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Company Cost Details</h2>
-                <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Cost-only analysis by period and hub, separated from commercial revenue performance.</p>
+                <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Cost performance by period and hub, separated from commercial revenue performance.</p>
               </div>
               {renderPeriodToggle()}
             </summary>
@@ -2749,7 +2749,7 @@ export default function App() {
                       </div>
                     );
                   })}
-                  {!periodTotals.length && <div style={{ color: theme.subtext }}>No cost data matches the current filters.</div>}
+                  {!periodTotals.length && <div style={{ color: theme.subtext }}>No cost performance matches the current filters.</div>}
                 </div>
               </div>
 
@@ -2774,7 +2774,7 @@ export default function App() {
                       </div>
                     );
                   })}
-                  {!hubHistogramRows.length && <div style={{ color: theme.subtext }}>No hub cost data matches the current filters.</div>}
+                  {!hubHistogramRows.length && <div style={{ color: theme.subtext }}>No hub cost performance matches the current filters.</div>}
                 </div>
               </div>
             </div>
@@ -2800,9 +2800,9 @@ export default function App() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 12 }}>
               {[
                 ["Cost Center", detailCostCenter, detailMergedSources.length > 1 ? `Merged: ${detailMergedSources.join(" + ")}` : "No aliases merged", theme.accentStrong],
-                ["Approved Revenue", formatCurrency(detailApprovedRevenue), `${detailFilteredRevenueRows.filter((item) => item.status === "approved").length.toLocaleString()} approved entries`, "#059669"],
-                ["Submitted Revenue", formatCurrency(detailSubmittedRevenue), `${detailFilteredRevenueRows.filter((item) => item.status === "submitted").length.toLocaleString()} submitted entries`, "#2563eb"],
-                ["Spent Cost", formatCurrency(detailCostTotal), `${detailFilteredCostRows.length.toLocaleString()} cost transactions`, theme.accentWarm],
+                ["Approved Revenue", formatCurrency(detailApprovedRevenue), "Approved commercial value", "#059669"],
+                ["Submitted Revenue", formatCurrency(detailSubmittedRevenue), "Submitted commercial value", "#2563eb"],
+                ["Spent Cost", formatCurrency(detailCostTotal), "Commercial cost base", theme.accentWarm],
                 ["Profit / Loss", formatCurrency(detailProfit), `${formatPercent(detailCostTotal ? detailApprovedRevenue / detailCostTotal : 0)} recovery`, profitColor(detailProfit)],
               ].map(([label, value, detail, accent]) => (
                 <div key={label} style={{ border: `1px solid ${theme.border}`, borderTop: `4px solid ${accent}`, borderRadius: 8, padding: 15, background: theme.panelBg }}>
@@ -2820,7 +2820,7 @@ export default function App() {
                 <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Detailed Cost by GL Name</h2>
                 <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Every GL name for the selected cost center.</p>
               </div>
-              <div style={{ color: theme.subtext, fontSize: 14 }}>{detailGlRows.length.toLocaleString()} GL names with spend</div>
+              <div style={{ color: theme.subtext, fontSize: 14 }}>GL cost view</div>
             </summary>
 
             <div style={{ overflowX: "auto" }}>
@@ -2830,7 +2830,7 @@ export default function App() {
                     <th style={leftHeaderStyle}>GL Name</th>
                     <th style={tableHeaderStyle}>Spent Cost</th>
                     <th style={tableHeaderStyle}>Share of Cost</th>
-                    <th style={tableHeaderStyle}>Transactions</th>
+                    <th style={tableHeaderStyle}>Entries</th>
                     <th style={leftHeaderStyle}>Cost Weight</th>
                   </tr>
                 </thead>
@@ -2951,10 +2951,10 @@ export default function App() {
         <div style={panelStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
             <div>
-              <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Detailed Transactions</h2>
-              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Full spent report table controlled by the global filters.</p>
+              <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Commercial Activity Detail</h2>
+              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Detailed commercial activity controlled by the global filters.</p>
             </div>
-            <strong style={{ color: theme.text }}>{sortedData.length.toLocaleString()} rows</strong>
+            <strong style={{ color: theme.text }}>{sortedData.length.toLocaleString()} entries</strong>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", minWidth: 1120, borderCollapse: "collapse" }}>
@@ -2993,7 +2993,7 @@ export default function App() {
               </tbody>
             </table>
           </div>
-          {sortedData.length > 500 && <p style={{ margin: "12px 0 0", color: theme.subtext, fontSize: 12 }}>Showing first 500 rows for browser performance. Use filters to narrow the transaction list.</p>}
+          {sortedData.length > 500 && <p style={{ margin: "12px 0 0", color: theme.subtext, fontSize: 12 }}>Showing the first 500 entries. Use filters to focus the transaction list.</p>}
         </div>
       )}
 
