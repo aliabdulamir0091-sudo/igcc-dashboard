@@ -827,13 +827,13 @@ function DashboardApp({ session, onLogout }) {
       const idToken = await auth.currentUser.getIdToken();
       let savedCount = 0;
       let skippedCount = 0;
-      const chunkSize = 400;
+      const chunkSize = 20;
 
       for (let index = 0; index < historicalRows.length; index += chunkSize) {
         const chunk = historicalRows.slice(index, index + chunkSize);
-        const writes = chunk.map((row, chunkIndex) => {
+        const results = await Promise.all(chunk.map(async (row, chunkIndex) => {
           const rowIndex = index + chunkIndex;
-          const documentPath = `manualSpentEntries/hist_${rowIndex}`;
+          const documentId = `hist_${rowIndex}`;
           const entry = {
             sourceType: "history",
             portfolio: getPortfolioForHub(getHubForCostCenter(row.costCenter)),
@@ -848,41 +848,26 @@ function DashboardApp({ session, onLogout }) {
             createdBy: session.email,
             createdAt: new Date().toISOString(),
           };
+          const importResponse = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries?documentId=${encodeURIComponent(documentId)}`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              fields: Object.fromEntries(Object.entries(entry).map(([key, value]) => [key, firestoreValue(value)])),
+            }),
+          });
 
-          return {
-            update: { fields: Object.fromEntries(Object.entries(entry).map(([key, value]) => [key, firestoreValue(value)])) },
-            updateMask: { fieldPaths: Object.keys(entry) },
-            updateTransforms: [],
-            currentDocument: { exists: false },
-            document: documentPath,
-          };
-        });
+          if (importResponse.ok) return "saved";
+          if (importResponse.status === 409) return "skipped";
 
-        const importResponse = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents:batchWrite`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            writes: writes.map(({ document, update, updateMask, currentDocument }) => ({
-              update: {
-                name: `projects/${firebaseProjectId}/databases/(default)/documents/${document}`,
-                ...update,
-              },
-              updateMask,
-              currentDocument,
-            })),
-          }),
-        });
+          const errorText = await importResponse.text();
+          throw new Error(`HTTP ${importResponse.status}${errorText ? ` - ${errorText.slice(0, 160)}` : ""}`);
+        }));
 
-        if (!importResponse.ok) throw new Error(`HTTP ${importResponse.status}`);
-
-        const result = await importResponse.json();
-        (result.status ?? []).forEach((status) => {
-          if (!status || status.code === 0) savedCount += 1;
-          else if (status.code === 6) skippedCount += 1;
-        });
+        savedCount += results.filter((result) => result === "saved").length;
+        skippedCount += results.filter((result) => result === "skipped").length;
       }
 
       setData((current) => {
