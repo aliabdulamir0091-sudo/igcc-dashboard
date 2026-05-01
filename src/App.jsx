@@ -422,6 +422,7 @@ const manualSpentEntryToRow = (entry) => {
     vendor: entry.vendor || "Manual Entry",
     amount: Number(entry.amount) || 0,
     source: "Manual",
+    sourceType: entry.sourceType || "manual",
     notes: entry.notes || "",
   };
 };
@@ -446,6 +447,7 @@ const parseManualSpentDocument = (document) => {
     vendor: fields.vendor?.stringValue,
     amount: readNumber("amount"),
     notes: fields.notes?.stringValue,
+    sourceType: fields.sourceType?.stringValue,
   });
 };
 
@@ -514,6 +516,7 @@ function DashboardApp({ session, onLogout }) {
   const [spentEntryMessage, setSpentEntryMessage] = useState("");
   const [spentEntryError, setSpentEntryError] = useState("");
   const [isSavingSpentEntry, setIsSavingSpentEntry] = useState(false);
+  const [isImportingHistory, setIsImportingHistory] = useState(false);
 
   const theme = {
     light: {
@@ -621,15 +624,18 @@ function DashboardApp({ session, onLogout }) {
 
         const buffer = await response.arrayBuffer();
         const workbook = read(new Uint8Array(buffer), { type: "array", cellDates: true });
+        const rows = parseSpentWorkbook(workbook);
 
         if (isMounted) {
-          setData(parseSpentWorkbook(workbook));
           setFilename(MASTER_SPENT_REPORT_FILE);
         }
+
+        return rows;
       } catch (err) {
         if (isMounted) {
           setError(`Failed to load financial dashboard data: ${err.message}`);
         }
+        return [];
       }
     };
 
@@ -655,30 +661,41 @@ function DashboardApp({ session, onLogout }) {
     };
 
     const loadManualSpentEntries = async () => {
-      if (!auth?.currentUser || !firebaseProjectId) return;
+      if (!auth?.currentUser || !firebaseProjectId) return [];
 
       try {
         const idToken = await auth.currentUser.getIdToken();
-        const response = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries`, {
-          headers: { Authorization: `Bearer ${idToken}` },
-        });
+        const documents = [];
+        let pageToken = "";
 
-        if (response.status === 404 || response.status === 403) return;
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        do {
+          const pageQuery = pageToken ? `?pageToken=${encodeURIComponent(pageToken)}` : "";
+          const response = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries${pageQuery}`, {
+            headers: { Authorization: `Bearer ${idToken}` },
+          });
 
-        const manualData = await response.json();
-        const manualRows = (manualData.documents ?? []).map(parseManualSpentDocument);
+          if (response.status === 404 || response.status === 403) return [];
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        if (isMounted && manualRows.length) {
-          setData((current) => [...current, ...manualRows]);
-        }
+          const manualData = await response.json();
+          documents.push(...(manualData.documents ?? []));
+          pageToken = manualData.nextPageToken || "";
+        } while (pageToken);
+
+        return documents.map(parseManualSpentDocument);
       } catch {
         // Manual entries are additive; keep the bundled dashboard available if Firestore is unreachable.
+        return [];
       }
     };
 
-    Promise.allSettled([loadBundledReport(), loadBundledRevenue()])
-      .then(loadManualSpentEntries)
+    Promise.all([loadBundledReport(), loadBundledRevenue().then(() => [])])
+      .then(([historicalRows]) => loadManualSpentEntries().then((manualRows) => {
+        if (!isMounted) return;
+
+        const hasImportedHistory = manualRows.some((row) => row.sourceType === "history");
+        setData(hasImportedHistory ? manualRows : [...historicalRows, ...manualRows]);
+      }))
       .finally(() => {
       if (isMounted) {
         setIsLoading(false);
@@ -783,6 +800,91 @@ function DashboardApp({ session, onLogout }) {
       setSpentEntryError(`Could not save spent entry: ${err.message}`);
     } finally {
       setIsSavingSpentEntry(false);
+    }
+  };
+  const importHistoricalSpentRows = async () => {
+    setSpentEntryError("");
+    setSpentEntryMessage("");
+
+    if (session?.role !== "Admin") {
+      setSpentEntryError("Only Admin users can import historical spent data.");
+      return;
+    }
+
+    setIsImportingHistory(true);
+
+    try {
+      const response = await fetch(getPublicAssetUrl(MASTER_SPENT_REPORT_FILE));
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const buffer = await response.arrayBuffer();
+      const workbook = read(new Uint8Array(buffer), { type: "array", cellDates: true });
+      const historicalRows = parseSpentWorkbook(workbook).map((row) => ({
+        ...row,
+        source: "Historical Import",
+        sourceType: "history",
+      }));
+      const idToken = await auth.currentUser.getIdToken();
+      let savedCount = 0;
+      let skippedCount = 0;
+      const chunkSize = 400;
+
+      for (let index = 0; index < historicalRows.length; index += chunkSize) {
+        const chunk = historicalRows.slice(index, index + chunkSize);
+        const writes = chunk.map((row, chunkIndex) => {
+          const rowIndex = index + chunkIndex;
+          const documentName = `projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries/hist_${rowIndex}`;
+          const entry = {
+            sourceType: "history",
+            portfolio: getPortfolioForHub(getHubForCostCenter(row.costCenter)),
+            hub: getHubForCostCenter(row.costCenter),
+            costCenter: row.costCenter,
+            monthNumber: row.monthNumber || 0,
+            year: row.year || 0,
+            glName: row.category || "Uncategorized",
+            amount: Number(row.amount) || 0,
+            vendor: row.vendor || "Historical Import",
+            notes: "Imported from historical spent workbook",
+            createdBy: session.email,
+            createdAt: new Date().toISOString(),
+          };
+
+          return {
+            update: {
+              name: documentName,
+              fields: Object.fromEntries(Object.entries(entry).map(([key, value]) => [key, firestoreValue(value)])),
+            },
+            currentDocument: { exists: false },
+          };
+        });
+
+        const importResponse = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents:batchWrite`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ writes }),
+        });
+
+        if (!importResponse.ok) throw new Error(`HTTP ${importResponse.status}`);
+
+        const result = await importResponse.json();
+        (result.status ?? []).forEach((status) => {
+          if (!status || status.code === 0) savedCount += 1;
+          else if (status.code === 6) skippedCount += 1;
+        });
+      }
+
+      setData((current) => {
+        const nonHistoricalManualRows = current.filter((row) => row.sourceType === "manual");
+        return [...historicalRows, ...nonHistoricalManualRows];
+      });
+      setSpentEntryMessage(`Historical import complete. Added ${savedCount.toLocaleString()} rows${skippedCount ? `, skipped ${skippedCount.toLocaleString()} existing rows` : ""}.`);
+    } catch (err) {
+      setSpentEntryError(`Could not import historical spent data: ${err.message}`);
+    } finally {
+      setIsImportingHistory(false);
     }
   };
 
@@ -1899,7 +2001,19 @@ function DashboardApp({ session, onLogout }) {
               <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Spent Report</h2>
               <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Monthly spend entries by portfolio, hub, cost center, and GL name.</p>
             </div>
-            <span style={{ color: isAdmin ? theme.accentStrong : theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>{isAdmin ? "Admin Entry" : "View Only"}</span>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={importHistoricalSpentRows}
+                  disabled={isImportingHistory}
+                  style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isImportingHistory ? "wait" : "pointer", fontSize: 12, fontWeight: 900 }}
+                >
+                  {isImportingHistory ? "Importing..." : "Import Excel History"}
+                </button>
+              )}
+              <span style={{ color: isAdmin ? theme.accentStrong : theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>{isAdmin ? "Admin Entry" : "View Only"}</span>
+            </div>
           </div>
 
           {!isAdmin && (
