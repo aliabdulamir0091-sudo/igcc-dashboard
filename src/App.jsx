@@ -517,6 +517,7 @@ function DashboardApp({ session, onLogout }) {
   const [spentEntryError, setSpentEntryError] = useState("");
   const [isSavingSpentEntry, setIsSavingSpentEntry] = useState(false);
   const [isImportingHistory, setIsImportingHistory] = useState(false);
+  const [historyImportProgress, setHistoryImportProgress] = useState("");
 
   const theme = {
     light: {
@@ -745,6 +746,7 @@ function DashboardApp({ session, onLogout }) {
     event.preventDefault();
     setSpentEntryError("");
     setSpentEntryMessage("");
+    setHistoryImportProgress("");
 
     if (session?.role !== "Admin") {
       setSpentEntryError("Only Admin users can add spent report entries.");
@@ -824,6 +826,7 @@ function DashboardApp({ session, onLogout }) {
         source: "Historical Import",
         sourceType: "history",
       }));
+      setHistoryImportProgress(`Preparing ${historicalRows.length.toLocaleString()} historical rows...`);
       const idToken = await auth.currentUser.getIdToken();
       let savedCount = 0;
       let skippedCount = 0;
@@ -868,6 +871,7 @@ function DashboardApp({ session, onLogout }) {
 
         savedCount += results.filter((result) => result === "saved").length;
         skippedCount += results.filter((result) => result === "skipped").length;
+        setHistoryImportProgress(`Imported ${Math.min(index + chunk.length, historicalRows.length).toLocaleString()} of ${historicalRows.length.toLocaleString()} rows...`);
       }
 
       setData((current) => {
@@ -875,6 +879,7 @@ function DashboardApp({ session, onLogout }) {
         return [...historicalRows, ...nonHistoricalManualRows];
       });
       setSpentEntryMessage(`Historical import complete. Added ${savedCount.toLocaleString()} rows${skippedCount ? `, skipped ${skippedCount.toLocaleString()} existing rows` : ""}.`);
+      setHistoryImportProgress("");
     } catch (err) {
       setSpentEntryError(`Could not import historical spent data: ${err.message}`);
     } finally {
@@ -2092,6 +2097,7 @@ function DashboardApp({ session, onLogout }) {
           </form>}
 
           {spentEntryMessage && <div style={{ marginTop: 12, color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryMessage}</div>}
+          {historyImportProgress && <div style={{ marginTop: 12, color: theme.text, background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, fontSize: 13, fontWeight: 850 }}>{historyImportProgress}</div>}
           {spentEntryError && <div style={{ marginTop: 12, color: theme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryError}</div>}
         </div>
       )}
