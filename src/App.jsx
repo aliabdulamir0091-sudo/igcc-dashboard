@@ -409,6 +409,8 @@ const manualSpentEntryToRow = (entry) => {
   const year = Number(entry.year) || new Date().getFullYear();
   const monthNumber = Number(entry.monthNumber) || 1;
   const monthName = MONTH_LABELS[monthNumber] || "Jan";
+  const sourceType = entry.sourceType || "manual";
+  const sourceLabel = sourceType === "history" ? "Historical Import" : sourceType === "upload" ? "Excel Upload" : "Manual";
 
   return {
     id: entry.id,
@@ -421,8 +423,8 @@ const manualSpentEntryToRow = (entry) => {
     category: entry.glName || "Manual Entry",
     vendor: entry.vendor || "Manual Entry",
     amount: Number(entry.amount) || 0,
-    source: "Manual",
-    sourceType: entry.sourceType || "manual",
+    source: sourceLabel,
+    sourceType,
     notes: entry.notes || "",
   };
 };
@@ -450,6 +452,14 @@ const parseManualSpentDocument = (document) => {
     sourceType: fields.sourceType?.stringValue,
   });
 };
+
+const getSafeDocumentIdPart = (value) =>
+  String(value ?? "")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 120) || "spent";
 
 const wait = (milliseconds) => new Promise((resolve) => {
   window.setTimeout(resolve, milliseconds);
@@ -538,6 +548,7 @@ function DashboardApp({ session, onLogout }) {
   const [spentEntryError, setSpentEntryError] = useState("");
   const [isSavingSpentEntry, setIsSavingSpentEntry] = useState(false);
   const [isImportingHistory, setIsImportingHistory] = useState(false);
+  const [isUploadingSpentExcel, setIsUploadingSpentExcel] = useState(false);
   const [historyImportProgress, setHistoryImportProgress] = useState("");
 
   const theme = {
@@ -899,7 +910,7 @@ function DashboardApp({ session, onLogout }) {
       }
 
       setData((current) => {
-        const nonHistoricalManualRows = current.filter((row) => row.sourceType === "manual");
+        const nonHistoricalManualRows = current.filter((row) => row.sourceType !== "history");
         return [...historicalRows, ...nonHistoricalManualRows];
       });
       setSpentEntryMessage(`Historical import complete. Added ${savedCount.toLocaleString()} rows${skippedCount ? `, skipped ${skippedCount.toLocaleString()} existing rows` : ""}.`);
@@ -908,6 +919,105 @@ function DashboardApp({ session, onLogout }) {
       setSpentEntryError(`Could not import historical spent data: ${err.message}`);
     } finally {
       setIsImportingHistory(false);
+    }
+  };
+  const uploadSpentExcelRows = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    setSpentEntryError("");
+    setSpentEntryMessage("");
+    setHistoryImportProgress("");
+
+    if (!file) return;
+
+    if (session?.role !== "Admin") {
+      setSpentEntryError("Only Admin users can upload spent Excel files.");
+      return;
+    }
+
+    setIsUploadingSpentExcel(true);
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = read(new Uint8Array(buffer), { type: "array", cellDates: true });
+      const uploadedRows = parseSpentWorkbook(workbook)
+        .filter((row) => row.costCenter && row.amount)
+        .map((row) => ({
+          ...row,
+          source: "Excel Upload",
+          sourceType: "upload",
+        }));
+
+      if (!uploadedRows.length) {
+        setSpentEntryError("No valid spent rows were found in this Excel file.");
+        return;
+      }
+
+      setHistoryImportProgress(`Preparing ${uploadedRows.length.toLocaleString()} uploaded rows...`);
+
+      let savedCount = 0;
+      let skippedCount = 0;
+      const savedRows = [];
+      const chunkSize = 5;
+      const uploadedAt = new Date().toISOString();
+      const uploadSeed = getSafeDocumentIdPart(file.name.replace(/\.[^/.]+$/, ""));
+
+      for (let index = 0; index < uploadedRows.length; index += chunkSize) {
+        const idToken = await auth.currentUser.getIdToken();
+        const chunk = uploadedRows.slice(index, index + chunkSize);
+        const results = await Promise.all(chunk.map(async (row, chunkIndex) => {
+          const rowIndex = index + chunkIndex;
+          const documentSeed = `${uploadSeed}_${row.costCenter}_${row.year}_${row.monthNumber}_${row.category}_${row.amount}_${rowIndex}`;
+          const documentId = `upload_${getSafeDocumentIdPart(documentSeed)}`;
+          const entry = {
+            sourceType: "upload",
+            portfolio: getPortfolioForHub(getHubForCostCenter(row.costCenter)),
+            hub: getHubForCostCenter(row.costCenter),
+            costCenter: row.costCenter,
+            monthNumber: row.monthNumber || 0,
+            year: row.year || 0,
+            glName: row.category || "Uncategorized",
+            amount: Number(row.amount) || 0,
+            vendor: row.vendor || "Excel Upload",
+            notes: `Uploaded from ${file.name}`,
+            createdBy: session.email,
+            createdAt: uploadedAt,
+          };
+          const uploadResponse = await fetchWithRetry(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries?documentId=${encodeURIComponent(documentId)}`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              fields: Object.fromEntries(Object.entries(entry).map(([key, value]) => [key, firestoreValue(value)])),
+            }),
+          });
+
+          if (uploadResponse.ok) return { status: "saved", row };
+          if (uploadResponse.status === 409) return "skipped";
+
+          const errorText = await uploadResponse.text();
+          throw new Error(`HTTP ${uploadResponse.status}${errorText ? ` - ${errorText.slice(0, 160)}` : ""}`);
+        }));
+
+        const savedResults = results.filter((result) => typeof result === "object" && result.status === "saved");
+        savedRows.push(...savedResults.map((result) => result.row));
+        savedCount += savedResults.length;
+        skippedCount += results.filter((result) => result === "skipped").length;
+        setHistoryImportProgress(`Uploaded ${Math.min(index + chunk.length, uploadedRows.length).toLocaleString()} of ${uploadedRows.length.toLocaleString()} rows...`);
+        await wait(120);
+      }
+
+      if (savedRows.length) {
+        setData((current) => [...current, ...savedRows]);
+      }
+      setSpentEntryMessage(`Excel upload complete. Added ${savedCount.toLocaleString()} rows${skippedCount ? `, skipped ${skippedCount.toLocaleString()} existing rows` : ""}.`);
+      setHistoryImportProgress("");
+    } catch (err) {
+      setSpentEntryError(`Could not upload spent Excel: ${err.message}`);
+    } finally {
+      setIsUploadingSpentExcel(false);
     }
   };
 
@@ -1302,7 +1412,7 @@ function DashboardApp({ session, onLogout }) {
   const filteredMonthOptions = filters.year
     ? monthOptions.filter((month) => data.some((item) => item.month === month.label && String(item.year ?? "") === filters.year))
     : monthOptions;
-  const glNameOptions = Array.from(new Set(data.map((item) => item.category).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+  const glNameOptions = Array.from(new Set([...COST_CATEGORY_ORDER, ...data.map((item) => item.category).filter(Boolean)])).sort((a, b) => a.localeCompare(b));
   const portfolioOptions = HUB_SECTIONS.map((section) => section.label);
   const hubOptions = COST_CENTER_GROUPS.map((group) => group.label);
   const filteredHubOptions = filters.portfolio
@@ -2026,14 +2136,32 @@ function DashboardApp({ session, onLogout }) {
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               {isAdmin && (
-                <button
-                  type="button"
-                  onClick={importHistoricalSpentRows}
-                  disabled={isImportingHistory}
-                  style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isImportingHistory ? "wait" : "pointer", fontSize: 12, fontWeight: 900 }}
-                >
-                  {isImportingHistory ? "Importing..." : "Import Excel History"}
-                </button>
+                <Fragment>
+                  <label
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: 7,
+                      border: `1px solid ${theme.border}`,
+                      background: theme.inputBg,
+                      color: theme.text,
+                      cursor: isUploadingSpentExcel ? "wait" : "pointer",
+                      fontSize: 12,
+                      fontWeight: 900,
+                      opacity: isUploadingSpentExcel ? 0.72 : 1,
+                    }}
+                  >
+                    {isUploadingSpentExcel ? "Uploading..." : "Upload Spent Excel"}
+                    <input type="file" accept=".xlsx,.xls" onChange={uploadSpentExcelRows} disabled={isUploadingSpentExcel} style={{ display: "none" }} />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={importHistoricalSpentRows}
+                    disabled={isImportingHistory || isUploadingSpentExcel}
+                    style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isImportingHistory ? "wait" : "pointer", fontSize: 12, fontWeight: 900 }}
+                  >
+                    {isImportingHistory ? "Importing..." : "Import Excel History"}
+                  </button>
+                </Fragment>
               )}
               <span style={{ color: isAdmin ? theme.accentStrong : theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>{isAdmin ? "Admin Entry" : "View Only"}</span>
             </div>
