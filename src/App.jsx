@@ -55,7 +55,7 @@ const getPublicAssetUrl = (filename) => `${import.meta.env.BASE_URL}${encodeURIC
 const IGCC_LEVEL_LABEL = "IGCC Level 1 - IRAQ GATE CONTRACTING COMPANY";
 const NAV_ITEMS = [
   ["overview", "Executive Cockpit"],
-  ["afp", "Commercial Approval Control"],
+  ["afp", "Commercial Approval Overview"],
   ["profitability", "Cost Center Profitability"],
 ];
 const PERIOD_OPTIONS = [
@@ -1499,7 +1499,7 @@ function DashboardApp({ session, onLogout }) {
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "grid", placeItems: "center", padding: 20, background: themeMode === "light" ? "rgba(15, 23, 42, 0.42)" : "rgba(2, 6, 23, 0.68)" }}>
           <div style={{ width: "min(620px, 100%)", overflow: "hidden", borderRadius: 8, background: theme.panelBg, border: `1px solid ${theme.border}`, boxShadow: "0 24px 70px rgba(15,23,42,0.28)" }}>
             <div style={{ padding: 22, color: "#fff", background: "linear-gradient(135deg, #0f766e, #12324f)" }}>
-              <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.82, textTransform: "uppercase" }}>Welcome to IGCC Commercial Dashboard</div>
+              <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.82, textTransform: "uppercase" }}>Welcome to IGCC Financial Dashboard</div>
               <h2 style={{ margin: "10px 0 0", color: "#fff", fontSize: 28, fontWeight: 950, letterSpacing: 0 }}>IRAQ GATE CONTRACTING COMPANY</h2>
               <p style={{ margin: "10px 0 0", color: "rgba(255,255,255,0.86)", fontSize: 16, lineHeight: 1.5 }}>{WELCOME_MESSAGE}</p>
             </div>
@@ -1518,16 +1518,16 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
-      <div style={{ marginBottom: 14, background: "#fff", border: `1px solid ${theme.border}`, borderRadius: 8, padding: "14px 16px", boxShadow: theme.cardShadow }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 8, border: `1px solid ${theme.border}`, background: "#f8fafc", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden" }}>
-              <img src={getPublicAssetUrl("favicon.svg")} alt="IGCC logo" style={{ width: 30, height: 30, objectFit: "contain" }} />
+      <div style={{ marginBottom: 12, background: "#fff", border: `1px solid ${theme.border}`, borderRadius: 8, padding: "12px 14px", boxShadow: theme.cardShadow }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 8, border: `1px solid ${theme.border}`, background: "#f8fafc", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden" }}>
+              <img src={getPublicAssetUrl("favicon.svg")} alt="IGCC logo" style={{ width: 28, height: 28, objectFit: "contain" }} />
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ color: theme.accentStrong, fontSize: 11, fontWeight: 950, letterSpacing: 0, textTransform: "uppercase" }}>IRAQ GATE CONTRACTING COMPANY</div>
-              <h1 style={{ margin: "3px 0 0", fontSize: 25, letterSpacing: 0, lineHeight: 1.05, fontWeight: 950, color: theme.text }}>Financial Dashboard</h1>
-              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13, maxWidth: 720 }}>Executive view of cost, AFP approval, profitability, and portfolio performance.</p>
+              <h1 style={{ margin: "2px 0 0", fontSize: 24, letterSpacing: 0, lineHeight: 1.04, fontWeight: 950, color: theme.text }}>Financial Dashboard</h1>
+              <p style={{ margin: "4px 0 0", color: theme.subtext, fontSize: 13, maxWidth: 720 }}>Executive view of cost, AFP approval, profitability, and portfolio performance.</p>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -1544,7 +1544,7 @@ function DashboardApp({ session, onLogout }) {
             </button>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12, paddingTop: 12, borderTop: `1px solid ${theme.border}` }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10, paddingTop: 10, borderTop: `1px solid ${theme.border}` }}>
           <button
             type="button"
             onClick={() => setFilters((current) => ({ ...current, portfolio: "", hub: "", costCenter: "" }))}
@@ -1645,7 +1645,7 @@ function DashboardApp({ session, onLogout }) {
         <div style={{ marginBottom: 12, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, boxShadow: theme.cardShadow }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 10 }}>
             <div>
-              <h1 style={{ margin: 0, color: theme.text, fontSize: 26, fontWeight: 950, letterSpacing: 0 }}>IGCC Cost Control Dashboard</h1>
+              <h1 style={{ margin: 0, color: theme.text, fontSize: 26, fontWeight: 950, letterSpacing: 0 }}>Financial Performance Overview</h1>
               <p style={{ margin: "4px 0 0", color: theme.subtext, fontSize: 12 }}>Executive cockpit: profitability, risk location, and performance direction.</p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, border: `1px solid ${overallStatus.color}`, borderRadius: 8, padding: "8px 12px", background: theme.inputBg, minWidth: 245 }}>
@@ -2057,7 +2057,7 @@ function DashboardApp({ session, onLogout }) {
       <div style={{ display: "grid", gap: 16, marginBottom: 20, backgroundColor: theme.panelBg, padding: 18, borderRadius: 8, border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
         <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <div>
-            <h2 style={{ margin: 0, color: theme.text, fontSize: 18, letterSpacing: 0 }}>Global Control Filters</h2>
+          <h2 style={{ margin: 0, color: theme.text, fontSize: 18, letterSpacing: 0 }}>Executive Filters</h2>
             <p style={{ margin: "4px 0 0", color: theme.subtext, fontSize: 13 }}>Structure filters and time filters apply to every page.</p>
           </div>
           <button
@@ -2249,7 +2249,7 @@ function DashboardApp({ session, onLogout }) {
       {activePage === "hub" && (
         <div style={panelStyle}>
           <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Hub Performance</h2>
-          <p style={{ margin: "5px 0 16px", color: theme.subtext, fontSize: 13 }}>Hub-level commercial control before drilling into individual cost centers.</p>
+          <p style={{ margin: "5px 0 16px", color: theme.subtext, fontSize: 13 }}>Hub-level commercial performance before drilling into individual cost centers.</p>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", minWidth: 920, borderCollapse: "collapse" }}>
               <thead>
@@ -2287,7 +2287,7 @@ function DashboardApp({ session, onLogout }) {
         <div style={panelStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
             <div>
-              <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Commercial Approval Control</h2>
+              <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Commercial Approval Overview</h2>
               <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Decision view for pending approvals, approval performance, and commercial action priorities.</p>
             </div>
             <strong style={{ color: approvalRate >= 0.85 ? theme.accentStrong : theme.accentWarm }}>{formatPercent(approvalRate)} approval rate</strong>
@@ -2986,7 +2986,7 @@ function DashboardApp({ session, onLogout }) {
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
             <div>
               <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Commercial Activity Detail</h2>
-              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Detailed commercial activity controlled by the global filters.</p>
+              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Detailed commercial activity based on the selected filters.</p>
             </div>
             <strong style={{ color: theme.text }}>{sortedData.length.toLocaleString()} entries</strong>
           </div>
