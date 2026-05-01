@@ -610,6 +610,17 @@ function DashboardApp({ session, onLogout }) {
   const handleFilterChange = (field) => (event) => {
     setFilters((current) => ({ ...current, [field]: event.target.value }));
   };
+  const handleYearFilterChange = (event) => {
+    const nextYear = event.target.value;
+    setFilters((current) => {
+      const monthBelongsToYear = !current.month || !nextYear || data.some((item) => item.month === current.month && String(item.year ?? "") === nextYear);
+      return {
+        ...current,
+        year: nextYear,
+        month: monthBelongsToYear ? current.month : "",
+      };
+    });
+  };
   const handleTimeModeChange = (value) => {
     setPeriodView(value);
     if (value !== "monthly") {
@@ -1005,6 +1016,9 @@ function DashboardApp({ session, onLogout }) {
       }, new Map())
       .values()
   ).sort((a, b) => a.order - b.order || a.label.localeCompare(b.label));
+  const filteredMonthOptions = filters.year
+    ? monthOptions.filter((month) => data.some((item) => item.month === month.label && String(item.year ?? "") === filters.year))
+    : monthOptions;
   const portfolioOptions = HUB_SECTIONS.map((section) => section.label);
   const hubOptions = COST_CENTER_GROUPS.map((group) => group.label);
   const filteredHubOptions = filters.portfolio
@@ -1601,7 +1615,7 @@ function DashboardApp({ session, onLogout }) {
               <span style={{ display: "inline-grid", placeItems: "center", minWidth: 22, height: 18, borderRadius: 5, background: theme.accentSoft, color: theme.accentStrong, fontSize: 9, fontWeight: 950 }}>YR</span>
               Year
             </span>
-            <select value={filters.year} onChange={handleFilterChange("year")} style={{ width: "100%", boxSizing: "border-box", padding: "8px 9px", marginTop: 5, borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, fontSize: 12, fontWeight: 800 }}>
+            <select value={filters.year} onChange={handleYearFilterChange} style={{ width: "100%", boxSizing: "border-box", padding: "8px 9px", marginTop: 5, borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, fontSize: 12, fontWeight: 800 }}>
               <option value="">All years</option>
               {yearsLoaded.map((year) => (
                 <option key={year} value={year}>{year}</option>
@@ -1617,7 +1631,7 @@ function DashboardApp({ session, onLogout }) {
               </span>
               <select value={filters.month} onChange={handleFilterChange("month")} style={{ width: "100%", boxSizing: "border-box", padding: "8px 9px", marginTop: 5, borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, fontSize: 12, fontWeight: 800 }}>
                 <option value="">All months</option>
-                {monthOptions.map((month) => (
+                {filteredMonthOptions.map((month) => (
                   <option key={month.label} value={month.label}>{month.label}</option>
                 ))}
               </select>
