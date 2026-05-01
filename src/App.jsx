@@ -543,7 +543,7 @@ export default function App() {
       <div style={{ width: "min(520px, 100%)", background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 24, boxShadow: theme.cardShadow, textAlign: "center" }}>
         <div style={{ color: theme.accentStrong, fontSize: 13, fontWeight: 900, textTransform: "uppercase" }}>Loading Dashboard</div>
         <h1 style={{ margin: "10px 0", fontSize: 28, letterSpacing: 0, color: theme.text }}>Preparing cost and revenue data</h1>
-        <p style={{ margin: 0, color: theme.subtext }}>Reading the master spent report and revenue workbook.</p>
+        <p style={{ margin: 0, color: theme.subtext }}>Preparing the executive financial view.</p>
         {error && <p style={{ marginTop: 14, color: theme.danger }}>{error}</p>}
       </div>
     </div>
@@ -568,7 +568,7 @@ export default function App() {
         }
       } catch (err) {
         if (isMounted) {
-          setError(`Failed to load bundled ${MASTER_SPENT_REPORT_FILE}: ${err.message}`);
+          setError(`Failed to load financial dashboard data: ${err.message}`);
         }
       }
     };
@@ -589,7 +589,7 @@ export default function App() {
         }
       } catch (err) {
         if (isMounted) {
-          setError(`Failed to load bundled Revenue.xlsx: ${err.message}`);
+          setError(`Failed to load commercial dashboard data: ${err.message}`);
         }
       }
     };
@@ -1509,46 +1509,30 @@ export default function App() {
         </div>
       )}
 
-      {activePage === "afp" && (
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.55fr) minmax(300px, 0.75fr)", gap: 18, alignItems: "stretch", marginBottom: 18 }}>
-        <div style={{ position: "relative", overflow: "hidden", background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 24, boxShadow: theme.cardShadow }}>
-          <div style={{ position: "absolute", inset: "0 0 auto", height: 5, background: "linear-gradient(90deg, #0f766e, #7c3aed, #b45309)" }} />
-          <p style={{ margin: "0 0 8px", color: theme.accentStrong, fontSize: 12, fontWeight: 900, letterSpacing: 0, textTransform: "uppercase" }}>Commercial Command Center</p>
-          <h1 style={{ margin: 0, fontSize: 40, letterSpacing: 0, lineHeight: 1.05, fontWeight: 950, color: theme.text }}>IRAQ GATE CONTRACTING COMPANY</h1>
-          <p style={{ margin: "10px 0 0", color: theme.subtext, fontSize: 16, maxWidth: 760 }}>Executive cost, AFP revenue, portfolio recovery, and hub performance dashboard for IGCC Level 1.</p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 18 }}>
-            {portfolioSummaries.map((portfolio) => (
-              <span key={portfolio.label} style={{ color: portfolio.accent, background: portfolio.soft, border: `1px solid ${portfolio.accent}33`, borderRadius: 999, padding: "7px 10px", fontSize: 12, fontWeight: 900 }}>
-                {portfolio.label}
-              </span>
-            ))}
+      <div style={{ marginBottom: 18, background: "#fff", border: `1px solid ${theme.border}`, borderRadius: 8, padding: 24, boxShadow: theme.cardShadow }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+          <div style={{ width: 72, height: 72, borderRadius: 8, border: `1px solid ${theme.border}`, background: "#f8fafc", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden" }}>
+            <img src={getPublicAssetUrl("favicon.svg")} alt="IGCC logo" style={{ width: 46, height: 46, objectFit: "contain" }} />
+          </div>
+          <div style={{ flex: "1 1 420px", minWidth: 0 }}>
+            <div style={{ color: theme.accentStrong, fontSize: 12, fontWeight: 950, letterSpacing: 0, textTransform: "uppercase" }}>IRAQ GATE CONTRACTING COMPANY</div>
+            <h1 style={{ margin: "6px 0 0", fontSize: 34, letterSpacing: 0, lineHeight: 1.08, fontWeight: 950, color: theme.text }}>IGCC Commercial &amp; Financial Dashboard</h1>
+            <p style={{ margin: "10px 0 0", color: theme.subtext, fontSize: 16, maxWidth: 820 }}>Executive view of cost, AFP approval, profitability, and portfolio performance.</p>
           </div>
         </div>
-        <div style={{ background: theme.accent, color: "#fff", borderRadius: 8, padding: 20, boxShadow: theme.cardShadow }}>
-          <div style={{ fontSize: 12, fontWeight: 900, opacity: 0.78, textTransform: "uppercase" }}>Data Sources</div>
-          <div style={{ display: "grid", gap: 12, marginTop: 14 }}>
-            <div>
-              <div style={{ opacity: 0.72, fontSize: 12 }}>Cost report</div>
-              <div style={{ marginTop: 3, fontWeight: 850, overflowWrap: "anywhere" }}>{filename || "No cost file loaded"}</div>
-            </div>
-            <div>
-              <div style={{ opacity: 0.72, fontSize: 12 }}>Revenue report</div>
-              <div style={{ marginTop: 3, fontWeight: 850, overflowWrap: "anywhere" }}>{revenueFilename || "No revenue file loaded"}</div>
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 16, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.18)" }}>
-            <div>
-              <div style={{ fontSize: 24, fontWeight: 950 }}>{data.length.toLocaleString()}</div>
-              <div style={{ opacity: 0.78, fontSize: 12 }}>Cost rows</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 24, fontWeight: 950 }}>{yearsLoaded.length || 0}</div>
-              <div style={{ opacity: 0.78, fontSize: 12 }}>Years loaded</div>
-            </div>
-          </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 22 }}>
+          {[
+            ["Basra Portfolio", "#0f766e", "rgba(15, 118, 110, 0.10)"],
+            ["Kirkuk Portfolio", "#7c3aed", "rgba(124, 58, 237, 0.10)"],
+            ["Head Office", "#b45309", "rgba(180, 83, 9, 0.10)"],
+            ["View-Only Access", theme.accentStrong, theme.accentSoft],
+          ].map(([label, accent, background]) => (
+            <span key={label} style={{ color: accent, background, border: `1px solid ${accent}33`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>
+              {label}
+            </span>
+          ))}
         </div>
       </div>
-      )}
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap", background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, boxShadow: theme.cardShadow }}>
         <div style={{ display: "inline-flex", gap: 4, padding: 4, background: theme.accentSoft, borderRadius: 8, flexWrap: "wrap" }}>
@@ -1572,33 +1556,10 @@ export default function App() {
             </button>
           ))}
         </div>
-        {VIEW_ONLY_MODE && (
-          <span style={{ color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 900, textTransform: "uppercase" }}>
-            View-only access
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={openWelcome}
-          style={{
-            padding: "10px 16px",
-            cursor: "pointer",
-            backgroundColor: theme.inputBg,
-            color: theme.text,
-            border: `1px solid ${theme.border}`,
-            borderRadius: 8,
-            fontWeight: 850,
-          }}
-        >
-          Welcome
-        </button>
         {!VIEW_ONLY_MODE && (
           <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFile} style={{ padding: 10, borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
         )}
         {!VIEW_ONLY_MODE && filename && <span style={{ color: theme.subtext, minWidth: 200, textAlign: "center", display: "inline-block" }}>{filename}</span>}
-        <span style={{ color: theme.subtext, fontSize: 13, fontWeight: 800 }}>
-          Level 1 cockpit + Level 2 operational control pages
-        </span>
         <button
           type="button"
           onClick={toggleTheme}
@@ -2857,7 +2818,7 @@ export default function App() {
             <summary style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 14, cursor: "pointer", listStyle: "none" }}>
               <div>
                 <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Detailed Cost by GL Name</h2>
-                <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Every GL name from the master spent report for the selected cost center.</p>
+                <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Every GL name for the selected cost center.</p>
               </div>
               <div style={{ color: theme.subtext, fontSize: 14 }}>{detailGlRows.length.toLocaleString()} GL names with spend</div>
             </summary>
