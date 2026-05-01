@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import Papa from "papaparse";
 import { read, utils } from "xlsx";
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db, isFirebaseConfigured } from "./firebase";
 
@@ -3072,7 +3072,7 @@ const getAttemptState = (email) => {
   return { attempts, key, state };
 };
 
-const getApprovedAccess = async (user) => {
+const getAllowedAccess = async (user) => {
   if (!user?.email) return null;
 
   const normalizedEmail = user.email.trim().toLowerCase();
@@ -3090,12 +3090,23 @@ const getApprovedAccess = async (user) => {
   };
 };
 
+const getApprovedAccess = async (user) => {
+  const access = await getAllowedAccess(user);
+
+  if (!access || user.emailVerified !== true) {
+    return null;
+  }
+
+  return access;
+};
+
 function LoginPage({ onAuthenticated }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [mode, setMode] = useState("login");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loginTheme = {
@@ -3114,6 +3125,7 @@ function LoginPage({ onAuthenticated }) {
   const switchMode = (nextMode) => {
     setMode(nextMode);
     setError("");
+    setNotice("");
     setPassword("");
     setConfirmPassword("");
   };
@@ -3121,6 +3133,7 @@ function LoginPage({ onAuthenticated }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    setNotice("");
 
     if (!isFirebaseConfigured || !auth || !db) {
       setError("Secure access is not configured yet. Please contact the dashboard administrator.");
@@ -3147,7 +3160,7 @@ function LoginPage({ onAuthenticated }) {
       const credential = mode === "signup"
         ? await createUserWithEmailAndPassword(auth, normalizedEmail, password)
         : await signInWithEmailAndPassword(auth, normalizedEmail, password);
-      const session = await getApprovedAccess(credential.user);
+      const session = await getAllowedAccess(credential.user);
 
       if (!session) {
         await signOut(auth);
@@ -3156,6 +3169,25 @@ function LoginPage({ onAuthenticated }) {
 
       attempts[key] = { count: 0, lockedUntil: 0 };
       writeLoginAttempts(attempts);
+
+      if (mode === "signup") {
+        await sendEmailVerification(credential.user, { url: window.location.href });
+        await signOut(auth);
+        setMode("login");
+        setPassword("");
+        setConfirmPassword("");
+        setNotice(`Verification email sent to ${normalizedEmail}. Please open your email, verify the account, then log in.`);
+        return;
+      }
+
+      if (credential.user.emailVerified !== true) {
+        await sendEmailVerification(credential.user, { url: window.location.href });
+        await signOut(auth);
+        setPassword("");
+        setNotice(`Please verify ${normalizedEmail} before accessing the dashboard. A new verification email has been sent.`);
+        return;
+      }
+
       onAuthenticated(session);
     } catch (err) {
       const nextCount = (state.count ?? 0) + 1;
@@ -3164,7 +3196,10 @@ function LoginPage({ onAuthenticated }) {
         lockedUntil: nextCount >= MAX_LOGIN_ATTEMPTS ? now + LOGIN_LOCK_MINUTES * 60000 : 0,
       };
       writeLoginAttempts(attempts);
-      setError(err.message || (mode === "signup" ? "Account setup failed." : "Login failed. Please check your email and password."));
+      const firebaseMessage = err?.code === "auth/email-already-in-use"
+        ? "This email already has an account. Please log in, or reset the password from Firebase if needed."
+        : err.message;
+      setError(firebaseMessage || (mode === "signup" ? "Account setup failed." : "Login failed. Please check your email and password."));
     } finally {
       setIsSubmitting(false);
     }
@@ -3237,6 +3272,7 @@ function LoginPage({ onAuthenticated }) {
             </label>
           )}
 
+          {notice && <div style={{ color: loginTheme.accentStrong, background: "rgba(15,118,110,0.10)", border: "1px solid rgba(15,118,110,0.20)", borderRadius: 8, padding: 11, fontSize: 13, lineHeight: 1.4 }}>{notice}</div>}
           {error && <div style={{ color: loginTheme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13, lineHeight: 1.4 }}>{error}</div>}
 
           <button
