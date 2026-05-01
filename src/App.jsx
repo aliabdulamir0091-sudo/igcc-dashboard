@@ -64,9 +64,6 @@ const PERIOD_OPTIONS = [
   ["yearly", "Yearly"],
 ];
 const VIEW_ONLY_MODE = true;
-const LOGIN_ATTEMPT_KEY = "igcc-login-attempts";
-const LOGIN_LOCK_MINUTES = 15;
-const MAX_LOGIN_ATTEMPTS = 5;
 const WELCOME_MESSAGE = "Welcome to this dashboard; Ali Abdulamir is developing this application, and this is not the final revision.";
 const WELCOME_VOICE_MESSAGE = "Welcome to this dashboard. This application is developed by Ali Abdulamir, and this is not the final revision.";
 const COST_CATEGORY_ORDER = [
@@ -3052,25 +3049,6 @@ function DashboardApp({ session, onLogout }) {
   );
 }
 
-const readLoginAttempts = () => {
-  try {
-    return JSON.parse(window.localStorage.getItem(LOGIN_ATTEMPT_KEY) || "{}");
-  } catch {
-    return {};
-  }
-};
-
-const writeLoginAttempts = (attempts) => {
-  window.localStorage.setItem(LOGIN_ATTEMPT_KEY, JSON.stringify(attempts));
-};
-
-const getAttemptState = (email) => {
-  const attempts = readLoginAttempts();
-  const key = email.trim().toLowerCase();
-  const state = attempts[key] ?? { count: 0, lockedUntil: 0 };
-  return { attempts, key, state };
-};
-
 const getAllowedAccess = async (user) => {
   if (!user?.email) return null;
 
@@ -3155,15 +3133,6 @@ function LoginPage({ onAuthenticated }) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const { attempts, key, state } = getAttemptState(normalizedEmail);
-    const now = Date.now();
-
-    if (state.lockedUntil && state.lockedUntil > now) {
-      const minutes = Math.ceil((state.lockedUntil - now) / 60000);
-      setError(`Too many failed attempts. Please try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`);
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -3180,9 +3149,6 @@ function LoginPage({ onAuthenticated }) {
         await signOut(auth);
         throw new Error("Access denied. This email is not approved for the IGCC dashboard.");
       }
-
-      attempts[key] = { count: 0, lockedUntil: 0 };
-      writeLoginAttempts(attempts);
 
       if (mode === "signup") {
         await sendEmailVerification(credential.user, { url: window.location.href });
@@ -3204,12 +3170,6 @@ function LoginPage({ onAuthenticated }) {
 
       onAuthenticated(session);
     } catch (err) {
-      const nextCount = (state.count ?? 0) + 1;
-      attempts[key] = {
-        count: nextCount,
-        lockedUntil: nextCount >= MAX_LOGIN_ATTEMPTS ? now + LOGIN_LOCK_MINUTES * 60000 : 0,
-      };
-      writeLoginAttempts(attempts);
       const firebaseMessage = err?.code === "auth/email-already-in-use"
         ? "This email already has an account. Please log in, or reset the password from Firebase if needed."
         : err.message;
