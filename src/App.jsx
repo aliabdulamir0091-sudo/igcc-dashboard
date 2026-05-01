@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import Papa from "papaparse";
 import { read, utils } from "xlsx";
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db, isFirebaseConfigured } from "./firebase";
 
@@ -3072,9 +3072,29 @@ const getAttemptState = (email) => {
   return { attempts, key, state };
 };
 
+const getApprovedAccess = async (user) => {
+  if (!user?.email) return null;
+
+  const normalizedEmail = user.email.trim().toLowerCase();
+  const accessDoc = await getDoc(doc(db, "allowedUsers", normalizedEmail));
+
+  if (!accessDoc.exists() || accessDoc.data()?.active !== true) {
+    return null;
+  }
+
+  const access = accessDoc.data();
+  return {
+    uid: user.uid,
+    email: user.email,
+    role: access.role === "Admin" ? "Admin" : "Viewer",
+  };
+};
+
 function LoginPage({ onAuthenticated }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [mode, setMode] = useState("login");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -3112,27 +3132,23 @@ function LoginPage({ onAuthenticated }) {
     setIsSubmitting(true);
 
     try {
-      const credential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
-      const accessDoc = await getDoc(doc(db, "approvedUsers", credential.user.uid));
-
-      if (!accessDoc.exists() || accessDoc.data()?.active !== true) {
-        await signOut(auth);
-        throw new Error("Access denied. Your account is not approved for this dashboard.");
+      if (mode === "signup" && password !== confirmPassword) {
+        throw new Error("Passwords do not match.");
       }
 
-      const access = accessDoc.data();
-      if (access.email && access.email.toLowerCase() !== normalizedEmail) {
+      const credential = mode === "signup"
+        ? await createUserWithEmailAndPassword(auth, normalizedEmail, password)
+        : await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      const session = await getApprovedAccess(credential.user);
+
+      if (!session) {
         await signOut(auth);
-        throw new Error("Access denied. Your approved account record does not match this login.");
+        throw new Error("Access denied. This email is not approved for the IGCC dashboard.");
       }
 
       attempts[key] = { count: 0, lockedUntil: 0 };
       writeLoginAttempts(attempts);
-      onAuthenticated({
-        uid: credential.user.uid,
-        email: credential.user.email,
-        role: access.role === "Admin" ? "Admin" : "Viewer",
-      });
+      onAuthenticated(session);
     } catch (err) {
       const nextCount = (state.count ?? 0) + 1;
       attempts[key] = {
@@ -3140,7 +3156,7 @@ function LoginPage({ onAuthenticated }) {
         lockedUntil: nextCount >= MAX_LOGIN_ATTEMPTS ? now + LOGIN_LOCK_MINUTES * 60000 : 0,
       };
       writeLoginAttempts(attempts);
-      setError(err.message || "Login failed. Please check your email and password.");
+      setError(err.message || (mode === "signup" ? "Account setup failed." : "Login failed. Please check your email and password."));
     } finally {
       setIsSubmitting(false);
     }
@@ -3159,7 +3175,7 @@ function LoginPage({ onAuthenticated }) {
             Secure executive access for cost, AFP approval, profitability, and portfolio performance.
           </p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 24 }}>
-            {["Manual Approval Only", "View-Only Access", "Protected Dashboard"].map((label) => (
+            {["Approved Emails Only", "View-Only Access", "Protected Dashboard"].map((label) => (
               <span key={label} style={{ color: loginTheme.accentStrong, background: "rgba(15,118,110,0.10)", border: "1px solid rgba(15,118,110,0.25)", borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>
                 {label}
               </span>
@@ -3169,8 +3185,29 @@ function LoginPage({ onAuthenticated }) {
 
         <form onSubmit={handleSubmit} style={{ background: loginTheme.panelBg, border: `1px solid ${loginTheme.border}`, borderRadius: 8, padding: 24, boxShadow: "0 18px 45px rgba(15,23,42,0.10)", display: "grid", gap: 14 }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 24, letterSpacing: 0 }}>Secure Login</h2>
-            <p style={{ margin: "6px 0 0", color: loginTheme.subtext, fontSize: 13 }}>Use your approved account credentials.</p>
+            <h2 style={{ margin: 0, fontSize: 24, letterSpacing: 0 }}>{mode === "signup" ? "Create Password" : "Secure Login"}</h2>
+            <p style={{ margin: "6px 0 0", color: loginTheme.subtext, fontSize: 13 }}>
+              {mode === "signup" ? "Use your approved email to create your own password." : "Use your approved account credentials."}
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: 4, borderRadius: 8, background: loginTheme.inputBg, border: `1px solid ${loginTheme.border}` }}>
+            {[
+              ["login", "Login"],
+              ["signup", "Create password"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => {
+                  setMode(value);
+                  setError("");
+                }}
+                style={{ border: "none", borderRadius: 6, padding: "9px 10px", cursor: "pointer", background: mode === value ? loginTheme.panelBg : "transparent", color: mode === value ? loginTheme.accentStrong : loginTheme.text, fontWeight: 900 }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
           <label style={{ display: "grid", gap: 7, color: loginTheme.text, fontSize: 13, fontWeight: 850 }}>
@@ -3197,6 +3234,20 @@ function LoginPage({ onAuthenticated }) {
             />
           </label>
 
+          {mode === "signup" && (
+            <label style={{ display: "grid", gap: 7, color: loginTheme.text, fontSize: 13, fontWeight: 850 }}>
+              Confirm Password
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                autoComplete="new-password"
+                required
+                style={{ padding: 12, borderRadius: 8, border: `1px solid ${loginTheme.border}`, background: loginTheme.inputBg, color: loginTheme.text, fontSize: 14 }}
+              />
+            </label>
+          )}
+
           {error && <div style={{ color: loginTheme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13, lineHeight: 1.4 }}>{error}</div>}
 
           <button
@@ -3204,7 +3255,7 @@ function LoginPage({ onAuthenticated }) {
             disabled={isSubmitting}
             style={{ border: "none", borderRadius: 8, padding: "12px 16px", cursor: isSubmitting ? "wait" : "pointer", background: loginTheme.accentStrong, color: "#fff", fontWeight: 950, fontSize: 14 }}
           >
-            {isSubmitting ? "Verifying..." : "Login"}
+            {isSubmitting ? "Verifying..." : mode === "signup" ? "Create Password" : "Login"}
           </button>
         </form>
       </div>
@@ -3230,20 +3281,15 @@ export default function App() {
       }
 
       try {
-        const accessDoc = await getDoc(doc(db, "approvedUsers", user.uid));
-        if (!accessDoc.exists() || accessDoc.data()?.active !== true) {
+        const session = await getApprovedAccess(user);
+        if (!session) {
           await signOut(auth);
           setSession(null);
           setIsCheckingAuth(false);
           return;
         }
 
-        const access = accessDoc.data();
-        setSession({
-          uid: user.uid,
-          email: user.email,
-          role: access.role === "Admin" ? "Admin" : "Viewer",
-        });
+        setSession(session);
       } catch {
         await signOut(auth);
         setSession(null);
