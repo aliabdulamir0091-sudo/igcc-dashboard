@@ -1177,6 +1177,7 @@ function DashboardApp({ session, onLogout }) {
   const filteredMonthOptions = filters.year
     ? monthOptions.filter((month) => data.some((item) => item.month === month.label && String(item.year ?? "") === filters.year))
     : monthOptions;
+  const glNameOptions = Array.from(new Set(data.map((item) => item.category).filter(Boolean))).sort((a, b) => a.localeCompare(b));
   const portfolioOptions = HUB_SECTIONS.map((section) => section.label);
   const hubOptions = COST_CENTER_GROUPS.map((group) => group.label);
   const filteredHubOptions = filters.portfolio
@@ -1954,7 +1955,12 @@ function DashboardApp({ session, onLogout }) {
 
             <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
               GL Name
-              <input value={spentEntryForm.glName} onChange={handleSpentEntryChange("glName")} required placeholder="Staff Salary, Materials..." style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
+              <select value={spentEntryForm.glName} onChange={handleSpentEntryChange("glName")} required style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
+                <option value="">Select GL name</option>
+                {glNameOptions.map((glName) => (
+                  <option key={glName} value={glName}>{glName}</option>
+                ))}
+              </select>
             </label>
 
             <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
