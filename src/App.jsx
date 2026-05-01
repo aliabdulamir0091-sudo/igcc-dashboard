@@ -1481,6 +1481,13 @@ function DashboardApp({ session, onLogout }) {
   const executiveInsight = approvedRevenue
     ? `Approved revenue covers ${formatPercent(recoveryRatio)} of selected cost, with ${highestSpendHub?.label ?? "no hub"} carrying the largest cost exposure.`
     : "No approved revenue is available for the current selection.";
+  const lastUpdatedLabel = new Date().toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   if (isLoading) {
     return loadingView;
@@ -1511,28 +1518,53 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
-      <div style={{ marginBottom: 18, background: "#fff", border: `1px solid ${theme.border}`, borderRadius: 8, padding: 24, boxShadow: theme.cardShadow }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
-          <div style={{ width: 72, height: 72, borderRadius: 8, border: `1px solid ${theme.border}`, background: "#f8fafc", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden" }}>
-            <img src={getPublicAssetUrl("favicon.svg")} alt="IGCC logo" style={{ width: 46, height: 46, objectFit: "contain" }} />
+      <div style={{ marginBottom: 14, background: "#fff", border: `1px solid ${theme.border}`, borderRadius: 8, padding: "14px 16px", boxShadow: theme.cardShadow }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 8, border: `1px solid ${theme.border}`, background: "#f8fafc", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden" }}>
+              <img src={getPublicAssetUrl("favicon.svg")} alt="IGCC logo" style={{ width: 30, height: 30, objectFit: "contain" }} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ color: theme.accentStrong, fontSize: 11, fontWeight: 950, letterSpacing: 0, textTransform: "uppercase" }}>IRAQ GATE CONTRACTING COMPANY</div>
+              <h1 style={{ margin: "3px 0 0", fontSize: 25, letterSpacing: 0, lineHeight: 1.05, fontWeight: 950, color: theme.text }}>Financial Dashboard</h1>
+              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13, maxWidth: 720 }}>Executive view of cost, AFP approval, profitability, and portfolio performance.</p>
+            </div>
           </div>
-          <div style={{ flex: "1 1 420px", minWidth: 0 }}>
-            <div style={{ color: theme.accentStrong, fontSize: 12, fontWeight: 950, letterSpacing: 0, textTransform: "uppercase" }}>IRAQ GATE CONTRACTING COMPANY</div>
-            <h1 style={{ margin: "6px 0 0", fontSize: 34, letterSpacing: 0, lineHeight: 1.08, fontWeight: 950, color: theme.text }}>IGCC Commercial &amp; Financial Dashboard</h1>
-            <p style={{ margin: "10px 0 0", color: theme.subtext, fontSize: 16, maxWidth: 820 }}>Executive view of cost, AFP approval, profitability, and portfolio performance.</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 850, textAlign: "right", lineHeight: 1.35 }}>
+              <div style={{ color: theme.text, maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session?.email}</div>
+              <div><span style={{ color: theme.accentStrong, textTransform: "uppercase" }}>{session?.role ?? "Viewer"}</span> | Last Updated: {lastUpdatedLabel}</div>
+            </div>
+            <button
+              type="button"
+              onClick={onLogout}
+              style={{ padding: "8px 11px", cursor: "pointer", backgroundColor: theme.inputBg, color: theme.text, border: `1px solid ${theme.border}`, borderRadius: 7, fontWeight: 850, fontSize: 12 }}
+            >
+              Logout
+            </button>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 22 }}>
-          {[
-            ["Basra Portfolio", "#0f766e", "rgba(15, 118, 110, 0.10)"],
-            ["Kirkuk Portfolio", "#7c3aed", "rgba(124, 58, 237, 0.10)"],
-            ["Head Office", "#b45309", "rgba(180, 83, 9, 0.10)"],
-            ["View-Only Access", theme.accentStrong, theme.accentSoft],
-          ].map(([label, accent, background]) => (
-            <span key={label} style={{ color: accent, background, border: `1px solid ${accent}33`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>
-              {label}
-            </span>
-          ))}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12, paddingTop: 12, borderTop: `1px solid ${theme.border}` }}>
+          <button
+            type="button"
+            onClick={() => setFilters((current) => ({ ...current, portfolio: "", hub: "", costCenter: "" }))}
+            style={{ color: filters.portfolio ? theme.text : "#fff", background: filters.portfolio ? theme.inputBg : theme.accentStrong, border: `1px solid ${filters.portfolio ? theme.border : theme.accentStrong}`, borderRadius: 6, padding: "7px 11px", fontSize: 12, fontWeight: 900, cursor: "pointer" }}
+          >
+            All Portfolios
+          </button>
+          {HUB_SECTIONS.map((section) => {
+            const isActive = filters.portfolio === section.label;
+            return (
+              <button
+                key={section.label}
+                type="button"
+                onClick={() => setFilters((current) => ({ ...current, portfolio: section.label, hub: "", costCenter: "" }))}
+                style={{ color: isActive ? "#fff" : section.accent, background: isActive ? section.accent : section.soft, border: `1px solid ${section.accent}55`, borderRadius: 6, padding: "7px 11px", fontSize: 12, fontWeight: 900, cursor: "pointer" }}
+              >
+                {section.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -1557,19 +1589,6 @@ function DashboardApp({ session, onLogout }) {
               {label}
             </button>
           ))}
-        </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <div style={{ color: theme.subtext, fontSize: 12, fontWeight: 800, textAlign: "right" }}>
-            <div style={{ color: theme.text }}>{session?.email}</div>
-            <div style={{ color: theme.accentStrong, textTransform: "uppercase" }}>{session?.role ?? "Viewer"}</div>
-          </div>
-          <button
-            type="button"
-            onClick={onLogout}
-            style={{ padding: "10px 14px", cursor: "pointer", backgroundColor: theme.inputBg, color: theme.text, border: `1px solid ${theme.border}`, borderRadius: 8, fontWeight: 850 }}
-          >
-            Logout
-          </button>
         </div>
         {!VIEW_ONLY_MODE && (
           <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFile} style={{ padding: 10, borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
