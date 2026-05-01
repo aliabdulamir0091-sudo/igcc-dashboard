@@ -833,7 +833,7 @@ function DashboardApp({ session, onLogout }) {
         const chunk = historicalRows.slice(index, index + chunkSize);
         const writes = chunk.map((row, chunkIndex) => {
           const rowIndex = index + chunkIndex;
-          const documentName = `projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries/hist_${rowIndex}`;
+          const documentPath = `manualSpentEntries/hist_${rowIndex}`;
           const entry = {
             sourceType: "history",
             portfolio: getPortfolioForHub(getHubForCostCenter(row.costCenter)),
@@ -850,11 +850,11 @@ function DashboardApp({ session, onLogout }) {
           };
 
           return {
-            update: {
-              name: documentName,
-              fields: Object.fromEntries(Object.entries(entry).map(([key, value]) => [key, firestoreValue(value)])),
-            },
+            update: { fields: Object.fromEntries(Object.entries(entry).map(([key, value]) => [key, firestoreValue(value)])) },
+            updateMask: { fieldPaths: Object.keys(entry) },
+            updateTransforms: [],
             currentDocument: { exists: false },
+            document: documentPath,
           };
         });
 
@@ -864,7 +864,16 @@ function DashboardApp({ session, onLogout }) {
             Authorization: `Bearer ${idToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ writes }),
+          body: JSON.stringify({
+            writes: writes.map(({ document, update, updateMask, currentDocument }) => ({
+              update: {
+                name: `projects/${firebaseProjectId}/databases/(default)/documents/${document}`,
+                ...update,
+              },
+              updateMask,
+              currentDocument,
+            })),
+          }),
         });
 
         if (!importResponse.ok) throw new Error(`HTTP ${importResponse.status}`);
