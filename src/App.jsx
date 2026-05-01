@@ -451,6 +451,27 @@ const parseManualSpentDocument = (document) => {
   });
 };
 
+const wait = (milliseconds) => new Promise((resolve) => {
+  window.setTimeout(resolve, milliseconds);
+});
+
+const fetchWithRetry = async (url, options, attempts = 3) => {
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await fetch(url, options);
+    } catch (err) {
+      lastError = err;
+      if (attempt < attempts) {
+        await wait(600 * attempt);
+      }
+    }
+  }
+
+  throw lastError;
+};
+
 const parseRevenueSheet = (rows, status) =>
   rows.flatMap((row) => {
     const rawCenter = normalizeValue(normalizeHeader(row, "__EMPTY", "Cost Center", "costCenter", "cost_center"));
@@ -827,12 +848,13 @@ function DashboardApp({ session, onLogout }) {
         sourceType: "history",
       }));
       setHistoryImportProgress(`Preparing ${historicalRows.length.toLocaleString()} historical rows...`);
-      const idToken = await auth.currentUser.getIdToken();
       let savedCount = 0;
       let skippedCount = 0;
-      const chunkSize = 20;
+      let processedCount = 0;
+      const chunkSize = 5;
 
       for (let index = 0; index < historicalRows.length; index += chunkSize) {
+        const idToken = await auth.currentUser.getIdToken();
         const chunk = historicalRows.slice(index, index + chunkSize);
         const results = await Promise.all(chunk.map(async (row, chunkIndex) => {
           const rowIndex = index + chunkIndex;
@@ -851,7 +873,7 @@ function DashboardApp({ session, onLogout }) {
             createdBy: session.email,
             createdAt: new Date().toISOString(),
           };
-          const importResponse = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries?documentId=${encodeURIComponent(documentId)}`, {
+          const importResponse = await fetchWithRetry(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries?documentId=${encodeURIComponent(documentId)}`, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${idToken}`,
@@ -871,7 +893,9 @@ function DashboardApp({ session, onLogout }) {
 
         savedCount += results.filter((result) => result === "saved").length;
         skippedCount += results.filter((result) => result === "skipped").length;
-        setHistoryImportProgress(`Imported ${Math.min(index + chunk.length, historicalRows.length).toLocaleString()} of ${historicalRows.length.toLocaleString()} rows...`);
+        processedCount = Math.min(index + chunk.length, historicalRows.length);
+        setHistoryImportProgress(`Processed ${processedCount.toLocaleString()} of ${historicalRows.length.toLocaleString()} rows...`);
+        await wait(120);
       }
 
       setData((current) => {
