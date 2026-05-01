@@ -2,8 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import Papa from "papaparse";
 import { read, utils } from "xlsx";
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db, isFirebaseConfigured } from "./firebase";
+import { auth, firebaseProjectId, isFirebaseConfigured } from "./firebase";
 
 const formatCurrency = (value) =>
   value.toLocaleString(undefined, {
@@ -3076,17 +3075,32 @@ const getAllowedAccess = async (user) => {
   if (!user?.email) return null;
 
   const normalizedEmail = user.email.trim().toLowerCase();
-  const accessDoc = await getDoc(doc(db, "allowedUsers", normalizedEmail));
+  const idToken = await user.getIdToken();
+  const documentUrl = `https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/allowedUsers/${encodeURIComponent(normalizedEmail)}`;
+  const response = await fetch(documentUrl, {
+    headers: { Authorization: `Bearer ${idToken}` },
+  });
 
-  if (!accessDoc.exists() || accessDoc.data()?.active !== true) {
+  if (response.status === 404 || response.status === 403) {
     return null;
   }
 
-  const access = accessDoc.data();
+  if (!response.ok) {
+    throw new Error("Could not verify approved access. Please try again.");
+  }
+
+  const access = await response.json();
+  const isActive = access.fields?.active?.booleanValue === true;
+  const role = access.fields?.role?.stringValue;
+
+  if (!isActive) {
+    return null;
+  }
+
   return {
     uid: user.uid,
     email: user.email,
-    role: access.role === "Admin" ? "Admin" : "Viewer",
+    role: role === "Admin" ? "Admin" : "Viewer",
   };
 };
 
@@ -3135,7 +3149,7 @@ function LoginPage({ onAuthenticated }) {
     setError("");
     setNotice("");
 
-    if (!isFirebaseConfigured || !auth || !db) {
+    if (!isFirebaseConfigured || !auth || !firebaseProjectId) {
       setError("Secure access is not configured yet. Please contact the dashboard administrator.");
       return;
     }
@@ -3311,7 +3325,7 @@ export default function App() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
-    if (!isFirebaseConfigured || !auth || !db) {
+    if (!isFirebaseConfigured || !auth || !firebaseProjectId) {
       setIsCheckingAuth(false);
       return undefined;
     }
