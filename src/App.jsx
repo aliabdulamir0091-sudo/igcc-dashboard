@@ -2071,8 +2071,8 @@ function DashboardApp({ session, onLogout }) {
             Clear Filters
           </button>
         </div>
-        <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: theme.inputBg }}>
-          <h3 style={{ margin: "0 0 12px", color: theme.text, fontSize: 14, fontWeight: 950 }}>1. Portfolio, Hub &amp; Cost Center</h3>
+        <div style={{ order: activePage === "profitability" ? 2 : 1, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: theme.inputBg }}>
+          <h3 style={{ margin: "0 0 12px", color: theme.text, fontSize: 14, fontWeight: 950 }}>{activePage === "profitability" ? "2" : "1"}. Portfolio, Hub &amp; Cost Center</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
             <label style={{ display: "block", color: theme.text, fontWeight: 600, fontSize: 14 }}>
               Portfolio
@@ -2106,13 +2106,23 @@ function DashboardApp({ session, onLogout }) {
           </div>
         </div>
 
-        <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: theme.inputBg }}>
-          <h3 style={{ margin: "0 0 12px", color: theme.text, fontSize: 14, fontWeight: 950 }}>2. Time Filter</h3>
+        <div style={{ order: activePage === "profitability" ? 1 : 2, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: theme.inputBg }}>
+          <h3 style={{ margin: "0 0 12px", color: theme.text, fontSize: 14, fontWeight: 950 }}>{activePage === "profitability" ? "1" : "2"}. Time Filter</h3>
           <div style={{ display: "grid", gridTemplateColumns: "minmax(220px, 0.8fr) repeat(auto-fit, minmax(220px, 1fr))", gap: 12, alignItems: "end" }}>
             <div>
               <div style={{ color: theme.text, fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Time Mode</div>
               {renderPeriodToggleFor(periodView, handleTimeModeChange)}
             </div>
+
+            <label style={{ display: "block", color: theme.text, fontWeight: 600, fontSize: 14 }}>
+              Year
+              <select value={filters.year} onChange={handleFilterChange("year")} style={{ width: "100%", boxSizing: "border-box", padding: 12, marginTop: 8, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
+                <option value="">All years</option>
+                {yearsLoaded.map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </label>
 
             {periodView === "monthly" && (
               <label style={{ display: "block", color: theme.text, fontWeight: 600, fontSize: 14 }}>
@@ -2125,16 +2135,6 @@ function DashboardApp({ session, onLogout }) {
                 </select>
               </label>
             )}
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 600, fontSize: 14 }}>
-              Year
-              <select value={filters.year} onChange={handleFilterChange("year")} style={{ width: "100%", boxSizing: "border-box", padding: 12, marginTop: 8, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
-                <option value="">All years</option>
-                {yearsLoaded.map((year) => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </label>
           </div>
         </div>
       </div>
