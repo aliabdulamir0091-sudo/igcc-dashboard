@@ -49,6 +49,7 @@ const MONTH_ORDER = {
 const MONTH_LABELS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const MASTER_SPENT_REPORT_FILE = "Master Spent Report.xlsx";
+const getPublicAssetUrl = (filename) => `${import.meta.env.BASE_URL}${encodeURIComponent(filename)}`;
 const IGCC_LEVEL_LABEL = "IGCC Level 1 - IRAQ GATE CONTRACTING COMPANY";
 const NAV_ITEMS = [
   ["overview", "Executive Cockpit"],
@@ -553,7 +554,7 @@ export default function App() {
 
     const loadBundledReport = async () => {
       try {
-        const response = await fetch(`/${encodeURIComponent(MASTER_SPENT_REPORT_FILE)}`);
+        const response = await fetch(getPublicAssetUrl(MASTER_SPENT_REPORT_FILE));
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -574,7 +575,7 @@ export default function App() {
 
     const loadBundledRevenue = async () => {
       try {
-        const response = await fetch("/Revenue.xlsx");
+        const response = await fetch(getPublicAssetUrl("Revenue.xlsx"));
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
