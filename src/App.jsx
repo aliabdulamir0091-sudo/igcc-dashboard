@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import Papa from "papaparse";
 import { read, utils } from "xlsx";
-import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, firebaseProjectId, isFirebaseConfigured } from "./firebase";
 
 const formatCurrency = (value) =>
@@ -3219,6 +3219,34 @@ function LoginPage({ onAuthenticated }) {
     }
   };
 
+  const handlePasswordReset = async () => {
+    setError("");
+    setNotice("");
+
+    if (!isFirebaseConfigured || !auth) {
+      setError("Secure access is not configured yet. Please contact the dashboard administrator.");
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      setError("Enter your approved email first, then request a password reset.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await sendPasswordResetEmail(auth, normalizedEmail, { url: window.location.href });
+      setNotice(`Password reset email sent to ${normalizedEmail}. Please check your inbox or spam folder.`);
+    } catch (err) {
+      setError(err.message || "Could not send password reset email. Please check the email address and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, fontFamily: "Inter, system-ui, sans-serif", background: loginTheme.pageBg, color: loginTheme.text }}>
       <div style={{ width: "min(980px, 100%)", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 420px)", gap: 18, alignItems: "stretch" }}>
@@ -3296,6 +3324,17 @@ function LoginPage({ onAuthenticated }) {
           >
             {isSubmitting ? "Verifying..." : mode === "signup" ? "Create account" : "Log in"}
           </button>
+
+          {mode === "login" && (
+            <button
+              type="button"
+              onClick={handlePasswordReset}
+              disabled={isSubmitting}
+              style={{ border: "none", background: "transparent", color: loginTheme.accentStrong, cursor: isSubmitting ? "wait" : "pointer", fontSize: 13, fontWeight: 900, padding: 0, justifySelf: "center" }}
+            >
+              Forgot password?
+            </button>
+          )}
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 10, color: loginTheme.subtext, fontSize: 12 }}>
             <span style={{ height: 1, background: "#e2e8f0" }} />
