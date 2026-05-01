@@ -3104,10 +3104,18 @@ function LoginPage({ onAuthenticated }) {
     text: "#10233f",
     subtext: "#4a5568",
     accentStrong: "#0f766e",
+    accentSoft: "#e6f5f2",
     accentWarm: "#b45309",
     border: "#cbd5e1",
     inputBg: "#f8fafc",
     danger: "#b00020",
+  };
+
+  const switchMode = (nextMode) => {
+    setMode(nextMode);
+    setError("");
+    setPassword("");
+    setConfirmPassword("");
   };
 
   const handleSubmit = async (event) => {
@@ -3183,31 +3191,12 @@ function LoginPage({ onAuthenticated }) {
           </div>
         </section>
 
-        <form onSubmit={handleSubmit} style={{ background: loginTheme.panelBg, border: `1px solid ${loginTheme.border}`, borderRadius: 8, padding: 24, boxShadow: "0 18px 45px rgba(15,23,42,0.10)", display: "grid", gap: 14 }}>
+        <form onSubmit={handleSubmit} style={{ background: loginTheme.panelBg, border: `1px solid ${loginTheme.border}`, borderRadius: 8, padding: 24, boxShadow: "0 18px 45px rgba(15,23,42,0.10)", display: "grid", gap: 14, alignSelf: "start" }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 24, letterSpacing: 0 }}>{mode === "signup" ? "Create Password" : "Secure Login"}</h2>
-            <p style={{ margin: "6px 0 0", color: loginTheme.subtext, fontSize: 13 }}>
-              {mode === "signup" ? "Use your approved email to create your own password." : "Use your approved account credentials."}
+            <h2 style={{ margin: 0, fontSize: 26, letterSpacing: 0 }}>{mode === "signup" ? "Create your account" : "Log in to dashboard"}</h2>
+            <p style={{ margin: "7px 0 0", color: loginTheme.subtext, fontSize: 13, lineHeight: 1.45 }}>
+              {mode === "signup" ? "Use an approved IGCC email to set your password." : "Access is limited to approved IGCC dashboard users."}
             </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: 4, borderRadius: 8, background: loginTheme.inputBg, border: `1px solid ${loginTheme.border}` }}>
-            {[
-              ["login", "Login"],
-              ["signup", "Create password"],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => {
-                  setMode(value);
-                  setError("");
-                }}
-                style={{ border: "none", borderRadius: 6, padding: "9px 10px", cursor: "pointer", background: mode === value ? loginTheme.panelBg : "transparent", color: mode === value ? loginTheme.accentStrong : loginTheme.text, fontWeight: 900 }}
-              >
-                {label}
-              </button>
-            ))}
           </div>
 
           <label style={{ display: "grid", gap: 7, color: loginTheme.text, fontSize: 13, fontWeight: 850 }}>
@@ -3228,7 +3217,7 @@ function LoginPage({ onAuthenticated }) {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
               required
               style={{ padding: 12, borderRadius: 8, border: `1px solid ${loginTheme.border}`, background: loginTheme.inputBg, color: loginTheme.text, fontSize: 14 }}
             />
@@ -3253,10 +3242,28 @@ function LoginPage({ onAuthenticated }) {
           <button
             type="submit"
             disabled={isSubmitting}
-            style={{ border: "none", borderRadius: 8, padding: "12px 16px", cursor: isSubmitting ? "wait" : "pointer", background: loginTheme.accentStrong, color: "#fff", fontWeight: 950, fontSize: 14 }}
+            style={{ border: "none", borderRadius: 8, padding: "13px 16px", cursor: isSubmitting ? "wait" : "pointer", background: loginTheme.accentStrong, color: "#fff", fontWeight: 950, fontSize: 15 }}
           >
-            {isSubmitting ? "Verifying..." : mode === "signup" ? "Create Password" : "Login"}
+            {isSubmitting ? "Verifying..." : mode === "signup" ? "Create account" : "Log in"}
           </button>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 10, color: loginTheme.subtext, fontSize: 12 }}>
+            <span style={{ height: 1, background: "#e2e8f0" }} />
+            <span>or</span>
+            <span style={{ height: 1, background: "#e2e8f0" }} />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => switchMode(mode === "signup" ? "login" : "signup")}
+            style={{ border: `1px solid rgba(15,118,110,0.28)`, borderRadius: 8, padding: "12px 16px", cursor: "pointer", background: loginTheme.accentSoft, color: loginTheme.accentStrong, fontWeight: 950, fontSize: 14 }}
+          >
+            {mode === "signup" ? "Already have an account? Log in" : "Create new account"}
+          </button>
+
+          <p style={{ margin: 0, textAlign: "center", color: loginTheme.subtext, fontSize: 12, lineHeight: 1.45 }}>
+            {mode === "signup" ? "Only approved emails can activate dashboard access." : "New users must use an approved email address."}
+          </p>
         </form>
       </div>
     </div>
