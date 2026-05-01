@@ -405,6 +405,50 @@ const getSpentWorkbookRows = (workbook) => {
 
 const parseSpentWorkbook = (workbook) => parseSpentRows(getSpentWorkbookRows(workbook));
 
+const manualSpentEntryToRow = (entry) => {
+  const year = Number(entry.year) || new Date().getFullYear();
+  const monthNumber = Number(entry.monthNumber) || 1;
+  const monthName = MONTH_LABELS[monthNumber] || "Jan";
+
+  return {
+    id: entry.id,
+    costCenter: COST_CENTER_ALIASES[entry.costCenter] || entry.costCenter,
+    month: `${monthName} ${year}`,
+    monthName,
+    monthNumber,
+    quarter: `Q${Math.ceil(monthNumber / 3)}`,
+    year,
+    category: entry.glName || "Manual Entry",
+    vendor: entry.vendor || "Manual Entry",
+    amount: Number(entry.amount) || 0,
+    source: "Manual",
+    notes: entry.notes || "",
+  };
+};
+
+const firestoreValue = (value) => {
+  if (typeof value === "boolean") return { booleanValue: value };
+  if (typeof value === "number" && Number.isInteger(value)) return { integerValue: value };
+  if (typeof value === "number") return { doubleValue: value };
+  return { stringValue: String(value ?? "") };
+};
+
+const parseManualSpentDocument = (document) => {
+  const fields = document.fields ?? {};
+  const readNumber = (field) => Number(fields[field]?.integerValue ?? fields[field]?.doubleValue ?? 0);
+
+  return manualSpentEntryToRow({
+    id: document.name?.split("/").pop(),
+    costCenter: fields.costCenter?.stringValue,
+    monthNumber: readNumber("monthNumber"),
+    year: readNumber("year"),
+    glName: fields.glName?.stringValue,
+    vendor: fields.vendor?.stringValue,
+    amount: readNumber("amount"),
+    notes: fields.notes?.stringValue,
+  });
+};
+
 const parseRevenueSheet = (rows, status) =>
   rows.flatMap((row) => {
     const rawCenter = normalizeValue(normalizeHeader(row, "__EMPTY", "Cost Center", "costCenter", "cost_center"));
@@ -456,6 +500,20 @@ function DashboardApp({ session, onLogout }) {
   const [themeMode, setThemeMode] = useState("light");
   const [showWelcome, setShowWelcome] = useState(true);
   const [expandedProfitRows, setExpandedProfitRows] = useState({});
+  const [spentEntryForm, setSpentEntryForm] = useState({
+    portfolio: "",
+    hub: "",
+    costCenter: "",
+    year: String(new Date().getFullYear()),
+    monthNumber: String(new Date().getMonth() + 1),
+    glName: "",
+    amount: "",
+    vendor: "",
+    notes: "",
+  });
+  const [spentEntryMessage, setSpentEntryMessage] = useState("");
+  const [spentEntryError, setSpentEntryError] = useState("");
+  const [isSavingSpentEntry, setIsSavingSpentEntry] = useState(false);
 
   const theme = {
     light: {
@@ -596,7 +654,32 @@ function DashboardApp({ session, onLogout }) {
       }
     };
 
-    Promise.allSettled([loadBundledReport(), loadBundledRevenue()]).finally(() => {
+    const loadManualSpentEntries = async () => {
+      if (!auth?.currentUser || !firebaseProjectId) return;
+
+      try {
+        const idToken = await auth.currentUser.getIdToken();
+        const response = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries`, {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+
+        if (response.status === 404 || response.status === 403) return;
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const manualData = await response.json();
+        const manualRows = (manualData.documents ?? []).map(parseManualSpentDocument);
+
+        if (isMounted && manualRows.length) {
+          setData((current) => [...current, ...manualRows]);
+        }
+      } catch {
+        // Manual entries are additive; keep the bundled dashboard available if Firestore is unreachable.
+      }
+    };
+
+    Promise.allSettled([loadBundledReport(), loadBundledRevenue()])
+      .then(loadManualSpentEntries)
+      .finally(() => {
       if (isMounted) {
         setIsLoading(false);
       }
@@ -625,6 +708,81 @@ function DashboardApp({ session, onLogout }) {
     setPeriodView(value);
     if (value !== "monthly") {
       setFilters((current) => ({ ...current, month: "" }));
+    }
+  };
+  const handleSpentEntryChange = (field) => (event) => {
+    const value = event.target.value;
+    setSpentEntryForm((current) => {
+      if (field === "portfolio") {
+        return { ...current, portfolio: value, hub: "", costCenter: "" };
+      }
+
+      if (field === "hub") {
+        return { ...current, hub: value, costCenter: "" };
+      }
+
+      return { ...current, [field]: value };
+    });
+  };
+  const saveSpentEntry = async (event) => {
+    event.preventDefault();
+    setSpentEntryError("");
+    setSpentEntryMessage("");
+
+    if (session?.role !== "Admin") {
+      setSpentEntryError("Only Admin users can add spent report entries.");
+      return;
+    }
+
+    const amount = Number(spentEntryForm.amount);
+    const monthNumber = Number(spentEntryForm.monthNumber);
+    const year = Number(spentEntryForm.year);
+
+    if (!spentEntryForm.costCenter || !spentEntryForm.glName || !amount || !monthNumber || !year) {
+      setSpentEntryError("Cost center, month, year, GL name, and amount are required.");
+      return;
+    }
+
+    setIsSavingSpentEntry(true);
+
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const entry = {
+        portfolio: getPortfolioForHub(spentEntryForm.hub),
+        hub: spentEntryForm.hub,
+        costCenter: spentEntryForm.costCenter,
+        monthNumber,
+        year,
+        glName: spentEntryForm.glName.trim(),
+        amount,
+        vendor: spentEntryForm.vendor.trim() || "Manual Entry",
+        notes: spentEntryForm.notes.trim(),
+        createdBy: session.email,
+        createdAt: new Date().toISOString(),
+      };
+
+      const response = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fields: Object.fromEntries(Object.entries(entry).map(([key, value]) => [key, firestoreValue(value)])),
+        }),
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const savedDocument = await response.json();
+      const savedRow = parseManualSpentDocument(savedDocument);
+      setData((current) => [...current, savedRow]);
+      setSpentEntryForm((current) => ({ ...current, glName: "", amount: "", vendor: "", notes: "" }));
+      setSpentEntryMessage("Spent entry saved and added to dashboard calculations.");
+    } catch (err) {
+      setSpentEntryError(`Could not save spent entry: ${err.message}`);
+    } finally {
+      setIsSavingSpentEntry(false);
     }
   };
 
@@ -1502,6 +1660,14 @@ function DashboardApp({ session, onLogout }) {
     hour: "2-digit",
     minute: "2-digit",
   });
+  const visibleNavItems = session?.role === "Admin" ? [...NAV_ITEMS, ["spent", "Spent Report"]] : NAV_ITEMS;
+  const spentFormHubOptions = spentEntryForm.portfolio
+    ? hubOptions.filter((hub) => getPortfolioForHub(hub) === spentEntryForm.portfolio)
+    : hubOptions;
+  const spentFormCostCenterOptions = COST_CENTER_GROUPS
+    .filter((group) => (spentEntryForm.portfolio ? getPortfolioForHub(group.label) === spentEntryForm.portfolio : true))
+    .filter((group) => (spentEntryForm.hub ? group.label === spentEntryForm.hub : true))
+    .flatMap((group) => group.centers);
 
   if (isLoading) {
     return loadingView;
@@ -1653,7 +1819,7 @@ function DashboardApp({ session, onLogout }) {
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap", background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, boxShadow: theme.cardShadow }}>
         <div style={{ display: "inline-flex", gap: 4, padding: 4, background: theme.accentSoft, borderRadius: 8, flexWrap: "wrap" }}>
-          {NAV_ITEMS.map(([value, label]) => (
+          {visibleNavItems.map(([value, label]) => (
             <button
               key={value}
               type="button"
@@ -1721,6 +1887,91 @@ function DashboardApp({ session, onLogout }) {
       {unknownCostCenters.length > 0 && (
         <div style={{ color: theme.danger, marginBottom: 16, textAlign: "center" }}>
           Unknown cost centers found: {unknownCostCenters.join(", ")}
+        </div>
+      )}
+
+      {activePage === "spent" && session?.role === "Admin" && (
+        <div style={panelStyle}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
+            <div>
+              <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Spent Report</h2>
+              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Admin entry for new monthly spend by portfolio, hub, cost center, and GL name.</p>
+            </div>
+            <span style={{ color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>Admin Entry</span>
+          </div>
+
+          <form onSubmit={saveSpentEntry} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, alignItems: "end", border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: theme.inputBg }}>
+            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
+              Portfolio
+              <select value={spentEntryForm.portfolio} onChange={handleSpentEntryChange("portfolio")} style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
+                <option value="">All portfolios</option>
+                {portfolioOptions.map((portfolio) => (
+                  <option key={portfolio} value={portfolio}>{portfolio}</option>
+                ))}
+              </select>
+            </label>
+
+            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
+              Hub
+              <select value={spentEntryForm.hub} onChange={handleSpentEntryChange("hub")} style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
+                <option value="">Select hub</option>
+                {spentFormHubOptions.map((hub) => (
+                  <option key={hub} value={hub}>{hub}</option>
+                ))}
+              </select>
+            </label>
+
+            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
+              Cost Center
+              <select value={spentEntryForm.costCenter} onChange={handleSpentEntryChange("costCenter")} required style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
+                <option value="">Select cost center</option>
+                {spentFormCostCenterOptions.map((center) => (
+                  <option key={center} value={center}>{center}</option>
+                ))}
+              </select>
+            </label>
+
+            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
+              Year
+              <input type="number" min="2020" max="2035" value={spentEntryForm.year} onChange={handleSpentEntryChange("year")} required style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
+            </label>
+
+            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
+              Month
+              <select value={spentEntryForm.monthNumber} onChange={handleSpentEntryChange("monthNumber")} required style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
+                {MONTH_LABELS.slice(1).map((month, index) => (
+                  <option key={month} value={String(index + 1)}>{month}</option>
+                ))}
+              </select>
+            </label>
+
+            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
+              GL Name
+              <input value={spentEntryForm.glName} onChange={handleSpentEntryChange("glName")} required placeholder="Staff Salary, Materials..." style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
+            </label>
+
+            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
+              Amount USD
+              <input type="number" step="0.01" value={spentEntryForm.amount} onChange={handleSpentEntryChange("amount")} required placeholder="0.00" style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
+            </label>
+
+            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
+              Vendor
+              <input value={spentEntryForm.vendor} onChange={handleSpentEntryChange("vendor")} placeholder="Optional" style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
+            </label>
+
+            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13, gridColumn: "span 2" }}>
+              Notes
+              <input value={spentEntryForm.notes} onChange={handleSpentEntryChange("notes")} placeholder="Optional entry note" style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
+            </label>
+
+            <button type="submit" disabled={isSavingSpentEntry} style={{ padding: "11px 14px", borderRadius: 7, border: "none", background: theme.accentStrong, color: "#fff", cursor: isSavingSpentEntry ? "wait" : "pointer", fontWeight: 950 }}>
+              {isSavingSpentEntry ? "Saving..." : "Add Entry"}
+            </button>
+          </form>
+
+          {spentEntryMessage && <div style={{ marginTop: 12, color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryMessage}</div>}
+          {spentEntryError && <div style={{ marginTop: 12, color: theme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryError}</div>}
         </div>
       )}
 
