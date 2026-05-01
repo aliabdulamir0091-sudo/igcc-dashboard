@@ -1566,6 +1566,75 @@ function DashboardApp({ session, onLogout }) {
             );
           })}
         </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, alignItems: "end", marginTop: 10, paddingTop: 10, borderTop: `1px solid ${theme.border}` }}>
+          {[
+            ["Hub", "HUB", filters.hub, (event) => setFilters((current) => ({ ...current, hub: event.target.value, costCenter: "" })), ["", ...filteredHubOptions], "All hubs"],
+            ["Cost Center", "CC", filters.costCenter, handleFilterChange("costCenter"), ["", ...filteredCostCenterOptions], "All centers"],
+          ].map(([label, icon, value, onChange, options, emptyLabel]) => (
+            <label key={label} style={{ display: "block", color: theme.subtext, fontWeight: 900, fontSize: 10, textTransform: "uppercase" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <span style={{ display: "inline-grid", placeItems: "center", minWidth: 22, height: 18, borderRadius: 5, background: theme.accentSoft, color: theme.accentStrong, fontSize: 9, fontWeight: 950 }}>{icon}</span>
+                {label}
+              </span>
+              <select
+                value={value}
+                onChange={onChange}
+                style={{ width: "100%", boxSizing: "border-box", padding: "8px 9px", marginTop: 5, borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, fontSize: 12, fontWeight: 800 }}
+              >
+                {options.map((option) => (
+                  <option key={option || emptyLabel} value={option}>{option || emptyLabel}</option>
+                ))}
+              </select>
+            </label>
+          ))}
+
+          <div style={{ color: theme.subtext, fontWeight: 900, fontSize: 10, textTransform: "uppercase" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
+              <span style={{ display: "inline-grid", placeItems: "center", minWidth: 22, height: 18, borderRadius: 5, background: theme.accentSoft, color: theme.accentStrong, fontSize: 9, fontWeight: 950 }}>TM</span>
+              Time Mode
+            </span>
+            {renderPeriodToggleFor(periodView, handleTimeModeChange)}
+          </div>
+
+          <label style={{ display: "block", color: theme.subtext, fontWeight: 900, fontSize: 10, textTransform: "uppercase" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <span style={{ display: "inline-grid", placeItems: "center", minWidth: 22, height: 18, borderRadius: 5, background: theme.accentSoft, color: theme.accentStrong, fontSize: 9, fontWeight: 950 }}>YR</span>
+              Year
+            </span>
+            <select value={filters.year} onChange={handleFilterChange("year")} style={{ width: "100%", boxSizing: "border-box", padding: "8px 9px", marginTop: 5, borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, fontSize: 12, fontWeight: 800 }}>
+              <option value="">All years</option>
+              {yearsLoaded.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </label>
+
+          {periodView === "monthly" && (
+            <label style={{ display: "block", color: theme.subtext, fontWeight: 900, fontSize: 10, textTransform: "uppercase" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <span style={{ display: "inline-grid", placeItems: "center", minWidth: 22, height: 18, borderRadius: 5, background: theme.accentSoft, color: theme.accentStrong, fontSize: 9, fontWeight: 950 }}>MO</span>
+                Month
+              </span>
+              <select value={filters.month} onChange={handleFilterChange("month")} style={{ width: "100%", boxSizing: "border-box", padding: "8px 9px", marginTop: 5, borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, fontSize: 12, fontWeight: 800 }}>
+                <option value="">All months</option>
+                {monthOptions.map((month) => (
+                  <option key={month.label} value={month.label}>{month.label}</option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              setFilters({ portfolio: "", hub: "", costCenter: "", month: "", year: "" });
+              setPeriodView("monthly");
+            }}
+            style={{ padding: "9px 11px", borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: "pointer", fontWeight: 900, fontSize: 12 }}
+          >
+            Clear
+          </button>
+        </div>
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap", background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, boxShadow: theme.cardShadow }}>
@@ -1655,36 +1724,6 @@ function DashboardApp({ session, onLogout }) {
                 <div style={{ color: theme.subtext, fontSize: 12 }}>{overallStatus.message}</div>
               </div>
             </div>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(125px, 1fr)) auto", gap: 8, alignItems: "end", marginBottom: 10 }}>
-            {[
-              ["Portfolio", filters.portfolio, (event) => setFilters((current) => ({ ...current, portfolio: event.target.value, hub: "", costCenter: "" })), ["", ...portfolioOptions], "All portfolios"],
-              ["Hub", filters.hub, (event) => setFilters((current) => ({ ...current, hub: event.target.value, costCenter: "" })), ["", ...filteredHubOptions], "All hubs"],
-              ["Cost Center", filters.costCenter, handleFilterChange("costCenter"), ["", ...filteredCostCenterOptions], "All centers"],
-              ["Month", filters.month, handleFilterChange("month"), ["", ...monthOptions.map((month) => month.label)], "All months"],
-              ["Year", filters.year, handleFilterChange("year"), ["", ...yearsLoaded.map(String)], "All years"],
-            ].map(([label, value, onChange, options, emptyLabel]) => (
-              <label key={label} style={{ display: "block", color: theme.subtext, fontWeight: 800, fontSize: 11 }}>
-                {label}
-                <select
-                  value={value}
-                  onChange={onChange}
-                  style={{ width: "100%", boxSizing: "border-box", padding: "7px 8px", marginTop: 4, borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, fontSize: 12 }}
-                >
-                  {options.map((option) => (
-                    <option key={option || emptyLabel} value={option}>{option || emptyLabel}</option>
-                  ))}
-                </select>
-              </label>
-            ))}
-            <button
-              type="button"
-              onClick={() => setFilters({ portfolio: "", hub: "", costCenter: "", month: "", year: "" })}
-              style={{ padding: "8px 10px", borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: "pointer", fontWeight: 800, fontSize: 12 }}
-            >
-              Clear
-            </button>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "minmax(240px, 0.68fr) minmax(0, 1.32fr)", gap: 12, alignItems: "stretch", marginBottom: 6, padding: 10, border: `1px solid ${theme.border}`, borderRadius: 8, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg }}>
@@ -2051,93 +2090,6 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
         </div>
-      )}
-
-      {activePage !== "overview" && (
-      <div style={{ display: "grid", gap: 16, marginBottom: 20, backgroundColor: theme.panelBg, padding: 18, borderRadius: 8, border: `1px solid ${theme.border}`, boxShadow: theme.cardShadow }}>
-        <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <div>
-          <h2 style={{ margin: 0, color: theme.text, fontSize: 18, letterSpacing: 0 }}>Executive Filters</h2>
-            <p style={{ margin: "4px 0 0", color: theme.subtext, fontSize: 13 }}>Structure filters and time filters apply to every page.</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setFilters({ portfolio: "", hub: "", costCenter: "", month: "", year: "" });
-              setPeriodView("monthly");
-            }}
-            style={{ padding: "9px 14px", borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: "pointer", fontWeight: 700 }}
-          >
-            Clear Filters
-          </button>
-        </div>
-        <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: theme.inputBg }}>
-          <h3 style={{ margin: "0 0 12px", color: theme.text, fontSize: 14, fontWeight: 950 }}>1. Portfolio, Hub &amp; Cost Center</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
-            <label style={{ display: "block", color: theme.text, fontWeight: 600, fontSize: 14 }}>
-              Portfolio
-              <select value={filters.portfolio} onChange={(event) => setFilters((current) => ({ ...current, portfolio: event.target.value, hub: "", costCenter: "" }))} style={{ width: "100%", boxSizing: "border-box", padding: 12, marginTop: 8, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
-                <option value="">All portfolios</option>
-                {portfolioOptions.map((portfolio) => (
-                  <option key={portfolio} value={portfolio}>{portfolio}</option>
-                ))}
-              </select>
-            </label>
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 600, fontSize: 14 }}>
-              Hub
-              <select value={filters.hub} onChange={(event) => setFilters((current) => ({ ...current, hub: event.target.value, costCenter: "" }))} style={{ width: "100%", boxSizing: "border-box", padding: 12, marginTop: 8, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
-                <option value="">All hubs</option>
-                {filteredHubOptions.map((hub) => (
-                  <option key={hub} value={hub}>{hub}</option>
-                ))}
-              </select>
-            </label>
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 600, fontSize: 14 }}>
-              Cost Center
-              <select value={filters.costCenter} onChange={handleFilterChange("costCenter")} style={{ width: "100%", boxSizing: "border-box", padding: 12, marginTop: 8, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
-                <option value="">{IGCC_LEVEL_LABEL} - all hubs and cost centers</option>
-                {filteredCostCenterOptions.map((center) => (
-                  <option key={center} value={center}>{center}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </div>
-
-        <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: theme.inputBg }}>
-          <h3 style={{ margin: "0 0 12px", color: theme.text, fontSize: 14, fontWeight: 950 }}>2. Time Filter</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(220px, 0.8fr) repeat(auto-fit, minmax(220px, 1fr))", gap: 12, alignItems: "end" }}>
-            <div>
-              <div style={{ color: theme.text, fontWeight: 600, fontSize: 14, marginBottom: 8 }}>Time Mode</div>
-              {renderPeriodToggleFor(periodView, handleTimeModeChange)}
-            </div>
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 600, fontSize: 14 }}>
-              Year
-              <select value={filters.year} onChange={handleFilterChange("year")} style={{ width: "100%", boxSizing: "border-box", padding: 12, marginTop: 8, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
-                <option value="">All years</option>
-                {yearsLoaded.map((year) => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </label>
-
-            {periodView === "monthly" && (
-              <label style={{ display: "block", color: theme.text, fontWeight: 600, fontSize: 14 }}>
-                Month
-                <select value={filters.month} onChange={handleFilterChange("month")} style={{ width: "100%", boxSizing: "border-box", padding: 12, marginTop: 8, borderRadius: 8, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
-                  <option value="">All months</option>
-                  {monthOptions.map((month) => (
-                    <option key={month.label} value={month.label}>{month.label}</option>
-                  ))}
-                </select>
-              </label>
-            )}
-          </div>
-        </div>
-      </div>
       )}
 
       {activePage === "cost" && (
