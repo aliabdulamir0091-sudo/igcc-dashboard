@@ -1,6 +1,9 @@
 import { Fragment, useEffect, useState } from "react";
 import Papa from "papaparse";
 import { read, utils } from "xlsx";
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db, isFirebaseConfigured } from "./firebase";
 
 const formatCurrency = (value) =>
   value.toLocaleString(undefined, {
@@ -62,6 +65,9 @@ const PERIOD_OPTIONS = [
   ["yearly", "Yearly"],
 ];
 const VIEW_ONLY_MODE = true;
+const LOGIN_ATTEMPT_KEY = "igcc-login-attempts";
+const LOGIN_LOCK_MINUTES = 15;
+const MAX_LOGIN_ATTEMPTS = 5;
 const WELCOME_MESSAGE = "Welcome to this dashboard; Ali Abdulamir is developing this application, and this is not the final revision.";
 const WELCOME_VOICE_MESSAGE = "Welcome to this dashboard. This application is developed by Ali Abdulamir, and this is not the final revision.";
 const COST_CATEGORY_ORDER = [
@@ -439,7 +445,7 @@ const parseRevenueWorkbook = (workbook) => {
   ];
 };
 
-export default function App() {
+function DashboardApp({ session, onLogout }) {
   const [data, setData] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
   const [filename, setFilename] = useState("");
@@ -1555,6 +1561,19 @@ export default function App() {
               {label}
             </button>
           ))}
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ color: theme.subtext, fontSize: 12, fontWeight: 800, textAlign: "right" }}>
+            <div style={{ color: theme.text }}>{session?.email}</div>
+            <div style={{ color: theme.accentStrong, textTransform: "uppercase" }}>{session?.role ?? "Viewer"}</div>
+          </div>
+          <button
+            type="button"
+            onClick={onLogout}
+            style={{ padding: "10px 14px", cursor: "pointer", backgroundColor: theme.inputBg, color: theme.text, border: `1px solid ${theme.border}`, borderRadius: 8, fontWeight: 850 }}
+          >
+            Logout
+          </button>
         </div>
         {!VIEW_ONLY_MODE && (
           <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFile} style={{ padding: 10, borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
@@ -3032,4 +3051,227 @@ export default function App() {
       </table>
     </div>
   );
+}
+
+const readLoginAttempts = () => {
+  try {
+    return JSON.parse(window.localStorage.getItem(LOGIN_ATTEMPT_KEY) || "{}");
+  } catch {
+    return {};
+  }
+};
+
+const writeLoginAttempts = (attempts) => {
+  window.localStorage.setItem(LOGIN_ATTEMPT_KEY, JSON.stringify(attempts));
+};
+
+const getAttemptState = (email) => {
+  const attempts = readLoginAttempts();
+  const key = email.trim().toLowerCase();
+  const state = attempts[key] ?? { count: 0, lockedUntil: 0 };
+  return { attempts, key, state };
+};
+
+function LoginPage({ onAuthenticated }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const loginTheme = {
+    pageBg: "#f4f7fb",
+    panelBg: "#fff",
+    text: "#10233f",
+    subtext: "#4a5568",
+    accentStrong: "#0f766e",
+    accentWarm: "#b45309",
+    border: "#cbd5e1",
+    inputBg: "#f8fafc",
+    danger: "#b00020",
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
+
+    if (!isFirebaseConfigured || !auth || !db) {
+      setError("Secure access is not configured yet. Please contact the dashboard administrator.");
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const { attempts, key, state } = getAttemptState(normalizedEmail);
+    const now = Date.now();
+
+    if (state.lockedUntil && state.lockedUntil > now) {
+      const minutes = Math.ceil((state.lockedUntil - now) / 60000);
+      setError(`Too many failed attempts. Please try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const credential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      const accessDoc = await getDoc(doc(db, "approvedUsers", credential.user.uid));
+
+      if (!accessDoc.exists() || accessDoc.data()?.active !== true) {
+        await signOut(auth);
+        throw new Error("Access denied. Your account is not approved for this dashboard.");
+      }
+
+      const access = accessDoc.data();
+      if (access.email && access.email.toLowerCase() !== normalizedEmail) {
+        await signOut(auth);
+        throw new Error("Access denied. Your approved account record does not match this login.");
+      }
+
+      attempts[key] = { count: 0, lockedUntil: 0 };
+      writeLoginAttempts(attempts);
+      onAuthenticated({
+        uid: credential.user.uid,
+        email: credential.user.email,
+        role: access.role === "Admin" ? "Admin" : "Viewer",
+      });
+    } catch (err) {
+      const nextCount = (state.count ?? 0) + 1;
+      attempts[key] = {
+        count: nextCount,
+        lockedUntil: nextCount >= MAX_LOGIN_ATTEMPTS ? now + LOGIN_LOCK_MINUTES * 60000 : 0,
+      };
+      writeLoginAttempts(attempts);
+      setError(err.message || "Login failed. Please check your email and password.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, fontFamily: "Inter, system-ui, sans-serif", background: loginTheme.pageBg, color: loginTheme.text }}>
+      <div style={{ width: "min(980px, 100%)", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 420px)", gap: 18, alignItems: "stretch" }}>
+        <section style={{ background: loginTheme.panelBg, border: `1px solid ${loginTheme.border}`, borderRadius: 8, padding: 28, boxShadow: "0 18px 45px rgba(15,23,42,0.10)" }}>
+          <div style={{ width: 72, height: 72, borderRadius: 8, border: `1px solid ${loginTheme.border}`, background: loginTheme.inputBg, display: "grid", placeItems: "center", marginBottom: 18 }}>
+            <img src={getPublicAssetUrl("favicon.svg")} alt="IGCC logo" style={{ width: 46, height: 46, objectFit: "contain" }} />
+          </div>
+          <div style={{ color: loginTheme.accentStrong, fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>IRAQ GATE CONTRACTING COMPANY</div>
+          <h1 style={{ margin: "8px 0 0", fontSize: 34, lineHeight: 1.08, letterSpacing: 0 }}>IGCC P&amp;L Dashboard</h1>
+          <p style={{ margin: "12px 0 0", color: loginTheme.subtext, fontSize: 16, lineHeight: 1.55, maxWidth: 620 }}>
+            Secure executive access for cost, AFP approval, profitability, and portfolio performance.
+          </p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 24 }}>
+            {["Manual Approval Only", "View-Only Access", "Protected Dashboard"].map((label) => (
+              <span key={label} style={{ color: loginTheme.accentStrong, background: "rgba(15,118,110,0.10)", border: "1px solid rgba(15,118,110,0.25)", borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>
+                {label}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        <form onSubmit={handleSubmit} style={{ background: loginTheme.panelBg, border: `1px solid ${loginTheme.border}`, borderRadius: 8, padding: 24, boxShadow: "0 18px 45px rgba(15,23,42,0.10)", display: "grid", gap: 14 }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 24, letterSpacing: 0 }}>Secure Login</h2>
+            <p style={{ margin: "6px 0 0", color: loginTheme.subtext, fontSize: 13 }}>Use your approved account credentials.</p>
+          </div>
+
+          <label style={{ display: "grid", gap: 7, color: loginTheme.text, fontSize: 13, fontWeight: 850 }}>
+            Email
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              required
+              style={{ padding: 12, borderRadius: 8, border: `1px solid ${loginTheme.border}`, background: loginTheme.inputBg, color: loginTheme.text, fontSize: 14 }}
+            />
+          </label>
+
+          <label style={{ display: "grid", gap: 7, color: loginTheme.text, fontSize: 13, fontWeight: 850 }}>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              required
+              style={{ padding: 12, borderRadius: 8, border: `1px solid ${loginTheme.border}`, background: loginTheme.inputBg, color: loginTheme.text, fontSize: 14 }}
+            />
+          </label>
+
+          {error && <div style={{ color: loginTheme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13, lineHeight: 1.4 }}>{error}</div>}
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            style={{ border: "none", borderRadius: 8, padding: "12px 16px", cursor: isSubmitting ? "wait" : "pointer", background: loginTheme.accentStrong, color: "#fff", fontWeight: 950, fontSize: 14 }}
+          >
+            {isSubmitting ? "Verifying..." : "Login"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  const [session, setSession] = useState(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    if (!isFirebaseConfigured || !auth || !db) {
+      setIsCheckingAuth(false);
+      return undefined;
+    }
+
+    return onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setSession(null);
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      try {
+        const accessDoc = await getDoc(doc(db, "approvedUsers", user.uid));
+        if (!accessDoc.exists() || accessDoc.data()?.active !== true) {
+          await signOut(auth);
+          setSession(null);
+          setIsCheckingAuth(false);
+          return;
+        }
+
+        const access = accessDoc.data();
+        setSession({
+          uid: user.uid,
+          email: user.email,
+          role: access.role === "Admin" ? "Admin" : "Viewer",
+        });
+      } catch {
+        await signOut(auth);
+        setSession(null);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    if (auth) await signOut(auth);
+    setSession(null);
+  };
+
+  if (isCheckingAuth) {
+    return (
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, fontFamily: "Inter, system-ui, sans-serif", background: "#f4f7fb", color: "#10233f" }}>
+        <div style={{ width: "min(420px, 100%)", border: "1px solid #cbd5e1", borderRadius: 8, padding: 22, background: "#fff", textAlign: "center", boxShadow: "0 18px 45px rgba(15,23,42,0.10)" }}>
+          <div style={{ color: "#0f766e", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>Secure Access</div>
+          <h1 style={{ margin: "8px 0 0", fontSize: 24 }}>Verifying session</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <LoginPage onAuthenticated={setSession} />;
+  }
+
+  return <DashboardApp session={session} onLogout={handleLogout} />;
 }
