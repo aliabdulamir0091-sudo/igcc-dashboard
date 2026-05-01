@@ -3312,7 +3312,7 @@ const getAllowedAccess = async (user) => {
 
   const access = await response.json();
   const isActive = access.fields?.active?.booleanValue === true;
-  const role = access.fields?.role?.stringValue;
+  const role = (access.fields?.role?.stringValue ?? "").trim().toLowerCase();
 
   if (!isActive) {
     return null;
@@ -3321,7 +3321,7 @@ const getAllowedAccess = async (user) => {
   return {
     uid: user.uid,
     email: user.email,
-    role: role === "Admin" ? "Admin" : "Viewer",
+    role: role === "admin" ? "Admin" : "Viewer",
   };
 };
 
