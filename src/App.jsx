@@ -429,7 +429,7 @@ const manualSpentEntryToRow = (entry) => {
 
 const firestoreValue = (value) => {
   if (typeof value === "boolean") return { booleanValue: value };
-  if (typeof value === "number" && Number.isInteger(value)) return { integerValue: value };
+  if (typeof value === "number" && Number.isInteger(value)) return { integerValue: String(value) };
   if (typeof value === "number") return { doubleValue: value };
   return { stringValue: String(value ?? "") };
 };
