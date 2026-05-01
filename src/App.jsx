@@ -1660,7 +1660,8 @@ function DashboardApp({ session, onLogout }) {
     hour: "2-digit",
     minute: "2-digit",
   });
-  const visibleNavItems = session?.role === "Admin" ? [...NAV_ITEMS, ["spent", "Spent Report"]] : NAV_ITEMS;
+  const isAdmin = session?.role === "Admin";
+  const visibleNavItems = [...NAV_ITEMS, ["spent", "Spent Report"]];
   const spentFormHubOptions = spentEntryForm.portfolio
     ? hubOptions.filter((hub) => getPortfolioForHub(hub) === spentEntryForm.portfolio)
     : hubOptions;
@@ -1890,17 +1891,23 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
-      {activePage === "spent" && session?.role === "Admin" && (
+      {activePage === "spent" && (
         <div style={panelStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
             <div>
               <h2 style={{ margin: 0, color: theme.text, fontSize: 22, letterSpacing: 0 }}>Spent Report</h2>
-              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Admin entry for new monthly spend by portfolio, hub, cost center, and GL name.</p>
+              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Monthly spend entries by portfolio, hub, cost center, and GL name.</p>
             </div>
-            <span style={{ color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>Admin Entry</span>
+            <span style={{ color: isAdmin ? theme.accentStrong : theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>{isAdmin ? "Admin Entry" : "View Only"}</span>
           </div>
 
-          <form onSubmit={saveSpentEntry} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, alignItems: "end", border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: theme.inputBg }}>
+          {!isAdmin && (
+            <div style={{ color: theme.subtext, background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, fontSize: 13, fontWeight: 800 }}>
+              Spent Report entry is available to Admin users only.
+            </div>
+          )}
+
+          {isAdmin && <form onSubmit={saveSpentEntry} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, alignItems: "end", border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: theme.inputBg }}>
             <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
               Portfolio
               <select value={spentEntryForm.portfolio} onChange={handleSpentEntryChange("portfolio")} style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
@@ -1968,7 +1975,7 @@ function DashboardApp({ session, onLogout }) {
             <button type="submit" disabled={isSavingSpentEntry} style={{ padding: "11px 14px", borderRadius: 7, border: "none", background: theme.accentStrong, color: "#fff", cursor: isSavingSpentEntry ? "wait" : "pointer", fontWeight: 950 }}>
               {isSavingSpentEntry ? "Saving..." : "Add Entry"}
             </button>
-          </form>
+          </form>}
 
           {spentEntryMessage && <div style={{ marginTop: 12, color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryMessage}</div>}
           {spentEntryError && <div style={{ marginTop: 12, color: theme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryError}</div>}
