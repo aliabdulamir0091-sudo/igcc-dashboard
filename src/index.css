@@ -56,6 +56,98 @@ body {
   background: var(--bg);
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  max-width: 100%;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+.dashboard-shell,
+.login-page {
+  width: 100%;
+  max-width: 100%;
+}
+
+.dashboard-shell {
+  overflow-x: hidden;
+}
+
+.login-page h1,
+.login-page h2 {
+  color: #10233f !important;
+}
+
+.dashboard-shell h1,
+.dashboard-shell h2,
+.dashboard-shell h3,
+.dashboard-shell p,
+.dashboard-shell strong,
+.dashboard-shell span,
+.dashboard-shell button,
+.login-page h1,
+.login-page h2,
+.login-page p,
+.login-page span,
+.login-page button {
+  overflow-wrap: anywhere;
+}
+
+.dashboard-shell [style*="overflow-x: auto"] {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+  border-radius: 8px;
+}
+
+.dashboard-shell table {
+  width: max-content !important;
+  max-width: none !important;
+  border-collapse: collapse;
+}
+
+.dashboard-shell th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.mobile-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 950;
+}
+
 .executive-hover-card:hover,
 .executive-hover-button:hover {
   transform: translateY(-3px);
@@ -122,4 +214,256 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+@media (max-width: 1024px) {
+  .login-page {
+    place-items: start center !important;
+    padding: 18px !important;
+  }
+
+  .login-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .dashboard-shell {
+    padding: 8px 12px 24px !important;
+  }
+
+  .dashboard-header-main,
+  .dashboard-user-actions,
+  .dashboard-nav-shell {
+    align-items: stretch !important;
+  }
+
+  .dashboard-user-actions {
+    width: 100%;
+    justify-content: space-between !important;
+    border-left: 0 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    padding-left: 0 !important;
+    padding-top: 14px;
+  }
+
+  .dashboard-nav-shell {
+    margin-bottom: 16px !important;
+  }
+
+  .dashboard-nav-list {
+    width: 100%;
+  }
+
+  .dashboard-nav-list > button {
+    flex: 1 1 calc(50% - 10px);
+    justify-content: center;
+    min-width: 180px;
+  }
+
+  .dashboard-shell [style*="grid-template-columns: minmax(0, 1fr) minmax(360px"],
+  .dashboard-shell [style*="grid-template-columns: minmax(240px"],
+  .dashboard-shell [style*="grid-template-columns: minmax(min(100%, 380px)"],
+  .dashboard-shell [style*="grid-template-columns: minmax(min(100%, 430px)"],
+  .dashboard-shell [style*="grid-template-columns: minmax(min(100%, 420px)"],
+  .dashboard-shell [style*="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .login-page {
+    padding: 12px !important;
+  }
+
+  .login-hero-panel,
+  .login-form-panel {
+    padding: 18px !important;
+  }
+
+  .login-page h1 {
+    font-size: 28px !important;
+    line-height: 1.12 !important;
+  }
+
+  .login-page h2 {
+    font-size: 22px !important;
+  }
+
+  .dashboard-shell {
+    padding: 6px 8px 20px !important;
+  }
+
+  .dashboard-header,
+  .dashboard-nav-shell,
+  .dashboard-shell details,
+  .dashboard-shell section,
+  .dashboard-shell [style*="border-radius: 18px"],
+  .dashboard-shell [style*="border-radius: 16px"],
+  .dashboard-shell [style*="border-radius: 14px"] {
+    border-radius: 8px !important;
+  }
+
+  .dashboard-header-main,
+  .dashboard-filter-grid,
+  .portfolio-filter-strip,
+  .dashboard-nav-shell {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .dashboard-brand {
+    width: 100%;
+  }
+
+  .dashboard-brand h1 {
+    font-size: 22px !important;
+  }
+
+  .dashboard-brand p {
+    font-size: 12px !important;
+    line-height: 1.45 !important;
+  }
+
+  .dashboard-user-actions {
+    gap: 12px !important;
+  }
+
+  .dashboard-user-actions > div {
+    min-width: 0;
+    flex: 1 1 190px;
+  }
+
+  .dashboard-user-actions button {
+    flex: 0 0 auto;
+    padding: 10px 14px !important;
+    border-radius: 8px !important;
+  }
+
+  .mobile-nav-toggle {
+    display: inline-flex;
+  }
+
+  .dashboard-nav-list {
+    display: none !important;
+    flex-direction: column;
+    gap: 8px !important;
+  }
+
+  .dashboard-nav-list.is-open {
+    display: flex !important;
+  }
+
+  .dashboard-nav-list > button,
+  .dashboard-nav-shell > button:not(.mobile-nav-toggle) {
+    width: 100%;
+    min-width: 0 !important;
+    justify-content: flex-start;
+  }
+
+  .dashboard-nav-shell > button:not(.mobile-nav-toggle) {
+    justify-content: center;
+  }
+
+  .dashboard-shell [style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .dashboard-shell [style*="padding: 44px 48px"],
+  .dashboard-shell [style*="padding: 28px"],
+  .dashboard-shell [style*="padding: 24px"],
+  .dashboard-shell [style*="padding: 22px"],
+  .dashboard-shell [style*="padding: 20px"] {
+    padding: 16px !important;
+  }
+
+  .dashboard-shell h1,
+  .dashboard-shell h2 {
+    font-size: 22px !important;
+    line-height: 1.15 !important;
+  }
+
+  .dashboard-shell h3 {
+    font-size: 16px !important;
+    line-height: 1.25 !important;
+  }
+
+  .dashboard-shell p {
+    font-size: 12px !important;
+    line-height: 1.45 !important;
+  }
+
+  .dashboard-shell [style*="font-size: 39px"],
+  .dashboard-shell [style*="font-size: 34px"],
+  .dashboard-shell [style*="font-size: 31px"],
+  .dashboard-shell [style*="font-size: 30px"],
+  .dashboard-shell [style*="font-size: 27px"] {
+    font-size: 22px !important;
+  }
+
+  .dashboard-shell [style*="font-size: 25px"],
+  .dashboard-shell [style*="font-size: 24px"],
+  .dashboard-shell [style*="font-size: 23px"],
+  .dashboard-shell [style*="font-size: 22px"] {
+    font-size: 18px !important;
+  }
+
+  .dashboard-shell svg[aria-hidden="true"][style*="position: absolute"] {
+    display: none !important;
+  }
+
+  .dashboard-shell [style*="overflow-x: auto"] {
+    margin-inline: -2px;
+    padding-bottom: 4px;
+  }
+
+  .dashboard-shell th,
+  .dashboard-shell td {
+    padding: 8px !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    white-space: nowrap;
+  }
+
+  .dashboard-shell td:first-child,
+  .dashboard-shell th:first-child {
+    white-space: normal;
+    min-width: 120px;
+  }
+
+  .dashboard-shell button,
+  .dashboard-shell select,
+  .dashboard-shell input {
+    min-height: 40px;
+  }
+
+  .dashboard-shell select,
+  .dashboard-shell input {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .dashboard-shell {
+    padding-inline: 6px !important;
+  }
+
+  .dashboard-header-main,
+  .dashboard-filter-grid,
+  .portfolio-filter-strip,
+  .dashboard-nav-shell {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .dashboard-user-actions {
+    flex-direction: column;
+  }
+
+  .dashboard-user-actions button {
+    width: 100%;
+  }
+
+  .dashboard-shell th,
+  .dashboard-shell td {
+    padding: 7px !important;
+  }
 }

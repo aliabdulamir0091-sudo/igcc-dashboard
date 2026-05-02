@@ -487,6 +487,7 @@ function DashboardApp({ session, onLogout }) {
   const [spentDetailSort, setSpentDetailSort] = useState({ field: "amount", direction: "desc" });
   const [profitabilitySortMode, setProfitabilitySortMode] = useState("worst");
   const [themeMode, setThemeMode] = useState("light");
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [expandedProfitRows, setExpandedProfitRows] = useState({});
   const [spentEntryMessage, setSpentEntryMessage] = useState("");
@@ -1843,7 +1844,7 @@ function DashboardApp({ session, onLogout }) {
   );
 
   return (
-    <div style={{ minHeight: "100vh", padding: "8px 16px 28px", fontFamily: "Inter, system-ui, sans-serif", maxWidth: 1280, margin: "0 auto", color: theme.text, background: themeMode === "light" ? "linear-gradient(180deg, #eef5fb 0%, #f8fbff 42%, #ffffff 100%)" : theme.pageBg }}>
+    <div className="dashboard-shell" style={{ minHeight: "100vh", padding: "8px 16px 28px", fontFamily: "Inter, system-ui, sans-serif", maxWidth: 1280, margin: "0 auto", color: theme.text, background: themeMode === "light" ? "linear-gradient(180deg, #eef5fb 0%, #f8fbff 42%, #ffffff 100%)" : theme.pageBg }}>
       {showWelcome && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "grid", placeItems: "center", padding: 20, background: themeMode === "light" ? "rgba(15, 23, 42, 0.42)" : "rgba(2, 6, 23, 0.68)" }}>
           <div style={{ width: "min(620px, 100%)", overflow: "hidden", borderRadius: 8, background: theme.panelBg, border: `1px solid ${theme.border}`, boxShadow: "0 24px 70px rgba(15,23,42,0.28)" }}>
@@ -1873,9 +1874,9 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
-      <div style={{ marginBottom: 12, overflow: "hidden", background: "linear-gradient(135deg, #041d36 0%, #062b4f 58%, #073861 100%)", border: "1px solid rgba(148, 163, 184, 0.24)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(15, 23, 42, 0.18)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "22px 26px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+      <div className="dashboard-header" style={{ marginBottom: 12, overflow: "hidden", background: "linear-gradient(135deg, #041d36 0%, #062b4f 58%, #073861 100%)", border: "1px solid rgba(148, 163, 184, 0.24)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(15, 23, 42, 0.18)" }}>
+        <div className="dashboard-header-main" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "22px 26px" }}>
+          <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <div style={{ width: 62, height: 62, borderRadius: 16, border: "1px solid rgba(255,255,255,0.16)", background: "linear-gradient(135deg, rgba(20,184,166,0.24), rgba(37,99,235,0.18))", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)" }}>
               <img src={getPublicAssetUrl("favicon.svg")} alt="IGCC logo" style={{ width: 42, height: 42, objectFit: "contain" }} />
             </div>
@@ -1885,7 +1886,7 @@ function DashboardApp({ session, onLogout }) {
               <p style={{ margin: "7px 0 0", color: "rgba(226,232,240,0.86)", fontSize: 13, maxWidth: 720 }}>Executive view of cost, AFP approval, profitability, and portfolio performance.</p>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap", justifyContent: "flex-end", borderLeft: "1px solid rgba(255,255,255,0.16)", paddingLeft: 22 }}>
+          <div className="dashboard-user-actions" style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap", justifyContent: "flex-end", borderLeft: "1px solid rgba(255,255,255,0.16)", paddingLeft: 22 }}>
             <div style={{ color: "rgba(226,232,240,0.78)", fontSize: 12, fontWeight: 850, textAlign: "left", lineHeight: 1.42 }}>
               <div style={{ color: "rgba(226,232,240,0.78)", fontWeight: 800 }}>Welcome,</div>
               <div style={{ color: "#fff", maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 15, fontWeight: 950 }}>{portalUserName}</div>
@@ -1901,7 +1902,7 @@ function DashboardApp({ session, onLogout }) {
           </div>
         </div>
         {activePage !== "home" && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "0 26px 12px", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+        <div className="portfolio-filter-strip" style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "0 26px 12px", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
           <button
             type="button"
             onClick={() => setFilters((current) => ({ ...current, portfolio: "", hub: "", costCenter: "" }))}
@@ -1925,7 +1926,7 @@ function DashboardApp({ session, onLogout }) {
         </div>
         )}
         {activePage !== "home" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", columnGap: 12, rowGap: 12, alignItems: "end", padding: "16px 26px 18px", borderTop: "1px solid rgba(255,255,255,0.12)", background: "rgba(2, 12, 27, 0.18)" }}>
+        <div className="dashboard-filter-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", columnGap: 12, rowGap: 12, alignItems: "end", padding: "16px 26px 18px", borderTop: "1px solid rgba(255,255,255,0.12)", background: "rgba(2, 12, 27, 0.18)" }}>
           {[
             ["Hub", "HUB", filters.hub, (event) => setFilters((current) => ({ ...current, hub: event.target.value, costCenter: "" })), ["", ...filteredHubOptions], "All hubs"],
             ["Cost Center", "CC", filters.costCenter, handleFilterChange("costCenter"), ["", ...filteredCostCenterOptions], "All centers"],
@@ -1997,13 +1998,25 @@ function DashboardApp({ session, onLogout }) {
         )}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", margin: "-12px 0 24px", flexWrap: "wrap", background: "linear-gradient(135deg, #06213d, #082d50)", border: "1px solid rgba(148, 163, 184, 0.22)", borderTop: "none", borderRadius: "0 0 14px 14px", padding: "14px 26px", boxShadow: "0 14px 34px rgba(15,23,42,0.14)" }}>
-        <div style={{ display: "inline-flex", gap: 10, padding: 0, borderRadius: 12, flexWrap: "wrap" }}>
+      <div className="dashboard-nav-shell" style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", margin: "-12px 0 24px", flexWrap: "wrap", background: "linear-gradient(135deg, #06213d, #082d50)", border: "1px solid rgba(148, 163, 184, 0.22)", borderTop: "none", borderRadius: "0 0 14px 14px", padding: "14px 26px", boxShadow: "0 14px 34px rgba(15,23,42,0.14)" }}>
+        <button
+          type="button"
+          className="mobile-nav-toggle"
+          aria-expanded={isMobileNavOpen}
+          onClick={() => setIsMobileNavOpen((current) => !current)}
+        >
+          <span aria-hidden="true">☰</span>
+          Menu
+        </button>
+        <div className={`dashboard-nav-list ${isMobileNavOpen ? "is-open" : ""}`} style={{ display: "inline-flex", gap: 10, padding: 0, borderRadius: 12, flexWrap: "wrap" }}>
           {visibleNavItems.map(([value, label]) => (
             <button
               key={value}
               type="button"
-              onClick={() => setActivePage(value)}
+              onClick={() => {
+                setActivePage(value);
+                setIsMobileNavOpen(false);
+              }}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -3996,9 +4009,9 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, fontFamily: "Inter, system-ui, sans-serif", background: loginTheme.pageBg, color: loginTheme.text }}>
-      <div style={{ width: "min(980px, 100%)", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 420px)", gap: 18, alignItems: "stretch" }}>
-        <section style={{ background: loginTheme.panelBg, border: `1px solid ${loginTheme.border}`, borderRadius: 8, padding: 28, boxShadow: "0 18px 45px rgba(15,23,42,0.10)" }}>
+    <div className="login-page" style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, fontFamily: "Inter, system-ui, sans-serif", background: loginTheme.pageBg, color: loginTheme.text }}>
+      <div className="login-grid" style={{ width: "min(980px, 100%)", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 420px)", gap: 18, alignItems: "stretch" }}>
+        <section className="login-hero-panel" style={{ background: loginTheme.panelBg, border: `1px solid ${loginTheme.border}`, borderRadius: 8, padding: 28, boxShadow: "0 18px 45px rgba(15,23,42,0.10)" }}>
           <div style={{ width: 72, height: 72, borderRadius: 8, border: `1px solid ${loginTheme.border}`, background: loginTheme.inputBg, display: "grid", placeItems: "center", marginBottom: 18 }}>
             <img src={getPublicAssetUrl("favicon.svg")} alt="IGCC logo" style={{ width: 46, height: 46, objectFit: "contain" }} />
           </div>
@@ -4016,7 +4029,7 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
           </div>
         </section>
 
-        <form onSubmit={handleSubmit} style={{ background: loginTheme.panelBg, border: `1px solid ${loginTheme.border}`, borderRadius: 8, padding: 24, boxShadow: "0 18px 45px rgba(15,23,42,0.10)", display: "grid", gap: 14, alignSelf: "start" }}>
+        <form className="login-form-panel" onSubmit={handleSubmit} style={{ background: loginTheme.panelBg, border: `1px solid ${loginTheme.border}`, borderRadius: 8, padding: 24, boxShadow: "0 18px 45px rgba(15,23,42,0.10)", display: "grid", gap: 14, alignSelf: "start" }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 26, letterSpacing: 0 }}>{mode === "signup" ? "Create your account" : "Log in to dashboard"}</h2>
             <p style={{ margin: "7px 0 0", color: loginTheme.subtext, fontSize: 13, lineHeight: 1.45 }}>
