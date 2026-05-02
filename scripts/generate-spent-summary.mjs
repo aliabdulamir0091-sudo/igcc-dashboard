@@ -10,6 +10,7 @@ const summaryDir = join(spentDir, "summary");
 const creditNoteOutputDir = join(spentDir, "credit-note");
 const manifestFile = join(processedDir, "manifest.json");
 const creditNoteSummaryFile = join(creditNoteOutputDir, "credit_note_summary.json");
+const workshopCreditIssuerCostCenter = "MWS_23";
 const creditNoteSourceCandidates = [
   join(spentDir, "Credit Note"),
   join(spentDir, "credit note"),
@@ -320,19 +321,14 @@ const readCreditNoteRows = () => {
               return;
             }
 
-            const cnReceived = /received|receipt|debit/i.test(headerLabel) ? amount : 0;
-            const cnIssued = /received|receipt|debit/i.test(headerLabel) ? 0 : amount;
+            const cnReceived = amount;
+            const cnIssued = 0;
             const periodKey = makePeriodKey(period.year, period.monthNumber);
             const category = getPeriodFromDate(header) ? "Credit Note" : /fa|fixed/i.test(headerLabel) ? "Fixed Assets" : headerLabel;
-
-            creditRows.push({
-              id: `${fileName}:${sheetName}:${headerIndex + rowOffset + 2}:${columnIndex}`,
+            const baseCreditRow = {
               fileName,
               sheetName,
               rowNumber: headerIndex + rowOffset + 2,
-              portfolio: getPortfolioForHub(getHubForCostCenter(costCenter)),
-              hub: getHubForCostCenter(costCenter),
-              costCenter,
               month: `${period.monthName} ${period.year}`,
               monthName: period.monthName,
               monthNumber: period.monthNumber,
@@ -340,11 +336,30 @@ const readCreditNoteRows = () => {
               year: period.year,
               category,
               vendor: "Credit Note",
+              source: "Credit Note",
+              sourceType: "credit-note",
+            };
+
+            creditRows.push({
+              ...baseCreditRow,
+              id: `${fileName}:${sheetName}:${headerIndex + rowOffset + 2}:${columnIndex}`,
+              portfolio: getPortfolioForHub(getHubForCostCenter(costCenter)),
+              hub: getHubForCostCenter(costCenter),
+              costCenter,
               cnReceived,
               cnIssued,
               amount: cnReceived - cnIssued,
-              source: "Credit Note",
-              sourceType: "credit-note",
+            });
+            creditRows.push({
+              ...baseCreditRow,
+              id: `${fileName}:${sheetName}:${headerIndex + rowOffset + 2}:${columnIndex}:workshop-issued`,
+              portfolio: getPortfolioForHub(getHubForCostCenter(workshopCreditIssuerCostCenter)),
+              hub: getHubForCostCenter(workshopCreditIssuerCostCenter),
+              costCenter: workshopCreditIssuerCostCenter,
+              cnReceived: 0,
+              cnIssued: amount,
+              amount: -amount,
+              source: "Workshop Credit Note Offset",
             });
             rowHadValue = true;
             fileSummary.validRows += 1;

@@ -1454,10 +1454,10 @@ function DashboardApp({ session, onLogout }) {
           <div>
             <h4 style={{ margin: "0 0 10px", color: theme.text, fontSize: 14 }}>Top receiving cost centers</h4>
             <div style={{ display: "grid", gap: 8 }}>
-              {creditImpactByCenter.slice(0, 6).map((row) => (
+              {[...creditImpactByCenter].sort((a, b) => b.cnReceived - a.cnReceived || Math.abs(b.netImpact) - Math.abs(a.netImpact)).slice(0, 6).map((row) => (
                 <div key={row.costCenter} style={{ display: "grid", gridTemplateColumns: "minmax(110px, 1fr) 130px", gap: 10, alignItems: "center" }}>
                   <span style={{ color: theme.text, fontSize: 12, fontWeight: 900, overflowWrap: "anywhere" }}>{row.costCenter}</span>
-                  <span style={{ color: theme.danger, textAlign: "right", fontSize: 12, fontWeight: 950 }}>{formatCompactCurrency(row.cnIssued)}</span>
+                  <span style={{ color: theme.accentStrong, textAlign: "right", fontSize: 12, fontWeight: 950 }}>{formatCompactCurrency(row.cnReceived)}</span>
                 </div>
               ))}
               {!creditImpactByCenter.length && <div style={{ color: theme.subtext, fontSize: 12 }}>No CN rows match the current filters.</div>}
