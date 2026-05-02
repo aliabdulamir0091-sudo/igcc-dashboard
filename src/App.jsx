@@ -3195,7 +3195,7 @@ const readCachedAccess = (user) => {
       cachedAccess?.email?.toLowerCase() === user.email?.trim().toLowerCase() &&
       Date.now() - Number(cachedAccess.cachedAt ?? 0) < ACCESS_CACHE_MS
     ) {
-      console.log("[IGCC Auth] approvedUsers cache hit", user.uid);
+      console.log("[IGCC Auth] access cache hit", user.uid);
       return {
         uid: cachedAccess.uid,
         email: cachedAccess.email,
@@ -3211,11 +3211,6 @@ const readCachedAccess = (user) => {
 
 const writeCachedAccess = (user, session) => {
   window.sessionStorage.setItem(getAccessCacheKey(user), JSON.stringify({ ...session, cachedAt: Date.now() }));
-};
-
-const isQuotaError = (err) => {
-  const value = `${err?.code ?? ""} ${err?.message ?? ""}`.toLowerCase();
-  return value.includes("resource-exhausted") || value.includes("quota") || value.includes("429");
 };
 
 const verifyAllowedAccessOnce = async (user) => {
@@ -3522,7 +3517,8 @@ export default function App() {
 
         setSession(session);
       } catch (err) {
-        setAuthError(isQuotaError(err) ? "Firebase quota exceeded. Please try again later or contact Admin." : err.message || "Could not verify approved access. Please try again.");
+        console.log("[IGCC Auth] session restore skipped", err?.code || err?.message);
+        setAuthError("");
         await signOut(auth);
         setSession(null);
       } finally {
