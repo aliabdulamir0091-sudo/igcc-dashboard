@@ -1145,7 +1145,7 @@ function DashboardApp({ session, onLogout }) {
   const profitColor = (value) => (value >= 0 ? theme.accentStrong : theme.danger);
   const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
   const renderPeriodToggleFor = (value, onChange) => (
-    <div onClick={(event) => event.stopPropagation()} style={{ display: "inline-flex", gap: 4, padding: 4, background: theme.accentSoft, borderRadius: 8 }}>
+    <div onClick={(event) => event.stopPropagation()} style={{ display: "flex", width: "100%", boxSizing: "border-box", gap: 3, padding: 3, background: theme.accentSoft, borderRadius: 8, overflow: "hidden" }}>
       {PERIOD_OPTIONS.map(([optionValue, label]) => (
         <button
           key={optionValue}
@@ -1154,9 +1154,13 @@ function DashboardApp({ session, onLogout }) {
           style={{
             border: "none",
             borderRadius: 6,
-            padding: "9px 14px",
+            flex: "1 1 0",
+            minWidth: 0,
+            padding: "8px 7px",
             cursor: "pointer",
-            fontWeight: 700,
+            fontWeight: 850,
+            fontSize: 11,
+            whiteSpace: "nowrap",
             background: value === optionValue ? theme.panelBg : "transparent",
             color: value === optionValue ? theme.accentStrong : theme.text,
             boxShadow: value === optionValue ? "0 1px 4px rgba(15,23,42,0.12)" : "none",
@@ -1720,7 +1724,7 @@ function DashboardApp({ session, onLogout }) {
         </div>
         )}
         {activePage !== "home" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, alignItems: "end", padding: "12px 26px 16px", borderTop: "1px solid rgba(255,255,255,0.12)", background: "rgba(2, 12, 27, 0.18)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", columnGap: 12, rowGap: 12, alignItems: "end", padding: "16px 26px 18px", borderTop: "1px solid rgba(255,255,255,0.12)", background: "rgba(2, 12, 27, 0.18)" }}>
           {[
             ["Hub", "HUB", filters.hub, (event) => setFilters((current) => ({ ...current, hub: event.target.value, costCenter: "" })), ["", ...filteredHubOptions], "All hubs"],
             ["Cost Center", "CC", filters.costCenter, handleFilterChange("costCenter"), ["", ...filteredCostCenterOptions], "All centers"],
