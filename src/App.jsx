@@ -66,6 +66,7 @@ const PERIOD_OPTIONS = [
 const VIEW_ONLY_MODE = true;
 const WELCOME_MESSAGE = "Welcome to this dashboard; Ali Abdulamir is developing this application, and this is not the final revision.";
 const WELCOME_VOICE_MESSAGE = "Welcome to this dashboard. This application is developed by Ali Abdulamir, and this is not the final revision.";
+const ACCESS_CACHE_MS = 10 * 60 * 1000;
 const COST_CATEGORY_ORDER = [
   "Accommodation",
   "Air ticket & travel",
@@ -549,6 +550,8 @@ function DashboardApp({ session, onLogout }) {
   const [isSavingSpentEntry, setIsSavingSpentEntry] = useState(false);
   const [isImportingHistory, setIsImportingHistory] = useState(false);
   const [isUploadingSpentExcel, setIsUploadingSpentExcel] = useState(false);
+  const [isLoadingFirebaseSpent, setIsLoadingFirebaseSpent] = useState(false);
+  const [loadedFirebaseSpentPeriods, setLoadedFirebaseSpentPeriods] = useState([]);
   const [historyImportProgress, setHistoryImportProgress] = useState("");
 
   const theme = {
@@ -682,42 +685,12 @@ function DashboardApp({ session, onLogout }) {
       }
     };
 
-    const loadManualSpentEntries = async () => {
-      if (!auth?.currentUser || !firebaseProjectId) return [];
-
-      try {
-        const idToken = await auth.currentUser.getIdToken();
-        const documents = [];
-        let pageToken = "";
-
-        do {
-          const pageQuery = pageToken ? `?pageToken=${encodeURIComponent(pageToken)}` : "";
-          const response = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries${pageQuery}`, {
-            headers: { Authorization: `Bearer ${idToken}` },
-          });
-
-          if (response.status === 404 || response.status === 403) return [];
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-          const manualData = await response.json();
-          documents.push(...(manualData.documents ?? []));
-          pageToken = manualData.nextPageToken || "";
-        } while (pageToken);
-
-        return documents.map(parseManualSpentDocument);
-      } catch {
-        // Manual entries are additive; keep the bundled dashboard available if Firestore is unreachable.
-        return [];
-      }
-    };
-
     Promise.all([loadBundledReport(), loadBundledRevenue().then(() => [])])
-      .then(([historicalRows]) => loadManualSpentEntries().then((manualRows) => {
+      .then(([historicalRows]) => {
         if (!isMounted) return;
 
-        const hasImportedHistory = manualRows.some((row) => row.sourceType === "history");
-        setData(hasImportedHistory ? manualRows : [...historicalRows, ...manualRows]);
-      }))
+        setData(historicalRows);
+      })
       .finally(() => {
       if (isMounted) {
         setIsLoading(false);
@@ -908,6 +881,96 @@ function DashboardApp({ session, onLogout }) {
       setSpentEntryError(`Could not import historical spent data: ${err.message}`);
     } finally {
       setIsImportingHistory(false);
+    }
+  };
+  const loadFirebaseSpentEntriesForSelection = async () => {
+    setSpentEntryError("");
+    setSpentEntryMessage("");
+
+    if (!auth?.currentUser || !firebaseProjectId) {
+      setSpentEntryError("Firebase is not available for uploaded spent entries.");
+      return;
+    }
+
+    const selectedYear = Number(filters.year || spentEntryForm.year || new Date().getFullYear());
+    const selectedMonth = filters.month ? getMonthNumber(filters.month) : null;
+    const periodKey = `${selectedYear}-${selectedMonth || "year"}`;
+
+    if (!selectedYear) {
+      setSpentEntryError("Select a year before loading uploaded entries.");
+      return;
+    }
+
+    if (loadedFirebaseSpentPeriods.includes(periodKey)) {
+      setSpentEntryMessage(`Uploaded entries for ${selectedMonth ? `${MONTH_LABELS[selectedMonth]} ` : ""}${selectedYear} are already loaded.`);
+      return;
+    }
+
+    setIsLoadingFirebaseSpent(true);
+
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const filterList = [
+        {
+          fieldFilter: {
+            field: { fieldPath: "year" },
+            op: "EQUAL",
+            value: { integerValue: String(selectedYear) },
+          },
+        },
+      ];
+
+      if (selectedMonth) {
+        filterList.push({
+          fieldFilter: {
+            field: { fieldPath: "monthNumber" },
+            op: "EQUAL",
+            value: { integerValue: String(selectedMonth) },
+          },
+        });
+      }
+
+      const response = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents:runQuery`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          structuredQuery: {
+            from: [{ collectionId: "manualSpentEntries" }],
+            where: filterList.length === 1 ? filterList[0] : { compositeFilter: { op: "AND", filters: filterList } },
+          },
+        }),
+      });
+
+      if (response.status === 404 || response.status === 403) {
+        setSpentEntryMessage(`No uploaded entries are available for ${selectedMonth ? `${MONTH_LABELS[selectedMonth]} ` : ""}${selectedYear}.`);
+        setLoadedFirebaseSpentPeriods((current) => [...current, periodKey]);
+        return;
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}${errorText ? ` - ${errorText.slice(0, 180)}` : ""}`);
+      }
+
+      const result = await response.json();
+      const rows = result.map((item) => item.document).filter(Boolean).map(parseManualSpentDocument);
+      let addedCount = 0;
+
+      setData((current) => {
+        const existingIds = new Set(current.map((row) => row.id).filter(Boolean));
+        const newRows = rows.filter((row) => !row.id || !existingIds.has(row.id));
+        addedCount = newRows.length;
+        return [...current, ...newRows];
+      });
+      setLoadedFirebaseSpentPeriods((current) => [...current, periodKey]);
+      setSpentEntryMessage(`Loaded ${addedCount.toLocaleString()} uploaded entries for ${selectedMonth ? `${MONTH_LABELS[selectedMonth]} ` : ""}${selectedYear}.`);
+    } catch (err) {
+      setSpentEntryError(`Could not load uploaded entries: ${err.message}`);
+    } finally {
+      setIsLoadingFirebaseSpent(false);
     }
   };
   const uploadSpentExcelRows = async (event) => {
@@ -2147,13 +2210,21 @@ function DashboardApp({ session, onLogout }) {
                   <button
                     type="button"
                     onClick={importHistoricalSpentRows}
-                    disabled={isImportingHistory || isUploadingSpentExcel}
+                    disabled={isImportingHistory || isUploadingSpentExcel || isLoadingFirebaseSpent}
                     style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isImportingHistory ? "wait" : "pointer", fontSize: 12, fontWeight: 900 }}
                   >
                     {isImportingHistory ? "Importing..." : "Import Excel History"}
                   </button>
                 </Fragment>
               )}
+              <button
+                type="button"
+                onClick={loadFirebaseSpentEntriesForSelection}
+                disabled={isLoadingFirebaseSpent || isImportingHistory || isUploadingSpentExcel}
+                style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isLoadingFirebaseSpent ? "wait" : "pointer", fontSize: 12, fontWeight: 900 }}
+              >
+                {isLoadingFirebaseSpent ? "Loading..." : "Load Uploaded Entries"}
+              </button>
               <span style={{ color: isAdmin ? theme.accentStrong : theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>{isAdmin ? "Admin Entry" : "View Only"}</span>
             </div>
           </div>
@@ -3559,6 +3630,25 @@ const getAllowedAccess = async (user) => {
   if (!user?.email) return null;
 
   const normalizedEmail = user.email.trim().toLowerCase();
+  const cacheKey = `igcc-access-${normalizedEmail}`;
+
+  try {
+    const cachedAccess = JSON.parse(window.sessionStorage.getItem(cacheKey) || "null");
+    if (
+      cachedAccess?.uid === user.uid &&
+      cachedAccess?.email?.toLowerCase() === normalizedEmail &&
+      Date.now() - Number(cachedAccess.cachedAt ?? 0) < ACCESS_CACHE_MS
+    ) {
+      return {
+        uid: cachedAccess.uid,
+        email: cachedAccess.email,
+        role: cachedAccess.role === "Admin" ? "Admin" : "Viewer",
+      };
+    }
+  } catch {
+    window.sessionStorage.removeItem(cacheKey);
+  }
+
   const idToken = await user.getIdToken();
   const documentUrl = `https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/allowedUsers/${encodeURIComponent(normalizedEmail)}`;
   const response = await fetch(documentUrl, {
@@ -3582,11 +3672,14 @@ const getAllowedAccess = async (user) => {
     return null;
   }
 
-  return {
+  const session = {
     uid: user.uid,
     email: user.email,
     role: role === "admin" ? "Admin" : "Viewer",
   };
+
+  window.sessionStorage.setItem(cacheKey, JSON.stringify({ ...session, cachedAt: Date.now() }));
+  return session;
 };
 
 const getApprovedAccess = async (user) => {
