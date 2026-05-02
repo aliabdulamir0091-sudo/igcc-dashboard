@@ -1906,10 +1906,6 @@ function DashboardApp({ session, onLogout }) {
     .filter((group) => (spentEntryForm.hub ? group.label === spentEntryForm.hub : true))
     .flatMap((group) => group.centers);
 
-  if (isLoading) {
-    return loadingView;
-  }
-
   return (
     <div style={{ minHeight: "100vh", padding: "28px 24px 40px", fontFamily: "Inter, system-ui, sans-serif", maxWidth: 1280, margin: "0 auto", color: theme.text, backgroundColor: theme.pageBg }}>
       {showWelcome && (
@@ -1932,6 +1928,12 @@ function DashboardApp({ session, onLogout }) {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {isLoading && (
+        <div style={{ marginBottom: 12, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: "10px 14px", boxShadow: theme.cardShadow, color: theme.subtext, fontSize: 13, fontWeight: 850 }}>
+          Loading financial data in the background...
         </div>
       )}
 
