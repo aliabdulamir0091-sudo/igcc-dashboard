@@ -1485,6 +1485,84 @@ function DashboardApp({ session, onLogout }) {
       </section>
     );
   };
+  const renderCostSourceBreakdown = () => {
+    if (!hasCostLevelFilter) return null;
+
+    const title = filters.costCenter
+      ? `${filters.costCenter} Cost Source Breakdown`
+      : filters.hub
+        ? `${filters.hub} Cost Source Breakdown`
+        : `${filters.portfolio} Cost Source Breakdown`;
+    const sourceRows = [
+      ["Spent Report Cost", officialVisibleTotal, "Official cost from Spent Report only", theme.accentWarm],
+      ["CN Received", cnReceivedTotal, "Credit notes received", theme.accentStrong],
+      ["CN Issued", cnIssuedTotal, "Credit notes issued", theme.danger],
+      ["Adjusted Cost", adjustedVisibleTotal, "Spent + CN Received - CN Issued", adjustedVisibleTotal >= officialVisibleTotal ? theme.accentWarm : theme.accentStrong],
+    ];
+
+    return (
+      <section style={{ marginTop: 16, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+          <div>
+            <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>{title}</h3>
+            <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Official cost is kept separate from Credit Note impact.</p>
+          </div>
+          <span style={{ color: isAdjustedCostActive ? theme.accentStrong : theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>
+            Current view: {costViewLabel}
+          </span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+          {sourceRows.map(([label, value, detail, accent]) => (
+            <div key={label} style={{ border: `1px solid ${theme.border}`, borderTop: `4px solid ${accent}`, borderRadius: 8, padding: 13, background: theme.panelBg }}>
+              <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+              <div style={{ marginTop: 7, color: accent, fontSize: 20, lineHeight: 1.05, fontWeight: 950 }}>{formatCurrency(value)}</div>
+              <div style={{ marginTop: 7, color: theme.subtext, fontSize: 12 }}>{detail}</div>
+            </div>
+          ))}
+        </div>
+        {filters.costCenter && (
+          <div style={{ marginTop: 14, overflowX: "auto" }}>
+            <table style={{ width: "100%", minWidth: 680, borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={leftHeaderStyle}>Source</th>
+                  <th style={leftHeaderStyle}>Cost Center</th>
+                  <th style={tableHeaderStyle}>Amount</th>
+                  <th style={leftHeaderStyle}>Effect</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={leftCellStyle}>Spent Report</td>
+                  <td style={leftCellStyle}>{filters.costCenter}</td>
+                  <td style={tableCellStyle}>{formatCurrency(officialVisibleTotal)}</td>
+                  <td style={leftCellStyle}>Official cost base</td>
+                </tr>
+                <tr>
+                  <td style={leftCellStyle}>Credit Note Received</td>
+                  <td style={leftCellStyle}>{filters.costCenter}</td>
+                  <td style={{ ...tableCellStyle, color: theme.accentStrong }}>{formatCurrency(cnReceivedTotal)}</td>
+                  <td style={leftCellStyle}>Adds to adjusted cost</td>
+                </tr>
+                <tr>
+                  <td style={leftCellStyle}>Credit Note Issued</td>
+                  <td style={leftCellStyle}>{filters.costCenter}</td>
+                  <td style={{ ...tableCellStyle, color: theme.danger }}>{formatCurrency(cnIssuedTotal)}</td>
+                  <td style={leftCellStyle}>Reduces adjusted cost</td>
+                </tr>
+                <tr style={{ background: theme.accentSoft }}>
+                  <td style={leftCellStyle}>Adjusted Cost</td>
+                  <td style={leftCellStyle}>{filters.costCenter}</td>
+                  <td style={{ ...tableCellStyle, fontWeight: 950 }}>{formatCurrency(adjustedVisibleTotal)}</td>
+                  <td style={leftCellStyle}>Spent + received - issued</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    );
+  };
   const overviewPeriodTotals = aggregateByPeriod(filteredData, overviewPeriodView);
   const chartPeriods = overviewPeriodTotals.slice(-8);
   const maxChartPeriodAmount = Math.max(...chartPeriods.map((item) => Math.abs(item.amount)), 0);
@@ -2411,6 +2489,7 @@ function DashboardApp({ session, onLogout }) {
           {spentEntryError && <div style={{ marginTop: 12, color: theme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryError}</div>}
 
           {renderExecutiveInsights("Spend Narrative", spentInsights)}
+          {renderCostSourceBreakdown()}
 
           <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
             {[
@@ -2591,6 +2670,7 @@ function DashboardApp({ session, onLogout }) {
           </div>
 
           {renderExecutiveInsights(insightContextLabel, keyInsights)}
+          {renderCostSourceBreakdown()}
 
           <div style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(240px, 0.72fr) minmax(0, 1.28fr)", gap: 16, alignItems: "stretch", marginBottom: 16 }}>
             <div style={{ position: "relative", overflow: "hidden", border: `1px solid ${profitColor(revenueSurplus)}33`, borderRadius: 14, padding: "22px 22px", background: `linear-gradient(145deg, #ffffff 0%, ${revenueSurplus >= 0 ? "#f1fdf8" : "#fff5f5"} 100%)`, boxShadow: "0 16px 34px rgba(15,23,42,0.10)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
@@ -3289,6 +3369,7 @@ function DashboardApp({ session, onLogout }) {
           </div>
 
           {renderExecutiveInsights("Profitability Narrative", profitabilityInsights)}
+          {renderCostSourceBreakdown()}
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12, marginBottom: 16 }}>
             {[
