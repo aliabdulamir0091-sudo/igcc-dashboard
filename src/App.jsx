@@ -1617,16 +1617,16 @@ function DashboardApp({ session, onLogout }) {
   const portalApprovedAfp = revenueData.filter((item) => item.status === "approved").reduce((sum, item) => sum + item.amount, 0);
   const portalNetPosition = portalApprovedAfp - portalTotalCost;
   const portalCards = [
-    ["Net Position", formatCurrency(portalNetPosition), portalNetPosition >= 0 ? "Approved AFP above total cost" : "Cost exceeds approved AFP", portalNetPosition >= 0 ? theme.accentStrong : theme.danger],
-    ["Total Cost", formatCurrency(portalTotalCost), "Cumulative spent report cost", theme.accent],
-    ["Approved AFP", formatCurrency(portalApprovedAfp), "Recognized approved AFP value", theme.accentStrong],
-    ["Last Updated", lastUpdatedLabel, "Dashboard refresh timestamp", theme.accentWarm],
+    ["Net Position", formatCompactCurrency(portalNetPosition), portalNetPosition >= 0 ? "Approved AFP above total cost" : "Cost exceeds approved AFP", portalNetPosition >= 0 ? theme.accentStrong : theme.danger],
+    ["Total Cost", formatCompactCurrency(portalTotalCost), "Cumulative spent report cost", "#2563eb"],
+    ["Approved AFP", formatCompactCurrency(portalApprovedAfp), "Recognized approved AFP value", theme.accentStrong],
+    ["Last Updated", lastUpdatedLabel, "Dashboard refresh timestamp", "#2563eb"],
   ];
   const portalNavigationCards = [
     ["overview", "Executive Cockpit", "Executive KPIs, portfolio exposure, performance direction, and financial position.", "EC", "#0f766e"],
     ["afp", "Commercial Approval Overview", "AFP submission, approval gaps, commercial issues, and approval distribution.", "AFP", "#2563eb"],
-    ["profitability", "Cost Center Profitability", "Portfolio-to-cost-center profitability drilldown and GL-level detail.", "P&L", "#7c3aed"],
-    ["spent", "Spent Report", "Historical spend summary and filtered transaction-level cost records.", "SR", "#b45309"],
+    ["profitability", "Cost Center Profitability", "Portfolio-to-cost-center profitability drilldown and GL-level detail.", "P&L", "#16a34a"],
+    ["spent", "Spent Report", "Historical spend summary and filtered transaction-level cost records.", "SR", "#b00020"],
   ];
   const isAdmin = session?.role === "Admin";
   const visibleNavItems = [["home", "Home"], ...NAV_ITEMS, ["spent", "Spent Report"]];
@@ -1688,6 +1688,7 @@ function DashboardApp({ session, onLogout }) {
             </button>
           </div>
         </div>
+        {activePage !== "home" && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10, paddingTop: 10, borderTop: `1px solid ${theme.border}` }}>
           <button
             type="button"
@@ -1710,6 +1711,8 @@ function DashboardApp({ session, onLogout }) {
             );
           })}
         </div>
+        )}
+        {activePage !== "home" && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, alignItems: "end", marginTop: 10, paddingTop: 10, borderTop: `1px solid ${theme.border}` }}>
           {[
             ["Hub", "HUB", filters.hub, (event) => setFilters((current) => ({ ...current, hub: event.target.value, costCenter: "" })), ["", ...filteredHubOptions], "All hubs"],
@@ -1779,6 +1782,7 @@ function DashboardApp({ session, onLogout }) {
             Clear
           </button>
         </div>
+        )}
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap", background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, boxShadow: theme.cardShadow }}>
@@ -1855,12 +1859,12 @@ function DashboardApp({ session, onLogout }) {
       )}
 
       {activePage === "home" && (
-        <div style={{ display: "grid", gap: 18 }}>
-          <section style={{ position: "relative", overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 12, padding: "28px 28px 30px", background: themeMode === "light" ? "linear-gradient(135deg, #ffffff 0%, #f8fbff 54%, #eef7f4 100%)" : "linear-gradient(135deg, #112240 0%, #0f172a 100%)", boxShadow: theme.cardShadow }}>
+        <div style={{ display: "grid", gap: 16 }}>
+          <div style={{ color: theme.accentStrong, fontSize: 12, fontWeight: 950, textTransform: "uppercase", letterSpacing: 0.3 }}>IGCC Financial Portal</div>
+          <section style={{ position: "relative", overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 12, padding: "20px 24px 22px", background: themeMode === "light" ? "linear-gradient(135deg, #ffffff 0%, #f8fbff 64%, #eef7f4 100%)" : "linear-gradient(135deg, #112240 0%, #0f172a 100%)", boxShadow: theme.cardShadow }}>
             <div style={{ maxWidth: 760 }}>
-              <div style={{ color: theme.accentStrong, fontSize: 12, fontWeight: 950, textTransform: "uppercase", letterSpacing: 0.3 }}>IGCC Financial Portal</div>
-              <h2 style={{ margin: "8px 0 0", color: theme.text, fontSize: 38, lineHeight: 1.04, letterSpacing: 0, fontWeight: 950 }}>Welcome, {portalUserName}</h2>
-              <p style={{ margin: "12px 0 0", color: theme.subtext, fontSize: 16, lineHeight: 1.6, maxWidth: 650 }}>A focused entry point for executive financial review, commercial approval visibility, profitability analysis, and spend reporting.</p>
+              <h2 style={{ margin: 0, color: theme.text, fontSize: 32, lineHeight: 1.06, letterSpacing: 0, fontWeight: 950 }}>Welcome, {portalUserName}</h2>
+              <p style={{ margin: "9px 0 0", color: theme.subtext, fontSize: 15, lineHeight: 1.5, maxWidth: 650 }}>A focused entry point for executive financial review, commercial approval visibility, profitability analysis, and spend reporting.</p>
             </div>
           </section>
 
@@ -1874,7 +1878,7 @@ function DashboardApp({ session, onLogout }) {
             ))}
           </section>
 
-          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 1fr))", gap: 16 }}>
+          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 280px))", justifyContent: "center", gap: 16 }}>
             {portalNavigationCards.map(([page, title, description, icon, color]) => (
               <button
                 key={page}
@@ -1885,7 +1889,7 @@ function DashboardApp({ session, onLogout }) {
                 <span style={{ display: "inline-grid", placeItems: "center", minWidth: 44, height: 34, borderRadius: 9, background: `${color}18`, color, fontSize: 12, fontWeight: 950, marginBottom: 18 }}>{icon}</span>
                 <div style={{ fontSize: 20, fontWeight: 950, letterSpacing: 0 }}>{title}</div>
                 <div style={{ marginTop: 9, color: theme.subtext, fontSize: 13, lineHeight: 1.55 }}>{description}</div>
-                <div style={{ marginTop: 18, color, fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>Open</div>
+                <div style={{ marginTop: 18, color, fontSize: 12, fontWeight: 950 }}>View Dashboard →</div>
               </button>
             ))}
           </section>
