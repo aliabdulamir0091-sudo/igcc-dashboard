@@ -1806,17 +1806,17 @@ function DashboardApp({ session, onLogout }) {
     { label: "Period Coverage", value: `${spentMonthCount}`, detail: "Months included in current view", color: "#7c3aed" },
   ];
   const renderExecutiveInsights = (title, insights) => (
-    <section style={{ marginBottom: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 10 }}>
+    <section style={{ marginBottom: 18, border: `1px solid ${theme.border}`, borderRadius: 16, padding: 16, background: themeMode === "light" ? "linear-gradient(135deg, #f8fbff 0%, #ffffff 48%, #ecfdf5 100%)" : theme.panelBg, boxShadow: "0 16px 36px rgba(15,23,42,0.08)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
         <div>
-          <div style={{ color: theme.accentStrong, fontSize: 11, fontWeight: 950, textTransform: "uppercase", letterSpacing: 0.3 }}>Executive Insight</div>
-          <h3 style={{ margin: "4px 0 0", color: theme.text, fontSize: 18, fontWeight: 950 }}>{title}</h3>
+          <div style={{ color: theme.accentStrong, fontSize: 11, fontWeight: 950, textTransform: "uppercase", letterSpacing: 0.5 }}>Auto-Generated Executive Narrative</div>
+          <h3 style={{ margin: "4px 0 0", color: theme.text, fontSize: 20, fontWeight: 950 }}>{title}</h3>
         </div>
-        <span style={{ color: theme.subtext, fontSize: 12, fontWeight: 850 }}>Auto-generated from current filters</span>
+        <span style={{ color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>Updates with current filters</span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
         {insights.slice(0, 5).map((insight, index) => (
-          <div key={`${insight.label}-${index}`} className="executive-hover-card" style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)", transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease" }}>
+          <div key={`${insight.label}-${index}`} className="executive-hover-card" style={{ border: `1px solid ${theme.border}`, borderLeft: `4px solid ${insight.color}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)", transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{insight.label}</div>
