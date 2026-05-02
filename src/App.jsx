@@ -2115,26 +2115,30 @@ function DashboardApp({ session, onLogout }) {
       )}
 
       {activePage === "overview" && (
-        <div style={{ marginBottom: 12, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, boxShadow: theme.cardShadow }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 10 }}>
-            <div>
-              <h1 style={{ margin: 0, color: theme.text, fontSize: 26, fontWeight: 950, letterSpacing: 0 }}>Financial Performance Overview</h1>
-              <p style={{ margin: "4px 0 0", color: theme.subtext, fontSize: 12 }}>Executive cockpit: profitability, risk location, and performance direction.</p>
+        <div style={{ position: "relative", overflow: "hidden", marginBottom: 14, background: "linear-gradient(180deg, #f8fbff 0%, #ffffff 34%, #f4f9ff 100%)", border: "1px solid rgba(148,163,184,0.28)", borderRadius: 18, padding: 18, boxShadow: "0 24px 60px rgba(15,23,42,0.12)" }}>
+          <div style={{ position: "absolute", inset: "0 0 auto auto", width: 520, height: 360, background: "radial-gradient(circle at 70% 20%, rgba(20,184,166,0.16), transparent 34%), radial-gradient(circle at 22% 62%, rgba(37,99,235,0.12), transparent 36%)", pointerEvents: "none" }} />
+          <div style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(360px, 0.9fr)", gap: 20, alignItems: "stretch", marginBottom: 18 }}>
+            <div style={{ padding: "20px 12px 18px 12px" }}>
+              <h1 style={{ margin: 0, color: "#071a3a", fontSize: 30, fontWeight: 950, letterSpacing: 0 }}>Executive Cockpit</h1>
+              <p style={{ margin: "10px 0 0", color: "#335174", fontSize: 15, lineHeight: 1.65, maxWidth: 560 }}>Executive overview of financial performance, approval status, portfolio exposure, and key risks.</p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, border: `1px solid ${overallStatus.color}`, borderRadius: 8, padding: "8px 12px", background: theme.inputBg, minWidth: 245 }}>
-              <span style={{ fontSize: 20, lineHeight: 1 }}>{overallStatus.icon}</span>
-              <div>
-                <div style={{ color: overallStatus.color, fontSize: 13, fontWeight: 950, textTransform: "uppercase" }}>Overall Status: {overallStatus.label}</div>
-                <div style={{ color: theme.subtext, fontSize: 12 }}>{overallStatus.message}</div>
+            <div style={{ position: "relative", overflow: "hidden", display: "flex", alignItems: "center", gap: 18, border: "1px solid rgba(20,184,166,0.28)", borderRadius: 14, padding: "22px 24px", background: "radial-gradient(circle at 80% 50%, rgba(20,184,166,0.35), transparent 22%), linear-gradient(135deg, #041d36 0%, #062b4f 58%, #064e5f 100%)", boxShadow: "0 18px 42px rgba(7,26,58,0.24), inset 0 1px 0 rgba(255,255,255,0.10)" }}>
+              <div style={{ position: "absolute", inset: "auto -30px -24px 110px", height: 82, opacity: 0.42, background: "repeating-radial-gradient(ellipse at center, transparent 0 18px, rgba(94,234,212,0.18) 19px 20px)" }} />
+              <span style={{ display: "grid", placeItems: "center", width: 58, height: 58, borderRadius: 16, color: "#a7f3d0", background: "rgba(20,184,166,0.18)", border: "1px solid rgba(94,234,212,0.28)", fontSize: 27, lineHeight: 1, boxShadow: "0 0 32px rgba(20,184,166,0.20)" }}>{overallStatus.icon}</span>
+              <div style={{ position: "relative" }}>
+                <div style={{ color: "#bfdbfe", fontSize: 12, fontWeight: 950, textTransform: "uppercase", letterSpacing: 0.2 }}>Overall Status</div>
+                <div style={{ color: "#5eead4", fontSize: 25, lineHeight: 1.05, fontWeight: 950, textTransform: "uppercase", marginTop: 5 }}>{overallStatus.label}</div>
+                <div style={{ color: "rgba(255,255,255,0.86)", fontSize: 13, lineHeight: 1.5, marginTop: 9 }}>{overallStatus.message}</div>
               </div>
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(240px, 0.68fr) minmax(0, 1.32fr)", gap: 12, alignItems: "stretch", marginBottom: 6, padding: 10, border: `1px solid ${theme.border}`, borderRadius: 8, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg }}>
-            <div style={{ border: `1px solid ${profitColor(revenueSurplus)}`, borderLeft: `5px solid ${profitColor(revenueSurplus)}`, borderRadius: 8, padding: "10px 12px", background: theme.inputBg }}>
-              <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 900, textTransform: "uppercase" }}>Net Position</div>
+          <div style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(240px, 0.72fr) minmax(0, 1.28fr)", gap: 16, alignItems: "stretch", marginBottom: 16 }}>
+            <div style={{ position: "relative", overflow: "hidden", border: `1px solid ${profitColor(revenueSurplus)}33`, borderRadius: 14, padding: "22px 22px", background: `linear-gradient(145deg, #ffffff 0%, ${revenueSurplus >= 0 ? "#f1fdf8" : "#fff5f5"} 100%)`, boxShadow: "0 16px 34px rgba(15,23,42,0.10)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
+              <div style={{ position: "absolute", right: -30, bottom: -30, width: 130, height: 130, borderRadius: "50%", background: `${profitColor(revenueSurplus)}14` }} />
+              <div style={{ color: "#334155", fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>Net Position</div>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginTop: 7, whiteSpace: "nowrap" }}>
-                <strong style={{ color: profitColor(revenueSurplus), fontSize: 28, lineHeight: 1, fontWeight: 950 }}>{formatCompactCurrency(revenueSurplus)}</strong>
+                <strong style={{ color: profitColor(revenueSurplus), fontSize: 34, lineHeight: 1, fontWeight: 950 }}>{formatCompactCurrency(revenueSurplus)}</strong>
                 {(() => {
                   const change = getKpiChange("net");
                   return <span style={{ color: change.color, opacity: change.muted ? 0.58 : 1, fontSize: change.muted ? 11 : 13, fontWeight: 950 }}>{change.arrow} {change.text}</span>;
@@ -2147,40 +2151,45 @@ function DashboardApp({ session, onLogout }) {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateRows: "1fr auto", gap: 8 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateRows: "1fr auto", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
                 {[
                   ["Total Cost", formatCompactCurrency(visibleTotal), getKpiChange("cost", true), theme.accentWarm],
                   ["Submitted AFP", formatCompactCurrency(submittedRevenue), getKpiChange("submitted"), "#2563eb"],
                   ["Approved AFP", formatCompactCurrency(approvedRevenue), getKpiChange("approved"), "#059669"],
                 ].map(([label, value, change, accent]) => (
-                  <div key={label} style={{ border: `1px solid ${theme.border}`, borderLeft: `4px solid ${accent}`, borderRadius: 8, padding: "8px 10px", background: theme.inputBg, minWidth: 0 }}>
-                    <div style={{ color: theme.subtext, fontSize: 10, lineHeight: 1, fontWeight: 900, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minHeight: 10 }}>{label}</div>
+                  <div key={label} style={{ position: "relative", overflow: "hidden", border: `1px solid ${accent}20`, borderRadius: 14, padding: "18px 18px", background: `linear-gradient(145deg, #ffffff 0%, ${accent}0d 100%)`, minWidth: 0, boxShadow: "0 14px 30px rgba(15,23,42,0.08)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
+                    <div style={{ position: "absolute", right: 12, bottom: 10, width: 110, height: 44, opacity: 0.22 }}>
+                      <svg viewBox="0 0 110 44" aria-hidden="true" style={{ width: "100%", height: "100%" }}>
+                        <path d="M3 35 C20 23, 31 30, 44 18 S72 26, 88 8 S101 16, 107 5" fill="none" stroke={accent} strokeWidth="3" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                    <div style={{ color: "#334155", fontSize: 10, lineHeight: 1, fontWeight: 950, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minHeight: 10 }}>{label}</div>
                     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginTop: 7, whiteSpace: "nowrap", minHeight: 18 }}>
-                      <strong style={{ color: theme.text, fontSize: 17, lineHeight: 1, fontWeight: 950 }}>{value}</strong>
+                      <strong style={{ color: accent === theme.accentWarm ? "#2563eb" : accent, fontSize: 24, lineHeight: 1, fontWeight: 950 }}>{value}</strong>
                       <span style={{ color: change.color, opacity: change.muted ? 0.58 : 1, fontSize: change.muted ? 10 : 12, lineHeight: 1, fontWeight: change.muted ? 800 : 950 }}>{change.arrow} {change.text}</span>
                     </div>
-                    <div style={{ marginTop: 5, color: theme.subtext, opacity: 0.65, fontSize: 10, lineHeight: 1 }}>{change.muted ? "All months" : "vs previous month"}</div>
+                    <div style={{ marginTop: 10, color: "#64748b", opacity: 0.85, fontSize: 11, lineHeight: 1 }}>{change.muted ? "All months" : "vs previous month"}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ color: theme.subtext, fontSize: 12, fontWeight: 800, display: "flex", gap: 14, flexWrap: "wrap", padding: "0 2px", alignItems: "center" }}>
-                <span>Approval Rate: <strong style={{ color: approvalRate >= 0.85 ? theme.accentStrong : theme.accentWarm }}>{formatPercent(approvalRate)}</strong></span>
-                <span style={{ color: theme.border }}>|</span>
-                <span>Cost Coverage: <strong style={{ color: costCoverage >= 1 ? theme.accentStrong : theme.danger }}>{formatPercent(costCoverage)}</strong></span>
+              <div style={{ color: "#334155", fontSize: 14, fontWeight: 900, display: "flex", gap: 18, flexWrap: "wrap", padding: "14px 18px", alignItems: "center", justifyContent: "center", border: "1px solid rgba(148,163,184,0.25)", borderRadius: 12, background: "rgba(255,255,255,0.76)", boxShadow: "0 10px 24px rgba(15,23,42,0.05)" }}>
+                <span>Approval Rate: <strong style={{ color: approvalRate >= 0.85 ? "#059669" : "#b45309" }}>{formatPercent(approvalRate)}</strong></span>
+                <span style={{ color: "#cbd5e1" }}>|</span>
+                <span>Cost Coverage: <strong style={{ color: costCoverage >= 1 ? "#059669" : "#dc2626" }}>{formatPercent(costCoverage)}</strong></span>
               </div>
             </div>
           </div>
 
-          <div style={{ marginBottom: 8, padding: "6px 2px 2px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 5 }}>
-              <h3 style={{ margin: 0, color: theme.text, fontSize: 15, fontWeight: 950 }}>{insightContextLabel}</h3>
-              <span style={{ color: theme.subtext, fontSize: 11, fontWeight: 900 }}>{keyInsights.length} insights</span>
+          <div style={{ marginBottom: 18, padding: "6px 2px 2px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 12 }}>
+              <h3 style={{ margin: 0, color: "#071a3a", fontSize: 18, fontWeight: 950 }}>{insightContextLabel}</h3>
+              <span style={{ color: "#0f766e", background: "#ecfdf5", border: "1px solid rgba(15,118,110,0.16)", borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>View All Insights</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 14 }}>
               {keyInsights.slice(0, 4).map((insight) => (
-                <div key={insight.label} style={{ border: `1px solid ${theme.border}`, borderTop: `3px solid ${insight.color}`, borderRadius: 8, padding: "9px 10px", background: themeMode === "light" ? "#fff" : theme.panelBg, color: theme.subtext, fontSize: 0, lineHeight: 1.3, minWidth: 0, minHeight: 86, boxSizing: "border-box" }}>
-                  <span style={{ display: "inline-grid", placeItems: "center", width: 28, height: 22, borderRadius: 6, color: insight.color, background: theme.accentSoft, fontSize: 9, fontWeight: 950, lineHeight: 1, marginBottom: 7 }}>{insight.icon}</span>
+                <div key={insight.label} style={{ position: "relative", overflow: "hidden", border: `1px solid ${insight.color}22`, borderRadius: 14, padding: "18px 18px", background: `linear-gradient(145deg, #ffffff 0%, ${insight.color}0b 100%)`, color: "#64748b", fontSize: 0, lineHeight: 1.3, minWidth: 0, minHeight: 130, boxSizing: "border-box", boxShadow: "0 14px 32px rgba(15,23,42,0.08)" }}>
+                  <span style={{ display: "inline-grid", placeItems: "center", width: 42, height: 36, borderRadius: 10, color: insight.color, background: `${insight.color}12`, fontSize: 12, fontWeight: 950, lineHeight: 1, marginBottom: 12 }}>{insight.icon}</span>
                   <span style={{ color: insight.color, fontSize: 0, fontWeight: 950, lineHeight: 1.15 }}>•</span>
                   <span style={{ display: "block", fontSize: 12 }}>
                     <strong style={{ display: "block", color: theme.subtext, fontSize: 10, lineHeight: 1, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{insight.label}</strong>
@@ -2196,31 +2205,31 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", margin: "4px 0 8px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", margin: "10px 0 14px" }}>
             <div>
-              <h2 style={{ margin: 0, color: theme.text, fontSize: 17, fontWeight: 950 }}>Performance Charts</h2>
-              <p style={{ margin: "3px 0 0", color: theme.subtext, fontSize: 11 }}>Trend, concentration, and cost drivers for the current selection.</p>
+              <h2 style={{ margin: 0, color: "#071a3a", fontSize: 20, fontWeight: 950 }}>Performance Charts</h2>
+              <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: 12 }}>Trend, concentration, and cost drivers for the current selection.</p>
             </div>
             {latestTrendRow && (
-              <span style={{ color: profitColor(latestTrendRow.net), fontSize: 12, fontWeight: 900 }}>
+              <span style={{ color: profitColor(latestTrendRow.net), background: "#f8fafc", border: "1px solid rgba(148,163,184,0.22)", borderRadius: 999, padding: "9px 13px", fontSize: 12, fontWeight: 950 }}>
                 Latest {latestTrendRow.label}: {formatCompactCurrency(latestTrendRow.cost)} cost vs {formatCompactCurrency(latestTrendRow.approved)} approved
               </span>
             )}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.15fr) minmax(320px, 0.85fr)", gap: 10, marginBottom: 10 }}>
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 12, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg, minHeight: 220, boxSizing: "border-box" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.15fr) minmax(320px, 0.85fr)", gap: 16, marginBottom: 16 }}>
+            <div style={{ border: "1px solid rgba(148,163,184,0.25)", borderRadius: 14, padding: 18, background: "#fff", minHeight: 250, boxSizing: "border-box", boxShadow: "0 16px 38px rgba(15,23,42,0.09)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 6 }}>
-                <h3 style={{ margin: 0, color: theme.text, fontSize: 15, fontWeight: 950 }}>Monthly Trend</h3>
-                <div style={{ display: "flex", gap: 12, color: theme.subtext, fontSize: 11 }}>
+                <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Monthly Trend</h3>
+                <div style={{ display: "flex", gap: 12, color: "#64748b", fontSize: 11 }}>
                   <span><strong style={{ color: theme.accentWarm }}>Cost</strong></span>
                   <span><strong style={{ color: "#059669" }}>Approved AFP</strong></span>
                 </div>
               </div>
               {executiveTrendRows.length ? (
                 <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="img" aria-label="Monthly trend line chart comparing cost and approved AFP" style={{ width: "100%", height: 160, display: "block" }}>
-                  <line x1={chartPadding} y1={chartHeight - chartPadding} x2={chartWidth - chartPadding} y2={chartHeight - chartPadding} stroke={theme.border} strokeWidth="1" />
-                  <line x1={chartPadding} y1={chartPadding} x2={chartPadding} y2={chartHeight - chartPadding} stroke={theme.border} strokeWidth="1" />
+                  <line x1={chartPadding} y1={chartHeight - chartPadding} x2={chartWidth - chartPadding} y2={chartHeight - chartPadding} stroke="rgba(148,163,184,0.28)" strokeWidth="1" />
+                  <line x1={chartPadding} y1={chartPadding} x2={chartPadding} y2={chartHeight - chartPadding} stroke="rgba(148,163,184,0.20)" strokeWidth="1" />
                   <polyline points={costTrendPoints} fill="none" stroke={theme.accentWarm} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
                   <polyline points={approvedTrendPoints} fill="none" stroke="#059669" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
                   {executiveTrendRows.map((row, index) => {
@@ -2231,13 +2240,13 @@ function DashboardApp({ session, onLogout }) {
                       <g key={row.key}>
                         {isLastPoint && (
                           <>
-                            <circle cx={costX} cy={costY} r="8" fill={theme.accentWarm} opacity="0.18" />
-                            <circle cx={approvedX} cy={approvedY} r="8" fill="#059669" opacity="0.18" />
+                            <circle cx={costX} cy={costY} r="12" fill={theme.accentWarm} opacity="0.16" />
+                            <circle cx={approvedX} cy={approvedY} r="12" fill="#059669" opacity="0.16" />
                           </>
                         )}
-                        <circle cx={costX} cy={costY} r={isLastPoint ? "5" : "3.5"} fill={theme.accentWarm} stroke={theme.panelBg} strokeWidth="2" />
-                        <circle cx={approvedX} cy={approvedY} r={isLastPoint ? "5" : "3.5"} fill="#059669" stroke={theme.panelBg} strokeWidth="2" />
-                        <text x={costX} y={chartHeight - 4} textAnchor="middle" fill={theme.subtext} fontSize="9" fontWeight="700">{row.label.split(" ")[0]}</text>
+                        <circle cx={costX} cy={costY} r={isLastPoint ? "6" : "3.5"} fill={theme.accentWarm} stroke="#fff" strokeWidth="2" />
+                        <circle cx={approvedX} cy={approvedY} r={isLastPoint ? "6" : "3.5"} fill="#059669" stroke="#fff" strokeWidth="2" />
+                        <text x={costX} y={chartHeight - 4} textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="700">{row.label.split(" ")[0]}</text>
                         {isLastPoint && (
                           <text x={approvedX} y={Math.max(12, Number(approvedY) - 10)} textAnchor="middle" fill="#059669" fontSize="10" fontWeight="900">Latest</text>
                         )}
@@ -2250,8 +2259,8 @@ function DashboardApp({ session, onLogout }) {
               )}
             </div>
 
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg, minHeight: 220, boxSizing: "border-box" }}>
-              <h3 style={{ margin: 0, color: theme.text, fontSize: 15, fontWeight: 950 }}>Cost by Hub</h3>
+            <div style={{ border: "1px solid rgba(148,163,184,0.25)", borderRadius: 14, padding: 18, background: "#fff", minHeight: 250, boxSizing: "border-box", boxShadow: "0 16px 38px rgba(15,23,42,0.09)" }}>
+              <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Cost by Hub</h3>
               <div style={{ display: "grid", gap: 8 }}>
                 {hubHistogramRows.slice(0, 8).map((hub, index) => {
                   const section = HUB_SECTIONS.find((item) => item.hubs.includes(hub.label));
@@ -2274,9 +2283,9 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 10 }}>
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg, minHeight: 190, boxSizing: "border-box" }}>
-              <h3 style={{ margin: 0, color: theme.text, fontSize: 15, fontWeight: 950 }}>Hub Risk Classification</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 16 }}>
+            <div style={{ border: "1px solid rgba(148,163,184,0.25)", borderRadius: 14, padding: 18, background: "#fff", minHeight: 210, boxSizing: "border-box", boxShadow: "0 16px 38px rgba(15,23,42,0.09)" }}>
+              <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Hub Risk Classification</h3>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 9 }}>
                 {[
                   ["No Approved Revenue", hubsWithoutApprovedRevenue, theme.danger],
@@ -2307,9 +2316,9 @@ function DashboardApp({ session, onLogout }) {
               </div>
             </div>
 
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg, minHeight: 190, boxSizing: "border-box" }}>
+            <div style={{ border: "1px solid rgba(148,163,184,0.25)", borderRadius: 14, padding: 18, background: "#fff", minHeight: 210, boxSizing: "border-box", boxShadow: "0 16px 38px rgba(15,23,42,0.09)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
-                <h3 style={{ margin: 0, color: theme.text, fontSize: 15, fontWeight: 950 }}>Cost by GL Name</h3>
+                <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Cost by GL Name</h3>
                 {costByGlRows[0] && <span style={{ color: theme.accentStrong, fontSize: 11, fontWeight: 900 }}>Top driver: {costByGlRows[0].glName}</span>}
               </div>
               <div style={{ display: "grid", gap: 8 }}>
