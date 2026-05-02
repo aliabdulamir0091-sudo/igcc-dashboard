@@ -634,17 +634,6 @@ function DashboardApp({ session, onLogout }) {
     };
   }, [showWelcome, isLoading]);
 
-  const loadingView = (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, fontFamily: "Inter, system-ui, sans-serif", color: theme.text, backgroundColor: theme.pageBg }}>
-      <div style={{ width: "min(520px, 100%)", background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 24, boxShadow: theme.cardShadow, textAlign: "center" }}>
-        <div style={{ color: theme.accentStrong, fontSize: 13, fontWeight: 900, textTransform: "uppercase" }}>Loading Dashboard</div>
-        <h1 style={{ margin: "10px 0", fontSize: 28, letterSpacing: 0, color: theme.text }}>Preparing executive dashboard</h1>
-        <p style={{ margin: 0, color: theme.subtext }}>Preparing the executive financial view.</p>
-        {error && <p style={{ marginTop: 14, color: theme.danger }}>{error}</p>}
-      </div>
-    </div>
-  );
-
   useEffect(() => {
     let isMounted = true;
 
