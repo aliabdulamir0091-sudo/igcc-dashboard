@@ -74,7 +74,6 @@ const APPROVED_ACCESS = {
   "haider.almesaody@igccgroup.com": "Viewer",
   "hussein@igccgroup.com": "Viewer",
 };
-const ACCESS_ADMIN_EMAIL = "ali.abdulamir0091@gmail.com";
 const COST_CATEGORY_ORDER = [
   "Accommodation",
   "Air ticket & travel",
@@ -3450,23 +3449,6 @@ const getApprovedAccess = async (user) => {
 
 const isEmailApproved = (email) => Boolean(APPROVED_ACCESS[String(email ?? "").trim().toLowerCase()]);
 
-const getAccessRequestUrl = (email) => {
-  const normalizedEmail = String(email ?? "").trim().toLowerCase();
-  const subject = encodeURIComponent("IGCC Dashboard access approval request");
-  const body = encodeURIComponent([
-    "Dear Admin,",
-    "",
-    "Please approve this user for IGCC Financial Dashboard access:",
-    "",
-    `Email: ${normalizedEmail || "[user email]"}`,
-    "",
-    "Requested role: Viewer",
-    "",
-    "Regards,",
-  ].join("\n"));
-  return `mailto:${ACCESS_ADMIN_EMAIL}?subject=${subject}&body=${body}`;
-};
-
 function LoginPage({ onAuthenticated, initialError = "" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -3522,7 +3504,7 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
       }
 
       if (mode === "signup" && !isEmailApproved(normalizedEmail)) {
-        setError("This email is not approved yet. Please request access from Admin.");
+        setError("This email is not authorized. Please contact the Admin.");
         return;
       }
 
@@ -3649,13 +3631,10 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
 
           {notice && <div style={{ color: loginTheme.accentStrong, background: "rgba(15,118,110,0.10)", border: "1px solid rgba(15,118,110,0.20)", borderRadius: 8, padding: 11, fontSize: 13, lineHeight: 1.4 }}>{notice}</div>}
           {error && <div style={{ color: loginTheme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13, lineHeight: 1.4 }}>{error}</div>}
-          {mode === "signup" && email.trim() && !isEmailApproved(email) && (
-            <a
-              href={getAccessRequestUrl(email)}
-              style={{ display: "block", textAlign: "center", border: `1px solid rgba(15,118,110,0.28)`, borderRadius: 8, padding: "11px 14px", background: loginTheme.accentSoft, color: loginTheme.accentStrong, textDecoration: "none", fontSize: 13, fontWeight: 950 }}
-            >
-              Request admin approval
-            </a>
+          {mode === "signup" && email.trim() && !isEmailApproved(email) && !error && (
+            <div style={{ color: loginTheme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13, lineHeight: 1.4 }}>
+              This email is not authorized. Please contact the Admin.
+            </div>
           )}
 
           <button
