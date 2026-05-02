@@ -1846,6 +1846,72 @@ function DashboardApp({ session, onLogout }) {
 
           {spentEntryMessage && <div style={{ marginTop: 12, color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryMessage}</div>}
           {spentEntryError && <div style={{ marginTop: 12, color: theme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryError}</div>}
+
+          <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <strong style={{ color: theme.text }}>{sortedData.length.toLocaleString()} spent entries</strong>
+            <span style={{ color: theme.subtext, fontSize: 12 }}>
+              Showing {sortedData.length ? (safeTransactionPage - 1) * transactionPageSize + 1 : 0}-{Math.min(safeTransactionPage * transactionPageSize, sortedData.length).toLocaleString()} of {sortedData.length.toLocaleString()}
+            </span>
+          </div>
+
+          <div style={{ marginTop: 10, overflowX: "auto" }}>
+            <table style={{ width: "100%", minWidth: 1120, borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={leftHeaderStyle}>Portfolio</th>
+                  <th style={leftHeaderStyle}>Hub</th>
+                  <th style={leftHeaderStyle}>Cost Center</th>
+                  <th style={leftHeaderStyle}>Month</th>
+                  <th style={leftHeaderStyle}>GL Name</th>
+                  <th style={leftHeaderStyle}>Vendor</th>
+                  <th style={tableHeaderStyle}>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagedTransactionRows.map((row, index) => {
+                  const hub = row.hub || getHubForCostCenter(row.costCenter);
+                  const portfolio = row.portfolio || getPortfolioForHub(hub);
+                  return (
+                    <tr key={`${row.id || row.costCenter}-${row.month}-${row.category}-${index}`} style={{ background: index % 2 === 0 ? theme.panelBg : theme.rowAlt }}>
+                      <td style={leftCellStyle}>{portfolio}</td>
+                      <td style={leftCellStyle}>{hub}</td>
+                      <td style={leftCellStyle}>{row.costCenter}</td>
+                      <td style={leftCellStyle}>{row.month}</td>
+                      <td style={leftCellStyle}>{row.category || "Uncategorized"}</td>
+                      <td style={leftCellStyle}>{row.vendor || "Unspecified Vendor"}</td>
+                      <td style={tableCellStyle}>{formatCurrency(row.amount)}</td>
+                    </tr>
+                  );
+                })}
+                {!sortedData.length && (
+                  <tr>
+                    <td colSpan={7} style={{ ...leftCellStyle, color: theme.subtext }}>No spent entries match the current filters.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {sortedData.length > transactionPageSize && (
+            <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setTransactionPage((current) => Math.max(1, current - 1))}
+                disabled={safeTransactionPage === 1}
+                style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeTransactionPage === 1 ? "not-allowed" : "pointer", opacity: safeTransactionPage === 1 ? 0.55 : 1, fontWeight: 850 }}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => setTransactionPage((current) => Math.min(transactionPageCount, current + 1))}
+                disabled={safeTransactionPage === transactionPageCount}
+                style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeTransactionPage === transactionPageCount ? "not-allowed" : "pointer", opacity: safeTransactionPage === transactionPageCount ? 0.55 : 1, fontWeight: 850 }}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       )}
 
