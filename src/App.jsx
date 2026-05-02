@@ -310,6 +310,17 @@ const getHubForCostCenter = (costCenter) =>
 const getPortfolioForHub = (hub) =>
   HUB_SECTIONS.find((section) => section.hubs.includes(hub))?.label ?? (hub === "Unmapped" ? "Unmapped" : "Other");
 
+const resolveHub = (item) => {
+  const mappedHub = getHubForCostCenter(item?.costCenter);
+  return item?.hub && item.hub !== "Unmapped" ? item.hub : mappedHub;
+};
+
+const resolvePortfolio = (item) => {
+  const hub = resolveHub(item);
+  const mappedPortfolio = getPortfolioForHub(hub);
+  return item?.portfolio && item.portfolio !== "Unmapped" ? item.portfolio : mappedPortfolio;
+};
+
 // Cost center aliases for normalizing Excel data variants
 const COST_CENTER_ALIASES = {
   "GRLBG": "GRLBG_23",
@@ -697,8 +708,8 @@ function DashboardApp({ session, onLogout }) {
   }, [activePage, filters.year, filters.month, spentImportSummary]);
 
   const matchesCostFilters = (item, { includeMonth = true } = {}) => {
-    const hub = getHubForCostCenter(item.costCenter);
-    const portfolio = getPortfolioForHub(hub);
+    const hub = resolveHub(item);
+    const portfolio = resolvePortfolio(item);
     const portfolioMatch = filters.portfolio ? portfolio === filters.portfolio : true;
     const hubMatch = filters.hub ? hub === filters.hub : true;
     const costMatch = filters.costCenter ? item.costCenter === filters.costCenter : true;
@@ -708,8 +719,8 @@ function DashboardApp({ session, onLogout }) {
   };
 
   const matchesRevenueFilters = (item, { includeMonth = true } = {}) => {
-    const hub = getHubForCostCenter(item.costCenter);
-    const portfolio = getPortfolioForHub(hub);
+    const hub = resolveHub(item);
+    const portfolio = resolvePortfolio(item);
     const portfolioMatch = filters.portfolio ? portfolio === filters.portfolio : true;
     const hubMatch = filters.hub ? hub === filters.hub : true;
     const costMatch = filters.costCenter ? item.costCenter === filters.costCenter : true;
@@ -728,13 +739,12 @@ function DashboardApp({ session, onLogout }) {
   const spentHasActiveFilter = Boolean(filters.portfolio || filters.hub || filters.costCenter || filters.year || filters.month);
   const spentPortfolioSummary = HUB_SECTIONS.map((section) => section.label).map((portfolio) => {
     const rows = data.filter((item) => {
-      const hub = item.hub || getHubForCostCenter(item.costCenter);
-      const rowPortfolio = item.portfolio || getPortfolioForHub(hub);
+      const rowPortfolio = resolvePortfolio(item);
       return rowPortfolio === portfolio;
     });
     const amount = rows.reduce((sum, item) => sum + item.amount, 0);
     const costCenters = new Set(rows.map((item) => item.costCenter).filter(Boolean)).size;
-    const hubs = new Set(rows.map((item) => item.hub || getHubForCostCenter(item.costCenter)).filter(Boolean)).size;
+    const hubs = new Set(rows.map((item) => resolveHub(item)).filter(Boolean)).size;
     return { portfolio, amount, rows: rows.length, costCenters, hubs };
   }).filter((row) => row.rows > 0);
   const transactionPageSize = 100;
@@ -1921,8 +1931,8 @@ function DashboardApp({ session, onLogout }) {
                   </thead>
                   <tbody>
                     {pagedTransactionRows.map((row, index) => {
-                      const hub = row.hub || getHubForCostCenter(row.costCenter);
-                      const portfolio = row.portfolio || getPortfolioForHub(hub);
+                      const hub = resolveHub(row);
+                      const portfolio = resolvePortfolio(row);
                       return (
                         <tr key={`${row.id || row.costCenter}-${row.month}-${row.category}-${index}`} style={{ background: index % 2 === 0 ? theme.panelBg : theme.rowAlt }}>
                           <td style={leftCellStyle}>{portfolio}</td>
