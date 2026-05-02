@@ -2,7 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import Papa from "papaparse";
 import { read, utils } from "xlsx";
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth, db, firebaseProjectId, isFirebaseConfigured } from "./firebase";
+import { auth, firebaseProjectId, isFirebaseConfigured } from "./firebase";
 
 const formatCurrency = (value) =>
   value.toLocaleString(undefined, {
@@ -66,7 +66,7 @@ const PERIOD_OPTIONS = [
 const VIEW_ONLY_MODE = true;
 const WELCOME_MESSAGE = "Welcome to this dashboard; Ali Abdulamir is developing this application, and this is not the final revision.";
 const WELCOME_VOICE_MESSAGE = "Welcome to this dashboard. This application is developed by Ali Abdulamir, and this is not the final revision.";
-const ACCESS_CACHE_MS = 60 * 60 * 1000;
+const ACCESS_CACHE_MS = 12 * 60 * 60 * 1000;
 const ACCESS_CACHE_PREFIX = "igcc-access";
 const accessVerificationRequests = new Map();
 const COST_CATEGORY_ORDER = [
@@ -3342,7 +3342,7 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
     setError("");
     setNotice("");
 
-    if (!isFirebaseConfigured || !auth || !db || !firebaseProjectId) {
+    if (!isFirebaseConfigured || !auth || !firebaseProjectId) {
       setError("Secure access is not configured yet. Please contact the dashboard administrator.");
       return;
     }
@@ -3536,11 +3536,11 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
 
 export default function App() {
   const [session, setSession] = useState(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
   const [authError, setAuthError] = useState("");
 
   useEffect(() => {
-    if (!isFirebaseConfigured || !auth || !db || !firebaseProjectId) {
+    if (!isFirebaseConfigured || !auth || !firebaseProjectId) {
       setIsCheckingAuth(false);
       return undefined;
     }
@@ -3548,6 +3548,14 @@ export default function App() {
     return onAuthStateChanged(auth, async (user) => {
       if (!user) {
         setSession(null);
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      const cachedSession = user.emailVerified === true ? readCachedAccess(user) : null;
+      if (cachedSession) {
+        setAuthError("");
+        setSession(cachedSession);
         setIsCheckingAuth(false);
         return;
       }
