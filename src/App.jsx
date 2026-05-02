@@ -726,7 +726,7 @@ function DashboardApp({ session, onLogout }) {
 
   const sortedData = [...filteredData].sort((a, b) => b.amount - a.amount);
   const spentHasActiveFilter = Boolean(filters.portfolio || filters.hub || filters.costCenter || filters.year || filters.month);
-  const spentPortfolioSummary = PORTFOLIO_OPTIONS.map((portfolio) => {
+  const spentPortfolioSummary = HUB_SECTIONS.map((section) => section.label).map((portfolio) => {
     const rows = data.filter((item) => {
       const hub = item.hub || getHubForCostCenter(item.costCenter);
       const rowPortfolio = item.portfolio || getPortfolioForHub(hub);
