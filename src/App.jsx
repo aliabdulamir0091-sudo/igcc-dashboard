@@ -304,8 +304,17 @@ const HUB_SECTIONS = [
 
 const KNOWN_COST_CENTERS = new Set(COST_CENTER_GROUPS.flatMap((group) => group.centers));
 
-const getHubForCostCenter = (costCenter) =>
-  COST_CENTER_GROUPS.find((group) => group.centers.includes(costCenter))?.label ?? "Unmapped";
+const normalizeCostCenterKey = (costCenter) =>
+  String(costCenter ?? "")
+    .replace(/[\u2010-\u2015\u2212]/g, "-")
+    .replace(/\s+/g, "")
+    .trim()
+    .toUpperCase();
+
+const getHubForCostCenter = (costCenter) => {
+  const key = normalizeCostCenterKey(costCenter);
+  return COST_CENTER_GROUPS.find((group) => group.centers.some((center) => normalizeCostCenterKey(center) === key))?.label ?? "Unmapped";
+};
 
 const getPortfolioForHub = (hub) =>
   HUB_SECTIONS.find((section) => section.hubs.includes(hub))?.label ?? (hub === "Unmapped" ? "Unmapped" : "Other");
