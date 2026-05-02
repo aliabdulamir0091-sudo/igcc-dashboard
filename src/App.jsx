@@ -68,7 +68,12 @@ const WELCOME_MESSAGE = "Welcome to this dashboard; Ali Abdulamir is developing 
 const WELCOME_VOICE_MESSAGE = "Welcome to this dashboard. This application is developed by Ali Abdulamir, and this is not the final revision.";
 const ACCESS_CACHE_MS = 12 * 60 * 60 * 1000;
 const ACCESS_CACHE_PREFIX = "igcc-access";
-const accessVerificationRequests = new Map();
+const APPROVED_ACCESS = {
+  "ali.abdulameer@igccgroup.com": "Admin",
+  "ali.abdulamir0091@gmail.com": "Admin",
+  "haider.almesaody@igccgroup.com": "Viewer",
+  "hussein@igccgroup.com": "Viewer",
+};
 const COST_CATEGORY_ORDER = [
   "Accommodation",
   "Air ticket & travel",
@@ -3179,34 +3184,6 @@ function DashboardApp({ session, onLogout }) {
 
 const getAccessCacheKey = (user) => `${ACCESS_CACHE_PREFIX}-${user.uid}`;
 
-const normalizeAccessSession = (user, accessData) => {
-  const role = String(accessData?.role ?? "").trim().toLowerCase();
-  const email = String(accessData?.email ?? user.email ?? "").trim();
-
-  if (accessData?.active !== true) return null;
-  if (email && user.email && email.toLowerCase() !== user.email.trim().toLowerCase()) return null;
-
-  return {
-    uid: user.uid,
-    email: user.email,
-    role: role === "admin" ? "Admin" : "Viewer",
-  };
-};
-
-const readFirestoreRestValue = (field) => {
-  if (!field) return undefined;
-  if (Object.prototype.hasOwnProperty.call(field, "stringValue")) return field.stringValue;
-  if (Object.prototype.hasOwnProperty.call(field, "booleanValue")) return field.booleanValue;
-  if (Object.prototype.hasOwnProperty.call(field, "integerValue")) return Number(field.integerValue);
-  if (Object.prototype.hasOwnProperty.call(field, "doubleValue")) return Number(field.doubleValue);
-  return undefined;
-};
-
-const normalizeRestAccessData = (documentData) => {
-  const fields = documentData?.fields ?? {};
-  return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, readFirestoreRestValue(value)]));
-};
-
 const readCachedAccess = (user) => {
   if (!user?.uid) return null;
 
@@ -3242,51 +3219,24 @@ const isQuotaError = (err) => {
 };
 
 const verifyAllowedAccessOnce = async (user) => {
-  if (!user?.uid || !user?.email || !firebaseProjectId) return null;
+  if (!user?.uid || !user?.email) return null;
 
   const cachedAccess = readCachedAccess(user);
   if (cachedAccess) return cachedAccess;
 
-  if (accessVerificationRequests.has(user.uid)) {
-    console.log("[IGCC Auth] allowedUsers request reused", user.uid);
-    return accessVerificationRequests.get(user.uid);
-  }
+  const normalizedEmail = user.email.trim().toLowerCase();
+  const role = APPROVED_ACCESS[normalizedEmail];
+  console.log("[IGCC Auth] local approved access check", normalizedEmail, Boolean(role));
 
-  const request = (async () => {
-    try {
-      const normalizedEmail = user.email.trim().toLowerCase();
-      const token = await user.getIdToken();
-      const documentUrl = `https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/allowedUsers/${encodeURIComponent(normalizedEmail)}`;
+  if (!role) return null;
 
-      console.log("[IGCC Auth] allowedUsers REST get start", normalizedEmail);
-      const response = await fetch(documentUrl, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("[IGCC Auth] allowedUsers REST get complete", normalizedEmail, response.status);
-
-      if (response.status === 404 || response.status === 403) return null;
-      if (!response.ok) {
-        const body = await response.text();
-        throw new Error(`HTTP ${response.status} - ${body}`);
-      }
-
-      const accessData = normalizeRestAccessData(await response.json());
-      const session = normalizeAccessSession(user, { ...accessData, email: normalizedEmail });
-      if (session) writeCachedAccess(user, session);
-      return session;
-    } catch (err) {
-      console.log("[IGCC Auth] allowedUsers REST get failed", err?.code || err?.message);
-      if (isQuotaError(err)) {
-        throw new Error("Firebase quota exceeded. Please try again later or contact Admin.");
-      }
-      throw err;
-    } finally {
-      accessVerificationRequests.delete(user.uid);
-    }
-  })();
-
-  accessVerificationRequests.set(user.uid, request);
-  return request;
+  const session = {
+    uid: user.uid,
+    email: user.email,
+    role,
+  };
+  writeCachedAccess(user, session);
+  return session;
 };
 
 const getAllowedAccess = (user) => verifyAllowedAccessOnce(user);
