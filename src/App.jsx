@@ -2215,7 +2215,7 @@ function DashboardApp({ session, onLogout }) {
           <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div>
               <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Spend Explorer</h3>
-              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Interactive grouped view. Select a group to open transaction detail.</p>
+              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Grouped visual summary for the current filter selection.</p>
             </div>
             <div style={{ display: "flex", gap: 6, padding: 4, borderRadius: 12, background: theme.accentSoft, border: `1px solid ${theme.border}`, flexWrap: "wrap" }}>
               {spentGroupOptions.map(([value, label]) => (
@@ -2233,21 +2233,15 @@ function DashboardApp({ session, onLogout }) {
 
           <div style={{ marginTop: 12, display: "grid", gap: 9 }}>
             {spentGroupedRows.slice(0, 18).map((row, index) => {
-              const selected = row.key === spentSelectedGroupKey;
               const width = maxSpentGroupAmount ? Math.max(4, Math.round((Math.abs(row.amount) / maxSpentGroupAmount) * 100)) : 0;
               return (
-                <button
+                <div
                   key={row.key}
-                  type="button"
-                  onClick={() => {
-                    setSpentSelectedGroupKey(selected ? "" : row.key);
-                    setTransactionPage(1);
-                  }}
-                  style={{ width: "100%", display: "grid", gridTemplateColumns: "minmax(190px, 0.7fr) minmax(160px, 1fr) 120px", gap: 14, alignItems: "center", textAlign: "left", border: `1px solid ${selected ? theme.accentStrong : theme.border}`, borderRadius: 12, padding: "13px 14px", background: selected ? theme.accentSoft : theme.panelBg, color: theme.text, cursor: "pointer", boxShadow: selected ? "0 12px 28px rgba(15,23,42,0.12)" : "0 7px 18px rgba(15,23,42,0.05)" }}
+                  style={{ width: "100%", display: "grid", gridTemplateColumns: "minmax(190px, 0.7fr) minmax(160px, 1fr) 120px", gap: 14, alignItems: "center", textAlign: "left", border: `1px solid ${theme.border}`, borderRadius: 12, padding: "13px 14px", background: theme.panelBg, color: theme.text, cursor: "default", boxShadow: "0 7px 18px rgba(15,23,42,0.05)" }}
                 >
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
-                      <span style={{ display: "grid", placeItems: "center", width: 28, height: 28, borderRadius: 8, background: selected ? theme.accentStrong : theme.accentSoft, color: selected ? "#fff" : theme.accentStrong, fontSize: 12, fontWeight: 950 }}>{index + 1}</span>
+                      <span style={{ display: "grid", placeItems: "center", width: 28, height: 28, borderRadius: 8, background: theme.accentSoft, color: theme.accentStrong, fontSize: 12, fontWeight: 950 }}>{index + 1}</span>
                       <strong style={{ overflowWrap: "anywhere" }}>{row.label}</strong>
                     </div>
                     <div style={{ marginTop: 6, color: theme.subtext, fontSize: 12 }}>{row.sublabel} | {row.costCenterCount} centers | {row.monthCount} months</div>
@@ -2259,7 +2253,7 @@ function DashboardApp({ session, onLogout }) {
                     <div style={{ color: theme.text, fontWeight: 950 }}>{formatCurrency(row.amount)}</div>
                     <div style={{ marginTop: 4, color: theme.subtext, fontSize: 12 }}>{row.rows.toLocaleString()} rows</div>
                   </div>
-                </button>
+                </div>
               );
             })}
             {!spentGroupedRows.length && (
@@ -2267,7 +2261,7 @@ function DashboardApp({ session, onLogout }) {
             )}
           </div>
 
-          {selectedSpentGroup ? (
+          {false ? (
             <>
               <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <div>
@@ -2341,11 +2335,7 @@ function DashboardApp({ session, onLogout }) {
                 </div>
               )}
             </>
-          ) : (
-            <div style={{ marginTop: 14, border: `1px solid ${theme.border}`, borderRadius: 12, padding: 14, background: theme.inputBg, color: theme.subtext, fontSize: 13 }}>
-              Select any bar above to open transaction-level drill-down details.
-            </div>
-          )}
+          ) : null}
         </div>
       )}
 
