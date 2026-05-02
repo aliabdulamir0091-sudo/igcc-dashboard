@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { read, utils } from "xlsx";
 
@@ -7,7 +7,15 @@ const sourceFile = join(root, "public", "data", "spent-report", "source-excel", 
 const spentDir = join(root, "public", "data", "spent-report");
 const processedDir = join(spentDir, "processed");
 const summaryDir = join(spentDir, "summary");
+const creditNoteOutputDir = join(spentDir, "credit-note");
 const manifestFile = join(processedDir, "manifest.json");
+const creditNoteSummaryFile = join(creditNoteOutputDir, "credit_note_summary.json");
+const creditNoteSourceCandidates = [
+  join(spentDir, "Credit Note"),
+  join(spentDir, "credit note"),
+  join(root, "..", "Spent report", "Credit Note"),
+  join(root, "..", "Spent Report", "Credit Note"),
+];
 
 const monthOrder = {
   jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
@@ -23,7 +31,7 @@ const costCenterAliases = {
   ROOP_23: "GRLRO_23", TMS_26: "MWP_23", EPMNT_23: "EIMNT_23", BGC_23: "GRLBG_23",
   BGCG_23: "GRLBG_23", camp_23: "CmpSB_23", Camp_23: "CmpSB_23", HO_23: "HO_SB_23",
   management: "HO_SB_23", Management: "HO_SB_23", MANAGEMENT: "HO_SB_23", ROOG_23: "GRLRO_23",
-  TOTAL_25: "GRLTOT_25",
+  TOTAL_25: "GRLTOT_25", "PWT PWRI1_23": "PWRI-PWT", "PWT PWRI_23": "PWRI-PWT", "PWRI1_23": "PWRI-PWT",
 };
 
 const costCenterGroups = [
@@ -86,6 +94,45 @@ const getPeriodParts = (monthRaw, yearRaw) => {
 };
 const makePeriodKey = (year, monthNumber) => `${year}-${String(monthNumber).padStart(2, "0")}`;
 const makeSpentFileName = (year, monthNumber) => `spent_${year}_${String(monthNumber).padStart(2, "0")}.json`;
+const getPeriodFromDate = (value) => {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const normalizedDate = new Date(value);
+    normalizedDate.setDate(normalizedDate.getDate() + 1);
+    const monthNumber = normalizedDate.getMonth() + 1;
+    const year = normalizedDate.getFullYear();
+    return { monthNumber, monthName: monthLabels[monthNumber], quarter: Math.ceil(monthNumber / 3), year };
+  }
+
+  const date = new Date(value);
+  if (value && !Number.isNaN(date.getTime()) && /[a-z]|\d{4}|-|\/|T/i.test(String(value))) {
+    date.setDate(date.getDate() + 1);
+    const monthNumber = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return { monthNumber, monthName: monthLabels[monthNumber], quarter: Math.ceil(monthNumber / 3), year };
+  }
+
+  return null;
+};
+const getPeriodFromFileName = (fileName) => {
+  const value = fileName.replace(/\.[^.]+$/, "").replace(/[_-]/g, " ");
+  const monthMatch = value.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\b/i);
+  const yearMatch = value.match(/\b(20\d{2}|\d{2})\b/);
+  if (!monthMatch || !yearMatch) return null;
+
+  const monthNumber = monthOrder[monthMatch[1].toLowerCase()];
+  const rawYear = Number(yearMatch[1]);
+  const year = rawYear < 100 ? 2000 + rawYear : rawYear;
+  return { monthNumber, monthName: monthLabels[monthNumber], quarter: Math.ceil(monthNumber / 3), year };
+};
+const getHeaderPeriod = (header, fallbackPeriod) => {
+  const datePeriod = getPeriodFromDate(header);
+  if (datePeriod) return datePeriod;
+
+  const value = normalizeValue(header);
+  const [monthRaw, yearRaw] = value.split(/\s+|-/);
+  const parsed = getPeriodParts(monthRaw, yearRaw);
+  return parsed.year && parsed.monthNumber ? parsed : fallbackPeriod;
+};
 
 const addSummary = (map, keyParts, row, overrides = {}) => {
   const key = keyParts.join("|");
@@ -101,6 +148,7 @@ rmSync(processedDir, { recursive: true, force: true });
 rmSync(summaryDir, { recursive: true, force: true });
 mkdirSync(processedDir, { recursive: true });
 mkdirSync(summaryDir, { recursive: true });
+mkdirSync(creditNoteOutputDir, { recursive: true });
 
 const workbook = read(readFileSync(sourceFile), { type: "buffer", cellDates: true });
 const masterSheet = workbook.Sheets.Master;
@@ -214,6 +262,112 @@ writeSummary("project_summary.json", projectSummaryMap);
 writeSummary("cost_center_summary.json", costCenterSummaryMap);
 writeSummary("hub_summary.json", hubSummaryMap);
 writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
+
+const readCreditNoteRows = () => {
+  const sourceDir = creditNoteSourceCandidates.find((dir) => existsSync(dir));
+  const files = sourceDir
+    ? readdirSync(sourceDir).filter((fileName) => /\.xlsx$/i.test(fileName) && !fileName.startsWith("~$")).sort()
+    : [];
+  const creditRows = [];
+  const fileErrors = [];
+  const importSummary = {
+    sourceFolder: sourceDir ? "Spent report/Credit Note" : "Credit Note folder not found",
+    totalFiles: files.length,
+    totalRows: 0,
+    validRows: 0,
+    invalidRows: 0,
+    monthsDetected: [],
+    filesProcessed: [],
+    fileErrors,
+  };
+
+  files.forEach((fileName) => {
+    const fileSummary = { fileName, totalRows: 0, validRows: 0, invalidRows: 0, monthsDetected: [] };
+    try {
+      const workbook = read(readFileSync(join(sourceDir, fileName)), { type: "buffer", cellDates: true });
+      const fallbackPeriod = getPeriodFromFileName(fileName);
+
+      workbook.SheetNames.forEach((sheetName) => {
+        const rawRows = utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "", header: 1, blankrows: false });
+        const headerIndex = rawRows.findIndex((row) => row.some((cell) => /cost\s*code|cost\s*center/i.test(normalizeValue(cell))));
+        if (headerIndex < 0) return;
+
+        const headers = rawRows[headerIndex];
+        const costCenterIndex = headers.findIndex((cell) => /cost\s*code|cost\s*center/i.test(normalizeValue(cell)));
+        const dataRows = rawRows.slice(headerIndex + 1);
+        fileSummary.totalRows += dataRows.length;
+        importSummary.totalRows += dataRows.length;
+
+        dataRows.forEach((row, rowOffset) => {
+          const rawCostCenter = normalizeValue(row[costCenterIndex]);
+          const costCenter = costCenterAliases[rawCostCenter] || rawCostCenter;
+          if (!costCenter || /^total|grand total$/i.test(costCenter)) return;
+
+          let rowHadValue = false;
+          headers.forEach((header, columnIndex) => {
+            if (columnIndex === costCenterIndex) return;
+            const headerLabel = normalizeValue(header);
+            const headerLower = headerLabel.toLowerCase();
+            if (!headerLabel || /^(no\.?|total revenue|grand total|total)$/i.test(headerLabel)) return;
+
+            const amount = cleanupAmount(row[columnIndex]);
+            if (!amount) return;
+
+            const period = getHeaderPeriod(header, fallbackPeriod);
+            if (!period?.year || !period?.monthNumber) {
+              fileSummary.invalidRows += 1;
+              importSummary.invalidRows += 1;
+              return;
+            }
+
+            const cnReceived = /received|receipt|debit/i.test(headerLabel) ? amount : 0;
+            const cnIssued = /received|receipt|debit/i.test(headerLabel) ? 0 : amount;
+            const periodKey = makePeriodKey(period.year, period.monthNumber);
+            const category = getPeriodFromDate(header) ? "Credit Note" : /fa|fixed/i.test(headerLabel) ? "Fixed Assets" : headerLabel;
+
+            creditRows.push({
+              id: `${fileName}:${sheetName}:${headerIndex + rowOffset + 2}:${columnIndex}`,
+              fileName,
+              sheetName,
+              rowNumber: headerIndex + rowOffset + 2,
+              portfolio: getPortfolioForHub(getHubForCostCenter(costCenter)),
+              hub: getHubForCostCenter(costCenter),
+              costCenter,
+              month: `${period.monthName} ${period.year}`,
+              monthName: period.monthName,
+              monthNumber: period.monthNumber,
+              quarter: period.quarter,
+              year: period.year,
+              category,
+              vendor: "Credit Note",
+              cnReceived,
+              cnIssued,
+              amount: cnReceived - cnIssued,
+              source: "Credit Note",
+              sourceType: "credit-note",
+            });
+            rowHadValue = true;
+            fileSummary.validRows += 1;
+            importSummary.validRows += 1;
+            fileSummary.monthsDetected.push(periodKey);
+          });
+
+          if (!rowHadValue) return;
+        });
+      });
+    } catch (error) {
+      fileErrors.push({ fileName, error: error.message });
+    }
+
+    fileSummary.monthsDetected = Array.from(new Set(fileSummary.monthsDetected)).sort();
+    importSummary.filesProcessed.push(fileSummary);
+  });
+
+  importSummary.monthsDetected = Array.from(new Set(creditRows.map((row) => makePeriodKey(row.year, row.monthNumber)))).sort();
+  return { generatedAt: new Date().toISOString(), importSummary, rows: creditRows };
+};
+
+writeFileSync(creditNoteSummaryFile, `${JSON.stringify(readCreditNoteRows())}\n`);
 
 console.log(`Source rows: ${importSummary.totalRows.toLocaleString()}`);
 console.log(`Valid rows: ${importSummary.validRows.toLocaleString()}`);

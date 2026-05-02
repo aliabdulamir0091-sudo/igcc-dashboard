@@ -51,6 +51,7 @@ const MONTH_ORDER = {
 const MONTH_LABELS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const SPENT_SUMMARY_FILE = "data/spent-report/summary/monthly_summary.json";
+const CREDIT_NOTE_SUMMARY_FILE = "data/spent-report/credit-note/credit_note_summary.json";
 const getPublicAssetUrl = (filename) => `${import.meta.env.BASE_URL}${String(filename).split("/").map(encodeURIComponent).join("/")}`;
 const IGCC_LEVEL_LABEL = "IGCC Level 1 - IRAQ GATE CONTRACTING COMPANY";
 const NAV_ITEMS = [
@@ -472,6 +473,7 @@ const parseRevenueWorkbook = (workbook) => {
 function DashboardApp({ session, onLogout }) {
   const [data, setData] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
+  const [creditNoteData, setCreditNoteData] = useState([]);
   const [filename, setFilename] = useState("");
   const [revenueFilename, setRevenueFilename] = useState("");
   const [error, setError] = useState("");
@@ -486,6 +488,7 @@ function DashboardApp({ session, onLogout }) {
   const [spentSelectedGroupKey, setSpentSelectedGroupKey] = useState("");
   const [spentDetailSort, setSpentDetailSort] = useState({ field: "amount", direction: "desc" });
   const [profitabilitySortMode, setProfitabilitySortMode] = useState("worst");
+  const [costViewMode, setCostViewMode] = useState("official");
   const [themeMode, setThemeMode] = useState("light");
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -495,6 +498,7 @@ function DashboardApp({ session, onLogout }) {
   const [isLoadingFullSpentDetails, setIsLoadingFullSpentDetails] = useState(false);
   const [loadedSpentDetailPeriods, setLoadedSpentDetailPeriods] = useState([]);
   const [spentImportSummary, setSpentImportSummary] = useState(null);
+  const [creditNoteImportSummary, setCreditNoteImportSummary] = useState(null);
 
   const theme = {
     light: {
@@ -626,7 +630,29 @@ function DashboardApp({ session, onLogout }) {
       }
     };
 
-    Promise.all([loadSpentSummary(), loadBundledRevenue().then(() => [])])
+    const loadCreditNoteSummary = async () => {
+      try {
+        const response = await fetch(getPublicAssetUrl(CREDIT_NOTE_SUMMARY_FILE));
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const summary = await response.json();
+
+        if (isMounted) {
+          setCreditNoteData(Array.isArray(summary.rows) ? summary.rows : []);
+          setCreditNoteImportSummary(summary.importSummary ?? null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.log(`[IGCC CN] Credit note summary not loaded: ${err.message}`);
+          setCreditNoteData([]);
+          setCreditNoteImportSummary(null);
+        }
+      }
+    };
+
+    Promise.all([loadSpentSummary(), loadBundledRevenue().then(() => []), loadCreditNoteSummary().then(() => [])])
       .then(([summaryRows]) => {
         if (!isMounted) return;
 
@@ -762,10 +788,85 @@ function DashboardApp({ session, onLogout }) {
   };
 
   const hasActiveGlobalFilter = Object.values(filters).some(Boolean);
-  const filteredData = data.filter((item) => matchesCostFilters(item));
+  const hasCostLevelFilter = Boolean(filters.portfolio || filters.hub || filters.costCenter);
+  const isAdjustedCostRequested = costViewMode === "adjusted";
+  const isAdjustedCostActive = isAdjustedCostRequested && hasCostLevelFilter;
+  const costViewLabel = isAdjustedCostActive ? "Adjusted Cost" : "Official Cost";
+  const filteredOfficialData = data.filter((item) => matchesCostFilters(item));
+  const filteredCreditNoteData = creditNoteData.filter((item) => matchesCostFilters(item));
+  const creditNoteAdjustmentRows = isAdjustedCostActive
+    ? filteredCreditNoteData
+        .map((item) => ({
+          ...item,
+          amount: (Number(item.cnReceived) || 0) - (Number(item.cnIssued) || 0),
+          category: item.category || "Credit Note Adjustment",
+          vendor: item.vendor || "Credit Note",
+          sourceType: "credit-note",
+        }))
+        .filter((item) => item.amount !== 0)
+    : [];
+  const filteredData = isAdjustedCostActive ? [...filteredOfficialData, ...creditNoteAdjustmentRows] : filteredOfficialData;
   const filteredRevenueData = revenueData.filter((item) => matchesRevenueFilters(item));
-  const comparisonData = data.filter((item) => matchesCostFilters(item, { includeMonth: false }));
+  const comparisonOfficialData = data.filter((item) => matchesCostFilters(item, { includeMonth: false }));
+  const comparisonCreditNoteData = creditNoteData.filter((item) => matchesCostFilters(item, { includeMonth: false }));
+  const comparisonCreditNoteAdjustmentRows = isAdjustedCostActive
+    ? comparisonCreditNoteData
+        .map((item) => ({
+          ...item,
+          amount: (Number(item.cnReceived) || 0) - (Number(item.cnIssued) || 0),
+          category: item.category || "Credit Note Adjustment",
+          vendor: item.vendor || "Credit Note",
+          sourceType: "credit-note",
+        }))
+        .filter((item) => item.amount !== 0)
+    : [];
+  const comparisonData = isAdjustedCostActive ? [...comparisonOfficialData, ...comparisonCreditNoteAdjustmentRows] : comparisonOfficialData;
   const comparisonRevenueData = revenueData.filter((item) => matchesRevenueFilters(item, { includeMonth: false }));
+  const officialVisibleTotal = filteredOfficialData.reduce((sum, d) => sum + d.amount, 0);
+  const cnReceivedTotal = filteredCreditNoteData.reduce((sum, item) => sum + (Number(item.cnReceived) || 0), 0);
+  const cnIssuedTotal = filteredCreditNoteData.reduce((sum, item) => sum + (Number(item.cnIssued) || 0), 0);
+  const cnNetImpact = cnReceivedTotal - cnIssuedTotal;
+  const adjustedVisibleTotal = officialVisibleTotal + (isAdjustedCostActive ? cnNetImpact : 0);
+  const getCreditNoteSummaryForCostCenter = (costCenter) =>
+    filteredCreditNoteData
+      .filter((item) => item.costCenter === costCenter)
+      .reduce(
+        (summary, item) => ({
+          cnReceived: summary.cnReceived + (Number(item.cnReceived) || 0),
+          cnIssued: summary.cnIssued + (Number(item.cnIssued) || 0),
+          rows: summary.rows + 1,
+        }),
+        { cnReceived: 0, cnIssued: 0, rows: 0 }
+      );
+  const creditImpactByCenter = Array.from(
+    filteredCreditNoteData
+      .reduce((map, item) => {
+        const key = item.costCenter || "Unmapped";
+        const current = map.get(key) ?? { costCenter: key, hub: resolveHub(item), cnReceived: 0, cnIssued: 0, rows: 0 };
+        current.cnReceived += Number(item.cnReceived) || 0;
+        current.cnIssued += Number(item.cnIssued) || 0;
+        current.rows += 1;
+        map.set(key, current);
+        return map;
+      }, new Map())
+      .values()
+  )
+    .map((row) => ({ ...row, netImpact: row.cnReceived - row.cnIssued }))
+    .sort((a, b) => b.cnIssued - a.cnIssued || Math.abs(b.netImpact) - Math.abs(a.netImpact));
+  const creditImpactByMonth = Array.from(
+    filteredCreditNoteData
+      .reduce((map, item) => {
+        const key = `${item.year ?? "Unknown"}-${String(item.monthNumber ?? 0).padStart(2, "0")}`;
+        const current = map.get(key) ?? { key, label: item.month || key, order: (Number(item.year) || 0) * 100 + (Number(item.monthNumber) || 0), cnReceived: 0, cnIssued: 0 };
+        current.cnReceived += Number(item.cnReceived) || 0;
+        current.cnIssued += Number(item.cnIssued) || 0;
+        map.set(key, current);
+        return map;
+      }, new Map())
+      .values()
+  )
+    .map((row) => ({ ...row, netImpact: row.cnReceived - row.cnIssued }))
+    .sort((a, b) => a.order - b.order);
 
   const sortedData = [...filteredData].sort((a, b) => b.amount - a.amount);
   const spentHasActiveFilter = Boolean(filters.portfolio || filters.hub || filters.costCenter || filters.year || filters.month);
@@ -1300,23 +1401,117 @@ function DashboardApp({ session, onLogout }) {
   const renderPeriodToggle = () => (
     renderPeriodToggleFor(periodView, setPeriodView)
   );
+  const renderCostViewToggle = () => (
+    <div style={{ display: "grid", gap: 6, minWidth: "min(100%, 280px)" }}>
+      <div onClick={(event) => event.stopPropagation()} style={{ display: "flex", gap: 3, padding: 3, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 8, overflow: "hidden" }}>
+        {[
+          ["official", "Official Cost"],
+          ["adjusted", "Adjusted Cost"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setCostViewMode(value)}
+            style={{ border: "none", borderRadius: 6, flex: "1 1 0", minWidth: 0, padding: "8px 9px", cursor: "pointer", fontWeight: 900, fontSize: 11, background: costViewMode === value ? theme.panelBg : "transparent", color: costViewMode === value ? theme.accentStrong : theme.text, boxShadow: costViewMode === value ? "0 1px 4px rgba(15,23,42,0.12)" : "none" }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <span style={{ color: theme.subtext, fontSize: 11, lineHeight: 1.35 }}>
+        {isAdjustedCostActive ? "CN applied at hub / cost center level." : isAdjustedCostRequested ? "IGCC Level 1 remains Official Cost until a portfolio, hub, or cost center is selected." : "Spent Report only."}
+      </span>
+    </div>
+  );
+  const renderWorkshopCreditImpact = () => {
+    const maxMonthImpact = Math.max(...creditImpactByMonth.map((row) => Math.abs(row.netImpact)), 0);
+
+    return (
+      <section style={{ marginTop: 16, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+          <div>
+            <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Workshop Credit Impact</h3>
+            <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>CN affects adjusted hub and cost-center views only.</p>
+          </div>
+          <span style={{ color: theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>
+            {creditNoteImportSummary?.totalFiles ?? 0} CN files
+          </span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+          {[
+            ["Total CN Issued", formatCurrency(cnIssuedTotal), "Credits reducing adjusted cost", theme.danger],
+            ["Total CN Received", formatCurrency(cnReceivedTotal), "Explicit received CN columns", theme.accentStrong],
+            ["Net CN Impact", formatCurrency(cnNetImpact), "Received minus issued", cnNetImpact >= 0 ? theme.accentStrong : theme.danger],
+          ].map(([label, value, detail, accent]) => (
+            <div key={label} style={{ border: `1px solid ${theme.border}`, borderLeft: `4px solid ${accent}`, borderRadius: 8, padding: 13, background: theme.panelBg }}>
+              <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+              <div style={{ marginTop: 7, color: accent, fontSize: 20, lineHeight: 1.05, fontWeight: 950 }}>{value}</div>
+              <div style={{ marginTop: 7, color: theme.subtext, fontSize: 12 }}>{detail}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(min(100%, 320px), 1fr) minmax(min(100%, 320px), 1fr)", gap: 14, marginTop: 14 }}>
+          <div>
+            <h4 style={{ margin: "0 0 10px", color: theme.text, fontSize: 14 }}>Top receiving cost centers</h4>
+            <div style={{ display: "grid", gap: 8 }}>
+              {creditImpactByCenter.slice(0, 6).map((row) => (
+                <div key={row.costCenter} style={{ display: "grid", gridTemplateColumns: "minmax(110px, 1fr) 130px", gap: 10, alignItems: "center" }}>
+                  <span style={{ color: theme.text, fontSize: 12, fontWeight: 900, overflowWrap: "anywhere" }}>{row.costCenter}</span>
+                  <span style={{ color: theme.danger, textAlign: "right", fontSize: 12, fontWeight: 950 }}>{formatCompactCurrency(row.cnIssued)}</span>
+                </div>
+              ))}
+              {!creditImpactByCenter.length && <div style={{ color: theme.subtext, fontSize: 12 }}>No CN rows match the current filters.</div>}
+            </div>
+          </div>
+          <div>
+            <h4 style={{ margin: "0 0 10px", color: theme.text, fontSize: 14 }}>CN impact by month</h4>
+            <div style={{ display: "grid", gap: 8 }}>
+              {creditImpactByMonth.slice(-8).map((row) => {
+                const width = `${Math.max(4, (Math.abs(row.netImpact) / (maxMonthImpact || 1)) * 100)}%`;
+                return (
+                  <div key={row.key} style={{ display: "grid", gridTemplateColumns: "82px minmax(0, 1fr) 120px", gap: 8, alignItems: "center" }}>
+                    <span style={{ color: theme.text, fontSize: 12, fontWeight: 850 }}>{row.label}</span>
+                    <div style={{ height: 10, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                      <div style={{ width, height: "100%", borderRadius: 999, background: row.netImpact >= 0 ? theme.accentStrong : theme.danger }} />
+                    </div>
+                    <span style={{ color: row.netImpact >= 0 ? theme.accentStrong : theme.danger, textAlign: "right", fontSize: 12, fontWeight: 900 }}>{formatCompactCurrency(row.netImpact)}</span>
+                  </div>
+                );
+              })}
+              {!creditImpactByMonth.length && <div style={{ color: theme.subtext, fontSize: 12 }}>No monthly CN impact for the current filters.</div>}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  };
   const overviewPeriodTotals = aggregateByPeriod(filteredData, overviewPeriodView);
   const chartPeriods = overviewPeriodTotals.slice(-8);
   const maxChartPeriodAmount = Math.max(...chartPeriods.map((item) => Math.abs(item.amount)), 0);
   const centerSummaryRows = hubCostCenterBreakdown
     .flatMap((hub) =>
-      hub.centers.map((center) => ({
-        portfolio: getPortfolioForHub(hub.label),
-        hub: hub.label,
-        costCenter: center.center,
-        cost: center.amount,
-        submitted: center.submitted,
-        approved: center.approved,
-        gap: center.submitted - center.approved,
-        net: center.approved - center.amount,
-        margin: center.approved ? (center.approved - center.amount) / center.approved : center.amount ? -1 : 0,
-        rows: center.rows,
-      }))
+      hub.centers.map((center) => {
+        const cnSummary = getCreditNoteSummaryForCostCenter(center.center);
+        const grossCost = filteredOfficialData.filter((item) => item.costCenter === center.center).reduce((sum, item) => sum + item.amount, 0);
+        const adjustedCost = grossCost + (isAdjustedCostActive ? cnSummary.cnReceived - cnSummary.cnIssued : 0);
+
+        return {
+          portfolio: getPortfolioForHub(hub.label),
+          hub: hub.label,
+          costCenter: center.center,
+          grossCost,
+          cnReceived: cnSummary.cnReceived,
+          cnIssued: cnSummary.cnIssued,
+          adjustedCost,
+          cost: center.amount,
+          submitted: center.submitted,
+          approved: center.approved,
+          gap: center.submitted - center.approved,
+          net: center.approved - center.amount,
+          margin: center.approved ? (center.approved - center.amount) / center.approved : center.amount ? -1 : 0,
+          rows: center.rows,
+        };
+      })
     )
     .filter((row) => row.cost || row.submitted || row.approved)
     .sort((a, b) => b.cost - a.cost);
@@ -2176,6 +2371,7 @@ function DashboardApp({ session, onLogout }) {
               <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Monthly spend entries by portfolio, hub, cost center, and GL name.</p>
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              {renderCostViewToggle()}
               {isLoadingFullSpentDetails && (
                 <span style={{ color: theme.text, background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>Loading Details</span>
               )}
@@ -2218,7 +2414,7 @@ function DashboardApp({ session, onLogout }) {
 
           <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
             {[
-              ["Total Spend", formatCompactCurrency(spentTotalAmount), "Filtered spend value", "TS", "#0f766e"],
+              [costViewLabel, formatCompactCurrency(spentTotalAmount), isAdjustedCostActive ? `Gross ${formatCompactCurrency(officialVisibleTotal)} | CN ${formatCompactCurrency(cnNetImpact)}` : "Filtered spend value", "TS", "#0f766e"],
               ["Top GL Name", topSpentGl?.[0] || "No data", topSpentGl ? formatCompactCurrency(topSpentGl[1]) : "-", "GL", "#2563eb"],
               ["Top Cost Center", topSpentCostCenter?.[0] || "No data", topSpentCostCenter ? formatCompactCurrency(topSpentCostCenter[1]) : "-", "CC", "#16a34a"],
               ["Months Included", spentMonthCount.toLocaleString(), "Periods in current view", "MO", "#7c3aed"],
@@ -2235,6 +2431,8 @@ function DashboardApp({ session, onLogout }) {
               </div>
             ))}
           </div>
+
+          {renderWorkshopCreditImpact()}
 
           <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div>
@@ -2379,6 +2577,7 @@ function DashboardApp({ session, onLogout }) {
             <div style={{ padding: "20px 12px 18px 12px" }}>
               <h1 style={{ margin: 0, color: "#071a3a", fontSize: 30, fontWeight: 950, letterSpacing: 0 }}>Executive Cockpit</h1>
               <p style={{ margin: "10px 0 0", color: "#335174", fontSize: 15, lineHeight: 1.65, maxWidth: 560 }}>Executive overview of financial performance, approval status, portfolio exposure, and key risks.</p>
+              <div style={{ marginTop: 14 }}>{renderCostViewToggle()}</div>
             </div>
             <div style={{ position: "relative", overflow: "hidden", display: "flex", alignItems: "center", gap: 18, border: "1px solid rgba(20,184,166,0.28)", borderRadius: 14, padding: "22px 24px", background: "radial-gradient(circle at 80% 50%, rgba(20,184,166,0.35), transparent 22%), linear-gradient(135deg, #041d36 0%, #062b4f 58%, #064e5f 100%)", boxShadow: "0 18px 42px rgba(7,26,58,0.24), inset 0 1px 0 rgba(255,255,255,0.10)" }}>
               <div style={{ position: "absolute", inset: "auto -30px -24px 110px", height: 82, opacity: 0.42, background: "repeating-radial-gradient(ellipse at center, transparent 0 18px, rgba(94,234,212,0.18) 19px 20px)" }} />
@@ -2414,7 +2613,7 @@ function DashboardApp({ session, onLogout }) {
             <div style={{ display: "grid", gridTemplateRows: "1fr auto", gap: 10 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
                 {[
-                  ["Total Cost", formatCompactCurrency(visibleTotal), getKpiChange("cost", true), theme.accentWarm],
+                  [costViewLabel, formatCompactCurrency(visibleTotal), getKpiChange("cost", true), theme.accentWarm],
                   ["Submitted AFP", formatCompactCurrency(submittedRevenue), getKpiChange("submitted"), "#2563eb"],
                   ["Approved AFP", formatCompactCurrency(approvedRevenue), getKpiChange("approved"), "#059669"],
                 ].map(([label, value, change, accent]) => (
@@ -2440,6 +2639,8 @@ function DashboardApp({ session, onLogout }) {
               </div>
             </div>
           </div>
+
+          {renderWorkshopCreditImpact()}
 
           <div style={{ display: "none" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 12 }}>
@@ -3070,9 +3271,10 @@ function DashboardApp({ session, onLogout }) {
               <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Expand from portfolio to hub, cost center, the global filter selection, and GL-name cost detail.</p>
             </div>
             <div style={{ display: "grid", gap: 8 }}>
+              {renderCostViewToggle()}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(120px, 1fr))", gap: 8, minWidth: "min(100%, 560px)" }}>
                 {[
-                  ["Cost", visibleTotal, theme.accentWarm],
+                  [costViewLabel, visibleTotal, theme.accentWarm],
                   ["Approved AFP", approvedRevenue, theme.accentStrong],
                   ["Profit", revenueSurplus, profitColor(revenueSurplus)],
                   ["Margin", approvedRevenue ? revenueSurplus / approvedRevenue : visibleTotal ? -1 : 0, profitColor(revenueSurplus)],
@@ -3090,7 +3292,7 @@ function DashboardApp({ session, onLogout }) {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12, marginBottom: 16 }}>
             {[
-              ["Cost", formatCompactCurrency(visibleTotal), "Filtered cost base", "CO", theme.accentWarm],
+              [costViewLabel, formatCompactCurrency(visibleTotal), isAdjustedCostActive ? `Gross ${formatCompactCurrency(officialVisibleTotal)} | CN ${formatCompactCurrency(cnNetImpact)}` : "Filtered cost base", "CO", theme.accentWarm],
               ["Approved AFP", formatCompactCurrency(approvedRevenue), "Recognized value", "AF", theme.accentStrong],
               ["Best Center", bestProfitabilityRow?.costCenter || "No data", bestProfitabilityRow ? formatCompactCurrency(bestProfitabilityRow.approvedNet) : "-", "BC", "#2563eb"],
               ["At Risk Center", riskProfitabilityRow?.costCenter || "No data", riskProfitabilityRow ? formatCompactCurrency(riskProfitabilityRow.approvedNet) : "-", "RC", theme.danger],
@@ -3107,6 +3309,47 @@ function DashboardApp({ session, onLogout }) {
                 </div>
               </div>
             ))}
+          </div>
+
+          {renderWorkshopCreditImpact()}
+
+          <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)", margin: "16px 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+              <div>
+                <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Cost Center CN View</h3>
+                <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Gross cost remains the Spent Report total; adjusted cost applies CN received minus CN issued.</p>
+              </div>
+              <span style={{ color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>{costViewLabel}</span>
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", minWidth: 760, borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={leftHeaderStyle}>Cost Center</th>
+                    <th style={tableHeaderStyle}>Gross Cost</th>
+                    <th style={tableHeaderStyle}>CN Received</th>
+                    <th style={tableHeaderStyle}>CN Issued</th>
+                    <th style={tableHeaderStyle}>Adjusted Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {centerSummaryRows.slice(0, 10).map((row) => (
+                    <tr key={`cn-${row.costCenter}`}>
+                      <td style={leftCellStyle}>{row.costCenter}</td>
+                      <td style={tableCellStyle}>{formatCurrency(row.grossCost)}</td>
+                      <td style={{ ...tableCellStyle, color: theme.accentStrong }}>{formatCurrency(row.cnReceived)}</td>
+                      <td style={{ ...tableCellStyle, color: theme.danger }}>{formatCurrency(row.cnIssued)}</td>
+                      <td style={{ ...tableCellStyle, fontWeight: 950 }}>{formatCurrency(row.adjustedCost)}</td>
+                    </tr>
+                  ))}
+                  {!centerSummaryRows.length && (
+                    <tr>
+                      <td colSpan={5} style={{ ...leftCellStyle, color: theme.subtext }}>No cost center CN detail matches the current filters.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)", marginBottom: 16 }}>
