@@ -1948,17 +1948,6 @@ function DashboardApp({ session, onLogout }) {
             ))}
           </section>
 
-          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: 0, overflow: "hidden", borderRadius: 16, background: "linear-gradient(135deg, #041d36, #062b4f)", border: "1px solid rgba(148,163,184,0.22)", boxShadow: "0 18px 40px rgba(15,23,42,0.16)" }}>
-            {portalInfoStrip.map(([title, detail, icon, color]) => (
-              <div key={title} style={{ display: "flex", alignItems: "center", gap: 16, padding: "22px 28px", borderRight: "1px solid rgba(255,255,255,0.12)" }}>
-                <span style={{ display: "inline-grid", placeItems: "center", minWidth: 58, height: 58, borderRadius: 999, background: `${color}22`, color, fontSize: 13, fontWeight: 950 }}>{icon}</span>
-                <div>
-                  <div style={{ color: "#fff", fontSize: 15, fontWeight: 950 }}>{title}</div>
-                  <div style={{ marginTop: 3, color: "rgba(226,232,240,0.82)", fontSize: 13, lineHeight: 1.35 }}>{detail}</div>
-                </div>
-              </div>
-            ))}
-          </section>
         </div>
       )}
 
@@ -3421,6 +3410,18 @@ function DashboardApp({ session, onLogout }) {
           )}
         </div>
       )}
+
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: 0, overflow: "hidden", marginTop: 18, borderRadius: 16, background: "linear-gradient(135deg, #041d36, #062b4f)", border: "1px solid rgba(148,163,184,0.22)", boxShadow: "0 18px 40px rgba(15,23,42,0.16)" }}>
+        {portalInfoStrip.map(([title, detail, icon, color]) => (
+          <div key={title} style={{ display: "flex", alignItems: "center", gap: 16, padding: "22px 28px", borderRight: "1px solid rgba(255,255,255,0.12)" }}>
+            <span style={{ display: "inline-grid", placeItems: "center", minWidth: 58, height: 58, borderRadius: 999, background: `${color}22`, color, fontSize: 13, fontWeight: 950 }}>{icon}</span>
+            <div>
+              <div style={{ color: "#fff", fontSize: 15, fontWeight: 950 }}>{title}</div>
+              <div style={{ marginTop: 3, color: "rgba(226,232,240,0.82)", fontSize: 13, lineHeight: 1.35 }}>{detail}</div>
+            </div>
+          </div>
+        ))}
+      </section>
 
       <table style={{ display: "none", width: "100%", borderCollapse: "collapse", backgroundColor: theme.panelBg, borderRadius: 8, overflow: "hidden", boxShadow: theme.cardShadow }}>
         <thead>
