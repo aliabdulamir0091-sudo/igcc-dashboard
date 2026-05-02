@@ -1771,6 +1771,65 @@ function DashboardApp({ session, onLogout }) {
   const isAdmin = session?.role === "Admin";
   const visibleNavItems = [["home", "Home"], ...NAV_ITEMS, ["spent", "Spent Report"]];
   const navIcons = { home: "HM", overview: "EC", afp: "AFP", profitability: "P&L", spent: "SR" };
+  const trendChange = getMonthChange("cost");
+  const trendDirection = !trendChange || Math.abs(trendChange.change) < 1
+    ? "Stable"
+    : trendChange.change > 0
+      ? "Increasing"
+      : "Decreasing";
+  const trendDetail = trendChange
+    ? `${latestMonthRow?.label ?? "Latest"} vs ${previousMonthRow?.label ?? "previous"}: ${trendChange.percent === null ? formatCompactCurrency(trendChange.change) : formatPercent(trendChange.percent)}`
+    : "No prior period available";
+  const trendColor = trendChange?.change > 0 ? theme.danger : trendChange?.change < 0 ? theme.accentStrong : theme.subtext;
+  const portalInsights = [
+    { label: "Cost Trend", value: trendDirection, detail: trendDetail, color: trendColor },
+    { label: "Top Cost Driver", value: topCostDriver?.glName ?? "No driver", detail: topCostDriver ? formatCompactCurrency(topCostDriver.cost) : "No cost data", color: theme.accentStrong },
+    { label: "Portfolio Exposure", value: largestPortfolioExposure?.label ?? "No portfolio", detail: largestPortfolioExposure ? formatCompactCurrency(largestPortfolioExposure.cost) : "No exposure", color: largestPortfolioExposure?.accent ?? "#2563eb" },
+    { label: "Commercial Position", value: portalNetPosition >= 0 ? "Positive" : "At Risk", detail: formatCompactCurrency(portalNetPosition), color: portalNetPosition >= 0 ? theme.accentStrong : theme.danger },
+  ];
+  const afpInsights = [
+    { label: "Approval Trend", value: approvalRate >= 0.85 ? "Strong" : approvalRate >= 0.6 ? "Watch" : "At Risk", detail: `${formatPercent(approvalRate)} approval rate`, color: approvalRate >= 0.85 ? theme.accentStrong : approvalRate >= 0.6 ? theme.accentWarm : theme.danger },
+    { label: "Largest Gap", value: worstApprovalRows[0]?.costCenter ?? "No gap", detail: worstApprovalRows[0] ? formatCompactCurrency(worstApprovalRows[0].gap) : "No pending gap", color: worstApprovalRows[0]?.gap > 0 ? theme.danger : theme.accentStrong },
+    { label: "Commercial Issue", value: commercialRiskRows[0]?.costCenter ?? "No issue", detail: commercialRiskRows[0] ? `${formatPercent(commercialRiskRows[0].approvalRate)} approved` : "No open issue", color: commercialRiskRows[0] ? theme.accentWarm : theme.accentStrong },
+    { label: "Pipeline Value", value: formatCompactCurrency(submittedRevenue), detail: `${formatCompactCurrency(approvedRevenue)} approved`, color: "#2563eb" },
+  ];
+  const profitabilityInsights = [
+    { label: "Net Position", value: revenueSurplus >= 0 ? "Positive" : "At Risk", detail: formatCompactCurrency(revenueSurplus), color: profitColor(revenueSurplus) },
+    { label: "At Risk Center", value: riskProfitabilityRow?.costCenter ?? "No risk", detail: riskProfitabilityRow ? formatCompactCurrency(riskProfitabilityRow.approvedNet) : "No center exposure", color: riskProfitabilityRow?.approvedNet < 0 ? theme.danger : theme.accentStrong },
+    { label: "Best Center", value: bestProfitabilityRow?.costCenter ?? "No data", detail: bestProfitabilityRow ? formatCompactCurrency(bestProfitabilityRow.approvedNet) : "No center data", color: "#2563eb" },
+    { label: "Positive Coverage", value: `${positiveProfitabilityCount}/${profitabilityRows.length || 0}`, detail: "Centers with positive approved position", color: theme.accentStrong },
+  ];
+  const spentInsights = [
+    { label: "Total Spend", value: formatCompactCurrency(spentTotalAmount), detail: `${filteredData.length.toLocaleString()} records in view`, color: theme.accentStrong },
+    { label: "Top GL Driver", value: topSpentGl?.[0] || "No data", detail: topSpentGl ? formatCompactCurrency(topSpentGl[1]) : "No GL cost", color: "#2563eb" },
+    { label: "Top Cost Center", value: topSpentCostCenter?.[0] || "No data", detail: topSpentCostCenter ? formatCompactCurrency(topSpentCostCenter[1]) : "No center cost", color: theme.accentWarm },
+    { label: "Period Coverage", value: `${spentMonthCount}`, detail: "Months included in current view", color: "#7c3aed" },
+  ];
+  const renderExecutiveInsights = (title, insights) => (
+    <section style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 10 }}>
+        <div>
+          <div style={{ color: theme.accentStrong, fontSize: 11, fontWeight: 950, textTransform: "uppercase", letterSpacing: 0.3 }}>Executive Insight</div>
+          <h3 style={{ margin: "4px 0 0", color: theme.text, fontSize: 18, fontWeight: 950 }}>{title}</h3>
+        </div>
+        <span style={{ color: theme.subtext, fontSize: 12, fontWeight: 850 }}>Auto-generated from current filters</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
+        {insights.slice(0, 5).map((insight, index) => (
+          <div key={`${insight.label}-${index}`} className="executive-hover-card" style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)", transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start" }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{insight.label}</div>
+                <div style={{ marginTop: 7, color: insight.color, fontSize: 20, lineHeight: 1.1, fontWeight: 950, overflowWrap: "anywhere" }}>{insight.value}</div>
+                <div style={{ marginTop: 9, color: theme.subtext, fontSize: 12, lineHeight: 1.4 }}>{insight.detail}</div>
+              </div>
+              <span style={{ display: "grid", placeItems: "center", minWidth: 32, height: 32, borderRadius: 10, background: `${insight.color}14`, color: insight.color, fontSize: 11, fontWeight: 950 }}>{index + 1}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 
   return (
     <div style={{ minHeight: "100vh", padding: "8px 16px 28px", fontFamily: "Inter, system-ui, sans-serif", maxWidth: 1280, margin: "0 auto", color: theme.text, background: themeMode === "light" ? "linear-gradient(180deg, #eef5fb 0%, #f8fbff 42%, #ffffff 100%)" : theme.pageBg }}>
@@ -2036,9 +2095,11 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </section>
 
+          {renderExecutiveInsights("Management Snapshot", portalInsights)}
+
           <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 245px), 1fr))", gap: 16 }}>
             {portalCards.map(([label, value, detail, color, icon]) => (
-              <div key={label} style={{ position: "relative", overflow: "hidden", minHeight: 166, border: "1px solid rgba(148,163,184,0.28)", borderRadius: 14, padding: 24, background: "#fff", boxShadow: "0 14px 34px rgba(15,23,42,0.10)" }}>
+              <div key={label} className="executive-hover-card" style={{ position: "relative", overflow: "hidden", minHeight: 166, border: "1px solid rgba(148,163,184,0.28)", borderRadius: 14, padding: 24, background: "#fff", boxShadow: "0 14px 34px rgba(15,23,42,0.10)", transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease" }}>
                 <div style={{ position: "absolute", right: 12, bottom: 10, width: 150, height: 64, opacity: 0.25 }}>
                   <svg viewBox="0 0 150 64" aria-hidden="true" style={{ width: "100%", height: "100%" }}>
                     <path d="M4 51 C26 48, 31 34, 53 38 S85 53, 99 28 S126 25, 146 11" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" />
@@ -2062,8 +2123,9 @@ function DashboardApp({ session, onLogout }) {
               <button
                 key={page}
                 type="button"
+                className="executive-hover-button"
                 onClick={() => setActivePage(page)}
-                style={{ position: "relative", overflow: "hidden", minHeight: 260, textAlign: "left", border: "1px solid rgba(148,163,184,0.28)", borderRadius: 14, padding: 28, background: index === 3 ? "linear-gradient(135deg, #fff 0%, #fff7f7 100%)" : "linear-gradient(135deg, #fff 0%, #f8fbff 100%)", color: "#0f172a", cursor: "pointer", boxShadow: "0 16px 38px rgba(15,23,42,0.10)" }}
+                style={{ position: "relative", overflow: "hidden", minHeight: 260, textAlign: "left", border: "1px solid rgba(148,163,184,0.28)", borderRadius: 14, padding: 28, background: index === 3 ? "linear-gradient(135deg, #fff 0%, #fff7f7 100%)" : "linear-gradient(135deg, #fff 0%, #f8fbff 100%)", color: "#0f172a", cursor: "pointer", boxShadow: "0 16px 38px rgba(15,23,42,0.10)", transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease" }}
               >
                 <span style={{ display: "inline-grid", placeItems: "center", minWidth: 58, height: 48, borderRadius: 8, background: `linear-gradient(135deg, ${color}, ${color}cc)`, color: "#fff", fontSize: 16, fontWeight: 950, marginBottom: 24, boxShadow: `0 12px 24px ${color}33` }}>{icon}</span>
                 <div style={{ maxWidth: 245, fontSize: 24, lineHeight: 1.1, fontWeight: 950, letterSpacing: 0 }}>{title}</div>
@@ -2128,6 +2190,8 @@ function DashboardApp({ session, onLogout }) {
           {spentEntryMessage && <div style={{ marginTop: 12, color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryMessage}</div>}
           {spentEntryError && <div style={{ marginTop: 12, color: theme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryError}</div>}
 
+          {renderExecutiveInsights("Spend Narrative", spentInsights)}
+
           <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
             {[
               ["Total Spend", formatCompactCurrency(spentTotalAmount), "Filtered spend value", "TS", "#0f766e"],
@@ -2135,7 +2199,7 @@ function DashboardApp({ session, onLogout }) {
               ["Top Cost Center", topSpentCostCenter?.[0] || "No data", topSpentCostCenter ? formatCompactCurrency(topSpentCostCenter[1]) : "-", "CC", "#16a34a"],
               ["Months Included", spentMonthCount.toLocaleString(), "Periods in current view", "MO", "#7c3aed"],
             ].map(([label, value, detail, icon, color]) => (
-              <div key={label} style={{ position: "relative", overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)" }}>
+              <div key={label} className="executive-hover-card" style={{ position: "relative", overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)", transition: "transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease" }}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                   <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: 12, background: `${color}14`, color, fontSize: 13, fontWeight: 950 }}>{icon}</span>
                   <div style={{ minWidth: 0 }}>
@@ -2304,6 +2368,8 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
 
+          {renderExecutiveInsights(insightContextLabel, keyInsights)}
+
           <div style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(240px, 0.72fr) minmax(0, 1.28fr)", gap: 16, alignItems: "stretch", marginBottom: 16 }}>
             <div style={{ position: "relative", overflow: "hidden", border: `1px solid ${profitColor(revenueSurplus)}33`, borderRadius: 14, padding: "22px 22px", background: `linear-gradient(145deg, #ffffff 0%, ${revenueSurplus >= 0 ? "#f1fdf8" : "#fff5f5"} 100%)`, boxShadow: "0 16px 34px rgba(15,23,42,0.10)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
               <div style={{ position: "absolute", right: -30, bottom: -30, width: 130, height: 130, borderRadius: "50%", background: `${profitColor(revenueSurplus)}14` }} />
@@ -2352,7 +2418,7 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
 
-          <div style={{ marginBottom: 18, padding: "6px 2px 2px" }}>
+          <div style={{ display: "none" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 12 }}>
               <h3 style={{ margin: 0, color: "#071a3a", fontSize: 18, fontWeight: 950 }}>{insightContextLabel}</h3>
               <span style={{ color: "#0f766e", background: "#ecfdf5", border: "1px solid rgba(15,118,110,0.16)", borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>View All Insights</span>
@@ -2829,6 +2895,8 @@ function DashboardApp({ session, onLogout }) {
             <strong style={{ color: approvalRate >= 0.85 ? theme.accentStrong : theme.accentWarm }}>{formatPercent(approvalRate)} approval rate</strong>
           </div>
 
+          {renderExecutiveInsights("Approval Narrative", afpInsights)}
+
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12, marginBottom: 14 }}>
             {[
               ["Submitted AFP", formatCompactCurrency(submittedRevenue), "Under approval pipeline", "SA", "#2563eb"],
@@ -2836,7 +2904,7 @@ function DashboardApp({ session, onLogout }) {
               ["Pending Approval", formatCompactCurrency(approvalGap), "Submitted less approved", "PA", approvalGap > 0 ? theme.danger : theme.accentStrong],
               ["Approval Rate", formatPercent(approvalRate), "Approved / submitted", "AR", approvalRate >= 0.85 ? theme.accentStrong : theme.accentWarm],
             ].map(([label, value, detail, icon, accent]) => (
-              <div key={label} style={{ position: "relative", overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)" }}>
+              <div className="executive-hover-card" key={label} style={{ position: "relative", overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)", transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease" }}>
                 <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                   <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: 12, background: `${accent}14`, color: accent, fontSize: 13, fontWeight: 950 }}>{icon}</span>
                   <div>
@@ -2995,6 +3063,8 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
 
+          {renderExecutiveInsights("Profitability Narrative", profitabilityInsights)}
+
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12, marginBottom: 16 }}>
             {[
               ["Cost", formatCompactCurrency(visibleTotal), "Filtered cost base", "CO", theme.accentWarm],
@@ -3003,7 +3073,7 @@ function DashboardApp({ session, onLogout }) {
               ["At Risk Center", riskProfitabilityRow?.costCenter || "No data", riskProfitabilityRow ? formatCompactCurrency(riskProfitabilityRow.approvedNet) : "-", "RC", theme.danger],
               ["Positive Centers", `${positiveProfitabilityCount}/${profitabilityRows.length || 0}`, "Approved profit position", "PC", "#16a34a"],
             ].map(([label, value, detail, icon, accent]) => (
-              <div key={label} style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)" }}>
+              <div className="executive-hover-card" key={label} style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)", transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease" }}>
                 <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                   <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: 12, background: `${accent}14`, color: accent, fontSize: 13, fontWeight: 950 }}>{icon}</span>
                   <div style={{ minWidth: 0 }}>

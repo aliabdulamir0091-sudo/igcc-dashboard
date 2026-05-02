@@ -56,6 +56,18 @@ body {
   background: var(--bg);
 }
 
+.executive-hover-card:hover,
+.executive-hover-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14) !important;
+  border-color: rgba(15, 118, 110, 0.34) !important;
+}
+
+.executive-hover-card,
+.executive-hover-button {
+  will-change: transform, box-shadow;
+}
+
 #root {
   width: 100%;
   max-width: 100%;
