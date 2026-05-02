@@ -699,9 +699,14 @@ function DashboardApp({ session, onLogout }) {
       const detailRows = periodPayloads.flatMap((payload) => payload.rows ?? []);
 
       setData((current) => {
-        const existingIds = new Set(current.map((row) => row.id).filter(Boolean));
+        const missingPeriodSet = new Set(missingPeriods);
+        const retainedRows = current.filter((row) => {
+          const periodKey = `${row.year ?? "Unknown"}-${String(row.monthNumber ?? 0).padStart(2, "0")}`;
+          return !(row.sourceType === "summary" && missingPeriodSet.has(periodKey));
+        });
+        const existingIds = new Set(retainedRows.map((row) => row.id).filter(Boolean));
         const newRows = detailRows.filter((row) => !row.id || !existingIds.has(row.id));
-        return [...current, ...newRows];
+        return [...retainedRows, ...newRows];
       });
       setLoadedSpentDetailPeriods((current) => Array.from(new Set([...current, ...missingPeriods])).sort());
     } catch (err) {
