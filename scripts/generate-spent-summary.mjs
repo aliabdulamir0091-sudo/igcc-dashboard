@@ -32,10 +32,13 @@ const costCenterGroups = [
   ["Camp", ["CmpSB_23", "MWS_23"]],
   ["Head Office", ["HO_SB_23"]],
   ["Total Hub", ["GRLTOT_25"]],
+  ["BP Hub", ["GRL-KR-BP-25"]],
+  ["West Qurna Hub", ["WQ1SB_23"]],
+  ["Valves", ["Valves_25"]],
 ];
 const hubSections = [
-  ["Basra Portfolio", ["BGC Hub", "ROO Hub", "Camp", "Total Hub"]],
-  ["Kirkuk Portfolio", ["Kirkuk Hub"]],
+  ["Basra Portfolio", ["BGC Hub", "ROO Hub", "Camp", "Total Hub", "West Qurna Hub", "Valves"]],
+  ["Kirkuk Portfolio", ["BP Hub"]],
   ["Head Office", ["Head Office"]],
 ];
 
