@@ -482,6 +482,9 @@ function DashboardApp({ session, onLogout }) {
   const [overviewPeriodView, setOverviewPeriodView] = useState("monthly");
   const [activePage, setActivePage] = useState("home");
   const [transactionPage, setTransactionPage] = useState(1);
+  const [spentGroupBy, setSpentGroupBy] = useState("gl");
+  const [spentSelectedGroupKey, setSpentSelectedGroupKey] = useState("");
+  const [spentDetailSort, setSpentDetailSort] = useState({ field: "amount", direction: "desc" });
   const [themeMode, setThemeMode] = useState("light");
   const [showWelcome, setShowWelcome] = useState(false);
   const [expandedProfitRows, setExpandedProfitRows] = useState({});
@@ -640,11 +643,13 @@ function DashboardApp({ session, onLogout }) {
 
   const handleFilterChange = (field) => (event) => {
     setTransactionPage(1);
+    setSpentSelectedGroupKey("");
     setFilters((current) => ({ ...current, [field]: event.target.value }));
   };
   const handleYearFilterChange = (event) => {
     const nextYear = event.target.value;
     setTransactionPage(1);
+    setSpentSelectedGroupKey("");
     setFilters((current) => {
       const monthBelongsToYear = !current.month || !nextYear || data.some((item) => item.month === current.month && String(item.year ?? "") === nextYear);
       return {
@@ -656,6 +661,7 @@ function DashboardApp({ session, onLogout }) {
   };
   const handleTimeModeChange = (value) => {
     setTransactionPage(1);
+    setSpentSelectedGroupKey("");
     setPeriodView(value);
     if (value !== "monthly") {
       setFilters((current) => ({ ...current, month: "" }));
@@ -771,6 +777,114 @@ function DashboardApp({ session, onLogout }) {
     const hubs = new Set(rows.map((item) => resolveHub(item)).filter(Boolean)).size;
     return { portfolio, amount, rows: rows.length, costCenters, hubs };
   }).filter((row) => row.rows > 0);
+  const spentGroupOptions = [
+    ["gl", "GL Name"],
+    ["costCenter", "Cost Center"],
+    ["portfolioHub", "Portfolio / Hub"],
+    ["month", "Month"],
+  ];
+  const getSpentGroupInfo = (item, groupBy = spentGroupBy) => {
+    const portfolio = resolvePortfolio(item) || "Unmapped";
+    const hub = resolveHub(item) || "Unmapped";
+    if (groupBy === "costCenter") {
+      const label = item.costCenter || "Unmapped Cost Center";
+      return { key: label, label, sublabel: `${portfolio} / ${hub}` };
+    }
+    if (groupBy === "portfolioHub") {
+      return { key: `${portfolio}|${hub}`, label: hub, sublabel: portfolio };
+    }
+    if (groupBy === "month") {
+      const monthNumber = Number(item.monthNumber) || 0;
+      const year = item.year || "Unknown";
+      return { key: `${year}-${String(monthNumber).padStart(2, "0")}`, label: item.month || "Unknown Month", sublabel: `${item.rows ?? 1} record${(item.rows ?? 1) === 1 ? "" : "s"}` };
+    }
+    const label = item.category || "Uncategorized";
+    return { key: label.toLowerCase(), label, sublabel: "GL cost driver" };
+  };
+  const spentGroupedRows = Array.from(
+    filteredData.reduce((map, item) => {
+      const info = getSpentGroupInfo(item, spentGroupBy);
+      const current = map.get(info.key) ?? {
+        ...info,
+        amount: 0,
+        rows: 0,
+        costCenters: new Set(),
+        months: new Set(),
+        portfolios: new Set(),
+        hubs: new Set(),
+      };
+      current.amount += Number(item.amount) || 0;
+      current.rows += Number(item.rows) || 1;
+      current.costCenters.add(item.costCenter);
+      current.months.add(item.month);
+      current.portfolios.add(resolvePortfolio(item));
+      current.hubs.add(resolveHub(item));
+      map.set(info.key, current);
+      return map;
+    }, new Map()).values()
+  )
+    .map((row) => ({
+      ...row,
+      costCenterCount: Array.from(row.costCenters).filter(Boolean).length,
+      monthCount: Array.from(row.months).filter(Boolean).length,
+      portfolioCount: Array.from(row.portfolios).filter(Boolean).length,
+      hubCount: Array.from(row.hubs).filter(Boolean).length,
+    }))
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+  const spentTotalAmount = filteredData.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const spentMonthCount = new Set(filteredData.map((item) => item.month).filter(Boolean)).size;
+  const topSpentGl = Array.from(
+    filteredData.reduce((map, item) => {
+      const label = item.category || "Uncategorized";
+      map.set(label, (map.get(label) || 0) + (Number(item.amount) || 0));
+      return map;
+    }, new Map()).entries()
+  ).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
+  const topSpentCostCenter = Array.from(
+    filteredData.reduce((map, item) => {
+      const label = item.costCenter || "Unmapped";
+      map.set(label, (map.get(label) || 0) + (Number(item.amount) || 0));
+      return map;
+    }, new Map()).entries()
+  ).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
+  const maxSpentGroupAmount = Math.max(...spentGroupedRows.map((row) => Math.abs(row.amount)), 0);
+  const selectedSpentGroup = spentGroupedRows.find((row) => row.key === spentSelectedGroupKey);
+  const spentSelectedRows = selectedSpentGroup
+    ? filteredData.filter((item) => getSpentGroupInfo(item, spentGroupBy).key === spentSelectedGroup.key)
+    : [];
+  const getSpentSortValue = (row, field) => {
+    if (field === "portfolio") return resolvePortfolio(row) || "";
+    if (field === "hub") return resolveHub(row) || "";
+    if (field === "costCenter") return row.costCenter || "";
+    if (field === "month") return (Number(row.year) || 0) * 100 + (Number(row.monthNumber) || 0);
+    if (field === "category") return row.category || "";
+    if (field === "vendor") return row.vendor || "";
+    return Number(row.amount) || 0;
+  };
+  const spentDetailRows = [...spentSelectedRows].sort((a, b) => {
+    const aValue = getSpentSortValue(a, spentDetailSort.field);
+    const bValue = getSpentSortValue(b, spentDetailSort.field);
+    const compare = typeof aValue === "number" && typeof bValue === "number"
+      ? aValue - bValue
+      : String(aValue).localeCompare(String(bValue));
+    return spentDetailSort.direction === "asc" ? compare : -compare;
+  });
+  const spentDetailPageSize = 50;
+  const spentDetailPageCount = Math.max(1, Math.ceil(spentDetailRows.length / spentDetailPageSize));
+  const safeSpentDetailPage = Math.min(transactionPage, spentDetailPageCount);
+  const pagedSpentDetailRows = spentDetailRows.slice((safeSpentDetailPage - 1) * spentDetailPageSize, safeSpentDetailPage * spentDetailPageSize);
+  const handleSpentGroupChange = (groupBy) => {
+    setSpentGroupBy(groupBy);
+    setSpentSelectedGroupKey("");
+    setTransactionPage(1);
+  };
+  const handleSpentDetailSort = (field) => {
+    setTransactionPage(1);
+    setSpentDetailSort((current) => ({
+      field,
+      direction: current.field === field && current.direction === "desc" ? "asc" : "desc",
+    }));
+  };
   const transactionPageSize = 100;
   const transactionPageCount = Math.max(1, Math.ceil(sortedData.length / transactionPageSize));
   const safeTransactionPage = Math.min(transactionPage, transactionPageCount);
@@ -2007,72 +2121,120 @@ function DashboardApp({ session, onLogout }) {
           {spentEntryMessage && <div style={{ marginTop: 12, color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryMessage}</div>}
           {spentEntryError && <div style={{ marginTop: 12, color: theme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryError}</div>}
 
-          {!spentHasActiveFilter ? (
-            <>
-              <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <strong style={{ color: theme.text }}>Portfolio Summary</strong>
-                <span style={{ color: theme.subtext, fontSize: 12 }}>Cumulative total cost by portfolio</span>
+          <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
+            {[
+              ["Total Spend", formatCompactCurrency(spentTotalAmount), "Filtered spend value", "TS", "#0f766e"],
+              ["Top GL Name", topSpentGl?.[0] || "No data", topSpentGl ? formatCompactCurrency(topSpentGl[1]) : "-", "GL", "#2563eb"],
+              ["Top Cost Center", topSpentCostCenter?.[0] || "No data", topSpentCostCenter ? formatCompactCurrency(topSpentCostCenter[1]) : "-", "CC", "#16a34a"],
+              ["Months Included", spentMonthCount.toLocaleString(), "Periods in current view", "MO", "#7c3aed"],
+            ].map(([label, value, detail, icon, color]) => (
+              <div key={label} style={{ position: "relative", overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)" }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                  <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: 12, background: `${color}14`, color, fontSize: 13, fontWeight: 950 }}>{icon}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                    <div style={{ marginTop: 6, color, fontSize: label === "Top GL Name" ? 18 : 24, lineHeight: 1.1, fontWeight: 950, overflowWrap: "anywhere" }}>{value}</div>
+                    <div style={{ marginTop: 8, color: theme.subtext, fontSize: 12 }}>{detail}</div>
+                  </div>
+                </div>
               </div>
-              <div style={{ marginTop: 10, overflowX: "auto" }}>
-                <table style={{ width: "100%", minWidth: 720, borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr>
-                      <th style={leftHeaderStyle}>Portfolio</th>
-                      <th style={tableHeaderStyle}>Total Cost</th>
-                      <th style={tableHeaderStyle}>Hubs</th>
-                      <th style={tableHeaderStyle}>Cost Centers</th>
-                      <th style={tableHeaderStyle}>Rows</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {spentPortfolioSummary.map((row, index) => (
-                      <tr key={row.portfolio} style={{ background: index % 2 === 0 ? theme.panelBg : theme.rowAlt }}>
-                        <td style={leftCellStyle}>{row.portfolio}</td>
-                        <td style={tableCellStyle}>{formatCurrency(row.amount)}</td>
-                        <td style={tableCellStyle}>{row.hubs.toLocaleString()}</td>
-                        <td style={tableCellStyle}>{row.costCenters.toLocaleString()}</td>
-                        <td style={tableCellStyle}>{row.rows.toLocaleString()}</td>
-                      </tr>
-                    ))}
-                    <tr style={{ background: theme.accentSoft }}>
-                      <td style={{ ...leftCellStyle, fontWeight: 950 }}>Total</td>
-                      <td style={{ ...tableCellStyle, fontWeight: 950 }}>{formatCurrency(spentPortfolioSummary.reduce((sum, row) => sum + row.amount, 0))}</td>
-                      <td style={tableCellStyle}>-</td>
-                      <td style={tableCellStyle}>-</td>
-                      <td style={{ ...tableCellStyle, fontWeight: 950 }}>{spentPortfolioSummary.reduce((sum, row) => sum + row.rows, 0).toLocaleString()}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </>
-          ) : (
+            ))}
+          </div>
+
+          <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Spend Explorer</h3>
+              <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Interactive grouped view. Select a group to open transaction detail.</p>
+            </div>
+            <div style={{ display: "flex", gap: 6, padding: 4, borderRadius: 12, background: theme.accentSoft, border: `1px solid ${theme.border}`, flexWrap: "wrap" }}>
+              {spentGroupOptions.map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => handleSpentGroupChange(value)}
+                  style={{ border: "none", borderRadius: 9, padding: "9px 12px", cursor: "pointer", background: spentGroupBy === value ? theme.panelBg : "transparent", color: spentGroupBy === value ? theme.accentStrong : theme.text, boxShadow: spentGroupBy === value ? "0 4px 14px rgba(15,23,42,0.10)" : "none", fontSize: 12, fontWeight: 950 }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginTop: 12, display: "grid", gap: 9 }}>
+            {spentGroupedRows.slice(0, 18).map((row, index) => {
+              const selected = row.key === spentSelectedGroupKey;
+              const width = maxSpentGroupAmount ? Math.max(4, Math.round((Math.abs(row.amount) / maxSpentGroupAmount) * 100)) : 0;
+              return (
+                <button
+                  key={row.key}
+                  type="button"
+                  onClick={() => {
+                    setSpentSelectedGroupKey(selected ? "" : row.key);
+                    setTransactionPage(1);
+                  }}
+                  style={{ width: "100%", display: "grid", gridTemplateColumns: "minmax(190px, 0.7fr) minmax(160px, 1fr) 120px", gap: 14, alignItems: "center", textAlign: "left", border: `1px solid ${selected ? theme.accentStrong : theme.border}`, borderRadius: 12, padding: "13px 14px", background: selected ? theme.accentSoft : theme.panelBg, color: theme.text, cursor: "pointer", boxShadow: selected ? "0 12px 28px rgba(15,23,42,0.12)" : "0 7px 18px rgba(15,23,42,0.05)" }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
+                      <span style={{ display: "grid", placeItems: "center", width: 28, height: 28, borderRadius: 8, background: selected ? theme.accentStrong : theme.accentSoft, color: selected ? "#fff" : theme.accentStrong, fontSize: 12, fontWeight: 950 }}>{index + 1}</span>
+                      <strong style={{ overflowWrap: "anywhere" }}>{row.label}</strong>
+                    </div>
+                    <div style={{ marginTop: 6, color: theme.subtext, fontSize: 12 }}>{row.sublabel} | {row.costCenterCount} centers | {row.monthCount} months</div>
+                  </div>
+                  <div style={{ height: 13, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                    <div style={{ width: `${width}%`, height: "100%", borderRadius: 999, background: "linear-gradient(90deg, #0f766e, #2563eb)" }} />
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: theme.text, fontWeight: 950 }}>{formatCurrency(row.amount)}</div>
+                    <div style={{ marginTop: 4, color: theme.subtext, fontSize: 12 }}>{row.rows.toLocaleString()} rows</div>
+                  </div>
+                </button>
+              );
+            })}
+            {!spentGroupedRows.length && (
+              <div style={{ border: `1px dashed ${theme.border}`, borderRadius: 12, padding: 18, color: theme.subtext, background: theme.inputBg }}>No spend groups match the current filters.</div>
+            )}
+          </div>
+
+          {selectedSpentGroup ? (
             <>
-              <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <strong style={{ color: theme.text }}>{sortedData.length.toLocaleString()} spent entries</strong>
-                <span style={{ color: theme.subtext, fontSize: 12 }}>
-                  Showing {sortedData.length ? (safeTransactionPage - 1) * transactionPageSize + 1 : 0}-{Math.min(safeTransactionPage * transactionPageSize, sortedData.length).toLocaleString()} of {sortedData.length.toLocaleString()}
-                </span>
+              <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <div>
+                  <strong style={{ color: theme.text }}>Drill-down: {selectedSpentGroup.label}</strong>
+                  <div style={{ color: theme.subtext, fontSize: 12, marginTop: 3 }}>
+                    Showing {spentDetailRows.length ? (safeSpentDetailPage - 1) * spentDetailPageSize + 1 : 0}-{Math.min(safeSpentDetailPage * spentDetailPageSize, spentDetailRows.length).toLocaleString()} of {spentDetailRows.length.toLocaleString()} detailed rows
+                  </div>
+                </div>
+                <button type="button" onClick={() => setSpentSelectedGroupKey("")} style={{ border: `1px solid ${theme.border}`, borderRadius: 9, background: theme.inputBg, color: theme.text, padding: "8px 12px", fontWeight: 900, cursor: "pointer" }}>Close Detail</button>
               </div>
 
               <div style={{ marginTop: 10, overflowX: "auto" }}>
                 <table style={{ width: "100%", minWidth: 1120, borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
-                      <th style={leftHeaderStyle}>Portfolio</th>
-                      <th style={leftHeaderStyle}>Hub</th>
-                      <th style={leftHeaderStyle}>Cost Center</th>
-                      <th style={leftHeaderStyle}>Month</th>
-                      <th style={leftHeaderStyle}>GL Name</th>
-                      <th style={leftHeaderStyle}>Vendor</th>
-                      <th style={tableHeaderStyle}>Amount</th>
+                      {[
+                        ["portfolio", "Portfolio", leftHeaderStyle],
+                        ["hub", "Hub", leftHeaderStyle],
+                        ["costCenter", "Cost Center", leftHeaderStyle],
+                        ["month", "Month", leftHeaderStyle],
+                        ["category", "GL Name", leftHeaderStyle],
+                        ["vendor", "Vendor", leftHeaderStyle],
+                        ["amount", "Amount", tableHeaderStyle],
+                      ].map(([field, label, style]) => (
+                        <th key={field} style={style}>
+                          <button type="button" onClick={() => handleSpentDetailSort(field)} style={{ border: "none", background: "transparent", color: "inherit", font: "inherit", fontWeight: 950, cursor: "pointer", padding: 0 }}>
+                            {label}{spentDetailSort.field === field ? (spentDetailSort.direction === "asc" ? " ↑" : " ↓") : ""}
+                          </button>
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {pagedTransactionRows.map((row, index) => {
+                    {pagedSpentDetailRows.map((row, index) => {
                       const hub = resolveHub(row);
                       const portfolio = resolvePortfolio(row);
                       return (
-                        <tr key={`${row.id || row.costCenter}-${row.month}-${row.category}-${index}`} style={{ background: index % 2 === 0 ? theme.panelBg : theme.rowAlt }}>
+                        <tr key={`${row.id || row.costCenter}-${row.month}-${row.category}-${row.vendor}-${index}`} style={{ background: index % 2 === 0 ? theme.panelBg : theme.rowAlt }}>
                           <td style={leftCellStyle}>{portfolio}</td>
                           <td style={leftCellStyle}>{hub}</td>
                           <td style={leftCellStyle}>{row.costCenter}</td>
@@ -2083,36 +2245,35 @@ function DashboardApp({ session, onLogout }) {
                         </tr>
                       );
                     })}
-                    {!sortedData.length && (
-                      <tr>
-                        <td colSpan={7} style={{ ...leftCellStyle, color: theme.subtext }}>No spent entries match the current filters.</td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>
 
-              {sortedData.length > transactionPageSize && (
+              {spentDetailRows.length > spentDetailPageSize && (
                 <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 8 }}>
                   <button
                     type="button"
                     onClick={() => setTransactionPage((current) => Math.max(1, current - 1))}
-                    disabled={safeTransactionPage === 1}
-                    style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeTransactionPage === 1 ? "not-allowed" : "pointer", opacity: safeTransactionPage === 1 ? 0.55 : 1, fontWeight: 850 }}
+                    disabled={safeSpentDetailPage === 1}
+                    style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeSpentDetailPage === 1 ? "not-allowed" : "pointer", opacity: safeSpentDetailPage === 1 ? 0.55 : 1, fontWeight: 850 }}
                   >
                     Previous
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTransactionPage((current) => Math.min(transactionPageCount, current + 1))}
-                    disabled={safeTransactionPage === transactionPageCount}
-                    style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeTransactionPage === transactionPageCount ? "not-allowed" : "pointer", opacity: safeTransactionPage === transactionPageCount ? 0.55 : 1, fontWeight: 850 }}
+                    onClick={() => setTransactionPage((current) => Math.min(spentDetailPageCount, current + 1))}
+                    disabled={safeSpentDetailPage === spentDetailPageCount}
+                    style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeSpentDetailPage === spentDetailPageCount ? "not-allowed" : "pointer", opacity: safeSpentDetailPage === spentDetailPageCount ? 0.55 : 1, fontWeight: 850 }}
                   >
                     Next
                   </button>
                 </div>
               )}
             </>
+          ) : (
+            <div style={{ marginTop: 14, border: `1px solid ${theme.border}`, borderRadius: 12, padding: 14, background: theme.inputBg, color: theme.subtext, fontSize: 13 }}>
+              Select any bar above to open transaction-level drill-down details.
+            </div>
           )}
         </div>
       )}
