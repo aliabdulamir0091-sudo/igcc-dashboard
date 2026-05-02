@@ -1616,22 +1616,29 @@ function DashboardApp({ session, onLogout }) {
   const portalApprovedAfp = revenueData.filter((item) => item.status === "approved").reduce((sum, item) => sum + item.amount, 0);
   const portalNetPosition = portalApprovedAfp - portalTotalCost;
   const portalCards = [
-    ["Net Position", formatCompactCurrency(portalNetPosition), portalNetPosition >= 0 ? "Approved AFP above total cost" : "Cost exceeds approved AFP", portalNetPosition >= 0 ? theme.accentStrong : theme.danger],
-    ["Total Cost", formatCompactCurrency(portalTotalCost), "Cumulative spent report cost", "#2563eb"],
-    ["Approved AFP", formatCompactCurrency(portalApprovedAfp), "Recognized approved AFP value", theme.accentStrong],
-    ["Last Updated", lastUpdatedLabel, "Dashboard refresh timestamp", "#2563eb"],
+    ["Net Position", formatCompactCurrency(portalNetPosition), portalNetPosition >= 0 ? "Approved AFP above total cost" : "Cost exceeds approved AFP", portalNetPosition >= 0 ? "#059669" : "#dc2626", "NP"],
+    ["Total Cost", formatCompactCurrency(portalTotalCost), "Cumulative spent report cost", "#2563eb", "TC"],
+    ["Approved AFP", formatCompactCurrency(portalApprovedAfp), "Recognized approved AFP value", "#16a34a", "AF"],
+    ["Last Updated", lastUpdatedLabel, "Dashboard refresh timestamp", "#7c3aed", "LU"],
   ];
   const portalNavigationCards = [
-    ["overview", "Executive Cockpit", "Executive KPIs, portfolio exposure, performance direction, and financial position.", "EC", "#0f766e"],
-    ["afp", "Commercial Approval Overview", "AFP submission, approval gaps, commercial issues, and approval distribution.", "AFP", "#2563eb"],
-    ["profitability", "Cost Center Profitability", "Portfolio-to-cost-center profitability drilldown and GL-level detail.", "P&L", "#16a34a"],
-    ["spent", "Spent Report", "Historical spend summary and filtered transaction-level cost records.", "SR", "#b00020"],
+    ["overview", "Executive Cockpit", "Executive KPIs, portfolio exposure, performance direction, and financial position.", "EC", "#0f766e", "line"],
+    ["afp", "Commercial Approval Overview", "AFP submission, approval gaps, commercial issues, and approval distribution.", "AFP", "#2563eb", "bars"],
+    ["profitability", "Cost Center Profitability", "Portfolio-to-cost-center profitability drilldown and GL-level detail.", "P&L", "#16a34a", "pie"],
+    ["spent", "Spent Report", "Historical spend summary and filtered transaction-level cost records.", "SR", "#dc2626", "doc"],
+  ];
+  const portalInfoStrip = [
+    ["Secure Access", "Role-based access and data protection", "SA", "#14b8a6"],
+    ["Real-time Data", "Always updated with latest financial data", "RT", "#2563eb"],
+    ["Data Integrity", "Validated and verified financial information", "DI", "#22c55e"],
+    ["Multi-portfolio", "Consolidated view across all portfolios and hubs", "MP", "#8b5cf6"],
   ];
   const isAdmin = session?.role === "Admin";
   const visibleNavItems = [["home", "Home"], ...NAV_ITEMS, ["spent", "Spent Report"]];
+  const navIcons = { home: "HM", overview: "EC", afp: "AFP", profitability: "P&L", spent: "SR" };
 
   return (
-    <div style={{ minHeight: "100vh", padding: "28px 24px 40px", fontFamily: "Inter, system-ui, sans-serif", maxWidth: 1280, margin: "0 auto", color: theme.text, backgroundColor: theme.pageBg }}>
+    <div style={{ minHeight: "100vh", padding: "8px 16px 28px", fontFamily: "Inter, system-ui, sans-serif", maxWidth: 1280, margin: "0 auto", color: theme.text, background: themeMode === "light" ? "linear-gradient(180deg, #eef5fb 0%, #f8fbff 42%, #ffffff 100%)" : theme.pageBg }}>
       {showWelcome && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "grid", placeItems: "center", padding: 20, background: themeMode === "light" ? "rgba(15, 23, 42, 0.42)" : "rgba(2, 6, 23, 0.68)" }}>
           <div style={{ width: "min(620px, 100%)", overflow: "hidden", borderRadius: 8, background: theme.panelBg, border: `1px solid ${theme.border}`, boxShadow: "0 24px 70px rgba(15,23,42,0.28)" }}>
@@ -1661,34 +1668,35 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
-      <div style={{ marginBottom: 12, background: "#fff", border: `1px solid ${theme.border}`, borderRadius: 8, padding: "12px 14px", boxShadow: theme.cardShadow }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+      <div style={{ marginBottom: 12, overflow: "hidden", background: "linear-gradient(135deg, #041d36 0%, #062b4f 58%, #073861 100%)", border: "1px solid rgba(148, 163, 184, 0.24)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(15, 23, 42, 0.18)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "22px 26px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 8, border: `1px solid ${theme.border}`, background: "#f8fafc", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden" }}>
-              <img src={getPublicAssetUrl("favicon.svg")} alt="IGCC logo" style={{ width: 28, height: 28, objectFit: "contain" }} />
+            <div style={{ width: 62, height: 62, borderRadius: 16, border: "1px solid rgba(255,255,255,0.16)", background: "linear-gradient(135deg, rgba(20,184,166,0.24), rgba(37,99,235,0.18))", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)" }}>
+              <img src={getPublicAssetUrl("favicon.svg")} alt="IGCC logo" style={{ width: 42, height: 42, objectFit: "contain" }} />
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ color: theme.accentStrong, fontSize: 11, fontWeight: 950, letterSpacing: 0, textTransform: "uppercase" }}>IRAQ GATE CONTRACTING COMPANY</div>
-              <h1 style={{ margin: "2px 0 0", fontSize: 24, letterSpacing: 0, lineHeight: 1.04, fontWeight: 950, color: theme.text }}>Financial Dashboard</h1>
-              <p style={{ margin: "4px 0 0", color: theme.subtext, fontSize: 13, maxWidth: 720 }}>Executive view of cost, AFP approval, profitability, and portfolio performance.</p>
+              <div style={{ color: "#67e8f9", fontSize: 11, fontWeight: 950, letterSpacing: 0, textTransform: "uppercase" }}>IRAQ GATE CONTRACTING COMPANY</div>
+              <h1 style={{ margin: "4px 0 0", fontSize: 27, letterSpacing: 0, lineHeight: 1.02, fontWeight: 950, color: "#ffffff" }}>Financial Dashboard</h1>
+              <p style={{ margin: "7px 0 0", color: "rgba(226,232,240,0.86)", fontSize: 13, maxWidth: 720 }}>Executive view of cost, AFP approval, profitability, and portfolio performance.</p>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 850, textAlign: "right", lineHeight: 1.35 }}>
-              <div style={{ color: theme.text, maxWidth: 240, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{session?.email}</div>
-              <div><span style={{ color: theme.accentStrong, textTransform: "uppercase" }}>{session?.role ?? "Viewer"}</span> | Last Updated: {lastUpdatedLabel}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap", justifyContent: "flex-end", borderLeft: "1px solid rgba(255,255,255,0.16)", paddingLeft: 22 }}>
+            <div style={{ color: "rgba(226,232,240,0.78)", fontSize: 12, fontWeight: 850, textAlign: "left", lineHeight: 1.42 }}>
+              <div style={{ color: "rgba(226,232,240,0.78)", fontWeight: 800 }}>Welcome,</div>
+              <div style={{ color: "#fff", maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 15, fontWeight: 950 }}>{portalUserName}</div>
+              <div><span style={{ color: "#22d3ee", textTransform: "uppercase" }}>{session?.role ?? "Viewer"}</span> | Last updated: {lastUpdatedLabel}</div>
             </div>
             <button
               type="button"
               onClick={onLogout}
-              style={{ padding: "8px 11px", cursor: "pointer", backgroundColor: theme.inputBg, color: theme.text, border: `1px solid ${theme.border}`, borderRadius: 7, fontWeight: 850, fontSize: 12 }}
+              style={{ padding: "14px 24px", cursor: "pointer", backgroundColor: "rgba(255,255,255,0.07)", color: "#fff", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 16, fontWeight: 950, fontSize: 14, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
             >
               Logout
             </button>
           </div>
         </div>
         {activePage !== "home" && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10, paddingTop: 10, borderTop: `1px solid ${theme.border}` }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "0 26px 12px", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
           <button
             type="button"
             onClick={() => setFilters((current) => ({ ...current, portfolio: "", hub: "", costCenter: "" }))}
@@ -1712,7 +1720,7 @@ function DashboardApp({ session, onLogout }) {
         </div>
         )}
         {activePage !== "home" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, alignItems: "end", marginTop: 10, paddingTop: 10, borderTop: `1px solid ${theme.border}` }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8, alignItems: "end", padding: "12px 26px 16px", borderTop: "1px solid rgba(255,255,255,0.12)", background: "rgba(2, 12, 27, 0.18)" }}>
           {[
             ["Hub", "HUB", filters.hub, (event) => setFilters((current) => ({ ...current, hub: event.target.value, costCenter: "" })), ["", ...filteredHubOptions], "All hubs"],
             ["Cost Center", "CC", filters.costCenter, handleFilterChange("costCenter"), ["", ...filteredCostCenterOptions], "All centers"],
@@ -1784,24 +1792,28 @@ function DashboardApp({ session, onLogout }) {
         )}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap", background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, boxShadow: theme.cardShadow }}>
-        <div style={{ display: "inline-flex", gap: 4, padding: 4, background: theme.accentSoft, borderRadius: 8, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", margin: "-12px 0 24px", flexWrap: "wrap", background: "linear-gradient(135deg, #06213d, #082d50)", border: "1px solid rgba(148, 163, 184, 0.22)", borderTop: "none", borderRadius: "0 0 14px 14px", padding: "14px 26px", boxShadow: "0 14px 34px rgba(15,23,42,0.14)" }}>
+        <div style={{ display: "inline-flex", gap: 10, padding: 0, borderRadius: 12, flexWrap: "wrap" }}>
           {visibleNavItems.map(([value, label]) => (
             <button
               key={value}
               type="button"
               onClick={() => setActivePage(value)}
               style={{
-                border: "none",
-                borderRadius: 6,
-                padding: "9px 14px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 9,
+                border: activePage === value ? "1px solid rgba(96,165,250,0.55)" : "1px solid transparent",
+                borderRadius: 10,
+                padding: "12px 16px",
                 cursor: "pointer",
-                fontWeight: 800,
-                background: activePage === value ? theme.panelBg : "transparent",
-                color: activePage === value ? theme.accentStrong : theme.text,
-                boxShadow: activePage === value ? "0 1px 4px rgba(15,23,42,0.12)" : "none",
+                fontWeight: 950,
+                background: activePage === value ? "linear-gradient(135deg, #2563eb, #0ea5e9)" : "transparent",
+                color: "#fff",
+                boxShadow: activePage === value ? "0 10px 22px rgba(37,99,235,0.28)" : "none",
               }}
             >
+              <span style={{ display: "inline-grid", placeItems: "center", minWidth: 26, height: 24, borderRadius: 7, background: activePage === value ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.08)", color: "#dbeafe", fontSize: 10, fontWeight: 950 }}>{navIcons[value] ?? ""}</span>
               {label}
             </button>
           ))}
@@ -1814,13 +1826,14 @@ function DashboardApp({ session, onLogout }) {
           type="button"
           onClick={toggleTheme}
           style={{
-            padding: "10px 20px",
+            padding: "12px 20px",
             cursor: "pointer",
-            backgroundColor: theme.panelBg,
-            color: theme.text,
-            border: `1px solid ${theme.border}`,
-            borderRadius: 8,
-            boxShadow: themeMode === "light" ? "0 4px 8px rgba(31,53,85,0.08)" : "0 4px 8px rgba(0,0,0,0.2)",
+            backgroundColor: "rgba(255,255,255,0.06)",
+            color: "#fff",
+            border: "1px solid rgba(255,255,255,0.18)",
+            borderRadius: 999,
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+            fontWeight: 900,
           }}
         >
           {themeMode === "light" ? "Dark Mode" : "Light Mode"}
@@ -1858,38 +1871,88 @@ function DashboardApp({ session, onLogout }) {
       )}
 
       {activePage === "home" && (
-        <div style={{ display: "grid", gap: 16 }}>
-          <div style={{ color: theme.accentStrong, fontSize: 12, fontWeight: 950, textTransform: "uppercase", letterSpacing: 0.3 }}>IGCC Financial Portal</div>
-          <section style={{ position: "relative", overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 12, padding: "20px 24px 22px", background: themeMode === "light" ? "linear-gradient(135deg, #ffffff 0%, #f8fbff 64%, #eef7f4 100%)" : "linear-gradient(135deg, #112240 0%, #0f172a 100%)", boxShadow: theme.cardShadow }}>
-            <div style={{ maxWidth: 760 }}>
-              <h2 style={{ margin: 0, color: theme.text, fontSize: 32, lineHeight: 1.06, letterSpacing: 0, fontWeight: 950 }}>Welcome, {portalUserName}</h2>
-              <p style={{ margin: "9px 0 0", color: theme.subtext, fontSize: 15, lineHeight: 1.5, maxWidth: 650 }}>A focused entry point for executive financial review, commercial approval visibility, profitability analysis, and spend reporting.</p>
+        <div style={{ display: "grid", gap: 22 }}>
+          <section style={{ position: "relative", overflow: "hidden", minHeight: 220, border: "1px solid rgba(14,165,233,0.22)", borderRadius: 16, padding: "44px 48px", color: "#fff", background: "radial-gradient(circle at 88% 52%, rgba(45,212,191,0.38), transparent 20%), radial-gradient(circle at 74% 18%, rgba(59,130,246,0.28), transparent 20%), linear-gradient(135deg, #082d74 0%, #073b69 48%, #0fafa7 100%)", boxShadow: "0 22px 50px rgba(15,23,42,0.18)" }}>
+            <div style={{ position: "absolute", inset: "auto -8% -44% 0", height: 190, background: "radial-gradient(ellipse at center, rgba(125,211,252,0.20), transparent 68%)", opacity: 0.9 }} />
+            <svg viewBox="0 0 430 210" aria-hidden="true" style={{ position: "absolute", right: 42, top: 22, width: "min(39%, 430px)", height: "auto", opacity: 0.74 }}>
+              <defs>
+                <linearGradient id="heroCardGradient" x1="0" x2="1">
+                  <stop offset="0" stopColor="#60a5fa" stopOpacity="0.55" />
+                  <stop offset="1" stopColor="#5eead4" stopOpacity="0.75" />
+                </linearGradient>
+              </defs>
+              <path d="M41 155 C88 117, 103 130, 139 86 S207 93, 241 52 S304 42, 369 26" fill="none" stroke="#a7f3d0" strokeWidth="5" strokeLinecap="round" opacity="0.7" />
+              {[41, 139, 241, 369].map((cx, index) => (
+                <circle key={cx} cx={cx} cy={[155, 86, 52, 26][index]} r="9" fill="#cffafe" opacity="0.85" />
+              ))}
+              <g transform="translate(162 48) rotate(14)">
+                <rect width="205" height="126" rx="18" fill="url(#heroCardGradient)" stroke="#bfdbfe" strokeOpacity="0.55" />
+                <circle cx="60" cy="58" r="31" fill="none" stroke="#dbeafe" strokeWidth="16" opacity="0.85" />
+                <path d="M60 27 A31 31 0 0 1 91 58" fill="none" stroke="#14b8a6" strokeWidth="16" />
+                {[55, 83, 111, 139].map((x, index) => (
+                  <rect key={x} x={x + 58} y={82 - index * 13} width="17" height={37 + index * 13} rx="4" fill="#dbeafe" opacity="0.8" />
+                ))}
+              </g>
+            </svg>
+            <div style={{ position: "relative", zIndex: 1, maxWidth: 710 }}>
+              <div style={{ color: "#cffafe", fontSize: 13, fontWeight: 950, textTransform: "uppercase", letterSpacing: 0.2 }}>IGCC Financial Portal</div>
+              <h2 style={{ margin: "24px 0 0", color: "#fff", fontSize: 39, lineHeight: 1.08, letterSpacing: 0, fontWeight: 950 }}>Welcome back, {portalUserName}</h2>
+              <p style={{ margin: "20px 0 0", color: "rgba(255,255,255,0.88)", fontSize: 17, lineHeight: 1.75, maxWidth: 720 }}>A focused entry point for executive financial review, commercial approval visibility, profitability analysis, and spend reporting.</p>
             </div>
           </section>
 
-          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 210px), 1fr))", gap: 14 }}>
-            {portalCards.map(([label, value, detail, color]) => (
-              <div key={label} style={{ border: `1px solid ${theme.border}`, borderRadius: 10, padding: 18, background: theme.panelBg, boxShadow: "0 10px 24px rgba(15,23,42,0.06)" }}>
-                <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
-                <div style={{ marginTop: 8, color, fontSize: label === "Last Updated" ? 18 : 24, fontWeight: 950, letterSpacing: 0 }}>{value}</div>
-                <div style={{ marginTop: 6, color: theme.subtext, fontSize: 12, lineHeight: 1.45 }}>{detail}</div>
+          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 245px), 1fr))", gap: 16 }}>
+            {portalCards.map(([label, value, detail, color, icon]) => (
+              <div key={label} style={{ position: "relative", overflow: "hidden", minHeight: 166, border: "1px solid rgba(148,163,184,0.28)", borderRadius: 14, padding: 24, background: "#fff", boxShadow: "0 14px 34px rgba(15,23,42,0.10)" }}>
+                <div style={{ position: "absolute", right: 12, bottom: 10, width: 150, height: 64, opacity: 0.25 }}>
+                  <svg viewBox="0 0 150 64" aria-hidden="true" style={{ width: "100%", height: "100%" }}>
+                    <path d="M4 51 C26 48, 31 34, 53 38 S85 53, 99 28 S126 25, 146 11" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" />
+                    <circle cx="146" cy="11" r="5" fill={color} />
+                  </svg>
+                </div>
+                <div style={{ display: "flex", gap: 16, alignItems: "flex-start", position: "relative", zIndex: 1 }}>
+                  <span style={{ display: "inline-grid", placeItems: "center", minWidth: 58, height: 58, borderRadius: 14, background: `${color}14`, color, fontSize: 14, fontWeight: 950 }}>{icon}</span>
+                  <div>
+                    <div style={{ color: "#0f172a", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                    <div style={{ marginTop: 9, color, fontSize: label === "Last Updated" ? 23 : 31, lineHeight: 1.07, fontWeight: 950, letterSpacing: 0 }}>{value}</div>
+                  </div>
+                </div>
+                <div style={{ position: "relative", zIndex: 1, marginTop: 15, color: "#475569", fontSize: 14, lineHeight: 1.45 }}>{detail}</div>
               </div>
             ))}
           </section>
 
-          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 280px))", justifyContent: "center", gap: 16 }}>
-            {portalNavigationCards.map(([page, title, description, icon, color]) => (
+          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 330px), 1fr))", gap: 18 }}>
+            {portalNavigationCards.map(([page, title, description, icon, color, visual], index) => (
               <button
                 key={page}
                 type="button"
                 onClick={() => setActivePage(page)}
-                style={{ textAlign: "left", border: `1px solid ${theme.border}`, borderRadius: 12, padding: 20, background: theme.panelBg, color: theme.text, cursor: "pointer", boxShadow: "0 12px 28px rgba(15,23,42,0.07)" }}
+                style={{ position: "relative", overflow: "hidden", minHeight: 260, textAlign: "left", border: "1px solid rgba(148,163,184,0.28)", borderRadius: 14, padding: 28, background: index === 3 ? "linear-gradient(135deg, #fff 0%, #fff7f7 100%)" : "linear-gradient(135deg, #fff 0%, #f8fbff 100%)", color: "#0f172a", cursor: "pointer", boxShadow: "0 16px 38px rgba(15,23,42,0.10)" }}
               >
-                <span style={{ display: "inline-grid", placeItems: "center", minWidth: 44, height: 34, borderRadius: 9, background: `${color}18`, color, fontSize: 12, fontWeight: 950, marginBottom: 18 }}>{icon}</span>
-                <div style={{ fontSize: 20, fontWeight: 950, letterSpacing: 0 }}>{title}</div>
-                <div style={{ marginTop: 9, color: theme.subtext, fontSize: 13, lineHeight: 1.55 }}>{description}</div>
-                <div style={{ marginTop: 18, color, fontSize: 12, fontWeight: 950 }}>View Dashboard →</div>
+                <span style={{ display: "inline-grid", placeItems: "center", minWidth: 58, height: 48, borderRadius: 8, background: `linear-gradient(135deg, ${color}, ${color}cc)`, color: "#fff", fontSize: 16, fontWeight: 950, marginBottom: 24, boxShadow: `0 12px 24px ${color}33` }}>{icon}</span>
+                <div style={{ maxWidth: 245, fontSize: 24, lineHeight: 1.1, fontWeight: 950, letterSpacing: 0 }}>{title}</div>
+                <div style={{ marginTop: 15, maxWidth: 285, color: "#334155", fontSize: 15, lineHeight: 1.62 }}>{description}</div>
+                <svg viewBox="0 0 180 150" aria-hidden="true" style={{ position: "absolute", right: 18, bottom: 22, width: 132, height: 110, opacity: 0.16 }}>
+                  {visual === "bars" && [105, 78, 50, 24].map((height, barIndex) => <rect key={height} x={24 + barIndex * 36} y={132 - height} width="19" height={height} rx="4" fill={color} />)}
+                  {visual === "pie" && <><circle cx="96" cy="76" r="52" fill={color} /><path d="M96 24 L96 76 L148 76 A52 52 0 0 0 96 24" fill="#fff" /></>}
+                  {visual === "doc" && <><path d="M54 20 H120 L150 50 V130 H54 Z" fill={color} /><path d="M120 20 V52 H150" fill="#fff" /><path d="M76 68 H128 M76 88 H128 M76 108 H118" stroke="#fff" strokeWidth="8" strokeLinecap="round" /></>}
+                  {visual === "line" && <path d="M18 118 C46 80, 60 120, 84 72 S120 90, 138 35 S156 50, 169 20" fill="none" stroke={color} strokeWidth="8" strokeLinecap="round" />}
+                </svg>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 10, minWidth: 210, justifyContent: "space-between", marginTop: 24, padding: "13px 16px", borderRadius: 10, background: `${color}12`, border: `1px solid ${color}24`, color, fontSize: 15, fontWeight: 950 }}>View Dashboard <span>&rarr;</span></div>
               </button>
+            ))}
+          </section>
+
+          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: 0, overflow: "hidden", borderRadius: 16, background: "linear-gradient(135deg, #041d36, #062b4f)", border: "1px solid rgba(148,163,184,0.22)", boxShadow: "0 18px 40px rgba(15,23,42,0.16)" }}>
+            {portalInfoStrip.map(([title, detail, icon, color]) => (
+              <div key={title} style={{ display: "flex", alignItems: "center", gap: 16, padding: "22px 28px", borderRight: "1px solid rgba(255,255,255,0.12)" }}>
+                <span style={{ display: "inline-grid", placeItems: "center", minWidth: 58, height: 58, borderRadius: 999, background: `${color}22`, color, fontSize: 13, fontWeight: 950 }}>{icon}</span>
+                <div>
+                  <div style={{ color: "#fff", fontSize: 15, fontWeight: 950 }}>{title}</div>
+                  <div style={{ marginTop: 3, color: "rgba(226,232,240,0.82)", fontSize: 13, lineHeight: 1.35 }}>{detail}</div>
+                </div>
+              </div>
             ))}
           </section>
         </div>
