@@ -664,7 +664,6 @@ function DashboardApp({ session, onLogout }) {
     }
 
     if (!missingPeriods.length) {
-      setSpentEntryMessage(`Spent details for ${selectedMonth ? `${MONTH_LABELS[selectedMonth]} ` : ""}${selectedYear} are already loaded.`);
       return;
     }
 
@@ -685,13 +684,18 @@ function DashboardApp({ session, onLogout }) {
         return [...current, ...newRows];
       });
       setLoadedSpentDetailPeriods((current) => Array.from(new Set([...current, ...missingPeriods])).sort());
-      setSpentEntryMessage(`Loaded ${detailRows.length.toLocaleString()} spent detail rows for ${selectedMonth ? `${MONTH_LABELS[selectedMonth]} ` : ""}${selectedYear}.`);
     } catch (err) {
       setSpentEntryError(`Could not load full spent details: ${err.message}`);
     } finally {
       setIsLoadingFullSpentDetails(false);
     }
   };
+
+  useEffect(() => {
+    if (activePage !== "spent" || !spentImportSummary?.monthsDetected?.length) return;
+    loadFullSpentDetails();
+  }, [activePage, filters.year, filters.month, spentImportSummary]);
+
   const matchesCostFilters = (item, { includeMonth = true } = {}) => {
     const hub = getHubForCostCenter(item.costCenter);
     const portfolio = getPortfolioForHub(hub);
@@ -1805,14 +1809,9 @@ function DashboardApp({ session, onLogout }) {
               <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Monthly spend entries by portfolio, hub, cost center, and GL name.</p>
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={loadFullSpentDetails}
-                disabled={isLoadingFullSpentDetails}
-                style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isLoadingFullSpentDetails ? "wait" : "pointer", fontSize: 12, fontWeight: 900 }}
-              >
-                {isLoadingFullSpentDetails ? "Loading Details..." : "Load Selected Details"}
-              </button>
+              {isLoadingFullSpentDetails && (
+                <span style={{ color: theme.text, background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>Loading Details</span>
+              )}
               <span style={{ color: theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>Excel Source</span>
             </div>
           </div>
