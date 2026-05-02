@@ -3,11 +3,11 @@ import { join } from "node:path";
 import { read, utils } from "xlsx";
 
 const root = process.cwd();
-const dataDir = join(root, "public", "data", "spent-report");
-const manifestFile = join(dataDir, "manifest.json");
-const processedDir = join(dataDir, "processed");
-const detailDir = join(processedDir, "details");
-const summaryFile = join(processedDir, "summary.json");
+const sourceFile = join(root, "public", "data", "spent-report", "source-excel", "master_spent_report.xlsx");
+const spentDir = join(root, "public", "data", "spent-report");
+const processedDir = join(spentDir, "processed");
+const summaryDir = join(spentDir, "summary");
+const manifestFile = join(processedDir, "manifest.json");
 
 const monthOrder = {
   jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4,
@@ -55,6 +55,7 @@ const cleanupAmount = (raw) => {
 };
 const getYearValue = (raw) => {
   if (raw instanceof Date && !Number.isNaN(raw.getTime())) return raw.getFullYear();
+  if (typeof raw === "number" && raw > 1900 && raw < 2100) return raw;
   const match = String(raw ?? "").match(/\b(20\d{2}|19\d{2})\b/);
   return match ? Number(match[1]) : null;
 };
@@ -80,103 +81,138 @@ const getPeriodParts = (monthRaw, yearRaw) => {
   const year = getYearValue(yearRaw);
   return { monthNumber, monthName: monthNumber ? monthLabels[monthNumber] : normalizeValue(monthRaw), quarter: monthNumber ? Math.ceil(monthNumber / 3) : null, year };
 };
+const makePeriodKey = (year, monthNumber) => `${year}-${String(monthNumber).padStart(2, "0")}`;
+const makeSpentFileName = (year, monthNumber) => `spent_${year}_${String(monthNumber).padStart(2, "0")}.json`;
 
-if (!existsSync(manifestFile)) throw new Error(`Missing manifest: ${manifestFile}`);
-const manifest = JSON.parse(readFileSync(manifestFile, "utf8"));
+const addSummary = (map, keyParts, row, overrides = {}) => {
+  const key = keyParts.join("|");
+  const current = map.get(key) ?? { ...row, ...overrides, id: key, vendor: "Summary", amount: 0, rows: 0, source: "Spent Summary", sourceType: "summary" };
+  current.amount += row.amount;
+  current.rows += 1;
+  map.set(key, current);
+};
+
+if (!existsSync(sourceFile)) throw new Error(`Missing source Excel: ${sourceFile}`);
 
 rmSync(processedDir, { recursive: true, force: true });
-mkdirSync(detailDir, { recursive: true });
+rmSync(summaryDir, { recursive: true, force: true });
+mkdirSync(processedDir, { recursive: true });
+mkdirSync(summaryDir, { recursive: true });
 
-const summaryMap = new Map();
+const workbook = read(readFileSync(sourceFile), { type: "buffer", cellDates: true });
+const masterSheet = workbook.Sheets.Master;
+if (!masterSheet) throw new Error('Source workbook must include a sheet named "Master".');
+
+const rows = utils.sheet_to_json(masterSheet, { defval: "" });
 const detailMap = new Map();
+const monthlySummaryMap = new Map();
+const yearlySummaryMap = new Map();
+const projectSummaryMap = new Map();
+const costCenterSummaryMap = new Map();
+const hubSummaryMap = new Map();
 const invalidRows = [];
-const importSummary = { totalRows: 0, validRows: 0, invalidRows: 0, monthsDetected: [], filesProcessed: [], fileErrors: [] };
+const importSummary = {
+  sourceFile: "source-excel/master_spent_report.xlsx",
+  totalRows: rows.length,
+  validRows: 0,
+  invalidRows: 0,
+  monthsDetected: [],
+  filesProcessed: [{ fileName: "master_spent_report.xlsx", totalRows: rows.length, validRows: 0, invalidRows: 0, monthsDetected: [] }],
+  fileErrors: [],
+};
 
-manifest.forEach((fileName) => {
-  const filePath = join(dataDir, fileName);
-  const fileSummary = { fileName, totalRows: 0, validRows: 0, invalidRows: 0, monthsDetected: [] };
+rows.forEach((row, rowIndex) => {
+  const rawCostCenter = normalizeValue(normalizeHeader(row, "Level 2", "Level2", "level 2", "level2", "Cost Center", "costCenter", "cost_center", "cost center", "Center"));
+  const costCenter = costCenterAliases[rawCostCenter] || rawCostCenter;
+  const monthValue = normalizeHeader(row, "Month", "month", "Billing Month", "billing_month", "Period", "period", "Date", "date");
+  const yearValue = normalizeHeader(row, "Year", "year", "Billing Year", "billing_year", "Period", "period", "Date", "date");
+  const { monthNumber, monthName, quarter, year } = getPeriodParts(monthValue, yearValue);
+  const amount = cleanupAmount(normalizeHeader(row, "Invoice Amount USD", "Invoice Amount", "InvoiceAmountUSD", "Invoice_Amount_USD", "Amount USD", "Amount", "amount", "Cost", "Total", "total"));
+  const category = normalizeValue(normalizeHeader(row, "GL Name", "GLName", "Cost Type", "costType", "Category", "category")) || "Uncategorized";
+  const vendor = normalizeValue(normalizeHeader(row, "Vendor", "Supplier", "Contractor", "vendor", "supplier")) || "Unspecified Vendor";
+  const project = normalizeValue(normalizeHeader(row, "Project", "project", "Level 1", "Level1", "Portfolio", "portfolio"));
+  const hub = normalizeValue(normalizeHeader(row, "Hub", "hub")) || getHubForCostCenter(costCenter);
+  const portfolio = normalizeValue(normalizeHeader(row, "Portfolio", "portfolio")) || getPortfolioForHub(hub);
 
-  if (!existsSync(filePath)) {
-    importSummary.fileErrors.push({ fileName, error: "File listed in manifest was not found." });
+  if (!year || !monthNumber) {
+    invalidRows.push({ rowNumber: rowIndex + 2, reason: "Month/year could not be detected.", costCenter, category, amount });
+    importSummary.invalidRows += 1;
+    importSummary.filesProcessed[0].invalidRows += 1;
     return;
   }
 
-  const workbook = read(readFileSync(filePath), { type: "buffer", cellDates: true });
-  const masterSheet = workbook.Sheets.Master;
-  if (!masterSheet) {
-    importSummary.fileErrors.push({ fileName, error: "Missing Master sheet." });
-    return;
-  }
+  const detailRow = {
+    id: `master-${rowIndex}`,
+    fileName: "master_spent_report.xlsx",
+    rowNumber: rowIndex + 2,
+    project,
+    portfolio,
+    hub,
+    costCenter,
+    month: `${monthName} ${year}`,
+    monthName,
+    monthNumber,
+    quarter,
+    year,
+    category,
+    vendor,
+    amount,
+    source: "Spent Report Master",
+    sourceType: "detail",
+  };
 
-  const rows = utils.sheet_to_json(masterSheet, { defval: "" });
-  rows.forEach((row, rowIndex) => {
-    importSummary.totalRows += 1;
-    fileSummary.totalRows += 1;
-    const rawCostCenter = normalizeValue(normalizeHeader(row, "Level 2", "Level2", "level 2", "level2", "Cost Center", "costCenter", "cost_center", "cost center", "Center"));
-    const costCenter = costCenterAliases[rawCostCenter] || rawCostCenter;
-    const monthValue = normalizeHeader(row, "Month", "month", "Billing Month", "billing_month", "Period", "period", "Date", "date");
-    const yearValue = normalizeHeader(row, "Year", "year", "Billing Year", "billing_year", "Period", "period", "Date", "date");
-    const { monthNumber, monthName, quarter, year } = getPeriodParts(monthValue, yearValue);
-    const amount = cleanupAmount(normalizeHeader(row, "Invoice Amount USD", "Invoice Amount", "InvoiceAmountUSD", "Invoice_Amount_USD", "Amount USD", "Amount", "amount", "Cost", "Total", "total"));
-    const category = normalizeValue(normalizeHeader(row, "GL Name", "GLName", "Cost Type", "costType", "Category", "category")) || "Uncategorized";
-    const vendor = normalizeValue(normalizeHeader(row, "Vendor", "Supplier", "Contractor", "vendor", "supplier")) || "Unspecified Vendor";
-    const project = normalizeValue(normalizeHeader(row, "Project", "project", "Level 1", "Level1", "Portfolio", "portfolio"));
-    const hub = normalizeValue(normalizeHeader(row, "Hub", "hub")) || getHubForCostCenter(costCenter);
-    const portfolio = normalizeValue(normalizeHeader(row, "Portfolio", "portfolio")) || getPortfolioForHub(hub);
+  const periodKey = makePeriodKey(year, monthNumber);
+  if (!detailMap.has(periodKey)) detailMap.set(periodKey, []);
+  detailMap.get(periodKey).push(detailRow);
 
-    if (!year || !monthNumber) {
-      invalidRows.push({ fileName, rowNumber: rowIndex + 2, reason: "Month/year could not be detected.", costCenter, category, amount });
-      importSummary.invalidRows += 1;
-      fileSummary.invalidRows += 1;
-      return;
-    }
+  addSummary(monthlySummaryMap, [year, monthNumber, project, portfolio, hub, costCenter, category], detailRow);
+  addSummary(yearlySummaryMap, [year, project, portfolio, hub, costCenter, category], detailRow, { month: String(year), monthName: "", monthNumber: null, quarter: null });
+  addSummary(projectSummaryMap, [project || "Unspecified", year, monthNumber, category], detailRow);
+  addSummary(costCenterSummaryMap, [costCenter || "Unmapped", year, monthNumber, category], detailRow);
+  addSummary(hubSummaryMap, [hub || "Unmapped", year, monthNumber, category], detailRow);
 
-    const detailRow = {
-      id: `${fileName}-${rowIndex}`,
-      fileName,
-      rowNumber: rowIndex + 2,
-      project,
-      portfolio,
-      hub,
-      costCenter,
-      month: `${monthName} ${year}`,
-      monthName,
-      monthNumber,
-      quarter,
-      year,
-      category,
-      vendor,
-      amount,
-      source: "Spent Report Master",
-      sourceType: "detail",
-    };
-
-    const periodKey = `${year}-${String(monthNumber).padStart(2, "0")}`;
-    const summaryKey = [year, monthNumber, project, portfolio, hub, costCenter, category].join("|");
-    const currentSummary = summaryMap.get(summaryKey) ?? { ...detailRow, id: summaryKey, vendor: "Summary", amount: 0, rows: 0, source: "Spent Summary", sourceType: "summary" };
-    currentSummary.amount += amount;
-    currentSummary.rows += 1;
-    summaryMap.set(summaryKey, currentSummary);
-
-    if (!detailMap.has(periodKey)) detailMap.set(periodKey, []);
-    detailMap.get(periodKey).push(detailRow);
-    importSummary.validRows += 1;
-    fileSummary.validRows += 1;
-    fileSummary.monthsDetected.push(periodKey);
-  });
-
-  fileSummary.monthsDetected = Array.from(new Set(fileSummary.monthsDetected)).sort();
-  importSummary.filesProcessed.push(fileSummary);
+  importSummary.validRows += 1;
+  importSummary.filesProcessed[0].validRows += 1;
+  importSummary.filesProcessed[0].monthsDetected.push(periodKey);
 });
 
-importSummary.monthsDetected = Array.from(detailMap.keys()).sort();
+const periods = Array.from(detailMap.keys()).sort();
+importSummary.monthsDetected = periods;
+importSummary.filesProcessed[0].monthsDetected = periods;
 
-for (const [periodKey, rows] of detailMap) {
-  writeFileSync(join(detailDir, `${periodKey}.json`), `${JSON.stringify({ periodKey, rows })}\n`);
+const manifest = {
+  generatedAt: new Date().toISOString(),
+  sourceFile: importSummary.sourceFile,
+  months: periods.map((periodKey) => {
+    const [year, month] = periodKey.split("-");
+    return {
+      periodKey,
+      year: Number(year),
+      monthNumber: Number(month),
+      file: makeSpentFileName(year, month),
+      rows: detailMap.get(periodKey).length,
+    };
+  }),
+  importSummary,
+};
+
+for (const periodKey of periods) {
+  const [year, month] = periodKey.split("-");
+  writeFileSync(join(processedDir, makeSpentFileName(year, month)), `${JSON.stringify({ periodKey, rows: detailMap.get(periodKey) })}\n`);
 }
 
-writeFileSync(summaryFile, `${JSON.stringify({ generatedAt: new Date().toISOString(), importSummary, invalidRows: invalidRows.slice(0, 500), rows: Array.from(summaryMap.values()) })}\n`);
-console.log(`Processed ${importSummary.filesProcessed.length} files.`);
-console.log(`Valid rows: ${importSummary.validRows.toLocaleString()} / ${importSummary.totalRows.toLocaleString()}`);
+const writeSummary = (fileName, map) => {
+  writeFileSync(join(summaryDir, fileName), `${JSON.stringify({ generatedAt: manifest.generatedAt, importSummary, invalidRows: invalidRows.slice(0, 500), rows: Array.from(map.values()) })}\n`);
+};
+
+writeSummary("monthly_summary.json", monthlySummaryMap);
+writeSummary("yearly_summary.json", yearlySummaryMap);
+writeSummary("project_summary.json", projectSummaryMap);
+writeSummary("cost_center_summary.json", costCenterSummaryMap);
+writeSummary("hub_summary.json", hubSummaryMap);
+writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
+
+console.log(`Source rows: ${importSummary.totalRows.toLocaleString()}`);
+console.log(`Valid rows: ${importSummary.validRows.toLocaleString()}`);
 console.log(`Invalid rows: ${importSummary.invalidRows.toLocaleString()}`);
-console.log(`Months detected: ${importSummary.monthsDetected.join(", ")}`);
+console.log(`Months detected: ${periods.join(", ")}`);

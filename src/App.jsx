@@ -51,7 +51,7 @@ const MONTH_ORDER = {
 
 const MONTH_LABELS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-const SPENT_SUMMARY_FILE = "data/spent-report/processed/summary.json";
+const SPENT_SUMMARY_FILE = "data/spent-report/summary/monthly_summary.json";
 const getPublicAssetUrl = (filename) => `${import.meta.env.BASE_URL}${String(filename).split("/").map(encodeURIComponent).join("/")}`;
 const IGCC_LEVEL_LABEL = "IGCC Level 1 - IRAQ GATE CONTRACTING COMPANY";
 const NAV_ITEMS = [
@@ -668,7 +668,8 @@ function DashboardApp({ session, onLogout }) {
 
     try {
       const periodPayloads = await Promise.all(missingPeriods.map(async (period) => {
-        const response = await fetch(getPublicAssetUrl(`data/spent-report/processed/details/${period}.json`));
+        const detailFile = `spent_${period.replace("-", "_")}.json`;
+        const response = await fetch(getPublicAssetUrl(`data/spent-report/processed/${detailFile}`));
         if (!response.ok) throw new Error(`${period}: HTTP ${response.status}`);
         return response.json();
       }));
