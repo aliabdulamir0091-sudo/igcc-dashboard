@@ -2,7 +2,8 @@ import { Fragment, useEffect, useState } from "react";
 import Papa from "papaparse";
 import { read, utils } from "xlsx";
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth, firebaseProjectId, isFirebaseConfigured } from "./firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db, firebaseProjectId, isFirebaseConfigured } from "./firebase";
 
 const formatCurrency = (value) =>
   value.toLocaleString(undefined, {
@@ -66,7 +67,9 @@ const PERIOD_OPTIONS = [
 const VIEW_ONLY_MODE = true;
 const WELCOME_MESSAGE = "Welcome to this dashboard; Ali Abdulamir is developing this application, and this is not the final revision.";
 const WELCOME_VOICE_MESSAGE = "Welcome to this dashboard. This application is developed by Ali Abdulamir, and this is not the final revision.";
-const ACCESS_CACHE_MS = 10 * 60 * 1000;
+const ACCESS_CACHE_MS = 60 * 60 * 1000;
+const ACCESS_CACHE_PREFIX = "igcc-access";
+const accessVerificationRequests = new Map();
 const COST_CATEGORY_ORDER = [
   "Accommodation",
   "Air ticket & travel",
@@ -3626,19 +3629,34 @@ function DashboardApp({ session, onLogout }) {
   );
 }
 
-const getAllowedAccess = async (user) => {
-  if (!user?.email) return null;
+const getAccessCacheKey = (user) => `${ACCESS_CACHE_PREFIX}-${user.uid}`;
 
-  const normalizedEmail = user.email.trim().toLowerCase();
-  const cacheKey = `igcc-access-${normalizedEmail}`;
+const normalizeAccessSession = (user, accessData) => {
+  const role = String(accessData?.role ?? "").trim().toLowerCase();
+  const email = String(accessData?.email ?? user.email ?? "").trim();
 
+  if (accessData?.active !== true) return null;
+  if (email && user.email && email.toLowerCase() !== user.email.trim().toLowerCase()) return null;
+
+  return {
+    uid: user.uid,
+    email: user.email,
+    role: role === "admin" ? "Admin" : "Viewer",
+  };
+};
+
+const readCachedAccess = (user) => {
+  if (!user?.uid) return null;
+
+  const cacheKey = getAccessCacheKey(user);
   try {
     const cachedAccess = JSON.parse(window.sessionStorage.getItem(cacheKey) || "null");
     if (
       cachedAccess?.uid === user.uid &&
-      cachedAccess?.email?.toLowerCase() === normalizedEmail &&
+      cachedAccess?.email?.toLowerCase() === user.email?.trim().toLowerCase() &&
       Date.now() - Number(cachedAccess.cachedAt ?? 0) < ACCESS_CACHE_MS
     ) {
+      console.log("[IGCC Auth] approvedUsers cache hit", user.uid);
       return {
         uid: cachedAccess.uid,
         email: cachedAccess.email,
@@ -3649,38 +3667,56 @@ const getAllowedAccess = async (user) => {
     window.sessionStorage.removeItem(cacheKey);
   }
 
-  const idToken = await user.getIdToken();
-  const documentUrl = `https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/allowedUsers/${encodeURIComponent(normalizedEmail)}`;
-  const response = await fetch(documentUrl, {
-    headers: { Authorization: `Bearer ${idToken}` },
-  });
-
-  if (response.status === 404 || response.status === 403) {
-    return null;
-  }
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Could not verify approved access: HTTP ${response.status}${errorText ? ` - ${errorText.slice(0, 220)}` : ""}`);
-  }
-
-  const access = await response.json();
-  const isActive = access.fields?.active?.booleanValue === true;
-  const role = (access.fields?.role?.stringValue ?? "").trim().toLowerCase();
-
-  if (!isActive) {
-    return null;
-  }
-
-  const session = {
-    uid: user.uid,
-    email: user.email,
-    role: role === "admin" ? "Admin" : "Viewer",
-  };
-
-  window.sessionStorage.setItem(cacheKey, JSON.stringify({ ...session, cachedAt: Date.now() }));
-  return session;
+  return null;
 };
+
+const writeCachedAccess = (user, session) => {
+  window.sessionStorage.setItem(getAccessCacheKey(user), JSON.stringify({ ...session, cachedAt: Date.now() }));
+};
+
+const isQuotaError = (err) => {
+  const value = `${err?.code ?? ""} ${err?.message ?? ""}`.toLowerCase();
+  return value.includes("resource-exhausted") || value.includes("quota") || value.includes("429");
+};
+
+const verifyAllowedAccessOnce = async (user) => {
+  if (!user?.uid || !user?.email || !db) return null;
+
+  const cachedAccess = readCachedAccess(user);
+  if (cachedAccess) return cachedAccess;
+
+  if (accessVerificationRequests.has(user.uid)) {
+    console.log("[IGCC Auth] approvedUsers request reused", user.uid);
+    return accessVerificationRequests.get(user.uid);
+  }
+
+  const request = (async () => {
+    try {
+      console.log("[IGCC Auth] approvedUsers getDoc start", user.uid);
+      const accessSnapshot = await getDoc(doc(db, "approvedUsers", user.uid));
+      console.log("[IGCC Auth] approvedUsers getDoc complete", user.uid, accessSnapshot.exists());
+
+      if (!accessSnapshot.exists()) return null;
+
+      const session = normalizeAccessSession(user, accessSnapshot.data());
+      if (session) writeCachedAccess(user, session);
+      return session;
+    } catch (err) {
+      console.log("[IGCC Auth] approvedUsers getDoc failed", err?.code || err?.message);
+      if (isQuotaError(err)) {
+        throw new Error("Firebase quota exceeded. Please try again later or contact Admin.");
+      }
+      throw err;
+    } finally {
+      accessVerificationRequests.delete(user.uid);
+    }
+  })();
+
+  accessVerificationRequests.set(user.uid, request);
+  return request;
+};
+
+const getAllowedAccess = (user) => verifyAllowedAccessOnce(user);
 
 const getApprovedAccess = async (user) => {
   const access = await getAllowedAccess(user);
@@ -3692,12 +3728,12 @@ const getApprovedAccess = async (user) => {
   return access;
 };
 
-function LoginPage({ onAuthenticated }) {
+function LoginPage({ onAuthenticated, initialError = "" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [mode, setMode] = useState("login");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -3722,12 +3758,18 @@ function LoginPage({ onAuthenticated }) {
     setConfirmPassword("");
   };
 
+  useEffect(() => {
+    if (initialError) {
+      setError(initialError);
+    }
+  }, [initialError]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
     setNotice("");
 
-    if (!isFirebaseConfigured || !auth || !firebaseProjectId) {
+    if (!isFirebaseConfigured || !auth || !db || !firebaseProjectId) {
       setError("Secure access is not configured yet. Please contact the dashboard administrator.");
       return;
     }
@@ -3922,9 +3964,10 @@ function LoginPage({ onAuthenticated }) {
 export default function App() {
   const [session, setSession] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
-    if (!isFirebaseConfigured || !auth || !firebaseProjectId) {
+    if (!isFirebaseConfigured || !auth || !db || !firebaseProjectId) {
       setIsCheckingAuth(false);
       return undefined;
     }
@@ -3937,6 +3980,7 @@ export default function App() {
       }
 
       try {
+        setAuthError("");
         const session = await getApprovedAccess(user);
         if (!session) {
           await signOut(auth);
@@ -3946,7 +3990,8 @@ export default function App() {
         }
 
         setSession(session);
-      } catch {
+      } catch (err) {
+        setAuthError(isQuotaError(err) ? "Firebase quota exceeded. Please try again later or contact Admin." : err.message || "Could not verify approved access. Please try again.");
         await signOut(auth);
         setSession(null);
       } finally {
@@ -3956,6 +4001,7 @@ export default function App() {
   }, []);
 
   const handleLogout = async () => {
+    setAuthError("");
     if (auth) await signOut(auth);
     setSession(null);
   };
@@ -3972,7 +4018,7 @@ export default function App() {
   }
 
   if (!session) {
-    return <LoginPage onAuthenticated={setSession} />;
+    return <LoginPage onAuthenticated={setSession} initialError={authError} />;
   }
 
   return <DashboardApp session={session} onLogout={handleLogout} />;
