@@ -2234,10 +2234,12 @@ function DashboardApp({ session, onLogout }) {
           <div style={{ marginTop: 12, display: "grid", gap: 9 }}>
             {spentGroupedRows.slice(0, 18).map((row, index) => {
               const width = maxSpentGroupAmount ? Math.max(4, Math.round((Math.abs(row.amount) / maxSpentGroupAmount) * 100)) : 0;
+              const costShare = spentTotalAmount ? row.amount / spentTotalAmount : 0;
+              const revenueShare = approvedRevenue ? row.amount / approvedRevenue : null;
               return (
                 <div
                   key={row.key}
-                  style={{ width: "100%", display: "grid", gridTemplateColumns: "minmax(190px, 0.7fr) minmax(160px, 1fr) 120px", gap: 14, alignItems: "center", textAlign: "left", border: `1px solid ${theme.border}`, borderRadius: 12, padding: "13px 14px", background: theme.panelBg, color: theme.text, cursor: "default", boxShadow: "0 7px 18px rgba(15,23,42,0.05)" }}
+                  style={{ width: "100%", display: "grid", gridTemplateColumns: "minmax(230px, 0.72fr) minmax(180px, 1fr) 190px", gap: 14, alignItems: "center", textAlign: "left", border: `1px solid ${theme.border}`, borderRadius: 12, padding: "13px 14px", background: theme.panelBg, color: theme.text, cursor: "default", boxShadow: "0 7px 18px rgba(15,23,42,0.05)" }}
                 >
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
@@ -2246,8 +2248,15 @@ function DashboardApp({ session, onLogout }) {
                     </div>
                     <div style={{ marginTop: 6, color: theme.subtext, fontSize: 12 }}>{row.sublabel} | {row.costCenterCount} centers | {row.monthCount} months</div>
                   </div>
-                  <div style={{ height: 13, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
-                    <div style={{ width: `${width}%`, height: "100%", borderRadius: 999, background: "linear-gradient(90deg, #0f766e, #2563eb)" }} />
+                  <div>
+                    <div style={{ height: 13, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                      <div style={{ width: `${width}%`, height: "100%", borderRadius: 999, background: "linear-gradient(90deg, #0f766e, #2563eb)" }} />
+                    </div>
+                    <div style={{ marginTop: 7, display: "flex", gap: 8, flexWrap: "wrap", color: theme.subtext, fontSize: 11, fontWeight: 850 }}>
+                      <span>Cost share <strong style={{ color: theme.accentStrong }}>{formatPercent(costShare)}</strong></span>
+                      <span style={{ color: theme.border }}>|</span>
+                      <span>Revenue share <strong style={{ color: revenueShare === null ? theme.subtext : theme.accentWarm }}>{revenueShare === null ? "-" : formatPercent(revenueShare)}</strong></span>
+                    </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
                     <div style={{ color: theme.text, fontWeight: 950 }}>{formatCurrency(row.amount)}</div>
