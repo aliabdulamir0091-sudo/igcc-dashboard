@@ -3522,7 +3522,7 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
       }
 
       if (mode === "signup" && !isEmailApproved(normalizedEmail)) {
-        setError(`This email is not approved yet. Please request access from ${ACCESS_ADMIN_EMAIL}.`);
+        setError("This email is not approved yet. Please request access from Admin.");
         return;
       }
 
@@ -3692,7 +3692,7 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
           </button>
 
           <p style={{ margin: 0, textAlign: "center", color: loginTheme.subtext, fontSize: 12, lineHeight: 1.45 }}>
-            {mode === "signup" ? `New emails must be approved by ${ACCESS_ADMIN_EMAIL}.` : "New users must use an approved email address."}
+            {mode === "signup" ? "New emails must be approved by Admin." : "New users must use an approved email address."}
           </p>
         </form>
       </div>
