@@ -485,6 +485,7 @@ function DashboardApp({ session, onLogout }) {
   const [spentGroupBy, setSpentGroupBy] = useState("gl");
   const [spentSelectedGroupKey, setSpentSelectedGroupKey] = useState("");
   const [spentDetailSort, setSpentDetailSort] = useState({ field: "amount", direction: "desc" });
+  const [profitabilitySortMode, setProfitabilitySortMode] = useState("worst");
   const [themeMode, setThemeMode] = useState("light");
   const [showWelcome, setShowWelcome] = useState(false);
   const [expandedProfitRows, setExpandedProfitRows] = useState({});
@@ -1327,12 +1328,22 @@ function DashboardApp({ session, onLogout }) {
       expectedMargin: row.submitted ? (row.submitted - row.cost) / row.submitted : row.cost ? -1 : 0,
     }))
     .sort((a, b) => a.approvedNet - b.approvedNet || a.expectedNet - b.expectedNet);
-  const profitabilityFocusRows = [...profitabilityRows]
-    .sort((a, b) => a.approvedNet - b.approvedNet || b.cost - a.cost)
-    .slice(0, 10);
+  const profitabilitySortOptions = [
+    ["worst", "Lowest to best"],
+    ["best", "Best to lowest"],
+    ["marginBest", "Best margin"],
+    ["marginWorst", "Lowest margin"],
+  ];
+  const profitabilitySortedRows = [...profitabilityRows].sort((a, b) => {
+    if (profitabilitySortMode === "best") return b.approvedNet - a.approvedNet || b.approvedMargin - a.approvedMargin;
+    if (profitabilitySortMode === "marginBest") return b.approvedMargin - a.approvedMargin || b.approvedNet - a.approvedNet;
+    if (profitabilitySortMode === "marginWorst") return a.approvedMargin - b.approvedMargin || a.approvedNet - b.approvedNet;
+    return a.approvedNet - b.approvedNet || b.cost - a.cost;
+  });
+  const profitabilityFocusRows = profitabilitySortedRows.slice(0, 10);
   const maxProfitabilityExposure = Math.max(...profitabilityFocusRows.map((row) => Math.abs(row.approvedNet)), 0);
   const bestProfitabilityRow = [...profitabilityRows].sort((a, b) => b.approvedNet - a.approvedNet)[0];
-  const riskProfitabilityRow = profitabilityFocusRows[0];
+  const riskProfitabilityRow = [...profitabilityRows].sort((a, b) => a.approvedNet - b.approvedNet || b.cost - a.cost)[0];
   const positiveProfitabilityCount = profitabilityRows.filter((row) => row.approvedNet >= 0).length;
   const portfolioPerformanceRows = portfolioSummaries.map((portfolio) => ({
     ...portfolio,
@@ -3091,7 +3102,21 @@ function DashboardApp({ session, onLogout }) {
                 <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Profitability Explorer</h3>
                 <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Cost centers ranked by approved profit position.</p>
               </div>
-              <span style={{ color: theme.subtext, fontSize: 12, fontWeight: 900 }}>{profitabilityFocusRows.length} priority centers</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 6, padding: 4, borderRadius: 12, background: theme.accentSoft, border: `1px solid ${theme.border}`, flexWrap: "wrap" }}>
+                  {profitabilitySortOptions.map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setProfitabilitySortMode(value)}
+                      style={{ border: "none", borderRadius: 9, padding: "8px 10px", cursor: "pointer", background: profitabilitySortMode === value ? theme.panelBg : "transparent", color: profitabilitySortMode === value ? theme.accentStrong : theme.text, boxShadow: profitabilitySortMode === value ? "0 4px 14px rgba(15,23,42,0.10)" : "none", fontSize: 11, fontWeight: 950 }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <span style={{ color: theme.subtext, fontSize: 12, fontWeight: 900 }}>{profitabilityFocusRows.length} centers shown</span>
+              </div>
             </div>
             <div style={{ display: "grid", gap: 10 }}>
               {profitabilityFocusRows.map((row, index) => {
