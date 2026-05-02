@@ -3570,7 +3570,8 @@ const getAllowedAccess = async (user) => {
   }
 
   if (!response.ok) {
-    throw new Error("Could not verify approved access. Please try again.");
+    const errorText = await response.text();
+    throw new Error(`Could not verify approved access: HTTP ${response.status}${errorText ? ` - ${errorText.slice(0, 220)}` : ""}`);
   }
 
   const access = await response.json();
