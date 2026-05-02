@@ -725,6 +725,18 @@ function DashboardApp({ session, onLogout }) {
   const comparisonRevenueData = revenueData.filter((item) => matchesRevenueFilters(item, { includeMonth: false }));
 
   const sortedData = [...filteredData].sort((a, b) => b.amount - a.amount);
+  const spentHasActiveFilter = Boolean(filters.portfolio || filters.hub || filters.costCenter || filters.year || filters.month);
+  const spentPortfolioSummary = PORTFOLIO_OPTIONS.map((portfolio) => {
+    const rows = data.filter((item) => {
+      const hub = item.hub || getHubForCostCenter(item.costCenter);
+      const rowPortfolio = item.portfolio || getPortfolioForHub(hub);
+      return rowPortfolio === portfolio;
+    });
+    const amount = rows.reduce((sum, item) => sum + item.amount, 0);
+    const costCenters = new Set(rows.map((item) => item.costCenter).filter(Boolean)).size;
+    const hubs = new Set(rows.map((item) => item.hub || getHubForCostCenter(item.costCenter)).filter(Boolean)).size;
+    return { portfolio, amount, rows: rows.length, costCenters, hubs };
+  }).filter((row) => row.rows > 0);
   const transactionPageSize = 100;
   const transactionPageCount = Math.max(1, Math.ceil(sortedData.length / transactionPageSize));
   const safeTransactionPage = Math.min(transactionPage, transactionPageCount);
@@ -1847,70 +1859,112 @@ function DashboardApp({ session, onLogout }) {
           {spentEntryMessage && <div style={{ marginTop: 12, color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryMessage}</div>}
           {spentEntryError && <div style={{ marginTop: 12, color: theme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryError}</div>}
 
-          <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <strong style={{ color: theme.text }}>{sortedData.length.toLocaleString()} spent entries</strong>
-            <span style={{ color: theme.subtext, fontSize: 12 }}>
-              Showing {sortedData.length ? (safeTransactionPage - 1) * transactionPageSize + 1 : 0}-{Math.min(safeTransactionPage * transactionPageSize, sortedData.length).toLocaleString()} of {sortedData.length.toLocaleString()}
-            </span>
-          </div>
-
-          <div style={{ marginTop: 10, overflowX: "auto" }}>
-            <table style={{ width: "100%", minWidth: 1120, borderCollapse: "collapse" }}>
-              <thead>
-                <tr>
-                  <th style={leftHeaderStyle}>Portfolio</th>
-                  <th style={leftHeaderStyle}>Hub</th>
-                  <th style={leftHeaderStyle}>Cost Center</th>
-                  <th style={leftHeaderStyle}>Month</th>
-                  <th style={leftHeaderStyle}>GL Name</th>
-                  <th style={leftHeaderStyle}>Vendor</th>
-                  <th style={tableHeaderStyle}>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pagedTransactionRows.map((row, index) => {
-                  const hub = row.hub || getHubForCostCenter(row.costCenter);
-                  const portfolio = row.portfolio || getPortfolioForHub(hub);
-                  return (
-                    <tr key={`${row.id || row.costCenter}-${row.month}-${row.category}-${index}`} style={{ background: index % 2 === 0 ? theme.panelBg : theme.rowAlt }}>
-                      <td style={leftCellStyle}>{portfolio}</td>
-                      <td style={leftCellStyle}>{hub}</td>
-                      <td style={leftCellStyle}>{row.costCenter}</td>
-                      <td style={leftCellStyle}>{row.month}</td>
-                      <td style={leftCellStyle}>{row.category || "Uncategorized"}</td>
-                      <td style={leftCellStyle}>{row.vendor || "Unspecified Vendor"}</td>
-                      <td style={tableCellStyle}>{formatCurrency(row.amount)}</td>
+          {!spentHasActiveFilter ? (
+            <>
+              <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <strong style={{ color: theme.text }}>Portfolio Summary</strong>
+                <span style={{ color: theme.subtext, fontSize: 12 }}>Cumulative total cost by portfolio</span>
+              </div>
+              <div style={{ marginTop: 10, overflowX: "auto" }}>
+                <table style={{ width: "100%", minWidth: 720, borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={leftHeaderStyle}>Portfolio</th>
+                      <th style={tableHeaderStyle}>Total Cost</th>
+                      <th style={tableHeaderStyle}>Hubs</th>
+                      <th style={tableHeaderStyle}>Cost Centers</th>
+                      <th style={tableHeaderStyle}>Rows</th>
                     </tr>
-                  );
-                })}
-                {!sortedData.length && (
-                  <tr>
-                    <td colSpan={7} style={{ ...leftCellStyle, color: theme.subtext }}>No spent entries match the current filters.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody>
+                    {spentPortfolioSummary.map((row, index) => (
+                      <tr key={row.portfolio} style={{ background: index % 2 === 0 ? theme.panelBg : theme.rowAlt }}>
+                        <td style={leftCellStyle}>{row.portfolio}</td>
+                        <td style={tableCellStyle}>{formatCurrency(row.amount)}</td>
+                        <td style={tableCellStyle}>{row.hubs.toLocaleString()}</td>
+                        <td style={tableCellStyle}>{row.costCenters.toLocaleString()}</td>
+                        <td style={tableCellStyle}>{row.rows.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    <tr style={{ background: theme.accentSoft }}>
+                      <td style={{ ...leftCellStyle, fontWeight: 950 }}>Total</td>
+                      <td style={{ ...tableCellStyle, fontWeight: 950 }}>{formatCurrency(spentPortfolioSummary.reduce((sum, row) => sum + row.amount, 0))}</td>
+                      <td style={tableCellStyle}>-</td>
+                      <td style={tableCellStyle}>-</td>
+                      <td style={{ ...tableCellStyle, fontWeight: 950 }}>{spentPortfolioSummary.reduce((sum, row) => sum + row.rows, 0).toLocaleString()}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <strong style={{ color: theme.text }}>{sortedData.length.toLocaleString()} spent entries</strong>
+                <span style={{ color: theme.subtext, fontSize: 12 }}>
+                  Showing {sortedData.length ? (safeTransactionPage - 1) * transactionPageSize + 1 : 0}-{Math.min(safeTransactionPage * transactionPageSize, sortedData.length).toLocaleString()} of {sortedData.length.toLocaleString()}
+                </span>
+              </div>
 
-          {sortedData.length > transactionPageSize && (
-            <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button
-                type="button"
-                onClick={() => setTransactionPage((current) => Math.max(1, current - 1))}
-                disabled={safeTransactionPage === 1}
-                style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeTransactionPage === 1 ? "not-allowed" : "pointer", opacity: safeTransactionPage === 1 ? 0.55 : 1, fontWeight: 850 }}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                onClick={() => setTransactionPage((current) => Math.min(transactionPageCount, current + 1))}
-                disabled={safeTransactionPage === transactionPageCount}
-                style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeTransactionPage === transactionPageCount ? "not-allowed" : "pointer", opacity: safeTransactionPage === transactionPageCount ? 0.55 : 1, fontWeight: 850 }}
-              >
-                Next
-              </button>
-            </div>
+              <div style={{ marginTop: 10, overflowX: "auto" }}>
+                <table style={{ width: "100%", minWidth: 1120, borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={leftHeaderStyle}>Portfolio</th>
+                      <th style={leftHeaderStyle}>Hub</th>
+                      <th style={leftHeaderStyle}>Cost Center</th>
+                      <th style={leftHeaderStyle}>Month</th>
+                      <th style={leftHeaderStyle}>GL Name</th>
+                      <th style={leftHeaderStyle}>Vendor</th>
+                      <th style={tableHeaderStyle}>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedTransactionRows.map((row, index) => {
+                      const hub = row.hub || getHubForCostCenter(row.costCenter);
+                      const portfolio = row.portfolio || getPortfolioForHub(hub);
+                      return (
+                        <tr key={`${row.id || row.costCenter}-${row.month}-${row.category}-${index}`} style={{ background: index % 2 === 0 ? theme.panelBg : theme.rowAlt }}>
+                          <td style={leftCellStyle}>{portfolio}</td>
+                          <td style={leftCellStyle}>{hub}</td>
+                          <td style={leftCellStyle}>{row.costCenter}</td>
+                          <td style={leftCellStyle}>{row.month}</td>
+                          <td style={leftCellStyle}>{row.category || "Uncategorized"}</td>
+                          <td style={leftCellStyle}>{row.vendor || "Unspecified Vendor"}</td>
+                          <td style={tableCellStyle}>{formatCurrency(row.amount)}</td>
+                        </tr>
+                      );
+                    })}
+                    {!sortedData.length && (
+                      <tr>
+                        <td colSpan={7} style={{ ...leftCellStyle, color: theme.subtext }}>No spent entries match the current filters.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {sortedData.length > transactionPageSize && (
+                <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setTransactionPage((current) => Math.max(1, current - 1))}
+                    disabled={safeTransactionPage === 1}
+                    style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeTransactionPage === 1 ? "not-allowed" : "pointer", opacity: safeTransactionPage === 1 ? 0.55 : 1, fontWeight: 850 }}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTransactionPage((current) => Math.min(transactionPageCount, current + 1))}
+                    disabled={safeTransactionPage === transactionPageCount}
+                    style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeTransactionPage === transactionPageCount ? "not-allowed" : "pointer", opacity: safeTransactionPage === transactionPageCount ? 0.55 : 1, fontWeight: 850 }}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
