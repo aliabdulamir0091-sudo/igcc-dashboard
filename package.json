@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "generate:summary": "node scripts/generate-spent-summary.mjs",
     "build": "vite build",
     "deploy": "npm run build",
     "lint": "eslint .",

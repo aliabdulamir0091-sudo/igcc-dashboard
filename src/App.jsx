@@ -52,6 +52,7 @@ const MONTH_ORDER = {
 const MONTH_LABELS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const MASTER_SPENT_REPORT_FILE = "Master Spent Report.xlsx";
+const SPENT_SUMMARY_FILE = "spent-summary.json";
 const getPublicAssetUrl = (filename) => `${import.meta.env.BASE_URL}${encodeURIComponent(filename)}`;
 const IGCC_LEVEL_LABEL = "IGCC Level 1 - IRAQ GATE CONTRACTING COMPANY";
 const NAV_ITEMS = [
@@ -534,6 +535,7 @@ function DashboardApp({ session, onLogout }) {
   const [periodView, setPeriodView] = useState("monthly");
   const [overviewPeriodView, setOverviewPeriodView] = useState("monthly");
   const [activePage, setActivePage] = useState("overview");
+  const [transactionPage, setTransactionPage] = useState(1);
   const [themeMode, setThemeMode] = useState("light");
   const [showWelcome, setShowWelcome] = useState(true);
   const [expandedProfitRows, setExpandedProfitRows] = useState({});
@@ -554,6 +556,8 @@ function DashboardApp({ session, onLogout }) {
   const [isImportingHistory, setIsImportingHistory] = useState(false);
   const [isUploadingSpentExcel, setIsUploadingSpentExcel] = useState(false);
   const [isLoadingFirebaseSpent, setIsLoadingFirebaseSpent] = useState(false);
+  const [isLoadingFullSpentDetails, setIsLoadingFullSpentDetails] = useState(false);
+  const [hasFullSpentDetails, setHasFullSpentDetails] = useState(false);
   const [loadedFirebaseSpentPeriods, setLoadedFirebaseSpentPeriods] = useState([]);
   const [historyImportProgress, setHistoryImportProgress] = useState("");
 
@@ -643,6 +647,28 @@ function DashboardApp({ session, onLogout }) {
   useEffect(() => {
     let isMounted = true;
 
+    const loadSpentSummary = async () => {
+      try {
+        const response = await fetch(getPublicAssetUrl(SPENT_SUMMARY_FILE));
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const summary = await response.json();
+
+        if (isMounted) {
+          setFilename(SPENT_SUMMARY_FILE);
+        }
+
+        return Array.isArray(summary.rows) ? summary.rows : [];
+      } catch (err) {
+        if (isMounted) {
+          setError(`Failed to load dashboard summary data: ${err.message}`);
+        }
+        return [];
+      }
+    };
+
     const loadBundledReport = async () => {
       try {
         const response = await fetch(getPublicAssetUrl(MASTER_SPENT_REPORT_FILE));
@@ -688,11 +714,11 @@ function DashboardApp({ session, onLogout }) {
       }
     };
 
-    Promise.all([loadBundledReport(), loadBundledRevenue().then(() => [])])
-      .then(([historicalRows]) => {
+    Promise.all([loadSpentSummary(), loadBundledRevenue().then(() => [])])
+      .then(([summaryRows]) => {
         if (!isMounted) return;
 
-        setData(historicalRows);
+        setData(summaryRows);
       })
       .finally(() => {
       if (isMounted) {
@@ -706,10 +732,12 @@ function DashboardApp({ session, onLogout }) {
   }, []);
 
   const handleFilterChange = (field) => (event) => {
+    setTransactionPage(1);
     setFilters((current) => ({ ...current, [field]: event.target.value }));
   };
   const handleYearFilterChange = (event) => {
     const nextYear = event.target.value;
+    setTransactionPage(1);
     setFilters((current) => {
       const monthBelongsToYear = !current.month || !nextYear || data.some((item) => item.month === current.month && String(item.year ?? "") === nextYear);
       return {
@@ -720,6 +748,7 @@ function DashboardApp({ session, onLogout }) {
     });
   };
   const handleTimeModeChange = (value) => {
+    setTransactionPage(1);
     setPeriodView(value);
     if (value !== "monthly") {
       setFilters((current) => ({ ...current, month: "" }));
@@ -884,6 +913,42 @@ function DashboardApp({ session, onLogout }) {
       setSpentEntryError(`Could not import historical spent data: ${err.message}`);
     } finally {
       setIsImportingHistory(false);
+    }
+  };
+  const loadFullSpentDetails = async () => {
+    setSpentEntryError("");
+    setSpentEntryMessage("");
+
+    if (hasFullSpentDetails) {
+      setSpentEntryMessage("Full spent report details are already loaded.");
+      return;
+    }
+
+    setIsLoadingFullSpentDetails(true);
+
+    try {
+      const response = await fetch(getPublicAssetUrl(MASTER_SPENT_REPORT_FILE));
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const buffer = await response.arrayBuffer();
+      const workbook = read(new Uint8Array(buffer), { type: "array", cellDates: true });
+      const detailRows = parseSpentWorkbook(workbook).map((row) => ({
+        ...row,
+        source: "Workbook Detail",
+        sourceType: "detail",
+      }));
+
+      setData((current) => {
+        const additiveRows = current.filter((row) => row.sourceType !== "summary" && row.sourceType !== "detail");
+        return [...detailRows, ...additiveRows];
+      });
+      setFilename(MASTER_SPENT_REPORT_FILE);
+      setHasFullSpentDetails(true);
+      setSpentEntryMessage(`Loaded ${detailRows.length.toLocaleString()} full spent detail rows.`);
+    } catch (err) {
+      setSpentEntryError(`Could not load full spent details: ${err.message}`);
+    } finally {
+      setIsLoadingFullSpentDetails(false);
     }
   };
   const loadFirebaseSpentEntriesForSelection = async () => {
@@ -1105,6 +1170,10 @@ function DashboardApp({ session, onLogout }) {
   const comparisonRevenueData = revenueData.filter((item) => matchesRevenueFilters(item, { includeMonth: false }));
 
   const sortedData = [...filteredData].sort((a, b) => b.amount - a.amount);
+  const transactionPageSize = 100;
+  const transactionPageCount = Math.max(1, Math.ceil(sortedData.length / transactionPageSize));
+  const safeTransactionPage = Math.min(transactionPage, transactionPageCount);
+  const pagedTransactionRows = sortedData.slice((safeTransactionPage - 1) * transactionPageSize, safeTransactionPage * transactionPageSize);
   const sortBy = "amount";
   const sortAsc = false;
   const visibleRows = [];
@@ -2213,17 +2282,25 @@ function DashboardApp({ session, onLogout }) {
                   <button
                     type="button"
                     onClick={importHistoricalSpentRows}
-                    disabled={isImportingHistory || isUploadingSpentExcel || isLoadingFirebaseSpent}
+                    disabled={isImportingHistory || isUploadingSpentExcel || isLoadingFirebaseSpent || isLoadingFullSpentDetails}
                     style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isImportingHistory ? "wait" : "pointer", fontSize: 12, fontWeight: 900 }}
                   >
                     {isImportingHistory ? "Importing..." : "Import Excel History"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={loadFullSpentDetails}
+                    disabled={isLoadingFullSpentDetails || hasFullSpentDetails || isImportingHistory || isUploadingSpentExcel || isLoadingFirebaseSpent}
+                    style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isLoadingFullSpentDetails ? "wait" : "pointer", fontSize: 12, fontWeight: 900, opacity: hasFullSpentDetails ? 0.66 : 1 }}
+                  >
+                    {isLoadingFullSpentDetails ? "Loading Details..." : hasFullSpentDetails ? "Details Loaded" : "Load Full Details"}
                   </button>
                 </Fragment>
               )}
               <button
                 type="button"
                 onClick={loadFirebaseSpentEntriesForSelection}
-                disabled={isLoadingFirebaseSpent || isImportingHistory || isUploadingSpentExcel}
+                disabled={isLoadingFirebaseSpent || isImportingHistory || isUploadingSpentExcel || isLoadingFullSpentDetails}
                 style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isLoadingFirebaseSpent ? "wait" : "pointer", fontSize: 12, fontWeight: 900 }}
               >
                 {isLoadingFirebaseSpent ? "Loading..." : "Load Uploaded Entries"}
@@ -3565,7 +3642,7 @@ function DashboardApp({ session, onLogout }) {
                 </tr>
               </thead>
               <tbody>
-                {sortedData.slice(0, 500).map((row, index) => {
+                {pagedTransactionRows.map((row, index) => {
                   const hub = getHubForCostCenter(row.costCenter);
                   const portfolio = getPortfolioForHub(hub);
                   return (
@@ -3588,7 +3665,29 @@ function DashboardApp({ session, onLogout }) {
               </tbody>
             </table>
           </div>
-          {sortedData.length > 500 && <p style={{ margin: "12px 0 0", color: theme.subtext, fontSize: 12 }}>Showing the first 500 entries. Use filters to focus the transaction list.</p>}
+          {sortedData.length > transactionPageSize && (
+            <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", color: theme.subtext, fontSize: 12 }}>
+              <span>Showing {(safeTransactionPage - 1) * transactionPageSize + 1}-{Math.min(safeTransactionPage * transactionPageSize, sortedData.length).toLocaleString()} of {sortedData.length.toLocaleString()} entries.</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setTransactionPage((current) => Math.max(1, current - 1))}
+                  disabled={safeTransactionPage === 1}
+                  style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeTransactionPage === 1 ? "not-allowed" : "pointer", opacity: safeTransactionPage === 1 ? 0.55 : 1, fontWeight: 850 }}
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTransactionPage((current) => Math.min(transactionPageCount, current + 1))}
+                  disabled={safeTransactionPage === transactionPageCount}
+                  style={{ padding: "7px 11px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: safeTransactionPage === transactionPageCount ? "not-allowed" : "pointer", opacity: safeTransactionPage === transactionPageCount ? 0.55 : 1, fontWeight: 850 }}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
