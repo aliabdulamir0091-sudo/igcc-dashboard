@@ -2,7 +2,6 @@ import { Fragment, useEffect, useState } from "react";
 import Papa from "papaparse";
 import { read, utils } from "xlsx";
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { auth, db, firebaseProjectId, isFirebaseConfigured } from "./firebase";
 
 const formatCurrency = (value) =>
@@ -3194,6 +3193,20 @@ const normalizeAccessSession = (user, accessData) => {
   };
 };
 
+const readFirestoreRestValue = (field) => {
+  if (!field) return undefined;
+  if (Object.prototype.hasOwnProperty.call(field, "stringValue")) return field.stringValue;
+  if (Object.prototype.hasOwnProperty.call(field, "booleanValue")) return field.booleanValue;
+  if (Object.prototype.hasOwnProperty.call(field, "integerValue")) return Number(field.integerValue);
+  if (Object.prototype.hasOwnProperty.call(field, "doubleValue")) return Number(field.doubleValue);
+  return undefined;
+};
+
+const normalizeRestAccessData = (documentData) => {
+  const fields = documentData?.fields ?? {};
+  return Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, readFirestoreRestValue(value)]));
+};
+
 const readCachedAccess = (user) => {
   if (!user?.uid) return null;
 
@@ -3229,29 +3242,40 @@ const isQuotaError = (err) => {
 };
 
 const verifyAllowedAccessOnce = async (user) => {
-  if (!user?.uid || !user?.email || !db) return null;
+  if (!user?.uid || !user?.email || !firebaseProjectId) return null;
 
   const cachedAccess = readCachedAccess(user);
   if (cachedAccess) return cachedAccess;
 
   if (accessVerificationRequests.has(user.uid)) {
-    console.log("[IGCC Auth] approvedUsers request reused", user.uid);
+    console.log("[IGCC Auth] allowedUsers request reused", user.uid);
     return accessVerificationRequests.get(user.uid);
   }
 
   const request = (async () => {
     try {
-      console.log("[IGCC Auth] approvedUsers getDoc start", user.uid);
-      const accessSnapshot = await getDoc(doc(db, "approvedUsers", user.uid));
-      console.log("[IGCC Auth] approvedUsers getDoc complete", user.uid, accessSnapshot.exists());
+      const normalizedEmail = user.email.trim().toLowerCase();
+      const token = await user.getIdToken();
+      const documentUrl = `https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/allowedUsers/${encodeURIComponent(normalizedEmail)}`;
 
-      if (!accessSnapshot.exists()) return null;
+      console.log("[IGCC Auth] allowedUsers REST get start", normalizedEmail);
+      const response = await fetch(documentUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("[IGCC Auth] allowedUsers REST get complete", normalizedEmail, response.status);
 
-      const session = normalizeAccessSession(user, accessSnapshot.data());
+      if (response.status === 404 || response.status === 403) return null;
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(`HTTP ${response.status} - ${body}`);
+      }
+
+      const accessData = normalizeRestAccessData(await response.json());
+      const session = normalizeAccessSession(user, { ...accessData, email: normalizedEmail });
       if (session) writeCachedAccess(user, session);
       return session;
     } catch (err) {
-      console.log("[IGCC Auth] approvedUsers getDoc failed", err?.code || err?.message);
+      console.log("[IGCC Auth] allowedUsers REST get failed", err?.code || err?.message);
       if (isQuotaError(err)) {
         throw new Error("Firebase quota exceeded. Please try again later or contact Admin.");
       }
