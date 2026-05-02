@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import Papa from "papaparse";
 import { read, utils } from "xlsx";
-import { createUserWithEmailAndPassword, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, firebaseProjectId, isFirebaseConfigured } from "./firebase";
 
 const formatCurrency = (value) =>
@@ -74,6 +74,7 @@ const APPROVED_ACCESS = {
   "haider.almesaody@igccgroup.com": "Viewer",
   "hussein@igccgroup.com": "Viewer",
 };
+const ACCESS_ADMIN_EMAIL = "ali.abdulamir0091@gmail.com";
 const COST_CATEGORY_ORDER = [
   "Accommodation",
   "Air ticket & travel",
@@ -3436,11 +3437,30 @@ const getAllowedAccess = (user) => verifyAllowedAccessOnce(user);
 const getApprovedAccess = async (user) => {
   const access = await getAllowedAccess(user);
 
-  if (!access || user.emailVerified !== true) {
+  if (!access) {
     return null;
   }
 
   return access;
+};
+
+const isEmailApproved = (email) => Boolean(APPROVED_ACCESS[String(email ?? "").trim().toLowerCase()]);
+
+const getAccessRequestUrl = (email) => {
+  const normalizedEmail = String(email ?? "").trim().toLowerCase();
+  const subject = encodeURIComponent("IGCC Dashboard access approval request");
+  const body = encodeURIComponent([
+    "Dear Admin,",
+    "",
+    "Please approve this user for IGCC Financial Dashboard access:",
+    "",
+    `Email: ${normalizedEmail || "[user email]"}`,
+    "",
+    "Requested role: Viewer",
+    "",
+    "Regards,",
+  ].join("\n"));
+  return `mailto:${ACCESS_ADMIN_EMAIL}?subject=${subject}&body=${body}`;
 };
 
 function LoginPage({ onAuthenticated, initialError = "" }) {
@@ -3497,6 +3517,11 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
         throw new Error("Passwords do not match.");
       }
 
+      if (mode === "signup" && !isEmailApproved(normalizedEmail)) {
+        setError(`This email is not approved yet. Please request access from ${ACCESS_ADMIN_EMAIL}.`);
+        return;
+      }
+
       const credential = mode === "signup"
         ? await createUserWithEmailAndPassword(auth, normalizedEmail, password)
         : await signInWithEmailAndPassword(auth, normalizedEmail, password);
@@ -3508,21 +3533,8 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
       }
 
       if (mode === "signup") {
-        await sendEmailVerification(credential.user, { url: window.location.href });
-        await signOut(auth);
-        setMode("login");
         setPassword("");
         setConfirmPassword("");
-        setNotice(`Verification email sent to ${normalizedEmail}. Please open your email, verify the account, then log in.`);
-        return;
-      }
-
-      if (credential.user.emailVerified !== true) {
-        await sendEmailVerification(credential.user, { url: window.location.href });
-        await signOut(auth);
-        setPassword("");
-        setNotice(`Please verify ${normalizedEmail} before accessing the dashboard. A new verification email has been sent.`);
-        return;
       }
 
       onAuthenticated(session);
@@ -3633,6 +3645,14 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
 
           {notice && <div style={{ color: loginTheme.accentStrong, background: "rgba(15,118,110,0.10)", border: "1px solid rgba(15,118,110,0.20)", borderRadius: 8, padding: 11, fontSize: 13, lineHeight: 1.4 }}>{notice}</div>}
           {error && <div style={{ color: loginTheme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13, lineHeight: 1.4 }}>{error}</div>}
+          {mode === "signup" && email.trim() && !isEmailApproved(email) && (
+            <a
+              href={getAccessRequestUrl(email)}
+              style={{ display: "block", textAlign: "center", border: `1px solid rgba(15,118,110,0.28)`, borderRadius: 8, padding: "11px 14px", background: loginTheme.accentSoft, color: loginTheme.accentStrong, textDecoration: "none", fontSize: 13, fontWeight: 950 }}
+            >
+              Request admin approval
+            </a>
+          )}
 
           <button
             type="submit"
@@ -3668,7 +3688,7 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
           </button>
 
           <p style={{ margin: 0, textAlign: "center", color: loginTheme.subtext, fontSize: 12, lineHeight: 1.45 }}>
-            {mode === "signup" ? "Only approved emails can activate dashboard access." : "New users must use an approved email address."}
+            {mode === "signup" ? `New emails must be approved by ${ACCESS_ADMIN_EMAIL}.` : "New users must use an approved email address."}
           </p>
         </form>
       </div>
@@ -3694,7 +3714,7 @@ export default function App() {
         return;
       }
 
-      const cachedSession = user.emailVerified === true ? readCachedAccess(user) : null;
+      const cachedSession = readCachedAccess(user);
       if (cachedSession) {
         setAuthError("");
         setSession(cachedSession);
