@@ -51,9 +51,8 @@ const MONTH_ORDER = {
 
 const MONTH_LABELS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-const MASTER_SPENT_REPORT_FILE = "Master Spent Report.xlsx";
-const SPENT_SUMMARY_FILE = "spent-summary.json";
-const getPublicAssetUrl = (filename) => `${import.meta.env.BASE_URL}${encodeURIComponent(filename)}`;
+const SPENT_SUMMARY_FILE = "data/spent-report/processed/summary.json";
+const getPublicAssetUrl = (filename) => `${import.meta.env.BASE_URL}${String(filename).split("/").map(encodeURIComponent).join("/")}`;
 const IGCC_LEVEL_LABEL = "IGCC Level 1 - IRAQ GATE CONTRACTING COMPANY";
 const NAV_ITEMS = [
   ["overview", "Executive Cockpit"],
@@ -410,83 +409,6 @@ const getSpentWorkbookRows = (workbook) => {
 
 const parseSpentWorkbook = (workbook) => parseSpentRows(getSpentWorkbookRows(workbook));
 
-const manualSpentEntryToRow = (entry) => {
-  const year = Number(entry.year) || new Date().getFullYear();
-  const monthNumber = Number(entry.monthNumber) || 1;
-  const monthName = MONTH_LABELS[monthNumber] || "Jan";
-  const sourceType = entry.sourceType || "manual";
-  const sourceLabel = sourceType === "history" ? "Historical Import" : sourceType === "upload" ? "Excel Upload" : "Manual";
-
-  return {
-    id: entry.id,
-    costCenter: COST_CENTER_ALIASES[entry.costCenter] || entry.costCenter,
-    month: `${monthName} ${year}`,
-    monthName,
-    monthNumber,
-    quarter: `Q${Math.ceil(monthNumber / 3)}`,
-    year,
-    category: entry.glName || "Manual Entry",
-    vendor: entry.vendor || "Manual Entry",
-    amount: Number(entry.amount) || 0,
-    source: sourceLabel,
-    sourceType,
-    notes: entry.notes || "",
-  };
-};
-
-const firestoreValue = (value) => {
-  if (typeof value === "boolean") return { booleanValue: value };
-  if (typeof value === "number" && Number.isInteger(value)) return { integerValue: String(value) };
-  if (typeof value === "number") return { doubleValue: value };
-  return { stringValue: String(value ?? "") };
-};
-
-const parseManualSpentDocument = (document) => {
-  const fields = document.fields ?? {};
-  const readNumber = (field) => Number(fields[field]?.integerValue ?? fields[field]?.doubleValue ?? 0);
-
-  return manualSpentEntryToRow({
-    id: document.name?.split("/").pop(),
-    costCenter: fields.costCenter?.stringValue,
-    monthNumber: readNumber("monthNumber"),
-    year: readNumber("year"),
-    glName: fields.glName?.stringValue,
-    vendor: fields.vendor?.stringValue,
-    amount: readNumber("amount"),
-    notes: fields.notes?.stringValue,
-    sourceType: fields.sourceType?.stringValue,
-  });
-};
-
-const getSafeDocumentIdPart = (value) =>
-  String(value ?? "")
-    .trim()
-    .replace(/[^a-zA-Z0-9_-]/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 120) || "spent";
-
-const wait = (milliseconds) => new Promise((resolve) => {
-  window.setTimeout(resolve, milliseconds);
-});
-
-const fetchWithRetry = async (url, options, attempts = 3) => {
-  let lastError;
-
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    try {
-      return await fetch(url, options);
-    } catch (err) {
-      lastError = err;
-      if (attempt < attempts) {
-        await wait(600 * attempt);
-      }
-    }
-  }
-
-  throw lastError;
-};
-
 const parseRevenueSheet = (rows, status) =>
   rows.flatMap((row) => {
     const rawCenter = normalizeValue(normalizeHeader(row, "__EMPTY", "Cost Center", "costCenter", "cost_center"));
@@ -539,27 +461,11 @@ function DashboardApp({ session, onLogout }) {
   const [themeMode, setThemeMode] = useState("light");
   const [showWelcome, setShowWelcome] = useState(true);
   const [expandedProfitRows, setExpandedProfitRows] = useState({});
-  const [spentEntryForm, setSpentEntryForm] = useState({
-    portfolio: "",
-    hub: "",
-    costCenter: "",
-    year: String(new Date().getFullYear()),
-    monthNumber: String(new Date().getMonth() + 1),
-    glName: "",
-    amount: "",
-    vendor: "",
-    notes: "",
-  });
   const [spentEntryMessage, setSpentEntryMessage] = useState("");
   const [spentEntryError, setSpentEntryError] = useState("");
-  const [isSavingSpentEntry, setIsSavingSpentEntry] = useState(false);
-  const [isImportingHistory, setIsImportingHistory] = useState(false);
-  const [isUploadingSpentExcel, setIsUploadingSpentExcel] = useState(false);
-  const [isLoadingFirebaseSpent, setIsLoadingFirebaseSpent] = useState(false);
   const [isLoadingFullSpentDetails, setIsLoadingFullSpentDetails] = useState(false);
-  const [hasFullSpentDetails, setHasFullSpentDetails] = useState(false);
-  const [loadedFirebaseSpentPeriods, setLoadedFirebaseSpentPeriods] = useState([]);
-  const [historyImportProgress, setHistoryImportProgress] = useState("");
+  const [loadedSpentDetailPeriods, setLoadedSpentDetailPeriods] = useState([]);
+  const [spentImportSummary, setSpentImportSummary] = useState(null);
 
   const theme = {
     light: {
@@ -658,36 +564,13 @@ function DashboardApp({ session, onLogout }) {
 
         if (isMounted) {
           setFilename(SPENT_SUMMARY_FILE);
+          setSpentImportSummary(summary.importSummary ?? null);
         }
 
         return Array.isArray(summary.rows) ? summary.rows : [];
       } catch (err) {
         if (isMounted) {
           setError(`Failed to load dashboard summary data: ${err.message}`);
-        }
-        return [];
-      }
-    };
-
-    const loadBundledReport = async () => {
-      try {
-        const response = await fetch(getPublicAssetUrl(MASTER_SPENT_REPORT_FILE));
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const buffer = await response.arrayBuffer();
-        const workbook = read(new Uint8Array(buffer), { type: "array", cellDates: true });
-        const rows = parseSpentWorkbook(workbook);
-
-        if (isMounted) {
-          setFilename(MASTER_SPENT_REPORT_FILE);
-        }
-
-        return rows;
-      } catch (err) {
-        if (isMounted) {
-          setError(`Failed to load financial dashboard data: ${err.message}`);
         }
         return [];
       }
@@ -754,393 +637,56 @@ function DashboardApp({ session, onLogout }) {
       setFilters((current) => ({ ...current, month: "" }));
     }
   };
-  const handleSpentEntryChange = (field) => (event) => {
-    const value = event.target.value;
-    setSpentEntryForm((current) => {
-      if (field === "portfolio") {
-        return { ...current, portfolio: value, hub: "", costCenter: "" };
-      }
-
-      if (field === "hub") {
-        return { ...current, hub: value, costCenter: "" };
-      }
-
-      return { ...current, [field]: value };
-    });
-  };
-  const saveSpentEntry = async (event) => {
-    event.preventDefault();
-    setSpentEntryError("");
-    setSpentEntryMessage("");
-    setHistoryImportProgress("");
-
-    if (session?.role !== "Admin") {
-      setSpentEntryError("Only Admin users can add spent report entries.");
-      return;
-    }
-
-    const amount = Number(spentEntryForm.amount);
-    const monthNumber = Number(spentEntryForm.monthNumber);
-    const year = Number(spentEntryForm.year);
-
-    if (!spentEntryForm.costCenter || !spentEntryForm.glName || !amount || !monthNumber || !year) {
-      setSpentEntryError("Cost center, month, year, GL name, and amount are required.");
-      return;
-    }
-
-    setIsSavingSpentEntry(true);
-
-    try {
-      const idToken = await auth.currentUser.getIdToken();
-      const entry = {
-        portfolio: getPortfolioForHub(spentEntryForm.hub),
-        hub: spentEntryForm.hub,
-        costCenter: spentEntryForm.costCenter,
-        monthNumber,
-        year,
-        glName: spentEntryForm.glName.trim(),
-        amount,
-        vendor: spentEntryForm.vendor.trim() || "Manual Entry",
-        notes: spentEntryForm.notes.trim(),
-        createdBy: session.email,
-        createdAt: new Date().toISOString(),
-      };
-
-      const response = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fields: Object.fromEntries(Object.entries(entry).map(([key, value]) => [key, firestoreValue(value)])),
-        }),
-      });
-
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const savedDocument = await response.json();
-      const savedRow = parseManualSpentDocument(savedDocument);
-      setData((current) => [...current, savedRow]);
-      setSpentEntryForm((current) => ({ ...current, glName: "", amount: "", vendor: "", notes: "" }));
-      setSpentEntryMessage("Spent entry saved and added to dashboard calculations.");
-    } catch (err) {
-      setSpentEntryError(`Could not save spent entry: ${err.message}`);
-    } finally {
-      setIsSavingSpentEntry(false);
-    }
-  };
-  const importHistoricalSpentRows = async () => {
-    setSpentEntryError("");
-    setSpentEntryMessage("");
-
-    if (session?.role !== "Admin") {
-      setSpentEntryError("Only Admin users can import historical spent data.");
-      return;
-    }
-
-    setIsImportingHistory(true);
-
-    try {
-      const response = await fetch(getPublicAssetUrl(MASTER_SPENT_REPORT_FILE));
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const buffer = await response.arrayBuffer();
-      const workbook = read(new Uint8Array(buffer), { type: "array", cellDates: true });
-      const historicalRows = parseSpentWorkbook(workbook).map((row) => ({
-        ...row,
-        source: "Historical Import",
-        sourceType: "history",
-      }));
-      setHistoryImportProgress(`Preparing ${historicalRows.length.toLocaleString()} historical rows...`);
-      let savedCount = 0;
-      let skippedCount = 0;
-      let processedCount = 0;
-      const chunkSize = 5;
-
-      for (let index = 0; index < historicalRows.length; index += chunkSize) {
-        const idToken = await auth.currentUser.getIdToken();
-        const chunk = historicalRows.slice(index, index + chunkSize);
-        const results = await Promise.all(chunk.map(async (row, chunkIndex) => {
-          const rowIndex = index + chunkIndex;
-          const documentId = `hist_${rowIndex}`;
-          const entry = {
-            sourceType: "history",
-            portfolio: getPortfolioForHub(getHubForCostCenter(row.costCenter)),
-            hub: getHubForCostCenter(row.costCenter),
-            costCenter: row.costCenter,
-            monthNumber: row.monthNumber || 0,
-            year: row.year || 0,
-            glName: row.category || "Uncategorized",
-            amount: Number(row.amount) || 0,
-            vendor: row.vendor || "Historical Import",
-            notes: "Imported from historical spent workbook",
-            createdBy: session.email,
-            createdAt: new Date().toISOString(),
-          };
-          const importResponse = await fetchWithRetry(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries?documentId=${encodeURIComponent(documentId)}`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${idToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              fields: Object.fromEntries(Object.entries(entry).map(([key, value]) => [key, firestoreValue(value)])),
-            }),
-          });
-
-          if (importResponse.ok) return "saved";
-          if (importResponse.status === 409) return "skipped";
-
-          const errorText = await importResponse.text();
-          throw new Error(`HTTP ${importResponse.status}${errorText ? ` - ${errorText.slice(0, 160)}` : ""}`);
-        }));
-
-        savedCount += results.filter((result) => result === "saved").length;
-        skippedCount += results.filter((result) => result === "skipped").length;
-        processedCount = Math.min(index + chunk.length, historicalRows.length);
-        setHistoryImportProgress(`Processed ${processedCount.toLocaleString()} of ${historicalRows.length.toLocaleString()} rows...`);
-        await wait(120);
-      }
-
-      setData((current) => {
-        const nonHistoricalManualRows = current.filter((row) => row.sourceType !== "history");
-        return [...historicalRows, ...nonHistoricalManualRows];
-      });
-      setSpentEntryMessage(`Historical import complete. Added ${savedCount.toLocaleString()} rows${skippedCount ? `, skipped ${skippedCount.toLocaleString()} existing rows` : ""}.`);
-      setHistoryImportProgress("");
-    } catch (err) {
-      setSpentEntryError(`Could not import historical spent data: ${err.message}`);
-    } finally {
-      setIsImportingHistory(false);
-    }
-  };
   const loadFullSpentDetails = async () => {
     setSpentEntryError("");
     setSpentEntryMessage("");
 
-    if (hasFullSpentDetails) {
-      setSpentEntryMessage("Full spent report details are already loaded.");
+    const selectedYear = Number(filters.year || new Date().getFullYear());
+    const selectedMonth = filters.month ? getMonthNumber(filters.month) : null;
+    const availablePeriods = spentImportSummary?.monthsDetected ?? [];
+    const targetPeriods = selectedMonth
+      ? [`${selectedYear}-${String(selectedMonth).padStart(2, "0")}`]
+      : availablePeriods.filter((period) => period.startsWith(`${selectedYear}-`));
+    const missingPeriods = targetPeriods.filter((period) => !loadedSpentDetailPeriods.includes(period));
+
+    if (!selectedYear) {
+      setSpentEntryError("Select a year before loading spent details.");
+      return;
+    }
+
+    if (!targetPeriods.length) {
+      setSpentEntryMessage(`No processed spent details are available for ${selectedYear}.`);
+      return;
+    }
+
+    if (!missingPeriods.length) {
+      setSpentEntryMessage(`Spent details for ${selectedMonth ? `${MONTH_LABELS[selectedMonth]} ` : ""}${selectedYear} are already loaded.`);
       return;
     }
 
     setIsLoadingFullSpentDetails(true);
 
     try {
-      const response = await fetch(getPublicAssetUrl(MASTER_SPENT_REPORT_FILE));
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const buffer = await response.arrayBuffer();
-      const workbook = read(new Uint8Array(buffer), { type: "array", cellDates: true });
-      const detailRows = parseSpentWorkbook(workbook).map((row) => ({
-        ...row,
-        source: "Workbook Detail",
-        sourceType: "detail",
+      const periodPayloads = await Promise.all(missingPeriods.map(async (period) => {
+        const response = await fetch(getPublicAssetUrl(`data/spent-report/processed/details/${period}.json`));
+        if (!response.ok) throw new Error(`${period}: HTTP ${response.status}`);
+        return response.json();
       }));
+      const detailRows = periodPayloads.flatMap((payload) => payload.rows ?? []);
 
       setData((current) => {
-        const additiveRows = current.filter((row) => row.sourceType !== "summary" && row.sourceType !== "detail");
-        return [...detailRows, ...additiveRows];
+        const existingIds = new Set(current.map((row) => row.id).filter(Boolean));
+        const newRows = detailRows.filter((row) => !row.id || !existingIds.has(row.id));
+        return [...current, ...newRows];
       });
-      setFilename(MASTER_SPENT_REPORT_FILE);
-      setHasFullSpentDetails(true);
-      setSpentEntryMessage(`Loaded ${detailRows.length.toLocaleString()} full spent detail rows.`);
+      setLoadedSpentDetailPeriods((current) => Array.from(new Set([...current, ...missingPeriods])).sort());
+      setSpentEntryMessage(`Loaded ${detailRows.length.toLocaleString()} spent detail rows for ${selectedMonth ? `${MONTH_LABELS[selectedMonth]} ` : ""}${selectedYear}.`);
     } catch (err) {
       setSpentEntryError(`Could not load full spent details: ${err.message}`);
     } finally {
       setIsLoadingFullSpentDetails(false);
     }
   };
-  const loadFirebaseSpentEntriesForSelection = async () => {
-    setSpentEntryError("");
-    setSpentEntryMessage("");
-
-    if (!auth?.currentUser || !firebaseProjectId) {
-      setSpentEntryError("Firebase is not available for uploaded spent entries.");
-      return;
-    }
-
-    const selectedYear = Number(filters.year || spentEntryForm.year || new Date().getFullYear());
-    const selectedMonth = filters.month ? getMonthNumber(filters.month) : null;
-    const periodKey = `${selectedYear}-${selectedMonth || "year"}`;
-
-    if (!selectedYear) {
-      setSpentEntryError("Select a year before loading uploaded entries.");
-      return;
-    }
-
-    if (loadedFirebaseSpentPeriods.includes(periodKey)) {
-      setSpentEntryMessage(`Uploaded entries for ${selectedMonth ? `${MONTH_LABELS[selectedMonth]} ` : ""}${selectedYear} are already loaded.`);
-      return;
-    }
-
-    setIsLoadingFirebaseSpent(true);
-
-    try {
-      const idToken = await auth.currentUser.getIdToken();
-      const filterList = [
-        {
-          fieldFilter: {
-            field: { fieldPath: "year" },
-            op: "EQUAL",
-            value: { integerValue: String(selectedYear) },
-          },
-        },
-      ];
-
-      if (selectedMonth) {
-        filterList.push({
-          fieldFilter: {
-            field: { fieldPath: "monthNumber" },
-            op: "EQUAL",
-            value: { integerValue: String(selectedMonth) },
-          },
-        });
-      }
-
-      const response = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents:runQuery`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          structuredQuery: {
-            from: [{ collectionId: "manualSpentEntries" }],
-            where: filterList.length === 1 ? filterList[0] : { compositeFilter: { op: "AND", filters: filterList } },
-          },
-        }),
-      });
-
-      if (response.status === 404 || response.status === 403) {
-        setSpentEntryMessage(`No uploaded entries are available for ${selectedMonth ? `${MONTH_LABELS[selectedMonth]} ` : ""}${selectedYear}.`);
-        setLoadedFirebaseSpentPeriods((current) => [...current, periodKey]);
-        return;
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}${errorText ? ` - ${errorText.slice(0, 180)}` : ""}`);
-      }
-
-      const result = await response.json();
-      const rows = result.map((item) => item.document).filter(Boolean).map(parseManualSpentDocument);
-      let addedCount = 0;
-
-      setData((current) => {
-        const existingIds = new Set(current.map((row) => row.id).filter(Boolean));
-        const newRows = rows.filter((row) => !row.id || !existingIds.has(row.id));
-        addedCount = newRows.length;
-        return [...current, ...newRows];
-      });
-      setLoadedFirebaseSpentPeriods((current) => [...current, periodKey]);
-      setSpentEntryMessage(`Loaded ${addedCount.toLocaleString()} uploaded entries for ${selectedMonth ? `${MONTH_LABELS[selectedMonth]} ` : ""}${selectedYear}.`);
-    } catch (err) {
-      setSpentEntryError(`Could not load uploaded entries: ${err.message}`);
-    } finally {
-      setIsLoadingFirebaseSpent(false);
-    }
-  };
-  const uploadSpentExcelRows = async (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    setSpentEntryError("");
-    setSpentEntryMessage("");
-    setHistoryImportProgress("");
-
-    if (!file) return;
-
-    if (session?.role !== "Admin") {
-      setSpentEntryError("Only Admin users can upload spent Excel files.");
-      return;
-    }
-
-    setIsUploadingSpentExcel(true);
-
-    try {
-      const buffer = await file.arrayBuffer();
-      const workbook = read(new Uint8Array(buffer), { type: "array", cellDates: true });
-      const uploadedRows = parseSpentWorkbook(workbook)
-        .filter((row) => row.costCenter && row.amount)
-        .map((row) => ({
-          ...row,
-          source: "Excel Upload",
-          sourceType: "upload",
-        }));
-
-      if (!uploadedRows.length) {
-        setSpentEntryError("No valid spent rows were found in this Excel file.");
-        return;
-      }
-
-      setHistoryImportProgress(`Preparing ${uploadedRows.length.toLocaleString()} uploaded rows...`);
-
-      let savedCount = 0;
-      let skippedCount = 0;
-      const savedRows = [];
-      const chunkSize = 5;
-      const uploadedAt = new Date().toISOString();
-      const uploadSeed = getSafeDocumentIdPart(file.name.replace(/\.[^/.]+$/, ""));
-
-      for (let index = 0; index < uploadedRows.length; index += chunkSize) {
-        const idToken = await auth.currentUser.getIdToken();
-        const chunk = uploadedRows.slice(index, index + chunkSize);
-        const results = await Promise.all(chunk.map(async (row, chunkIndex) => {
-          const rowIndex = index + chunkIndex;
-          const documentSeed = `${uploadSeed}_${row.costCenter}_${row.year}_${row.monthNumber}_${row.category}_${row.amount}_${rowIndex}`;
-          const documentId = `upload_${getSafeDocumentIdPart(documentSeed)}`;
-          const entry = {
-            sourceType: "upload",
-            portfolio: getPortfolioForHub(getHubForCostCenter(row.costCenter)),
-            hub: getHubForCostCenter(row.costCenter),
-            costCenter: row.costCenter,
-            monthNumber: row.monthNumber || 0,
-            year: row.year || 0,
-            glName: row.category || "Uncategorized",
-            amount: Number(row.amount) || 0,
-            vendor: row.vendor || "Excel Upload",
-            notes: `Uploaded from ${file.name}`,
-            createdBy: session.email,
-            createdAt: uploadedAt,
-          };
-          const uploadResponse = await fetchWithRetry(`https://firestore.googleapis.com/v1/projects/${firebaseProjectId}/databases/(default)/documents/manualSpentEntries?documentId=${encodeURIComponent(documentId)}`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${idToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              fields: Object.fromEntries(Object.entries(entry).map(([key, value]) => [key, firestoreValue(value)])),
-            }),
-          });
-
-          if (uploadResponse.ok) return { status: "saved", row };
-          if (uploadResponse.status === 409) return "skipped";
-
-          const errorText = await uploadResponse.text();
-          throw new Error(`HTTP ${uploadResponse.status}${errorText ? ` - ${errorText.slice(0, 160)}` : ""}`);
-        }));
-
-        const savedResults = results.filter((result) => typeof result === "object" && result.status === "saved");
-        savedRows.push(...savedResults.map((result) => result.row));
-        savedCount += savedResults.length;
-        skippedCount += results.filter((result) => result === "skipped").length;
-        setHistoryImportProgress(`Uploaded ${Math.min(index + chunk.length, uploadedRows.length).toLocaleString()} of ${uploadedRows.length.toLocaleString()} rows...`);
-        await wait(120);
-      }
-
-      if (savedRows.length) {
-        setData((current) => [...current, ...savedRows]);
-      }
-      setSpentEntryMessage(`Excel upload complete. Added ${savedCount.toLocaleString()} rows${skippedCount ? `, skipped ${skippedCount.toLocaleString()} existing rows` : ""}.`);
-      setHistoryImportProgress("");
-    } catch (err) {
-      setSpentEntryError(`Could not upload spent Excel: ${err.message}`);
-    } finally {
-      setIsUploadingSpentExcel(false);
-    }
-  };
-
   const matchesCostFilters = (item, { includeMonth = true } = {}) => {
     const hub = getHubForCostCenter(item.costCenter);
     const portfolio = getPortfolioForHub(hub);
@@ -2022,13 +1568,6 @@ function DashboardApp({ session, onLogout }) {
   });
   const isAdmin = session?.role === "Admin";
   const visibleNavItems = [...NAV_ITEMS, ["spent", "Spent Report"]];
-  const spentFormHubOptions = spentEntryForm.portfolio
-    ? hubOptions.filter((hub) => getPortfolioForHub(hub) === spentEntryForm.portfolio)
-    : hubOptions;
-  const spentFormCostCenterOptions = COST_CENTER_GROUPS
-    .filter((group) => (spentEntryForm.portfolio ? getPortfolioForHub(group.label) === spentEntryForm.portfolio : true))
-    .filter((group) => (spentEntryForm.hub ? group.label === spentEntryForm.hub : true))
-    .flatMap((group) => group.centers);
 
   return (
     <div style={{ minHeight: "100vh", padding: "28px 24px 40px", fontFamily: "Inter, system-ui, sans-serif", maxWidth: 1280, margin: "0 auto", color: theme.text, backgroundColor: theme.pageBg }}>
@@ -2261,137 +1800,47 @@ function DashboardApp({ session, onLogout }) {
               <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 13 }}>Monthly spend entries by portfolio, hub, cost center, and GL name.</p>
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              {isAdmin && (
-                <Fragment>
-                  <label
-                    style={{
-                      padding: "8px 12px",
-                      borderRadius: 7,
-                      border: `1px solid ${theme.border}`,
-                      background: theme.inputBg,
-                      color: theme.text,
-                      cursor: isUploadingSpentExcel ? "wait" : "pointer",
-                      fontSize: 12,
-                      fontWeight: 900,
-                      opacity: isUploadingSpentExcel ? 0.72 : 1,
-                    }}
-                  >
-                    {isUploadingSpentExcel ? "Uploading..." : "Upload Spent Excel"}
-                    <input type="file" accept=".xlsx,.xls" onChange={uploadSpentExcelRows} disabled={isUploadingSpentExcel} style={{ display: "none" }} />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={importHistoricalSpentRows}
-                    disabled={isImportingHistory || isUploadingSpentExcel || isLoadingFirebaseSpent || isLoadingFullSpentDetails}
-                    style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isImportingHistory ? "wait" : "pointer", fontSize: 12, fontWeight: 900 }}
-                  >
-                    {isImportingHistory ? "Importing..." : "Import Excel History"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={loadFullSpentDetails}
-                    disabled={isLoadingFullSpentDetails || hasFullSpentDetails || isImportingHistory || isUploadingSpentExcel || isLoadingFirebaseSpent}
-                    style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isLoadingFullSpentDetails ? "wait" : "pointer", fontSize: 12, fontWeight: 900, opacity: hasFullSpentDetails ? 0.66 : 1 }}
-                  >
-                    {isLoadingFullSpentDetails ? "Loading Details..." : hasFullSpentDetails ? "Details Loaded" : "Load Full Details"}
-                  </button>
-                </Fragment>
-              )}
               <button
                 type="button"
-                onClick={loadFirebaseSpentEntriesForSelection}
-                disabled={isLoadingFirebaseSpent || isImportingHistory || isUploadingSpentExcel || isLoadingFullSpentDetails}
-                style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isLoadingFirebaseSpent ? "wait" : "pointer", fontSize: 12, fontWeight: 900 }}
+                onClick={loadFullSpentDetails}
+                disabled={isLoadingFullSpentDetails}
+                style={{ padding: "8px 12px", borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: isLoadingFullSpentDetails ? "wait" : "pointer", fontSize: 12, fontWeight: 900 }}
               >
-                {isLoadingFirebaseSpent ? "Loading..." : "Load Uploaded Entries"}
+                {isLoadingFullSpentDetails ? "Loading Details..." : "Load Selected Details"}
               </button>
-              <span style={{ color: isAdmin ? theme.accentStrong : theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>{isAdmin ? "Admin Entry" : "View Only"}</span>
+              <span style={{ color: theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>Excel Source</span>
             </div>
           </div>
 
-          {!isAdmin && (
-            <div style={{ color: theme.subtext, background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, fontSize: 13, fontWeight: 800 }}>
-              Spent Report entry is available to Admin users only.
+          {spentImportSummary && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(155px, 1fr))", gap: 10, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: theme.inputBg }}>
+              {[
+                ["Files Processed", spentImportSummary.filesProcessed?.length ?? 0],
+                ["Rows Processed", spentImportSummary.totalRows ?? 0],
+                ["Valid Rows", spentImportSummary.validRows ?? 0],
+                ["Invalid Rows", spentImportSummary.invalidRows ?? 0],
+                ["File Errors", spentImportSummary.fileErrors?.length ?? 0],
+                ["Months Detected", spentImportSummary.monthsDetected?.length ?? 0],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 900, textTransform: "uppercase" }}>{label}</div>
+                  <strong style={{ color: theme.text, fontSize: 18 }}>{Number(value).toLocaleString()}</strong>
+                </div>
+              ))}
+            </div>
+          )}
+          {spentImportSummary?.fileErrors?.length > 0 && (
+            <div style={{ marginTop: 12, color: theme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13 }}>
+              {spentImportSummary.fileErrors.map((item) => `${item.fileName}: ${item.error}`).join(" | ")}
+            </div>
+          )}
+          {spentImportSummary?.invalidRows > 0 && (
+            <div style={{ marginTop: 12, color: theme.subtext, background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, fontSize: 13 }}>
+              {spentImportSummary.invalidRows.toLocaleString()} rows were marked invalid because month/year could not be detected.
             </div>
           )}
 
-          {isAdmin && <form onSubmit={saveSpentEntry} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, alignItems: "end", border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: theme.inputBg }}>
-            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
-              Portfolio
-              <select value={spentEntryForm.portfolio} onChange={handleSpentEntryChange("portfolio")} style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
-                <option value="">All portfolios</option>
-                {portfolioOptions.map((portfolio) => (
-                  <option key={portfolio} value={portfolio}>{portfolio}</option>
-                ))}
-              </select>
-            </label>
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
-              Hub
-              <select value={spentEntryForm.hub} onChange={handleSpentEntryChange("hub")} style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
-                <option value="">Select hub</option>
-                {spentFormHubOptions.map((hub) => (
-                  <option key={hub} value={hub}>{hub}</option>
-                ))}
-              </select>
-            </label>
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
-              Cost Center
-              <select value={spentEntryForm.costCenter} onChange={handleSpentEntryChange("costCenter")} required style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
-                <option value="">Select cost center</option>
-                {spentFormCostCenterOptions.map((center) => (
-                  <option key={center} value={center}>{center}</option>
-                ))}
-              </select>
-            </label>
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
-              Year
-              <input type="number" min="2020" max="2035" value={spentEntryForm.year} onChange={handleSpentEntryChange("year")} required style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
-            </label>
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
-              Month
-              <select value={spentEntryForm.monthNumber} onChange={handleSpentEntryChange("monthNumber")} required style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
-                {MONTH_LABELS.slice(1).map((month, index) => (
-                  <option key={month} value={String(index + 1)}>{month}</option>
-                ))}
-              </select>
-            </label>
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
-              GL Name
-              <select value={spentEntryForm.glName} onChange={handleSpentEntryChange("glName")} required style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }}>
-                <option value="">Select GL name</option>
-                {glNameOptions.map((glName) => (
-                  <option key={glName} value={glName}>{glName}</option>
-                ))}
-              </select>
-            </label>
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
-              Amount USD
-              <input type="number" step="0.01" value={spentEntryForm.amount} onChange={handleSpentEntryChange("amount")} required placeholder="0.00" style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
-            </label>
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13 }}>
-              Vendor
-              <input value={spentEntryForm.vendor} onChange={handleSpentEntryChange("vendor")} placeholder="Optional" style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
-            </label>
-
-            <label style={{ display: "block", color: theme.text, fontWeight: 800, fontSize: 13, gridColumn: "span 2" }}>
-              Notes
-              <input value={spentEntryForm.notes} onChange={handleSpentEntryChange("notes")} placeholder="Optional entry note" style={{ width: "100%", boxSizing: "border-box", padding: 10, marginTop: 6, borderRadius: 7, border: `1px solid ${theme.border}`, background: theme.panelBg, color: theme.text }} />
-            </label>
-
-            <button type="submit" disabled={isSavingSpentEntry} style={{ padding: "11px 14px", borderRadius: 7, border: "none", background: theme.accentStrong, color: "#fff", cursor: isSavingSpentEntry ? "wait" : "pointer", fontWeight: 950 }}>
-              {isSavingSpentEntry ? "Saving..." : "Add Entry"}
-            </button>
-          </form>}
-
           {spentEntryMessage && <div style={{ marginTop: 12, color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryMessage}</div>}
-          {historyImportProgress && <div style={{ marginTop: 12, color: theme.text, background: theme.inputBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, fontSize: 13, fontWeight: 850 }}>{historyImportProgress}</div>}
           {spentEntryError && <div style={{ marginTop: 12, color: theme.danger, background: "rgba(176,0,32,0.08)", border: "1px solid rgba(176,0,32,0.18)", borderRadius: 8, padding: 11, fontSize: 13 }}>{spentEntryError}</div>}
         </div>
       )}
