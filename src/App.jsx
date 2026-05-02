@@ -665,21 +665,31 @@ function DashboardApp({ session, onLogout }) {
     setSpentEntryError("");
     setSpentEntryMessage("");
 
-    const selectedYear = Number(filters.year || new Date().getFullYear());
-    const selectedMonth = filters.month ? getMonthNumber(filters.month) : null;
     const availablePeriods = spentImportSummary?.monthsDetected ?? [];
-    const targetPeriods = selectedMonth
-      ? [`${selectedYear}-${String(selectedMonth).padStart(2, "0")}`]
-      : availablePeriods.filter((period) => period.startsWith(`${selectedYear}-`));
+    const availablePeriodSet = new Set(availablePeriods);
+    const selectedMonth = filters.month ? getMonthNumber(filters.month) : null;
+    const selectedMonthYear = filters.month ? getYearValue(filters.month) : null;
+    const selectedYear = filters.year ? Number(filters.year) : selectedMonthYear;
+    let targetPeriods = [];
+
+    if (selectedMonth && selectedYear) {
+      const period = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
+      targetPeriods = availablePeriodSet.has(period) ? [period] : [];
+    } else if (selectedMonth) {
+      targetPeriods = availablePeriods.filter((period) => Number(period.slice(5, 7)) === selectedMonth);
+    } else if (selectedYear) {
+      targetPeriods = availablePeriods.filter((period) => period.startsWith(`${selectedYear}-`));
+    }
+
     const missingPeriods = targetPeriods.filter((period) => !loadedSpentDetailPeriods.includes(period));
 
-    if (!selectedYear) {
-      setSpentEntryError("Select a year before loading spent details.");
+    if (!filters.year && !filters.month) {
       return;
     }
 
     if (!targetPeriods.length) {
-      setSpentEntryMessage(`No processed spent details are available for ${selectedYear}.`);
+      const periodLabel = filters.month || filters.year || "the selected period";
+      setSpentEntryMessage(`No detailed spent records are available for ${periodLabel}.`);
       return;
     }
 
