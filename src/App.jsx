@@ -1327,6 +1327,13 @@ function DashboardApp({ session, onLogout }) {
       expectedMargin: row.submitted ? (row.submitted - row.cost) / row.submitted : row.cost ? -1 : 0,
     }))
     .sort((a, b) => a.approvedNet - b.approvedNet || a.expectedNet - b.expectedNet);
+  const profitabilityFocusRows = [...profitabilityRows]
+    .sort((a, b) => a.approvedNet - b.approvedNet || b.cost - a.cost)
+    .slice(0, 10);
+  const maxProfitabilityExposure = Math.max(...profitabilityFocusRows.map((row) => Math.abs(row.approvedNet)), 0);
+  const bestProfitabilityRow = [...profitabilityRows].sort((a, b) => b.approvedNet - a.approvedNet)[0];
+  const riskProfitabilityRow = profitabilityFocusRows[0];
+  const positiveProfitabilityCount = profitabilityRows.filter((row) => row.approvedNet >= 0).length;
   const portfolioPerformanceRows = portfolioSummaries.map((portfolio) => ({
     ...portfolio,
     gap: portfolio.submitted - portfolio.approved,
@@ -2822,23 +2829,28 @@ function DashboardApp({ session, onLogout }) {
             <strong style={{ color: approvalRate >= 0.85 ? theme.accentStrong : theme.accentWarm }}>{formatPercent(approvalRate)} approval rate</strong>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12, marginBottom: 14 }}>
             {[
-              ["Submitted AFP", formatCompactCurrency(submittedRevenue), "Under Approval", "#2563eb"],
-              ["Approved AFP", formatCompactCurrency(approvedRevenue), "Recognized Revenue", theme.accentStrong],
-              ["Pending Approval", formatCompactCurrency(approvalGap), "Submitted - Approved", approvalGap > 0 ? theme.danger : theme.accentStrong],
-              ["Approval Rate", formatPercent(approvalRate), "Approved / Submitted", approvalRate >= 0.85 ? theme.accentStrong : theme.accentWarm],
-            ].map(([label, value, detail, accent]) => (
-              <div key={label} style={{ border: `1px solid ${theme.border}`, borderLeft: `4px solid ${accent}`, borderRadius: 8, padding: "10px 12px", background: theme.inputBg }}>
-                <div style={{ color: theme.subtext, fontSize: 10, fontWeight: 900, textTransform: "uppercase" }}>{label}</div>
-                <div style={{ marginTop: 7, color: theme.text, fontSize: 21, lineHeight: 1, fontWeight: 950, whiteSpace: "nowrap" }}>{value}</div>
-                <div style={{ marginTop: 7, color: theme.subtext, fontSize: 12 }}>{detail}</div>
+              ["Submitted AFP", formatCompactCurrency(submittedRevenue), "Under approval pipeline", "SA", "#2563eb"],
+              ["Approved AFP", formatCompactCurrency(approvedRevenue), "Recognized commercial value", "AA", theme.accentStrong],
+              ["Pending Approval", formatCompactCurrency(approvalGap), "Submitted less approved", "PA", approvalGap > 0 ? theme.danger : theme.accentStrong],
+              ["Approval Rate", formatPercent(approvalRate), "Approved / submitted", "AR", approvalRate >= 0.85 ? theme.accentStrong : theme.accentWarm],
+            ].map(([label, value, detail, icon, accent]) => (
+              <div key={label} style={{ position: "relative", overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)" }}>
+                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: 12, background: `${accent}14`, color: accent, fontSize: 13, fontWeight: 950 }}>{icon}</span>
+                  <div>
+                    <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                    <div style={{ marginTop: 7, color: accent, fontSize: 24, lineHeight: 1, fontWeight: 950, whiteSpace: "nowrap" }}>{value}</div>
+                    <div style={{ marginTop: 9, color: theme.subtext, fontSize: 12 }}>{detail}</div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.1fr) minmax(320px, 0.9fr)", gap: 12, marginBottom: 12 }}>
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg }}>
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 10 }}>
                 <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Monthly Approval Gap</h3>
                 <span style={{ color: theme.subtext, fontSize: 11, fontWeight: 900 }}>Submitted - Approved</span>
@@ -2863,7 +2875,7 @@ function DashboardApp({ session, onLogout }) {
               </div>
             </div>
 
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg }}>
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)" }}>
               <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Top Commercial Issues</h3>
               <div style={{ display: "grid", gap: 9, marginTop: 12 }}>
                 {commercialRiskRows.map((row, index) => (
@@ -2883,9 +2895,31 @@ function DashboardApp({ session, onLogout }) {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.25fr) minmax(300px, 0.75fr)", gap: 12 }}>
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg }}>
-              <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Worst 10 Cost Centers</h3>
-              <div style={{ overflowX: "auto", marginTop: 12 }}>
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)" }}>
+              <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Cost Center Approval Risk</h3>
+              <p style={{ margin: "5px 0 14px", color: theme.subtext, fontSize: 12 }}>Grouped view of largest pending approval exposure.</p>
+              <div style={{ display: "grid", gap: 10 }}>
+                {worstApprovalRows.slice(0, 8).map((row, index) => {
+                  const width = `${Math.max(4, (Math.abs(row.gap) / (Math.abs(worstApprovalRows[0]?.gap) || 1)) * 100)}%`;
+                  const accent = row.approvalRate >= 0.85 ? theme.accentStrong : row.approvalRate >= 0.6 ? theme.accentWarm : theme.danger;
+                  return (
+                    <div key={row.costCenter} style={{ display: "grid", gridTemplateColumns: "minmax(130px, 0.65fr) minmax(160px, 1fr) 130px", gap: 12, alignItems: "center", border: `1px solid ${theme.border}`, borderRadius: 11, padding: "10px 12px", background: theme.panelBg }}>
+                      <div>
+                        <strong style={{ color: theme.text }}>{index + 1}. {row.costCenter}</strong>
+                        <div style={{ marginTop: 4, color: theme.subtext, fontSize: 12 }}>{row.hub} | {formatPercent(row.approvalRate)} approved</div>
+                      </div>
+                      <div style={{ height: 12, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                        <div style={{ width, height: "100%", borderRadius: 999, background: accent }} />
+                      </div>
+                      <div style={{ color: row.gap > 0 ? theme.danger : theme.accentStrong, fontWeight: 950, textAlign: "right" }}>{formatCompactCurrency(row.gap)}</div>
+                    </div>
+                  );
+                })}
+                {!worstApprovalRows.length && <div style={{ color: theme.subtext }}>No AFP performance matches the current filters.</div>}
+              </div>
+              <details style={{ marginTop: 14, border: `1px solid ${theme.border}`, borderRadius: 12, overflow: "hidden", background: theme.panelBg }}>
+                <summary style={{ padding: "12px 14px", cursor: "pointer", listStyle: "none", color: theme.text, fontWeight: 950, background: theme.accentSoft }}>Open detailed approval table</summary>
+                <div style={{ overflowX: "auto", padding: 12 }}>
                 <table style={{ width: "100%", minWidth: 720, borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
@@ -2914,9 +2948,10 @@ function DashboardApp({ session, onLogout }) {
                   </tbody>
                 </table>
               </div>
+              </details>
             </div>
 
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 8, padding: 14, background: themeMode === "light" ? "#f8fbfd" : theme.inputBg }}>
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)" }}>
               <h3 style={{ margin: 0, color: theme.text, fontSize: 16, fontWeight: 950 }}>Approval Distribution</h3>
               <div style={{ display: "grid", gap: 12, marginTop: 14 }}>
                 {approvalDistributionRows.map((row) => (
@@ -2960,7 +2995,62 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
 
-          <div style={{ overflowX: "auto", border: `1px solid ${theme.border}`, borderRadius: 8 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12, marginBottom: 16 }}>
+            {[
+              ["Cost", formatCompactCurrency(visibleTotal), "Filtered cost base", "CO", theme.accentWarm],
+              ["Approved AFP", formatCompactCurrency(approvedRevenue), "Recognized value", "AF", theme.accentStrong],
+              ["Best Center", bestProfitabilityRow?.costCenter || "No data", bestProfitabilityRow ? formatCompactCurrency(bestProfitabilityRow.approvedNet) : "-", "BC", "#2563eb"],
+              ["At Risk Center", riskProfitabilityRow?.costCenter || "No data", riskProfitabilityRow ? formatCompactCurrency(riskProfitabilityRow.approvedNet) : "-", "RC", theme.danger],
+              ["Positive Centers", `${positiveProfitabilityCount}/${profitabilityRows.length || 0}`, "Approved profit position", "PC", "#16a34a"],
+            ].map(([label, value, detail, icon, accent]) => (
+              <div key={label} style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)" }}>
+                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: 12, background: `${accent}14`, color: accent, fontSize: 13, fontWeight: 950 }}>{icon}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                    <div style={{ marginTop: 7, color: accent, fontSize: 22, lineHeight: 1.1, fontWeight: 950, overflowWrap: "anywhere" }}>{value}</div>
+                    <div style={{ marginTop: 9, color: theme.subtext, fontSize: 12 }}>{detail}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)", marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+              <div>
+                <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Profitability Explorer</h3>
+                <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Cost centers ranked by approved profit position.</p>
+              </div>
+              <span style={{ color: theme.subtext, fontSize: 12, fontWeight: 900 }}>{profitabilityFocusRows.length} priority centers</span>
+            </div>
+            <div style={{ display: "grid", gap: 10 }}>
+              {profitabilityFocusRows.map((row, index) => {
+                const width = `${Math.max(4, (Math.abs(row.approvedNet) / (maxProfitabilityExposure || 1)) * 100)}%`;
+                const accent = profitColor(row.approvedNet);
+                return (
+                  <div key={row.costCenter} style={{ display: "grid", gridTemplateColumns: "minmax(180px, 0.75fr) minmax(160px, 1fr) 140px", gap: 12, alignItems: "center", border: `1px solid ${theme.border}`, borderRadius: 12, padding: "12px 14px", background: theme.panelBg }}>
+                    <div>
+                      <strong style={{ color: theme.text }}>{index + 1}. {row.costCenter}</strong>
+                      <div style={{ marginTop: 4, color: theme.subtext, fontSize: 12 }}>{row.portfolio} | {row.hub}</div>
+                    </div>
+                    <div style={{ height: 13, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                      <div style={{ width, height: "100%", borderRadius: 999, background: accent }} />
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ color: accent, fontWeight: 950 }}>{formatCompactCurrency(row.approvedNet)}</div>
+                      <div style={{ marginTop: 4, color: theme.subtext, fontSize: 12 }}>{formatPercent(row.approvedMargin)}</div>
+                    </div>
+                  </div>
+                );
+              })}
+              {!profitabilityFocusRows.length && <div style={{ color: theme.subtext }}>No profitability data matches the current filters.</div>}
+            </div>
+          </div>
+
+          <details style={{ border: `1px solid ${theme.border}`, borderRadius: 14, overflow: "hidden", background: theme.panelBg }}>
+            <summary style={{ padding: "14px 16px", cursor: "pointer", listStyle: "none", color: theme.text, fontWeight: 950, background: theme.accentSoft }}>Open full Profit &amp; Loss drilldown</summary>
+            <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", minWidth: 980, borderCollapse: "collapse", background: theme.panelBg }}>
               <thead>
                 <tr>
@@ -3151,6 +3241,7 @@ function DashboardApp({ session, onLogout }) {
               </tbody>
             </table>
           </div>
+          </details>
         </div>
       )}
 
