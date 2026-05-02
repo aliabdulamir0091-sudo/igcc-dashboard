@@ -480,10 +480,10 @@ function DashboardApp({ session, onLogout }) {
   const [detailCostCenter, setDetailCostCenter] = useState("KAZ_23");
   const [periodView, setPeriodView] = useState("monthly");
   const [overviewPeriodView, setOverviewPeriodView] = useState("monthly");
-  const [activePage, setActivePage] = useState("overview");
+  const [activePage, setActivePage] = useState("home");
   const [transactionPage, setTransactionPage] = useState(1);
   const [themeMode, setThemeMode] = useState("light");
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [expandedProfitRows, setExpandedProfitRows] = useState({});
   const [spentEntryMessage, setSpentEntryMessage] = useState("");
   const [spentEntryError, setSpentEntryError] = useState("");
@@ -1611,8 +1611,24 @@ function DashboardApp({ session, onLogout }) {
     hour: "2-digit",
     minute: "2-digit",
   });
+  const portalUserName = session?.email?.split("@")[0]?.replace(/[._-]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) || "IGCC User";
+  const portalTotalCost = data.reduce((sum, item) => sum + item.amount, 0);
+  const portalApprovedAfp = revenueData.filter((item) => item.status === "approved").reduce((sum, item) => sum + item.amount, 0);
+  const portalNetPosition = portalApprovedAfp - portalTotalCost;
+  const portalCards = [
+    ["Net Position", formatCurrency(portalNetPosition), portalNetPosition >= 0 ? "Approved AFP above total cost" : "Cost exceeds approved AFP", portalNetPosition >= 0 ? theme.accentStrong : theme.danger],
+    ["Total Cost", formatCurrency(portalTotalCost), "Cumulative spent report cost", theme.accent],
+    ["Approved AFP", formatCurrency(portalApprovedAfp), "Recognized approved AFP value", theme.accentStrong],
+    ["Last Updated", lastUpdatedLabel, "Dashboard refresh timestamp", theme.accentWarm],
+  ];
+  const portalNavigationCards = [
+    ["overview", "Executive Cockpit", "Executive KPIs, portfolio exposure, performance direction, and financial position.", "EC", "#0f766e"],
+    ["afp", "Commercial Approval Overview", "AFP submission, approval gaps, commercial issues, and approval distribution.", "AFP", "#2563eb"],
+    ["profitability", "Cost Center Profitability", "Portfolio-to-cost-center profitability drilldown and GL-level detail.", "P&L", "#7c3aed"],
+    ["spent", "Spent Report", "Historical spend summary and filtered transaction-level cost records.", "SR", "#b45309"],
+  ];
   const isAdmin = session?.role === "Admin";
-  const visibleNavItems = [...NAV_ITEMS, ["spent", "Spent Report"]];
+  const visibleNavItems = [["home", "Home"], ...NAV_ITEMS, ["spent", "Spent Report"]];
 
   return (
     <div style={{ minHeight: "100vh", padding: "28px 24px 40px", fontFamily: "Inter, system-ui, sans-serif", maxWidth: 1280, margin: "0 auto", color: theme.text, backgroundColor: theme.pageBg }}>
@@ -1834,6 +1850,44 @@ function DashboardApp({ session, onLogout }) {
       {unknownCostCenters.length > 0 && (
         <div style={{ color: theme.danger, marginBottom: 16, textAlign: "center" }}>
           Unknown cost centers found: {unknownCostCenters.join(", ")}
+        </div>
+      )}
+
+      {activePage === "home" && (
+        <div style={{ display: "grid", gap: 18 }}>
+          <section style={{ position: "relative", overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 12, padding: "28px 28px 30px", background: themeMode === "light" ? "linear-gradient(135deg, #ffffff 0%, #f8fbff 54%, #eef7f4 100%)" : "linear-gradient(135deg, #112240 0%, #0f172a 100%)", boxShadow: theme.cardShadow }}>
+            <div style={{ maxWidth: 760 }}>
+              <div style={{ color: theme.accentStrong, fontSize: 12, fontWeight: 950, textTransform: "uppercase", letterSpacing: 0.3 }}>IGCC Financial Portal</div>
+              <h2 style={{ margin: "8px 0 0", color: theme.text, fontSize: 38, lineHeight: 1.04, letterSpacing: 0, fontWeight: 950 }}>Welcome, {portalUserName}</h2>
+              <p style={{ margin: "12px 0 0", color: theme.subtext, fontSize: 16, lineHeight: 1.6, maxWidth: 650 }}>A focused entry point for executive financial review, commercial approval visibility, profitability analysis, and spend reporting.</p>
+            </div>
+          </section>
+
+          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 210px), 1fr))", gap: 14 }}>
+            {portalCards.map(([label, value, detail, color]) => (
+              <div key={label} style={{ border: `1px solid ${theme.border}`, borderRadius: 10, padding: 18, background: theme.panelBg, boxShadow: "0 10px 24px rgba(15,23,42,0.06)" }}>
+                <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                <div style={{ marginTop: 8, color, fontSize: label === "Last Updated" ? 18 : 24, fontWeight: 950, letterSpacing: 0 }}>{value}</div>
+                <div style={{ marginTop: 6, color: theme.subtext, fontSize: 12, lineHeight: 1.45 }}>{detail}</div>
+              </div>
+            ))}
+          </section>
+
+          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 1fr))", gap: 16 }}>
+            {portalNavigationCards.map(([page, title, description, icon, color]) => (
+              <button
+                key={page}
+                type="button"
+                onClick={() => setActivePage(page)}
+                style={{ textAlign: "left", border: `1px solid ${theme.border}`, borderRadius: 12, padding: 20, background: theme.panelBg, color: theme.text, cursor: "pointer", boxShadow: "0 12px 28px rgba(15,23,42,0.07)" }}
+              >
+                <span style={{ display: "inline-grid", placeItems: "center", minWidth: 44, height: 34, borderRadius: 9, background: `${color}18`, color, fontSize: 12, fontWeight: 950, marginBottom: 18 }}>{icon}</span>
+                <div style={{ fontSize: 20, fontWeight: 950, letterSpacing: 0 }}>{title}</div>
+                <div style={{ marginTop: 9, color: theme.subtext, fontSize: 13, lineHeight: 1.55 }}>{description}</div>
+                <div style={{ marginTop: 18, color, fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>Open</div>
+              </button>
+            ))}
+          </section>
         </div>
       )}
 
