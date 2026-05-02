@@ -52,6 +52,7 @@ const MONTH_LABELS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"
 
 const SPENT_SUMMARY_FILE = "data/spent-report/summary/monthly_summary.json";
 const CREDIT_NOTE_SUMMARY_FILE = "data/spent-report/credit-note/credit_note_summary.json";
+const CREDIT_NOTE_DATA_VERSION = "workshop-received-v2";
 const getPublicAssetUrl = (filename) => `${import.meta.env.BASE_URL}${String(filename).split("/").map(encodeURIComponent).join("/")}`;
 const IGCC_LEVEL_LABEL = "IGCC Level 1 - IRAQ GATE CONTRACTING COMPANY";
 const NAV_ITEMS = [
@@ -632,7 +633,7 @@ function DashboardApp({ session, onLogout }) {
 
     const loadCreditNoteSummary = async () => {
       try {
-        const response = await fetch(getPublicAssetUrl(CREDIT_NOTE_SUMMARY_FILE));
+        const response = await fetch(`${getPublicAssetUrl(CREDIT_NOTE_SUMMARY_FILE)}?v=${CREDIT_NOTE_DATA_VERSION}`, { cache: "no-store" });
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -826,7 +827,8 @@ function DashboardApp({ session, onLogout }) {
   const cnReceivedTotal = filteredCreditNoteData.reduce((sum, item) => sum + (Number(item.cnReceived) || 0), 0);
   const cnIssuedTotal = filteredCreditNoteData.reduce((sum, item) => sum + (Number(item.cnIssued) || 0), 0);
   const cnNetImpact = cnReceivedTotal - cnIssuedTotal;
-  const adjustedVisibleTotal = officialVisibleTotal + (isAdjustedCostActive ? cnNetImpact : 0);
+  const adjustedCostPreviewTotal = officialVisibleTotal + cnNetImpact;
+  const adjustedVisibleTotal = isAdjustedCostActive ? adjustedCostPreviewTotal : officialVisibleTotal;
   const getCreditNoteSummaryForCostCenter = (costCenter) =>
     filteredCreditNoteData
       .filter((item) => item.costCenter === costCenter)
@@ -1497,7 +1499,7 @@ function DashboardApp({ session, onLogout }) {
       ["Spent Report Cost", officialVisibleTotal, "Official cost from Spent Report only", theme.accentWarm],
       ["CN Received", cnReceivedTotal, "Credit notes received", theme.accentStrong],
       ["CN Issued", cnIssuedTotal, "Credit notes issued", theme.danger],
-      ["Adjusted Cost", adjustedVisibleTotal, "Spent + CN Received - CN Issued", adjustedVisibleTotal >= officialVisibleTotal ? theme.accentWarm : theme.accentStrong],
+      ["Adjusted Cost", adjustedCostPreviewTotal, "Spent + CN Received - CN Issued", adjustedCostPreviewTotal >= officialVisibleTotal ? theme.accentWarm : theme.accentStrong],
     ];
 
     return (
@@ -1553,7 +1555,7 @@ function DashboardApp({ session, onLogout }) {
                 <tr style={{ background: theme.accentSoft }}>
                   <td style={leftCellStyle}>Adjusted Cost</td>
                   <td style={leftCellStyle}>{filters.costCenter}</td>
-                  <td style={{ ...tableCellStyle, fontWeight: 950 }}>{formatCurrency(adjustedVisibleTotal)}</td>
+                  <td style={{ ...tableCellStyle, fontWeight: 950 }}>{formatCurrency(adjustedCostPreviewTotal)}</td>
                   <td style={leftCellStyle}>Spent + received - issued</td>
                 </tr>
               </tbody>
