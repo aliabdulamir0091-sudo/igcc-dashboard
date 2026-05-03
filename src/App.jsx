@@ -3229,8 +3229,8 @@ function DashboardApp({ session, onLogout }) {
       <div className="dashboard-header" style={{ position: "relative", zIndex: 30, marginBottom: 12, overflow: "visible", background: "linear-gradient(135deg, #041d36 0%, #062b4f 58%, #073861 100%)", border: "1px solid rgba(148, 163, 184, 0.24)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(15, 23, 42, 0.18)" }}>
         <div className="dashboard-header-main" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "22px 26px" }}>
           <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <div style={{ width: 62, height: 62, borderRadius: 16, border: "1px solid rgba(255,255,255,0.16)", background: "linear-gradient(135deg, rgba(20,184,166,0.24), rgba(37,99,235,0.18))", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)" }}>
-              <img src={getPublicAssetUrl("favicon.svg")} alt="IGCC logo" style={{ width: 42, height: 42, objectFit: "contain" }} />
+            <div style={{ width: 62, height: 62, borderRadius: 16, border: "1px solid rgba(255,255,255,0.16)", background: "#ffffff", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "0 12px 26px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.18)" }}>
+              <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC logo" style={{ width: 54, height: 54, objectFit: "contain" }} />
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ color: "#67e8f9", fontSize: 11, fontWeight: 950, letterSpacing: 0, textTransform: "uppercase" }}>IRAQ GATE CONTRACTING COMPANY</div>
@@ -4599,15 +4599,12 @@ function DashboardApp({ session, onLogout }) {
       {activePage === "profitability" && (
         <div style={{ ...panelStyle, padding: 0, overflow: "hidden", background: themeMode === "light" ? "#ffffff" : theme.panelBg, borderRadius: 10 }}>
           <div style={{ background: "linear-gradient(135deg, #05295a 0%, #07366f 54%, #06254f 100%)", color: "#fff", padding: "28px 30px 22px", display: "flex", justifyContent: "space-between", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
-              <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC" style={{ width: 58, height: 58, borderRadius: 12, background: "#fff", objectFit: "contain", padding: 5, boxShadow: "0 10px 24px rgba(0,0,0,0.18)" }} />
-              <div style={{ minWidth: 0 }}>
-                <h2 style={{ margin: 0, color: "#fff", fontSize: 32, lineHeight: 1.05, fontWeight: 950, letterSpacing: 0 }}>P&amp;L REPORT - {profitabilityScopeType.toUpperCase()} VIEW</h2>
-                <p style={{ margin: "7px 0 0", color: "rgba(255,255,255,0.88)", fontSize: 15 }}>{profitabilityScopeName} performance overview</p>
-              </div>
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{ margin: 0, color: "#fff", fontSize: 32, lineHeight: 1.05, fontWeight: 950, letterSpacing: 0 }}>P&amp;L REPORT - {profitabilityScopeType.toUpperCase()} VIEW</h2>
+              <p style={{ margin: "7px 0 0", color: "rgba(255,255,255,0.88)", fontSize: 15 }}>{profitabilityScopeName} performance overview</p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
-              <span style={{ color: "rgba(255,255,255,0.88)", fontSize: 14, fontWeight: 850 }}>IGCC | Commercial Dashboard</span>
+              <span style={{ color: "rgba(255,255,255,0.58)", fontSize: 13, fontWeight: 850 }}>IGCC | Commercial Dashboard</span>
               <span style={{ display: "grid", placeItems: "center", width: 28, height: 34, border: "1px solid rgba(255,255,255,0.55)", borderRadius: 5, color: "#fff", fontSize: 18, fontWeight: 900 }}>▤</span>
             </div>
           </div>
