@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import Papa from "papaparse";
 import { read, utils } from "xlsx";
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
@@ -532,6 +532,10 @@ function DashboardApp({ session, onLogout }) {
   const [activeCeoPnLFilter, setActiveCeoPnLFilter] = useState("");
   const [ceoPnLSort, setCeoPnLSort] = useState({ key: "status", direction: "asc" });
   const [collapsedCeoPnLGroups, setCollapsedCeoPnLGroups] = useState({});
+  const [selectedCeoPnLRow, setSelectedCeoPnLRow] = useState(null);
+  const [focusedCeoPnLIndex, setFocusedCeoPnLIndex] = useState(0);
+  const [ceoViewType, setCeoViewType] = useState(session?.role === "Admin" ? "ceo" : "project");
+  const [activeHeaderTool, setActiveHeaderTool] = useState("");
   const [ceoPnLColumnFilters, setCeoPnLColumnFilters] = useState({
     costCenter: "",
     submittedMin: "",
@@ -550,6 +554,7 @@ function DashboardApp({ session, onLogout }) {
     netMax: "",
     status: "all",
   });
+  const ceoPnLSearchRef = useRef(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [activeUserModal, setActiveUserModal] = useState("");
   const filters = pageFilters[activePage] ?? DEFAULT_FILTERS;
@@ -1933,6 +1938,9 @@ function DashboardApp({ session, onLogout }) {
   const toggleCeoPnLGroup = (key) => {
     setCollapsedCeoPnLGroups((current) => ({ ...current, [key]: !current[key] }));
   };
+  const setCeoPnLGroupOpen = (key) => {
+    setCollapsedCeoPnLGroups((current) => ({ ...current, [key]: false }));
+  };
   const getCeoPnLAggregateRow = (rows, label, type, key, extra = {}) => {
     const submitted = rows.reduce((sum, row) => sum + row.submitted, 0);
     const approved = rows.reduce((sum, row) => sum + row.approved, 0);
@@ -1985,6 +1993,68 @@ function DashboardApp({ session, onLogout }) {
 
     return rows;
   });
+  const ceoWorstPortfolio = ceoPnLGroupedRows.filter((row) => row.type === "portfolio").sort((a, b) => a.margin - b.margin)[0];
+  const ceoHighestCostPortfolio = ceoPnLGroupedRows.filter((row) => row.type === "portfolio").sort((a, b) => b.totalCost - a.totalCost)[0];
+  const ceoHighestRiskCenter = filteredCeoPnLRows.filter((row) => row.status.label === "Critical" || row.status.label === "At Risk").sort((a, b) => a.margin - b.margin || b.totalCost - a.totalCost)[0];
+  const ceoBestPerformer = [...filteredCeoPnLRows].sort((a, b) => b.margin - a.margin || b.net - a.net)[0];
+  const handleCeoPnLRowAction = (row, event) => {
+    if (row.type === "portfolio") {
+      setCeoPnLGroupOpen(row.key);
+    }
+    if (row.type === "hub") {
+      setCeoPnLGroupOpen(`portfolio:${row.portfolio}`);
+      setCeoPnLGroupOpen(row.key);
+    }
+    if (event?.metaKey || event?.ctrlKey || row.type === "center") {
+      setSelectedCeoPnLRow(row);
+    } else {
+      setSelectedCeoPnLRow(row);
+    }
+  };
+  const expandAllCeoPnL = () => setCollapsedCeoPnLGroups({});
+  const collapseAllCeoPnL = () => {
+    setCollapsedCeoPnLGroups(Object.fromEntries(ceoPnLGroupedRows.filter((row) => row.type !== "center").map((row) => [row.key, true])));
+  };
+  const ceoNarrativeText = ceoBestPerformer && ceoWorstPortfolio
+    ? `${ceoBestPerformer.costCenter} is the strongest performer at ${formatPercent(ceoBestPerformer.margin)} margin, while ${ceoWorstPortfolio.costCenter} is underperforming at ${formatPercent(ceoWorstPortfolio.margin)}, driven by ${topCostDriver?.glName ?? "the current cost mix"}.`
+    : "Profitability narrative will update as cost center data becomes available.";
+  useEffect(() => {
+    const handleCeoKeys = (event) => {
+      if (activePage !== "overview") return;
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f") {
+        event.preventDefault();
+        ceoPnLSearchRef.current?.focus();
+        return;
+      }
+
+      if (!document.activeElement?.closest?.("[data-ceo-pnl]")) return;
+
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setFocusedCeoPnLIndex((current) => Math.min(ceoPnLGroupedRows.length - 1, current + 1));
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setFocusedCeoPnLIndex((current) => Math.max(0, current - 1));
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        const row = ceoPnLGroupedRows[focusedCeoPnLIndex];
+        if (!row) return;
+        if (row.type !== "center") toggleCeoPnLGroup(row.key);
+        setSelectedCeoPnLRow(row);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        const row = ceoPnLGroupedRows[focusedCeoPnLIndex];
+        if (row?.type !== "center") {
+          setCollapsedCeoPnLGroups((current) => ({ ...current, [row.key]: true }));
+        }
+        setSelectedCeoPnLRow(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleCeoKeys);
+    return () => window.removeEventListener("keydown", handleCeoKeys);
+  }, [activePage, ceoPnLGroupedRows, focusedCeoPnLIndex]);
   const ceoPnLColumns = [
     { key: "costCenter", label: "Name", align: "left", filterType: "costCenter", group: "costCenter" },
     { key: "submitted", label: "Submitted AFP", align: "right", filterType: "range", group: "submitted", minField: "submittedMin", maxField: "submittedMax" },
@@ -2017,6 +2087,7 @@ function DashboardApp({ session, onLogout }) {
     ? [filters.month || "All months", filters.year || "All years"].join(" / ")
     : "All available periods";
   const renderCeoPnLFilterPanel = (column) => {
+    if (column.filterType === "none") return null;
     if (activeCeoPnLFilter !== column.key) return null;
 
     const panelInputStyle = { width: "100%", boxSizing: "border-box", border: "1px solid rgba(148,163,184,0.36)", borderRadius: 8, padding: "9px 10px", background: "#fff", color: "#10233f", fontSize: 12, fontWeight: 800, outline: "none" };
@@ -3711,17 +3782,20 @@ function DashboardApp({ session, onLogout }) {
               <div style={{ color: "#fff", maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 15, fontWeight: 950 }}>{portalUserName}</div>
               <div><span style={{ color: "#22d3ee", textTransform: "uppercase" }}>{session?.role ?? "Viewer"}</span> | Last updated: {lastUpdatedLabel}</div>
             </div>
-            <div
-              onMouseEnter={() => {
-                setIsUserMenuOpen(true);
-                setActiveUserModal((current) => current || "profile");
-              }}
-              onFocus={() => {
-                setIsUserMenuOpen(true);
-                setActiveUserModal((current) => current || "profile");
-              }}
-              style={{ position: "relative" }}
-            >
+            <div style={{ position: "relative", display: "flex", gap: 8, alignItems: "center" }}>
+              {[
+                ["settings", "⚙ Settings"],
+                ["info", "ℹ Info"],
+              ].map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setActiveHeaderTool((current) => current === key ? "" : key)}
+                  style={{ height: 36, border: "1px solid rgba(255,255,255,0.22)", borderRadius: 10, background: activeHeaderTool === key ? "rgba(37,99,235,0.42)" : "rgba(255,255,255,0.07)", color: "#fff", cursor: "pointer", padding: "0 12px", fontSize: 12, fontWeight: 950 }}
+                >
+                  {label}
+                </button>
+              ))}
               <button
                 type="button"
                 onClick={() => {
@@ -3729,10 +3803,33 @@ function DashboardApp({ session, onLogout }) {
                   setIsUserMenuOpen((current) => !current);
                 }}
                 aria-label="Open user menu"
-                style={{ width: 46, height: 42, cursor: "pointer", backgroundColor: "rgba(255,255,255,0.07)", color: "#fff", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 14, fontWeight: 950, fontSize: 22, lineHeight: 1, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
+                style={{ width: 40, height: 36, cursor: "pointer", backgroundColor: "rgba(255,255,255,0.07)", color: "#fff", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 10, fontWeight: 950, fontSize: 13, lineHeight: 1, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
               >
-                ...
+                CEO
               </button>
+              {activeHeaderTool && (
+                <div style={{ position: "absolute", right: 0, top: 44, zIndex: 60, width: 280, border: "1px solid rgba(148,163,184,0.30)", borderRadius: 14, padding: 14, background: "#ffffff", color: "#10233f", boxShadow: "0 24px 60px rgba(15,23,42,0.26)" }}>
+                  {activeHeaderTool === "settings" ? (
+                    <div style={{ display: "grid", gap: 12 }}>
+                      <strong>Table Settings</strong>
+                      <label style={{ display: "grid", gap: 6, color: "#64748b", fontSize: 11, fontWeight: 950 }}>View Type
+                        <select value={ceoViewType} onChange={(event) => setCeoViewType(event.target.value)} style={{ border: "1px solid #cbd5e1", borderRadius: 8, padding: 8, fontWeight: 850 }}>
+                          <option value="ceo">CEO View</option>
+                          <option value="project">Project Manager View</option>
+                        </select>
+                      </label>
+                      <div style={{ color: "#64748b", fontSize: 12, lineHeight: 1.45 }}>Columns: AFP, cost, margin, net profit, status, trend. Density: compact executive.</div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gap: 8, fontSize: 12, lineHeight: 1.45 }}>
+                      <strong>Definitions</strong>
+                      <span><b>AFP:</b> Submitted / Approved Financial Plan.</span>
+                      <span><b>Margin:</b> (Approved AFP - Total Cost) / Approved AFP.</span>
+                      <span><b>Total Cost:</b> Spent cost plus CN impact where applicable.</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -4414,6 +4511,13 @@ function DashboardApp({ session, onLogout }) {
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.55fr) minmax(300px, 0.75fr)", gap: 16, alignItems: "start" }}>
               <div>
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+              <input
+                ref={ceoPnLSearchRef}
+                value={ceoPnLColumnFilters.costCenter}
+                onChange={(event) => updateCeoPnLFilter("costCenter", event.target.value)}
+                placeholder="Search table..."
+                style={{ width: 180, border: "1px solid rgba(148,163,184,0.38)", borderRadius: 10, padding: "9px 12px", background: "#fff", color: "#10233f", fontSize: 12, fontWeight: 850, outline: "none" }}
+              />
               <span style={{ color: "#10233f", fontSize: 12, fontWeight: 950 }}>Quick Filters</span>
               {[
                 ["Show Loss Making Only", "loss", "#dc2626"],
@@ -4427,6 +4531,9 @@ function DashboardApp({ session, onLogout }) {
               <button type="button" onClick={clearCeoPnLFilters} disabled={!hasCeoPnLFilters} style={{ marginLeft: "auto", border: "1px solid rgba(37,99,235,0.24)", borderRadius: 10, padding: "9px 12px", background: hasCeoPnLFilters ? "#eff6ff" : "#f8fafc", color: hasCeoPnLFilters ? "#0b4db3" : "#94a3b8", cursor: hasCeoPnLFilters ? "pointer" : "default", fontSize: 12, fontWeight: 950 }}>
                 Clear Filters
               </button>
+              <button type="button" onClick={expandAllCeoPnL} style={{ border: "1px solid rgba(37,99,235,0.20)", borderRadius: 10, padding: "9px 12px", background: "#fff", color: "#0b4db3", cursor: "pointer", fontSize: 12, fontWeight: 950 }}>Expand All</button>
+              <button type="button" onClick={collapseAllCeoPnL} style={{ border: "1px solid rgba(37,99,235,0.20)", borderRadius: 10, padding: "9px 12px", background: "#fff", color: "#0b4db3", cursor: "pointer", fontSize: 12, fontWeight: 950 }}>Collapse All</button>
+              <button type="button" onClick={() => setCeoViewType((current) => current === "ceo" ? "project" : "ceo")} style={{ border: "1px solid rgba(15,118,110,0.22)", borderRadius: 10, padding: "9px 12px", background: ceoViewType === "ceo" ? "#ecfdf5" : "#eff6ff", color: ceoViewType === "ceo" ? "#0f766e" : "#0b4db3", cursor: "pointer", fontSize: 12, fontWeight: 950 }}>{ceoViewType === "ceo" ? "CEO View" : "Project Manager View"}</button>
             </div>
 
             {ceoPnLActiveFilterTags.length > 0 && (
@@ -4442,23 +4549,29 @@ function DashboardApp({ session, onLogout }) {
               </div>
             )}
 
+            <div style={{ marginBottom: 10, border: "1px solid rgba(15,118,110,0.18)", borderRadius: 12, padding: "10px 12px", background: "linear-gradient(90deg, #ecfdf5, #ffffff)", color: "#10233f", fontSize: 12, lineHeight: 1.45, fontWeight: 850 }}>
+              <strong style={{ color: "#0f766e" }}>Intelligence:</strong> {ceoNarrativeText}
+            </div>
+
             <div style={{ marginBottom: 10, color: "#64748b", fontSize: 11, fontWeight: 850 }}>
               Click a column name to sort. Use the small filter button in each header for precise filters.
             </div>
 
-            <div className="ceo-pnl-scroll" style={{ height: isCeoPnLExpanded ? 560 : 344, overflowY: "auto", overflowX: "auto", border: "1px solid rgba(148,163,184,0.28)", borderRadius: 12, background: "#fff", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)" }}>
+            <div data-ceo-pnl tabIndex={0} className="ceo-pnl-scroll" style={{ height: isCeoPnLExpanded ? 520 : 368, overflowY: "auto", overflowX: "auto", border: "1px solid rgba(148,163,184,0.28)", borderRadius: 12, background: "#fff", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)", outline: "none" }}>
               <table style={{ width: "100%", minWidth: 1060, borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
                 <thead>
                   <tr>
                     {ceoPnLColumns.map((column, index) => (
-                      <th key={column.key} style={{ position: "sticky", top: 0, zIndex: activeCeoPnLFilter === column.key ? 8 : 2, padding: "10px 12px", textAlign: column.align, color: "#e5f2ff", background: "linear-gradient(180deg, #08264a 0%, #061b35 100%)", borderBottom: "1px solid rgba(148,163,184,0.30)", borderLeft: index === 0 ? 0 : "1px solid rgba(148,163,184,0.20)", fontSize: 11, fontWeight: 950, whiteSpace: "nowrap" }}>
+                      <th key={column.key} style={{ position: "sticky", top: 0, left: index === 0 ? 0 : "auto", zIndex: index === 0 ? 9 : activeCeoPnLFilter === column.key ? 8 : 2, padding: "10px 12px", textAlign: column.align, color: "#e5f2ff", background: "linear-gradient(180deg, #08264a 0%, #061b35 100%)", borderBottom: "1px solid rgba(148,163,184,0.30)", borderLeft: index === 0 ? 0 : "1px solid rgba(148,163,184,0.20)", fontSize: 11, fontWeight: 950, whiteSpace: "nowrap" }}>
                         <span style={{ display: "flex", justifyContent: column.align === "right" ? "flex-end" : "flex-start", alignItems: "center", gap: 7 }}>
                           <button type="button" onClick={() => handleCeoPnLSort(column.key)} style={{ border: 0, padding: 0, background: "transparent", color: "#e5f2ff", cursor: "pointer", fontSize: 11, fontWeight: 950 }}>
                             {column.label} {ceoPnLSort.key === column.key ? (ceoPnLSort.direction === "asc" ? "^" : "v") : ""}
                           </button>
-                          <button type="button" aria-label={`Filter ${column.label}`} onClick={(event) => { event.stopPropagation(); setActiveCeoPnLFilter((current) => current === column.key ? "" : column.key); }} style={{ display: "inline-grid", placeItems: "center", width: 22, height: 22, border: `1px solid ${activeCeoPnLFilter === column.key ? "rgba(94,234,212,0.65)" : "rgba(226,242,255,0.30)"}`, borderRadius: 7, background: activeCeoPnLFilter === column.key ? "rgba(20,184,166,0.22)" : "rgba(255,255,255,0.07)", color: "#dbeafe", cursor: "pointer", fontSize: 11, fontWeight: 950 }}>
-                            F
-                          </button>
+                          {column.filterType !== "none" && (
+                            <button type="button" aria-label={`Filter ${column.label}`} onClick={(event) => { event.stopPropagation(); setActiveCeoPnLFilter((current) => current === column.key ? "" : column.key); }} style={{ display: "inline-grid", placeItems: "center", width: 22, height: 22, border: `1px solid ${activeCeoPnLFilter === column.key ? "rgba(94,234,212,0.65)" : "rgba(226,242,255,0.30)"}`, borderRadius: 7, background: activeCeoPnLFilter === column.key ? "rgba(20,184,166,0.22)" : "rgba(255,255,255,0.07)", color: "#dbeafe", cursor: "pointer", fontSize: 11, fontWeight: 950 }}>
+                              F
+                            </button>
+                          )}
                           {renderCeoPnLFilterPanel(column)}
                         </span>
                       </th>
@@ -4471,13 +4584,17 @@ function DashboardApp({ session, onLogout }) {
                     const isCollapsed = Boolean(collapsedCeoPnLGroups[row.key]);
                     const rowBg = row.type === "portfolio" ? "#f1f5ff" : row.type === "hub" ? "#f8fafc" : index % 2 === 0 ? "#ffffff" : "#fbfdff";
                     return (
-                    <tr key={row.key} className="ceo-pnl-row" style={{ background: rowBg }}>
-                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: isGroup ? 950 : 850, borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>
+                    <tr key={row.key} onClick={(event) => { setFocusedCeoPnLIndex(index); handleCeoPnLRowAction(row, event); }} className="ceo-pnl-row" style={{ background: focusedCeoPnLIndex === index ? "#eaf5ff" : rowBg, cursor: "pointer", outline: focusedCeoPnLIndex === index ? "2px solid rgba(37,99,235,0.24)" : "none" }}>
+                      <td style={{ position: "sticky", left: 0, zIndex: 1, padding: "12px 14px", color: "#10233f", fontWeight: isGroup ? 950 : 850, borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap", background: focusedCeoPnLIndex === index ? "#eaf5ff" : rowBg }}>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 8, paddingLeft: row.type === "hub" ? 18 : row.type === "center" ? 38 : 0 }}>
                           {isGroup ? (
                             <button type="button" onClick={() => toggleCeoPnLGroup(row.key)} style={{ width: 22, height: 22, border: "1px solid rgba(148,163,184,0.35)", borderRadius: 7, background: "#fff", color: "#0b2a55", cursor: "pointer", fontWeight: 950 }}>{isCollapsed ? "+" : "-"}</button>
                           ) : <span style={{ width: 22, display: "inline-block" }} />}
                           {row.costCenter}
+                          {row.key === ceoWorstPortfolio?.key && <span style={{ color: "#dc2626", background: "#fff1f2", border: "1px solid rgba(220,38,38,0.18)", borderRadius: 999, padding: "3px 7px", fontSize: 10, fontWeight: 950 }}>Worst</span>}
+                          {row.key === ceoHighestCostPortfolio?.key && <span style={{ color: "#b45309", background: "#fff7ed", border: "1px solid rgba(180,83,9,0.18)", borderRadius: 999, padding: "3px 7px", fontSize: 10, fontWeight: 950 }}>High Cost</span>}
+                          {row.costCenter === ceoHighestRiskCenter?.costCenter && <span style={{ color: "#991b1b", background: "#fef2f2", border: "1px solid rgba(153,27,27,0.18)", borderRadius: 999, padding: "3px 7px", fontSize: 10, fontWeight: 950 }}>Risk</span>}
+                          {row.costCenter === ceoBestPerformer?.costCenter && <span style={{ color: "#059669", background: "#ecfdf5", border: "1px solid rgba(5,150,105,0.18)", borderRadius: 999, padding: "3px 7px", fontSize: 10, fontWeight: 950 }}>Best</span>}
                         </span>
                       </td>
                       <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: isGroup ? 950 : 850, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.submitted)}</td>
@@ -4621,6 +4738,62 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </section>
 
+          {selectedCeoPnLRow && (
+            <div style={{ position: "fixed", inset: 0, zIndex: 70, background: "rgba(15,23,42,0.26)", display: "flex", justifyContent: "flex-end" }} onClick={() => setSelectedCeoPnLRow(null)}>
+              <aside onClick={(event) => event.stopPropagation()} style={{ width: "min(430px, 94vw)", height: "100%", overflowY: "auto", background: "#ffffff", borderLeft: "1px solid rgba(148,163,184,0.32)", boxShadow: "-24px 0 70px rgba(15,23,42,0.26)", padding: 22, boxSizing: "border-box" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 18 }}>
+                  <div>
+                    <div style={{ color: "#64748b", fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{selectedCeoPnLRow.type === "portfolio" ? "Portfolio Summary" : selectedCeoPnLRow.type === "hub" ? "Hub Breakdown" : "Cost Center Financials"}</div>
+                    <h3 style={{ margin: "5px 0 0", color: "#071a3a", fontSize: 22, fontWeight: 950 }}>{selectedCeoPnLRow.costCenter}</h3>
+                    <div style={{ marginTop: 5, color: "#64748b", fontSize: 12 }}>{selectedCeoPnLRow.childCount ? `${selectedCeoPnLRow.childCount} cost centers` : selectedCeoPnLRow.hub || selectedCeoPnLRow.portfolio || "Selected row"}</div>
+                  </div>
+                  <button type="button" onClick={() => setSelectedCeoPnLRow(null)} style={{ border: "1px solid rgba(148,163,184,0.36)", borderRadius: 10, background: "#f8fafc", color: "#10233f", width: 34, height: 32, cursor: "pointer", fontWeight: 950 }}>x</button>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                  {[
+                    ["Submitted AFP", selectedCeoPnLRow.submitted, "#2563eb"],
+                    ["Approved AFP", selectedCeoPnLRow.approved, "#059669"],
+                    ["Total Cost", selectedCeoPnLRow.totalCost, "#f97316"],
+                    ["Net Profit", selectedCeoPnLRow.net, profitColor(selectedCeoPnLRow.net)],
+                  ].map(([label, value, color]) => (
+                    <div key={label} style={{ border: `1px solid ${color}22`, borderRadius: 12, padding: 12, background: `${color}0b` }}>
+                      <div style={{ color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                      <strong style={{ display: "block", marginTop: 6, color, fontSize: 18 }}>{formatCompactCurrency(value)}</strong>
+                    </div>
+                  ))}
+                </div>
+                <section style={{ border: "1px solid rgba(148,163,184,0.24)", borderRadius: 12, padding: 14, marginBottom: 12 }}>
+                  <h4 style={{ margin: 0, color: "#071a3a", fontSize: 14, fontWeight: 950 }}>Margin Before / After HO</h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 10, alignItems: "center", marginTop: 12 }}>
+                    <strong style={{ color: "#0f766e", fontSize: 20 }}>{formatPercent(selectedCeoPnLRow.margin + 0.053)}</strong>
+                    <span style={{ color: "#94a3b8", fontWeight: 950 }}>→</span>
+                    <strong style={{ color: profitColor(selectedCeoPnLRow.net), fontSize: 20 }}>{formatPercent(selectedCeoPnLRow.margin)}</strong>
+                  </div>
+                </section>
+                {ceoViewType === "project" && (
+                  <section style={{ border: "1px solid rgba(148,163,184,0.24)", borderRadius: 12, padding: 14, marginBottom: 12 }}>
+                    <h4 style={{ margin: 0, color: "#071a3a", fontSize: 14, fontWeight: 950 }}>CN Details</h4>
+                    <div style={{ display: "grid", gap: 8, marginTop: 10, color: "#10233f", fontSize: 13, fontWeight: 850 }}>
+                      <span>Received CN: <strong style={{ color: "#059669" }}>{formatCompactCurrency(selectedCeoPnLRow.cnReceived || 0)}</strong></span>
+                      <span>Issued CN: <strong style={{ color: "#dc2626" }}>{formatCompactCurrency(selectedCeoPnLRow.cnIssued || 0)}</strong></span>
+                      <span>Net CN: <strong>{formatCompactCurrency((selectedCeoPnLRow.cnReceived || 0) - (selectedCeoPnLRow.cnIssued || 0))}</strong></span>
+                    </div>
+                  </section>
+                )}
+                <section style={{ border: "1px solid rgba(148,163,184,0.24)", borderRadius: 12, padding: 14 }}>
+                  <h4 style={{ margin: 0, color: "#071a3a", fontSize: 14, fontWeight: 950 }}>Trend Chart</h4>
+                  <svg viewBox="0 0 240 72" aria-hidden="true" style={{ width: "100%", height: 88, marginTop: 10 }}>
+                    {selectedCeoPnLRow.sparkline?.points && <polyline points={selectedCeoPnLRow.sparkline.points.split(" ").map((point) => {
+                      const [x, y] = point.split(",").map(Number);
+                      return `${x * 3.3},${y * 2.4}`;
+                    }).join(" ")} fill="none" stroke={selectedCeoPnLRow.sparkline.color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
+                  </svg>
+                </section>
+              </aside>
+            </div>
+          )}
+
+          {false && (
           <div style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(280px, 0.82fr) minmax(0, 1.18fr)", gap: 16, alignItems: "stretch", marginBottom: 22 }}>
             <div style={{ position: "relative", overflow: "hidden", border: `1px solid ${profitColor(revenueSurplus)}33`, borderRadius: 14, padding: "22px 22px", background: `linear-gradient(145deg, #ffffff 0%, ${revenueSurplus >= 0 ? "#f1fdf8" : "#fff5f5"} 100%)`, boxShadow: "0 16px 34px rgba(15,23,42,0.10)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
               <div style={{ position: "absolute", right: -30, bottom: -30, width: 130, height: 130, borderRadius: "50%", background: `${profitColor(revenueSurplus)}14` }} />
@@ -4691,8 +4864,9 @@ function DashboardApp({ session, onLogout }) {
               </div>
             </div>
           </div>
+          )}
 
-          {isAdjustedCostActive && (
+          {false && isAdjustedCostActive && (
           <section style={{ marginBottom: 22, border: "1px solid rgba(148,163,184,0.25)", borderRadius: 16, padding: 20, background: "#fff", boxShadow: "0 16px 38px rgba(15,23,42,0.08)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 14 }}>
               <div>
