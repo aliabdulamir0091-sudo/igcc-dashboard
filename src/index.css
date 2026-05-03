@@ -476,6 +476,7 @@ code {
   .dashboard-filter-grid,
   .dashboard-nav-shell,
   .mobile-nav-toggle,
+  .portal-info-strip,
   .profitability-print-actions {
     display: none !important;
   }

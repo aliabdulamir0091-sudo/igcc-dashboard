@@ -5642,7 +5642,7 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: 0, overflow: "hidden", marginTop: 18, borderRadius: 16, background: "linear-gradient(135deg, #041d36, #062b4f)", border: "1px solid rgba(148,163,184,0.22)", boxShadow: "0 18px 40px rgba(15,23,42,0.16)" }}>
+      <section className="portal-info-strip" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: 0, overflow: "hidden", marginTop: 18, borderRadius: 16, background: "linear-gradient(135deg, #041d36, #062b4f)", border: "1px solid rgba(148,163,184,0.22)", boxShadow: "0 18px 40px rgba(15,23,42,0.16)" }}>
         {portalInfoStrip.map(([title, detail, icon, color]) => (
           <div key={title} style={{ display: "flex", alignItems: "center", gap: 16, padding: "22px 28px", borderRight: "1px solid rgba(255,255,255,0.12)" }}>
             <span style={{ display: "inline-grid", placeItems: "center", minWidth: 58, height: 58, borderRadius: 999, background: `${color}22`, color, fontSize: 13, fontWeight: 950 }}>{icon}</span>
