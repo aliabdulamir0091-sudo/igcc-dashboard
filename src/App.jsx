@@ -1806,32 +1806,54 @@ function DashboardApp({ session, onLogout }) {
     const cnCost = cnReceivedTotal - cnIssuedTotal;
     const approvedIncome = selectedCostCenterApproved;
     const submittedIncome = selectedCostCenterSubmitted;
-    const cnIssuedIncome = cnIssuedTotal;
-    const costWithReceivedCn = officialVisibleTotal + cnReceivedTotal;
-    const approvedMargin = approvedIncome ? (approvedIncome - officialVisibleTotal) / approvedIncome : null;
-    const submittedMargin = submittedIncome ? (submittedIncome - officialVisibleTotal) / submittedIncome : null;
-    const cnIncome = approvedIncome + cnIssuedIncome;
-    const cnMargin = cnIncome ? (cnIncome - costWithReceivedCn) / cnIncome : null;
-    const maxRevenueCost = Math.max(approvedIncome, submittedIncome, cnIssuedIncome, officialVisibleTotal, adjustedCostPreviewTotal, 1);
-    const maxGlCost = Math.max(...costCenterGlBreakdownRows.slice(0, 8).map((row) => Math.abs(row.amount)), 1);
-    const formatPrintPercent = (value) => (value === null ? "N/A" : formatPercent(value));
-    const metricCard = (label, value, tone = "teal") => `<div class="card ${tone}"><div class="label">${htmlEscape(label)}</div><div class="value">${htmlEscape(value)}</div></div>`;
-    const barRow = (label, value, color) => `
+    const totalAdjustedCost = adjustedCostPreviewTotal;
+    const netProfit = approvedIncome - totalAdjustedCost;
+    const reportMargin = approvedIncome ? netProfit / approvedIncome : null;
+    const approvalGapForReport = submittedIncome - approvedIncome;
+    const approvalRateForReport = submittedIncome ? approvedIncome / submittedIncome : 0;
+    const maxAfpReport = Math.max(submittedIncome, approvedIncome, Math.abs(approvalGapForReport), 1);
+    const maxFlowReport = Math.max(approvedIncome, officialVisibleTotal, Math.abs(cnCost), Math.abs(netProfit), 1);
+    const topReportGlRows = costCenterGlBreakdownRows.slice(0, 5);
+    const maxGlCost = Math.max(...topReportGlRows.map((row) => Math.abs(row.amount)), 1);
+    const topReportReceivingCenters = topCreditReceivingCenters.slice(0, 5);
+    const maxReportCnReceived = Math.max(...topReportReceivingCenters.map((row) => row.cnReceived), 1);
+    const topDriver = topReportGlRows[0];
+    const topDriverShare = topDriver && officialVisibleTotal ? topDriver.amount / officialVisibleTotal : 0;
+    const compactMoney = (value) => formatCompactCurrency(value);
+    const compactPercent = (value) => (value === null ? "N/A" : formatPercent(value));
+    const insightItems = [
+      `${filters.costCenter} is ${netProfit >= 0 ? "profitable" : "negative"} with ${compactMoney(netProfit)} net profit${reportMargin === null ? "" : ` (${compactPercent(reportMargin)})`}.`,
+      topDriver ? `${topDriver.label} is the main cost driver (${compactPercent(topDriverShare)}).` : "No GL cost driver is available for the selected filters.",
+      `Credit Notes ${cnCost >= 0 ? "increased" : "reduced"} cost by ${compactMoney(Math.abs(cnCost))}.`,
+      approvalGapForReport === 0 ? `AFP is fully approved (${compactPercent(approvalRateForReport)}).` : `AFP approval rate is ${compactPercent(approvalRateForReport)} with ${compactMoney(approvalGapForReport)} gap.`,
+    ];
+    const kpiCard = (label, value, tone = "teal") => `<div class="kpi ${tone}"><div class="label">${htmlEscape(label)}</div><div class="kpi-value">${htmlEscape(value)}</div></div>`;
+    const afpRow = (label, value, color) => `
       <div class="bar-row">
         <div class="bar-label">${htmlEscape(label)}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, Math.min(100, (Math.abs(value) / maxRevenueCost) * 100))}%; background:${color};"></div></div>
-        <div class="bar-value">${htmlEscape(formatCurrency(value))}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${label === "Approval Rate" ? Math.max(3, Math.min(100, value * 100)) : Math.max(3, Math.min(100, (Math.abs(value) / maxAfpReport) * 100))}%; background:${color};"></div></div>
+        <div class="bar-value">${htmlEscape(label === "Approval Rate" ? compactPercent(value) : compactMoney(value))}</div>
       </div>`;
-    const marginRow = (label, value, color) => `
-      <div class="margin-row">
-        <div><strong>${htmlEscape(label)}</strong><span>${htmlEscape(formatPrintPercent(value))}</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${value === null ? 0 : Math.max(3, Math.min(100, Math.abs(value) * 100))}%; background:${color};"></div></div>
+    const flowStep = (label, value, detail, color, isPercent = false) => `
+      <div class="flow-card">
+        <div class="label">${htmlEscape(label)}</div>
+        <div class="flow-value" style="color:${color};">${htmlEscape(isPercent ? compactPercent(value) : compactMoney(value))}</div>
+        <div class="detail">${htmlEscape(detail)}</div>
       </div>`;
-    const glRows = costCenterGlBreakdownRows.slice(0, 8).map((row) => `
-      <div class="gl-row">
-        <div><strong>${htmlEscape(row.label)}</strong><span>${row.rows.toLocaleString()} rows</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, (Math.abs(row.amount) / maxGlCost) * 100)}%; background:#0f766e;"></div></div>
-        <div>${htmlEscape(formatCurrency(row.amount))}</div>
+    const glRows = topReportGlRows.map((row) => {
+      const share = officialVisibleTotal ? row.amount / officialVisibleTotal : 0;
+      return `
+        <div class="driver-row">
+          <div><strong>${htmlEscape(row.label)}</strong><span>${htmlEscape(compactPercent(share))}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, (Math.abs(row.amount) / maxGlCost) * 100)}%; background:#0f766e;"></div></div>
+          <div>${htmlEscape(compactMoney(row.amount))}</div>
+        </div>`;
+    }).join("");
+    const cnReceiverRows = topReportReceivingCenters.map((row) => `
+      <div class="driver-row">
+        <div><strong>${htmlEscape(row.costCenter)}</strong></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, (row.cnReceived / maxReportCnReceived) * 100)}%; background:#0f766e;"></div></div>
+        <div>${htmlEscape(compactMoney(row.cnReceived))}</div>
       </div>`).join("");
     const reportHtml = `<!doctype html>
       <html>
@@ -1839,40 +1861,39 @@ function DashboardApp({ session, onLogout }) {
           <meta charset="utf-8" />
           <title>Cost Center Report - ${htmlEscape(filters.costCenter)}</title>
           <style>
-            @page { size: A4; margin: 14mm; }
+            @page { size: A4; margin: 12mm; }
             * { box-sizing: border-box; }
             body { margin: 0; background: #fff; color: #10233f; font-family: Arial, Helvetica, sans-serif; }
             .report { width: 100%; max-width: 190mm; margin: 0 auto; }
-            .header { border-bottom: 3px solid #0f766e; padding: 0 0 14px; margin-bottom: 18px; display: flex; justify-content: space-between; gap: 18px; }
-            .eyebrow { color: #0f766e; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
-            h1 { margin: 5px 0 0; font-size: 25px; line-height: 1.1; }
-            h2 { margin: 22px 0 10px; font-size: 16px; color: #10233f; }
-            .meta { text-align: right; color: #475569; font-size: 11px; line-height: 1.55; }
-            .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-            .grid.four { grid-template-columns: repeat(4, 1fr); }
-            .card { border: 1px solid #cbd5e1; border-top: 4px solid #0f766e; border-radius: 10px; padding: 12px; min-height: 72px; background: #fff; }
-            .card.blue { border-top-color: #2563eb; }
-            .card.green { border-top-color: #059669; }
-            .card.red { border-top-color: #dc2626; }
-            .card.amber { border-top-color: #b45309; }
-            .label { color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-            .value { margin-top: 7px; font-size: 16px; font-weight: 900; color: #0f172a; }
-            .section { break-inside: avoid; margin-top: 16px; }
-            .panel { border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px; background: #f8fafc; }
-            .bar-row, .gl-row { display: grid; grid-template-columns: 132px 1fr 112px; gap: 10px; align-items: center; margin: 10px 0; font-size: 11px; }
+            .header { padding: 18px 20px; margin-bottom: 16px; border-radius: 18px; color: #fff; background: linear-gradient(135deg, #062b4f 0%, #0f766e 100%); display: flex; justify-content: space-between; gap: 18px; }
+            .eyebrow { color: #a7f3d0; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
+            h1 { margin: 5px 0 0; font-size: 26px; line-height: 1.05; }
+            h2 { margin: 0 0 12px; font-size: 15px; color: #10233f; }
+            .meta { text-align: right; color: rgba(255,255,255,.82); font-size: 10px; line-height: 1.65; }
+            .section { break-inside: avoid; margin-top: 14px; }
+            .panel { border: 1px solid #d8e2ee; border-radius: 16px; padding: 15px; background: #f8fafc; box-shadow: 0 10px 24px rgba(15,23,42,.06); }
+            .summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .insight { border-left: 4px solid #0f766e; border-radius: 12px; padding: 10px 12px; background: #fff; color: #334155; font-size: 11px; line-height: 1.4; }
+            .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+            .kpi { border: 1px solid #d8e2ee; border-radius: 15px; padding: 13px; background: #fff; min-height: 82px; }
+            .kpi.teal { border-top: 4px solid #0f766e; }
+            .kpi.green { border-top: 4px solid #059669; }
+            .kpi.red { border-top: 4px solid #dc2626; }
+            .kpi.blue { border-top: 4px solid #2563eb; }
+            .label { color: #64748b; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; }
+            .kpi-value { margin-top: 9px; font-size: 22px; line-height: 1; font-weight: 900; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .bar-row, .driver-row { display: grid; grid-template-columns: 132px 1fr 92px; gap: 10px; align-items: center; margin: 9px 0; font-size: 11px; }
             .bar-label { font-weight: 800; }
-            .bar-track { height: 12px; border-radius: 999px; background: #e5edf5; overflow: hidden; }
+            .bar-track { height: 11px; border-radius: 999px; background: #e5edf5; overflow: hidden; }
             .bar-fill { height: 100%; border-radius: 999px; }
-            .bar-value, .gl-row > div:last-child { text-align: right; font-weight: 800; }
-            .bridge { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-            .bridge-step { border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; background: #fff; }
-            .bridge-step strong { display: block; font-size: 11px; color: #64748b; text-transform: uppercase; }
-            .bridge-step span { display: block; margin-top: 7px; font-size: 15px; font-weight: 900; }
-            .margin-row { margin: 12px 0; }
-            .margin-row > div:first-child { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; }
-            .gl-row strong { display: block; }
-            .gl-row span { display: block; color: #64748b; font-size: 10px; margin-top: 3px; }
-            .footer { border-top: 1px solid #cbd5e1; margin-top: 24px; padding-top: 10px; color: #64748b; font-size: 10px; display: flex; justify-content: space-between; }
+            .bar-value, .driver-row > div:last-child { text-align: right; font-weight: 900; }
+            .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+            .flow-card { border: 1px solid #d8e2ee; border-radius: 14px; padding: 12px; background: #fff; min-height: 82px; }
+            .flow-value { margin-top: 8px; font-size: 18px; line-height: 1; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .detail, .driver-row span { display: block; margin-top: 5px; color: #64748b; font-size: 10px; line-height: 1.35; }
+            .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .note { color: #0f766e; font-size: 11px; font-weight: 900; margin-top: 8px; }
+            .footer { border-top: 1px solid #d8e2ee; margin-top: 22px; padding-top: 10px; color: #64748b; font-size: 10px; display: flex; justify-content: space-between; }
             @media print { button { display: none; } .report { max-width: none; } }
           </style>
         </head>
@@ -1891,66 +1912,64 @@ function DashboardApp({ session, onLogout }) {
               </div>
             </section>
 
-            <section class="section">
-              <h2>Financial Summary</h2>
-              <div class="grid">
-                ${metricCard("Approved AFP", formatCurrency(selectedCostCenterApproved), "green")}
-                ${metricCard("Submitted AFP", formatCurrency(selectedCostCenterSubmitted), "blue")}
-                ${metricCard("Cost from Spent Report", formatCurrency(officialVisibleTotal), "amber")}
-                ${metricCard("Cost from Credit Note", formatCurrency(cnCost), cnCost >= 0 ? "green" : "red")}
-                ${metricCard("Total Adjusted Cost", formatCurrency(adjustedCostPreviewTotal), "green")}
-                ${metricCard("Profit", formatCurrency(selectedCostCenterProfit), selectedCostCenterProfit >= 0 ? "green" : "red")}
+            <section class="section panel">
+              <h2>Executive Summary</h2>
+              <div class="summary">
+                ${insightItems.map((item) => `<div class="insight">${htmlEscape(item)}</div>`).join("")}
               </div>
             </section>
 
             <section class="section">
-              <h2>Revenue Section</h2>
-              <div class="grid">
-                ${metricCard("Revenue based on Approved AFP", formatCurrency(approvedIncome), "green")}
-                ${metricCard("Revenue based on Submitted AFP", formatCurrency(submittedIncome), "blue")}
-                ${metricCard("Revenue based on Issued CN", formatCurrency(cnIssuedIncome), "amber")}
+              <div class="kpi-grid">
+                ${kpiCard("Revenue", compactMoney(approvedIncome), "green")}
+                ${kpiCard("Total Cost", compactMoney(totalAdjustedCost), "blue")}
+                ${kpiCard("Net Profit", compactMoney(netProfit), netProfit >= 0 ? "green" : "red")}
+                ${kpiCard("Margin %", compactPercent(reportMargin), reportMargin !== null && reportMargin >= 0 ? "teal" : "red")}
               </div>
             </section>
 
             <section class="section panel">
-              <h2 style="margin-top:0;">Revenue vs Cost</h2>
-              ${barRow("Approved AFP", approvedIncome, "#059669")}
-              ${barRow("Submitted AFP", submittedIncome, "#2563eb")}
-              ${barRow("Issued CN", cnIssuedIncome, "#b45309")}
-              ${barRow("Spent Cost", officialVisibleTotal, "#dc2626")}
-              ${barRow("Adjusted Cost", adjustedCostPreviewTotal, "#0f766e")}
+              <h2>AFP Status</h2>
+              ${afpRow("Submitted AFP", submittedIncome, "#2563eb")}
+              ${afpRow("Approved AFP", approvedIncome, "#059669")}
+              ${afpRow("Approval Gap", approvalGapForReport, approvalGapForReport > 0 ? "#dc2626" : "#059669")}
+              ${afpRow("Approval Rate", approvalRateForReport, approvalRateForReport >= 0.85 ? "#059669" : "#b45309")}
+              ${approvalGapForReport === 0 ? "<div class='note'>Fully Approved</div>" : ""}
             </section>
 
             <section class="section panel">
-              <h2 style="margin-top:0;">Margin Section</h2>
-              ${marginRow("Margin based on Approved AFP", approvedMargin, "#059669")}
-              ${marginRow("Margin based on Submitted AFP", submittedMargin, "#2563eb")}
-              ${marginRow("Margin including CN impact", cnMargin, "#0f766e")}
+              <h2>Profit Bridge</h2>
+              <div class="flow">
+                ${flowStep("Revenue", approvedIncome, "Approved AFP", "#059669")}
+                ${flowStep("Spent Cost", -officialVisibleTotal, "Spent report", "#dc2626")}
+                ${flowStep("CN Impact", cnCost, "Received - issued", cnCost >= 0 ? "#dc2626" : "#059669")}
+                ${flowStep("Net Profit", netProfit, "Revenue - adjusted cost", netProfit >= 0 ? "#059669" : "#dc2626")}
+              </div>
             </section>
 
-            <section class="section">
-              <h2>Credit Note Section</h2>
-              <div class="grid">
-                ${metricCard("CN Received", formatCurrency(cnReceivedTotal), "green")}
-                ${metricCard("CN Issued", formatCurrency(cnIssuedTotal), "red")}
-                ${metricCard("Net CN Impact", formatCurrency(cnNetImpact), cnNetImpact >= 0 ? "green" : "red")}
+            <section class="section two-col">
+              <div class="panel">
+                <h2>Credit Note Impact</h2>
+                ${flowStep("+ Received", cnReceivedTotal, "CN received", "#059669")}
+                <div style="height:8px;"></div>
+                ${flowStep("- Issued", cnIssuedTotal, "CN issued", "#dc2626")}
+                <div style="height:8px;"></div>
+                ${flowStep("= Net Impact", cnCost, "Internal reallocation", cnCost >= 0 ? "#dc2626" : "#059669")}
               </div>
-              <div class="bridge" style="margin-top:10px;">
-                <div class="bridge-step"><strong>Official Cost</strong><span>${htmlEscape(formatCurrency(officialVisibleTotal))}</span></div>
-                <div class="bridge-step"><strong>+ CN Received</strong><span>${htmlEscape(formatCurrency(cnReceivedTotal))}</span></div>
-                <div class="bridge-step"><strong>- CN Issued</strong><span>${htmlEscape(formatCurrency(cnIssuedTotal))}</span></div>
-                <div class="bridge-step"><strong>Adjusted Cost</strong><span>${htmlEscape(formatCurrency(adjustedCostPreviewTotal))}</span></div>
+              <div class="panel">
+                <h2>Top Receiving Cost Centers</h2>
+                ${cnReceiverRows || "<div style='color:#64748b;font-size:12px;'>No receiving cost centers match the current filters.</div>"}
               </div>
             </section>
 
             <section class="section panel">
-              <h2 style="margin-top:0;">Top GL Cost Drivers</h2>
+              <h2>Cost Drivers</h2>
               ${glRows || "<div style='color:#64748b;font-size:12px;'>No GL cost drivers match the current filters.</div>"}
             </section>
 
             <footer class="footer">
-              <span>Prepared from IGCC Financial Portal</span>
-              <span>Cost Center: ${htmlEscape(filters.costCenter)}</span>
+              <span>Prepared from IGCC Financial Portal | Confidential</span>
+              <span>${htmlEscape(filters.costCenter)}</span>
             </footer>
           </main>
           <script>
