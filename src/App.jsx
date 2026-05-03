@@ -528,6 +528,7 @@ function DashboardApp({ session, onLogout }) {
   const [loadedSpentDetailPeriods, setLoadedSpentDetailPeriods] = useState([]);
   const [spentImportSummary, setSpentImportSummary] = useState(null);
   const [creditNoteImportSummary, setCreditNoteImportSummary] = useState(null);
+  const [isCeoPnLExpanded, setIsCeoPnLExpanded] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [activeUserModal, setActiveUserModal] = useState("");
   const filters = pageFilters[activePage] ?? DEFAULT_FILTERS;
@@ -1738,6 +1739,61 @@ function DashboardApp({ session, onLogout }) {
     )
     .filter((row) => row.cost || row.submitted || row.approved)
     .sort((a, b) => b.cost - a.cost);
+  const getCostCenterMarginSparkline = (costCenter, width = 64, height = 22, padding = 3) => {
+    const costRows = (filters.month ? filteredData : comparisonData).filter((item) => item.costCenter === costCenter);
+    const revenueRows = (filters.month ? filteredRevenueData : comparisonRevenueData).filter((item) => item.costCenter === costCenter);
+    const bucketMap = new Map();
+
+    [...costRows, ...revenueRows].forEach((item) => {
+      const bucket = getPeriodBucket(item, "monthly");
+      if (bucket.key !== "Unknown") bucketMap.set(bucket.key, bucket);
+    });
+
+    const buckets = Array.from(bucketMap.values()).sort((a, b) => a.order - b.order).slice(-6);
+    if (!buckets.length) return { points: "", color: theme.subtext };
+
+    const values = buckets.map((bucket) => {
+      const cost = costRows
+        .filter((item) => getPeriodBucket(item, "monthly").key === bucket.key)
+        .reduce((sum, item) => sum + item.amount, 0);
+      const approved = revenueRows
+        .filter((item) => item.status === "approved" && getPeriodBucket(item, "monthly").key === bucket.key)
+        .reduce((sum, item) => sum + item.amount, 0);
+      return approved ? (approved - cost) / approved : cost ? -1 : 0;
+    });
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || Math.max(Math.abs(max), 1);
+    const points = values.map((value, index) => {
+      const x = values.length > 1 ? padding + (index / (values.length - 1)) * (width - padding * 2) : width / 2;
+      const normalized = max === min ? 0.5 : (value - min) / range;
+      const y = height - padding - normalized * (height - padding * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+
+    return { points: points.join(" "), color: values[values.length - 1] >= 0 ? "#059669" : "#dc2626" };
+  };
+  const getCeoPnLStatus = (margin, totalCost, approved) => {
+    if (!approved && totalCost) return { label: "At Risk", color: "#dc2626", bg: "#fff1f2", rank: 0 };
+    if (margin >= 0.15) return { label: "Healthy", color: "#059669", bg: "#ecfdf5", rank: 2 };
+    if (margin >= 0) return { label: "Monitor", color: "#d97706", bg: "#fff7ed", rank: 1 };
+    return { label: "At Risk", color: "#dc2626", bg: "#fff1f2", rank: 0 };
+  };
+  const ceoPnLRows = centerSummaryRows
+    .map((row) => {
+      const totalCost = row.grossCost + row.cnReceived - row.cnIssued;
+      const net = row.approved - totalCost;
+      const margin = row.approved ? net / row.approved : totalCost ? -1 : 0;
+      return {
+        ...row,
+        totalCost,
+        net,
+        margin,
+        status: getCeoPnLStatus(margin, totalCost, row.approved),
+        sparkline: getCostCenterMarginSparkline(row.costCenter),
+      };
+    })
+    .sort((a, b) => a.status.rank - b.status.rank || a.margin - b.margin || b.totalCost - a.totalCost);
   const profitabilityRows = centerSummaryRows
     .map((row) => ({
       ...row,
@@ -3096,6 +3152,36 @@ function DashboardApp({ session, onLogout }) {
 
   return (
     <div className="dashboard-shell" style={{ minHeight: "100vh", padding: "8px 16px 28px", fontFamily: "Inter, system-ui, sans-serif", maxWidth: 1280, margin: "0 auto", color: theme.text, background: themeMode === "light" ? "linear-gradient(180deg, #eef5fb 0%, #f8fbff 42%, #ffffff 100%)" : theme.pageBg }}>
+      <style>{`
+        .ceo-pnl-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(15, 118, 110, 0.38) rgba(226, 232, 240, 0.52);
+          scroll-behavior: smooth;
+        }
+        .ceo-pnl-scroll::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        .ceo-pnl-scroll::-webkit-scrollbar-track {
+          background: rgba(226, 232, 240, 0.48);
+          border-radius: 999px;
+        }
+        .ceo-pnl-scroll::-webkit-scrollbar-thumb {
+          background: rgba(15, 118, 110, 0.34);
+          border-radius: 999px;
+          border: 2px solid rgba(248, 250, 252, 0.9);
+        }
+        .ceo-pnl-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(15, 118, 110, 0.52);
+        }
+        .ceo-pnl-row {
+          transition: background 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+        }
+        .ceo-pnl-row:hover {
+          background: rgba(240, 253, 250, 0.72) !important;
+          box-shadow: inset 3px 0 0 rgba(15, 118, 110, 0.55);
+        }
+      `}</style>
       {showWelcome && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "grid", placeItems: "center", padding: 20, background: themeMode === "light" ? "rgba(15, 23, 42, 0.42)" : "rgba(2, 6, 23, 0.68)" }}>
           <div style={{ width: "min(620px, 100%)", overflow: "hidden", borderRadius: 8, background: theme.panelBg, border: `1px solid ${theme.border}`, boxShadow: "0 24px 70px rgba(15,23,42,0.28)" }}>
@@ -3879,6 +3965,95 @@ function DashboardApp({ session, onLogout }) {
                   <div style={{ marginTop: 7, color: "#475569", fontSize: 12, lineHeight: 1.45 }}>{item.detail}</div>
                 </div>
               ))}
+            </div>
+          </section>
+
+          <section style={{ position: "relative", marginBottom: 22, border: "1px solid rgba(124,58,237,0.30)", borderRadius: 16, padding: 20, background: "linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)", boxShadow: "0 18px 42px rgba(15,23,42,0.10)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "flex-start", marginBottom: 16, flexWrap: "wrap" }}>
+              <div>
+                <h2 style={{ margin: 0, color: "#071a3a", fontSize: 22, fontWeight: 950 }}>CEO Profit &amp; Loss Summary</h2>
+                <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: 12 }}>All cost centers in one compact view, including CN impact and margin health.</p>
+              </div>
+              <span style={{ color: "#5b21b6", background: "#f5f3ff", border: "1px solid rgba(124,58,237,0.18)", borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>{ceoPnLRows.length.toLocaleString()} cost centers</span>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 16 }}>
+              {[
+                ["Total Received CN", cnReceivedTotal, "#059669", "RCN", "Credit notes received"],
+                ["Total Issued CN", cnIssuedTotal, "#dc2626", "ICN", "Credit notes issued"],
+                ["Net CN Impact", cnNetImpact, cnNetImpact >= 0 ? "#2563eb" : "#059669", "NET", "Received minus issued"],
+              ].map(([label, value, color, icon, detail]) => (
+                <div key={label} className="executive-hover-card" style={{ display: "flex", gap: 12, alignItems: "center", minWidth: 0, border: `1px solid ${color}24`, borderRadius: 12, padding: "13px 14px", background: `${color}0b`, boxShadow: "0 10px 24px rgba(15,23,42,0.06)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
+                  <span style={{ display: "grid", placeItems: "center", width: 38, height: 38, flex: "0 0 auto", borderRadius: 10, color, background: `${color}14`, border: `1px solid ${color}24`, fontSize: 11, fontWeight: 950 }}>{icon}</span>
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ display: "block", color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
+                    <strong style={{ display: "block", marginTop: 5, color: "#071a3a", fontSize: 19, lineHeight: 1.05, fontWeight: 950 }}>{formatCompactCurrency(value)}</strong>
+                    <span style={{ display: "block", marginTop: 4, color: "#64748b", fontSize: 11 }}>{detail}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="ceo-pnl-scroll" style={{ height: isCeoPnLExpanded ? 560 : 344, overflowY: "auto", overflowX: "auto", border: "1px solid rgba(148,163,184,0.28)", borderRadius: 12, background: "#fff", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)" }}>
+              <table style={{ width: "100%", minWidth: 920, borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+                <thead>
+                  <tr>
+                    {[
+                      ["Cost Center", "left"],
+                      ["Submitted AFP", "right"],
+                      ["Approved AFP", "right"],
+                      ["Received CN", "right"],
+                      ["Issued CN", "right"],
+                      ["Total Cost", "right"],
+                      ["Profit Margin %", "right"],
+                      ["Status", "left"],
+                    ].map(([label, align], index) => (
+                      <th key={label} style={{ position: "sticky", top: 0, zIndex: 2, padding: "13px 14px", textAlign: align, color: "#e5f2ff", background: "linear-gradient(180deg, #08264a 0%, #061b35 100%)", borderBottom: "1px solid rgba(148,163,184,0.30)", borderLeft: index === 0 ? 0 : "1px solid rgba(148,163,184,0.20)", fontSize: 11, fontWeight: 950, whiteSpace: "nowrap" }}>{label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {ceoPnLRows.map((row, index) => (
+                    <tr key={row.costCenter} className="ceo-pnl-row" style={{ background: index % 2 === 0 ? "#ffffff" : "#f8fafc" }}>
+                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: 950, borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{row.costCenter}</td>
+                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: 850, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.submitted)}</td>
+                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: 850, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.approved)}</td>
+                      <td style={{ padding: "12px 14px", color: "#059669", fontWeight: 900, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.cnReceived)}</td>
+                      <td style={{ padding: "12px 14px", color: "#dc2626", fontWeight: 900, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.cnIssued)}</td>
+                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: 950, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.totalCost)}</td>
+                      <td style={{ padding: "10px 14px", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>
+                        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 9 }}>
+                          <svg viewBox="0 0 64 22" aria-hidden="true" style={{ width: 64, height: 22, display: "block" }}>
+                            {row.sparkline.points && <polyline points={row.sparkline.points} fill="none" stroke={row.sparkline.color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />}
+                          </svg>
+                          <strong style={{ color: profitColor(row.net), fontSize: 12 }}>{formatPercent(row.margin)}</strong>
+                        </div>
+                      </td>
+                      <td style={{ padding: "12px 14px", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: row.status.color, background: row.status.bg, border: `1px solid ${row.status.color}24`, borderRadius: 999, padding: "6px 10px", fontSize: 11, fontWeight: 950 }}>
+                          <span style={{ width: 7, height: 7, borderRadius: "50%", background: row.status.color }} />
+                          {row.status.label}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {!ceoPnLRows.length && (
+                    <tr>
+                      <td colSpan={8} style={{ padding: 22, textAlign: "center", color: "#64748b", fontWeight: 850 }}>No cost center P&amp;L data matches the current filters.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 14 }}>
+              <button
+                type="button"
+                onClick={() => setIsCeoPnLExpanded((current) => !current)}
+                style={{ border: "1px solid rgba(37,99,235,0.24)", borderRadius: 10, padding: "10px 14px", background: "#eff6ff", color: "#0b4db3", cursor: "pointer", fontSize: 12, fontWeight: 950, boxShadow: "0 8px 20px rgba(37,99,235,0.10)" }}
+              >
+                {isCeoPnLExpanded ? "Show compact view" : "View all cost centers"}
+              </button>
             </div>
           </section>
 
