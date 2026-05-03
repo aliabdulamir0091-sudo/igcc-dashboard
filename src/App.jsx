@@ -2655,7 +2655,7 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
-      <div className="dashboard-header" style={{ marginBottom: 12, overflow: "hidden", background: "linear-gradient(135deg, #041d36 0%, #062b4f 58%, #073861 100%)", border: "1px solid rgba(148, 163, 184, 0.24)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(15, 23, 42, 0.18)" }}>
+      <div className="dashboard-header" style={{ position: "relative", zIndex: 30, marginBottom: 12, overflow: "visible", background: "linear-gradient(135deg, #041d36 0%, #062b4f 58%, #073861 100%)", border: "1px solid rgba(148, 163, 184, 0.24)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(15, 23, 42, 0.18)" }}>
         <div className="dashboard-header-main" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "22px 26px" }}>
           <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <div style={{ width: 62, height: 62, borderRadius: 16, border: "1px solid rgba(255,255,255,0.16)", background: "linear-gradient(135deg, rgba(20,184,166,0.24), rgba(37,99,235,0.18))", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)" }}>
@@ -2683,7 +2683,7 @@ function DashboardApp({ session, onLogout }) {
                 ...
               </button>
               {isUserMenuOpen && (
-                <div style={{ position: "absolute", right: 0, top: 50, zIndex: 20, minWidth: 230, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 8, background: theme.panelBg, boxShadow: "0 20px 48px rgba(15,23,42,0.24)" }}>
+                <div style={{ position: "absolute", right: 0, top: 50, zIndex: 80, minWidth: 230, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 8, background: theme.panelBg, boxShadow: "0 20px 48px rgba(15,23,42,0.24)" }}>
                   {[
                     ["profile", "Profile / Personal Info"],
                     ["login", "Login Info"],
