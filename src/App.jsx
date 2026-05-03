@@ -4694,8 +4694,9 @@ function DashboardApp({ session, onLogout }) {
 
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", margin: "10px 0 14px" }}>
             <div>
-              <h2 style={{ margin: 0, color: "#071a3a", fontSize: 20, fontWeight: 950 }}>Performance View</h2>
-              <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: 12 }}>Trend, concentration, and cost drivers for the current selection.</p>
+              <div style={{ color: "#64748b", fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>Why It Is Happening</div>
+              <h2 style={{ margin: "4px 0 0", color: "#071a3a", fontSize: 20, fontWeight: 950 }}>Cost &amp; Performance Drivers</h2>
+              <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: 12 }}>Trend, hub concentration, and GL cost drivers behind the profitability summary above.</p>
             </div>
             {latestTrendRow && (
               <span style={{ color: profitColor(latestTrendRow.net), background: "#f8fafc", border: "1px solid rgba(148,163,184,0.22)", borderRadius: 999, padding: "9px 13px", fontSize: 12, fontWeight: 950 }}>
@@ -4707,8 +4708,13 @@ function DashboardApp({ session, onLogout }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, marginBottom: 16 }}>
             <div style={{ border: "1px solid rgba(148,163,184,0.25)", borderRadius: 14, padding: 22, background: "#fff", minHeight: 320, boxSizing: "border-box", boxShadow: "0 16px 38px rgba(15,23,42,0.09)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 6 }}>
-                <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Monthly Trend</h3>
-                <div style={{ display: "flex", gap: 12, color: "#64748b", fontSize: 11 }}>
+                <div>
+                  <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Monthly Trend</h3>
+                  <div style={{ marginTop: 5, color: costTrendDelta > 0 ? "#dc2626" : costTrendDelta < 0 ? "#059669" : "#64748b", fontSize: 12, fontWeight: 950 }}>
+                    {costTrendDelta > 0 ? "▲ Increasing" : costTrendDelta < 0 ? "▼ Decreasing" : "— Stable"} cost movement
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 12, color: "#64748b", fontSize: 11, alignItems: "center" }}>
                   <span><strong style={{ color: theme.accentWarm }}>Cost</strong></span>
                   <span><strong style={{ color: "#059669" }}>Approved AFP</strong></span>
                 </div>
@@ -4746,7 +4752,10 @@ function DashboardApp({ session, onLogout }) {
             </div>
 
             <div style={{ border: "1px solid rgba(148,163,184,0.25)", borderRadius: 14, padding: 18, background: "#fff", minHeight: 250, boxSizing: "border-box", boxShadow: "0 16px 38px rgba(15,23,42,0.09)" }}>
-              <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Cost by Hub</h3>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 4 }}>
+                <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Cost by Hub</h3>
+                {hubHistogramRows[0] && <span style={{ color: "#b45309", background: "#fff7ed", border: "1px solid rgba(180,83,9,0.20)", borderRadius: 999, padding: "6px 10px", fontSize: 11, fontWeight: 950 }}>Highest cost: {hubHistogramRows[0].label}</span>}
+              </div>
               <div style={{ display: "grid", gap: 8 }}>
                 {hubHistogramRows.slice(0, 8).map((hub, index) => {
                   const section = HUB_SECTIONS.find((item) => item.hubs.includes(hub.label));
@@ -4755,12 +4764,12 @@ function DashboardApp({ session, onLogout }) {
                   const width = `${Math.max(3, (Math.abs(hub.amount) / (maxHubHistogramAmount || 1)) * 100)}%`;
 
                   return (
-                    <div key={hub.label} style={{ display: "grid", gridTemplateColumns: "96px minmax(0, 1fr) 138px", gap: 8, alignItems: "center", padding: index === 0 ? "3px 0" : 0 }}>
-                      <span style={{ color: accent, fontSize: 12, fontWeight: 900 }}>{hub.label}</span>
+                    <div key={hub.label} style={{ display: "grid", gridTemplateColumns: "96px minmax(0, 1fr) 150px", gap: 8, alignItems: "center", padding: index === 0 ? "8px 10px" : "2px 0", border: index === 0 ? `1px solid ${accent}24` : "1px solid transparent", borderRadius: 10, background: index === 0 ? `${accent}0b` : "transparent" }}>
+                      <span style={{ color: accent, fontSize: 12, fontWeight: index === 0 ? 950 : 900 }}>{hub.label}</span>
                       <div style={{ height: 10, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
                         <div style={{ width, height: "100%", borderRadius: 999, background: accent }} />
                       </div>
-                      <span style={{ color: index === 0 ? accent : theme.text, fontSize: 12, fontWeight: index === 0 ? 950 : 900, textAlign: "right" }}>{formatCompactCurrency(hub.amount)} <span style={{ color: theme.subtext, fontSize: 10 }}>({formatPercent(contribution)})</span></span>
+                      <span style={{ color: index === 0 ? accent : theme.text, fontSize: 12, fontWeight: index === 0 ? 950 : 900, textAlign: "right" }}>{formatCompactCurrency(hub.amount)} <span style={{ color: index === 0 ? accent : theme.subtext, fontSize: 10, fontWeight: 950 }}>{formatPercent(contribution)}</span></span>
                     </div>
                   );
                 })}
@@ -4773,14 +4782,14 @@ function DashboardApp({ session, onLogout }) {
             <div style={{ border: "1px solid rgba(148,163,184,0.25)", borderRadius: 14, padding: 18, background: "#fff", minHeight: 210, boxSizing: "border-box", boxShadow: "0 16px 38px rgba(15,23,42,0.09)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
                 <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Cost by GL Name</h3>
-                {costByGlRows[0] && <span style={{ color: theme.accentStrong, fontSize: 11, fontWeight: 900 }}>Top driver: {costByGlRows[0].glName}</span>}
+                {costByGlRows[0] && <span style={{ color: theme.accentStrong, background: "#ecfdf5", border: "1px solid rgba(15,118,110,0.18)", borderRadius: 999, padding: "6px 10px", fontSize: 11, fontWeight: 950 }}>Top Driver: {costByGlRows[0].glName}</span>}
               </div>
               <div style={{ display: "grid", gap: 8 }}>
                 {costByGlRows.slice(0, 7).map((row, index) => (
-                  <div key={row.glName} style={{ display: "grid", gridTemplateColumns: "minmax(180px, 0.8fr) minmax(0, 1fr) 150px", gap: 12, alignItems: "center" }}>
+                  <div key={row.glName} style={{ display: "grid", gridTemplateColumns: "minmax(180px, 0.8fr) minmax(0, 1fr) 150px", gap: 12, alignItems: "center", padding: index === 0 ? "8px 10px" : "2px 0", border: index === 0 ? `1px solid ${theme.accentStrong}24` : "1px solid transparent", borderRadius: 10, background: index === 0 ? `${theme.accentStrong}0b` : "transparent" }}>
                     <span style={{ color: index === 0 ? theme.accentStrong : theme.text, fontSize: 12, fontWeight: index === 0 ? 950 : 850, overflowWrap: "anywhere" }}>{row.glName}</span>
                     <div style={{ height: 10, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
-                      <div style={{ width: `${Math.max(3, (Math.abs(row.cost) / (maxGlCost || 1)) * 100)}%`, height: "100%", borderRadius: 999, background: index === 0 ? theme.accentStrong : "#0e7490" }} />
+                      <div style={{ width: `${Math.max(3, (Math.abs(row.cost) / (maxGlCost || 1)) * 100)}%`, height: "100%", borderRadius: 999, background: index === 0 ? "linear-gradient(90deg, #0f766e, #14b8a6)" : "#0e7490" }} />
                     </div>
                     <span style={{ color: index === 0 ? theme.accentStrong : theme.text, fontSize: 12, fontWeight: index === 0 ? 950 : 900, textAlign: "right" }}>{formatCompactCurrency(row.cost)} <span style={{ color: theme.subtext, fontSize: 10 }}>({formatPercent(visibleTotal ? row.cost / visibleTotal : 0)})</span></span>
                   </div>
