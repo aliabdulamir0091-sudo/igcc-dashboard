@@ -2649,6 +2649,53 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
+      {isUserMenuOpen && (
+        <div
+          onClick={() => setIsUserMenuOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 55, background: themeMode === "light" ? "rgba(15,23,42,0.28)" : "rgba(2,6,23,0.62)", display: "flex", justifyContent: "flex-end" }}
+        >
+          <aside
+            onClick={(event) => event.stopPropagation()}
+            style={{ width: "min(380px, 92vw)", height: "100%", background: theme.panelBg, borderLeft: `1px solid ${theme.border}`, boxShadow: "-28px 0 70px rgba(15,23,42,0.28)", padding: 22, boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 18 }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", borderBottom: `1px solid ${theme.border}`, paddingBottom: 16 }}>
+              <div>
+                <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>Account</div>
+                <h3 style={{ margin: "5px 0 0", color: theme.text, fontSize: 20, fontWeight: 950 }}>{portalUserName}</h3>
+                <div style={{ marginTop: 5, color: theme.subtext, fontSize: 12 }}>{session?.role ?? "Viewer"} | Last updated: {lastUpdatedLabel}</div>
+              </div>
+              <button type="button" onClick={() => setIsUserMenuOpen(false)} style={{ border: `1px solid ${theme.border}`, borderRadius: 10, background: theme.inputBg, color: theme.text, width: 34, height: 32, cursor: "pointer", fontWeight: 950 }}>x</button>
+            </div>
+
+            <div style={{ display: "grid", gap: 8 }}>
+              {[
+                ["profile", "Profile / Personal Info", "User email, role, access, and approval status"],
+                ["login", "Login Info", "Last login and current access type"],
+                ["contact", "Contact Us", "System owner and support information"],
+                ["settings", "Settings", "Dashboard preferences and access settings"],
+              ].map(([key, label, note]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => {
+                    setActiveUserModal(key);
+                    setIsUserMenuOpen(false);
+                  }}
+                  style={{ width: "100%", border: `1px solid ${theme.border}`, borderRadius: 14, padding: "14px 15px", background: themeMode === "light" ? "#ffffff" : theme.inputBg, color: theme.text, textAlign: "left", cursor: "pointer", boxShadow: "0 10px 22px rgba(15,23,42,0.06)" }}
+                >
+                  <strong style={{ display: "block", fontSize: 14 }}>{label}</strong>
+                  <span style={{ display: "block", marginTop: 4, color: theme.subtext, fontSize: 12, lineHeight: 1.35 }}>{note}</span>
+                </button>
+              ))}
+            </div>
+
+            <div style={{ marginTop: "auto", borderTop: `1px solid ${theme.border}`, paddingTop: 16 }}>
+              <button type="button" onClick={onLogout} style={{ width: "100%", border: "none", borderRadius: 14, padding: "13px 15px", background: "rgba(220,38,38,0.10)", color: theme.danger, textAlign: "left", cursor: "pointer", fontWeight: 950 }}>Logout</button>
+            </div>
+          </aside>
+        </div>
+      )}
+
       {isLoading && (
         <div style={{ marginBottom: 12, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: "10px 14px", boxShadow: theme.cardShadow, color: theme.subtext, fontSize: 13, fontWeight: 850 }}>
           Loading financial data in the background...
@@ -2682,29 +2729,6 @@ function DashboardApp({ session, onLogout }) {
               >
                 ...
               </button>
-              {isUserMenuOpen && (
-                <div style={{ position: "absolute", right: 0, top: 50, zIndex: 80, minWidth: 230, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 8, background: theme.panelBg, boxShadow: "0 20px 48px rgba(15,23,42,0.24)" }}>
-                  {[
-                    ["profile", "Profile / Personal Info"],
-                    ["login", "Login Info"],
-                    ["contact", "Contact Us"],
-                    ["settings", "Settings"],
-                  ].map(([key, label]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => {
-                        setActiveUserModal(key);
-                        setIsUserMenuOpen(false);
-                      }}
-                      style={{ width: "100%", border: "none", borderRadius: 10, padding: "10px 11px", background: "transparent", color: theme.text, textAlign: "left", cursor: "pointer", fontWeight: 850 }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                  <button type="button" onClick={onLogout} style={{ width: "100%", border: "none", borderRadius: 10, padding: "10px 11px", background: "rgba(220,38,38,0.10)", color: theme.danger, textAlign: "left", cursor: "pointer", fontWeight: 950 }}>Logout</button>
-                </div>
-              )}
             </div>
           </div>
         </div>
