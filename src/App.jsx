@@ -1794,6 +1794,7 @@ function DashboardApp({ session, onLogout }) {
       };
     })
     .sort((a, b) => a.status.rank - b.status.rank || a.margin - b.margin || b.totalCost - a.totalCost);
+  const shouldShowCeoCnCards = Math.abs(cnNetImpact) > 1;
   const profitabilityRows = centerSummaryRows
     .map((row) => ({
       ...row,
@@ -3978,6 +3979,7 @@ function DashboardApp({ session, onLogout }) {
               <span style={{ color: "#5b21b6", background: "#f5f3ff", border: "1px solid rgba(124,58,237,0.18)", borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>{ceoPnLRows.length.toLocaleString()} cost centers</span>
             </div>
 
+            {shouldShowCeoCnCards && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 16 }}>
               {[
                 ["Total Received CN", cnReceivedTotal, "#059669", "RCN", "Credit notes received"],
@@ -3994,6 +3996,7 @@ function DashboardApp({ session, onLogout }) {
                 </div>
               ))}
             </div>
+            )}
 
             <div className="ceo-pnl-scroll" style={{ height: isCeoPnLExpanded ? 560 : 344, overflowY: "auto", overflowX: "auto", border: "1px solid rgba(148,163,184,0.28)", borderRadius: 12, background: "#fff", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)" }}>
               <table style={{ width: "100%", minWidth: 920, borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
