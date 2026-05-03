@@ -2658,11 +2658,30 @@ function DashboardApp({ session, onLogout }) {
               </button>
             </div>
 
+            <div style={{ display: "grid", gap: 8 }}>
+              {[
+                ["profile", "Profile / Personal Info", "User email, role, access, and approval status"],
+                ["login", "Login Info", "Last login and current access type"],
+                ["contact", "Contact Us", "System owner and support information"],
+                ["settings", "Settings", "Dashboard preferences and access settings"],
+              ].map(([key, label, note]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onMouseEnter={() => setActiveUserModal(key)}
+                  onMouseOver={() => setActiveUserModal(key)}
+                  onFocus={() => setActiveUserModal(key)}
+                  onClick={() => setActiveUserModal(key)}
+                  style={{ width: "100%", border: `1px solid ${activeUserModal === key ? theme.accentStrong : theme.border}`, borderRadius: 14, padding: "12px 14px", background: activeUserModal === key ? theme.accentSoft : themeMode === "light" ? "#ffffff" : theme.inputBg, color: theme.text, textAlign: "left", cursor: "pointer", boxShadow: "0 10px 22px rgba(15,23,42,0.06)" }}
+                >
+                  <strong style={{ display: "block", fontSize: 14 }}>{label}</strong>
+                  <span style={{ display: "block", marginTop: 4, color: theme.subtext, fontSize: 12, lineHeight: 1.35 }}>{note}</span>
+                </button>
+              ))}
+            </div>
+
             {activeUserModal ? (
               <div style={{ display: "grid", gap: 14 }}>
-                <button type="button" onClick={() => setActiveUserModal("")} style={{ justifySelf: "start", border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", background: theme.inputBg, color: theme.text, cursor: "pointer", fontWeight: 900 }}>
-                  Back
-                </button>
                 <div style={{ border: `1px solid ${theme.border}`, borderRadius: 16, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)", overflow: "hidden" }}>
                   <div style={{ padding: "16px 18px", background: theme.accentSoft, borderBottom: `1px solid ${theme.border}` }}>
                     <h3 style={{ margin: 0, color: theme.text, fontSize: 18, fontWeight: 950 }}>
@@ -2698,25 +2717,8 @@ function DashboardApp({ session, onLogout }) {
                 </div>
               </div>
             ) : (
-              <div style={{ display: "grid", gap: 8 }}>
-                {[
-                  ["profile", "Profile / Personal Info", "User email, role, access, and approval status"],
-                  ["login", "Login Info", "Last login and current access type"],
-                  ["contact", "Contact Us", "System owner and support information"],
-                  ["settings", "Settings", "Dashboard preferences and access settings"],
-                ].map(([key, label, note]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onMouseEnter={() => setActiveUserModal(key)}
-                    onFocus={() => setActiveUserModal(key)}
-                    onClick={() => setActiveUserModal(key)}
-                    style={{ width: "100%", border: `1px solid ${theme.border}`, borderRadius: 14, padding: "14px 15px", background: themeMode === "light" ? "#ffffff" : theme.inputBg, color: theme.text, textAlign: "left", cursor: "pointer", boxShadow: "0 10px 22px rgba(15,23,42,0.06)" }}
-                  >
-                    <strong style={{ display: "block", fontSize: 14 }}>{label}</strong>
-                    <span style={{ display: "block", marginTop: 4, color: theme.subtext, fontSize: 12, lineHeight: 1.35 }}>{note}</span>
-                  </button>
-                ))}
+              <div style={{ border: `1px dashed ${theme.border}`, borderRadius: 16, padding: 16, color: theme.subtext, lineHeight: 1.45, background: themeMode === "light" ? "#ffffff" : theme.inputBg }}>
+                Move the cursor over any account option to show its details here.
               </div>
             )}
 
@@ -2752,8 +2754,14 @@ function DashboardApp({ session, onLogout }) {
               <div><span style={{ color: "#22d3ee", textTransform: "uppercase" }}>{session?.role ?? "Viewer"}</span> | Last updated: {lastUpdatedLabel}</div>
             </div>
             <div
-              onMouseEnter={() => setIsUserMenuOpen(true)}
-              onFocus={() => setIsUserMenuOpen(true)}
+              onMouseEnter={() => {
+                setIsUserMenuOpen(true);
+                setActiveUserModal((current) => current || "profile");
+              }}
+              onFocus={() => {
+                setIsUserMenuOpen(true);
+                setActiveUserModal((current) => current || "profile");
+              }}
               style={{ position: "relative" }}
             >
               <button
