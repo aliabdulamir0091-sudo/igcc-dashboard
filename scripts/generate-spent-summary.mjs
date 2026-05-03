@@ -10,7 +10,18 @@ const summaryDir = join(spentDir, "summary");
 const creditNoteOutputDir = join(spentDir, "credit-note");
 const manifestFile = join(processedDir, "manifest.json");
 const creditNoteSummaryFile = join(creditNoteOutputDir, "credit_note_summary.json");
+const campCreditIssuerCostCenter = "CmpSB_23";
 const workshopCreditIssuerCostCenter = "MWS_23";
+const creditNoteIssuerByColumn = new Map([
+  ["store", campCreditIssuerCostCenter],
+  ["fa", campCreditIssuerCostCenter],
+  ["fixed assets", campCreditIssuerCostCenter],
+  ["fixed asset", campCreditIssuerCostCenter],
+  ["scaffolding", campCreditIssuerCostCenter],
+  ["materials", campCreditIssuerCostCenter],
+  ["material", campCreditIssuerCostCenter],
+  ["workshop", workshopCreditIssuerCostCenter],
+]);
 const creditNoteSourceCandidates = [
   join(spentDir, "Credit Note"),
   join(spentDir, "credit note"),
@@ -133,6 +144,10 @@ const getHeaderPeriod = (header, fallbackPeriod) => {
   const [monthRaw, yearRaw] = value.split(/\s+|-/);
   const parsed = getPeriodParts(monthRaw, yearRaw);
   return parsed.year && parsed.monthNumber ? parsed : fallbackPeriod;
+};
+const getCreditNoteIssuerForColumn = (headerLabel) => {
+  const key = normalizeValue(headerLabel).toLowerCase().replace(/\s+/g, " ");
+  return creditNoteIssuerByColumn.get(key) ?? null;
 };
 
 const addSummary = (map, keyParts, row, overrides = {}) => {
@@ -310,6 +325,8 @@ const readCreditNoteRows = () => {
             const headerLabel = normalizeValue(header);
             const headerLower = headerLabel.toLowerCase();
             if (!headerLabel || /^(no\.?|total revenue|grand total|total)$/i.test(headerLabel)) return;
+            const issuerCostCenter = getCreditNoteIssuerForColumn(headerLabel);
+            if (!issuerCostCenter) return;
 
             const amount = cleanupAmount(row[columnIndex]);
             if (!amount) return;
@@ -352,14 +369,14 @@ const readCreditNoteRows = () => {
             });
             creditRows.push({
               ...baseCreditRow,
-              id: `${fileName}:${sheetName}:${headerIndex + rowOffset + 2}:${columnIndex}:workshop-issued`,
-              portfolio: getPortfolioForHub(getHubForCostCenter(workshopCreditIssuerCostCenter)),
-              hub: getHubForCostCenter(workshopCreditIssuerCostCenter),
-              costCenter: workshopCreditIssuerCostCenter,
+              id: `${fileName}:${sheetName}:${headerIndex + rowOffset + 2}:${columnIndex}:${issuerCostCenter}:issued`,
+              portfolio: getPortfolioForHub(getHubForCostCenter(issuerCostCenter)),
+              hub: getHubForCostCenter(issuerCostCenter),
+              costCenter: issuerCostCenter,
               cnReceived: 0,
               cnIssued: amount,
               amount: -amount,
-              source: "Workshop Credit Note Offset",
+              source: issuerCostCenter === workshopCreditIssuerCostCenter ? "Workshop Credit Note Offset" : "Camp Credit Note Offset",
             });
             rowHadValue = true;
             fileSummary.validRows += 1;

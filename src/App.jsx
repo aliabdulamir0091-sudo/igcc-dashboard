@@ -305,6 +305,14 @@ const HUB_SECTIONS = [
 ];
 
 const KNOWN_COST_CENTERS = new Set(COST_CENTER_GROUPS.flatMap((group) => group.centers));
+const CAMP_CREDIT_NOTE_ISSUER = "CmpSB_23";
+const WORKSHOP_CREDIT_NOTE_ISSUER = "MWS_23";
+const CAMP_CREDIT_NOTE_CATEGORIES = new Set(["store", "fa", "fixed assets", "fixed asset", "scaffolding", "materials", "material"]);
+const normalizeCreditNoteCategory = (category) =>
+  String(category ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 
 const normalizeCostCenterKey = (costCenter) =>
   String(costCenter ?? "")
@@ -331,6 +339,24 @@ const resolvePortfolio = (item) => {
   const mappedPortfolio = getPortfolioForHub(hub);
   return item?.portfolio && item.portfolio !== "Unmapped" ? item.portfolio : mappedPortfolio;
 };
+
+const normalizeCreditNoteRows = (rows) =>
+  rows.map((row) => {
+    if (row?.sourceType !== "credit-note") return row;
+
+    const category = normalizeCreditNoteCategory(row.category);
+    const costCenter = row.costCenter;
+    let cnIssued = Number(row.cnIssued) || 0;
+
+    if (cnIssued) {
+      const validCampIssue = costCenter === CAMP_CREDIT_NOTE_ISSUER && CAMP_CREDIT_NOTE_CATEGORIES.has(category);
+      const validWorkshopIssue = costCenter === WORKSHOP_CREDIT_NOTE_ISSUER && category === "workshop";
+      cnIssued = validCampIssue || validWorkshopIssue ? cnIssued : 0;
+    }
+
+    const cnReceived = Number(row.cnReceived) || 0;
+    return { ...row, cnReceived, cnIssued, amount: cnReceived - cnIssued };
+  });
 
 // Cost center aliases for normalizing Excel data variants
 const COST_CENTER_ALIASES = {
@@ -641,7 +667,7 @@ function DashboardApp({ session, onLogout }) {
         const summary = await response.json();
 
         if (isMounted) {
-          setCreditNoteData(Array.isArray(summary.rows) ? summary.rows : []);
+          setCreditNoteData(Array.isArray(summary.rows) ? normalizeCreditNoteRows(summary.rows) : []);
           setCreditNoteImportSummary(summary.importSummary ?? null);
         }
       } catch (err) {
@@ -789,7 +815,7 @@ function DashboardApp({ session, onLogout }) {
   };
 
   const hasActiveGlobalFilter = Object.values(filters).some(Boolean);
-  const hasCostLevelFilter = Boolean(filters.portfolio || filters.hub || filters.costCenter);
+  const hasCostLevelFilter = Boolean(filters.hub || filters.costCenter);
   const isAdjustedCostRequested = costViewMode === "adjusted";
   const isAdjustedCostActive = isAdjustedCostRequested && hasCostLevelFilter;
   const costViewLabel = isAdjustedCostActive ? "Adjusted Cost" : "Official Cost";
@@ -1421,7 +1447,7 @@ function DashboardApp({ session, onLogout }) {
         ))}
       </div>
       <span style={{ color: theme.subtext, fontSize: 11, lineHeight: 1.35 }}>
-        {isAdjustedCostActive ? "CN applied at hub / cost center level." : isAdjustedCostRequested ? "IGCC Level 1 remains Official Cost until a portfolio, hub, or cost center is selected." : "Spent Report only."}
+        {isAdjustedCostActive ? "CN applied at hub / cost center level." : isAdjustedCostRequested ? "IGCC Level 1 remains Official Cost until a hub or cost center is selected." : "Spent Report only."}
       </span>
     </div>
   );
@@ -1432,8 +1458,8 @@ function DashboardApp({ session, onLogout }) {
       <section style={{ marginTop: 16, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
           <div>
-            <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Workshop Credit Impact</h3>
-            <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>CN affects adjusted hub and cost-center views only.</p>
+            <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Credit Note Reallocation</h3>
+            <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Store, FA, Scaffolding, and Materials issue from CmpSB_23; Workshop issues from MWS_23.</p>
           </div>
           <span style={{ color: theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>
             {creditNoteImportSummary?.totalFiles ?? 0} CN files
