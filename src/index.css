@@ -448,7 +448,7 @@ code {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 4mm;
+    margin: 3mm;
   }
 
   html,
@@ -507,8 +507,8 @@ code {
 
   .profitability-print-exact {
     display: block !important;
-    width: 202mm !important;
-    max-width: 202mm !important;
+    width: 204mm !important;
+    max-width: 204mm !important;
     margin: 0 auto !important;
     padding: 0 !important;
     background: #ffffff !important;
@@ -520,7 +520,7 @@ code {
     display: flex !important;
     justify-content: space-between !important;
     align-items: flex-start !important;
-    padding: 6mm !important;
+    padding: 4mm 5mm !important;
     border-radius: 4px 4px 0 0 !important;
     background: linear-gradient(135deg, #05295a, #073b77) !important;
     color: #ffffff !important;
@@ -529,16 +529,16 @@ code {
   .print-exact-header h1 {
     margin: 0 !important;
     color: #ffffff !important;
-    font-size: 22px !important;
+    font-size: 17px !important;
     line-height: 1 !important;
     font-weight: 900 !important;
   }
 
   .print-exact-header p,
   .print-exact-brand {
-    margin: 2mm 0 0 !important;
+    margin: 1mm 0 0 !important;
     color: #ffffff !important;
-    font-size: 10px !important;
+    font-size: 7px !important;
   }
 
   .print-exact-meta,
@@ -553,15 +553,15 @@ code {
   .print-exact-meta {
     display: grid !important;
     grid-template-columns: 1fr 1.3fr auto !important;
-    gap: 5mm !important;
+    gap: 3mm !important;
     align-items: center !important;
-    padding: 4mm !important;
-    margin-top: 3mm !important;
+    padding: 2.2mm !important;
+    margin-top: 2mm !important;
   }
 
   .print-exact-meta-item {
     display: flex !important;
-    gap: 3mm !important;
+    gap: 2mm !important;
     align-items: center !important;
     border-right: 1px solid #d7e2ef !important;
   }
@@ -569,12 +569,12 @@ code {
   .print-exact-icon {
     display: grid !important;
     place-items: center !important;
-    width: 9mm !important;
-    height: 9mm !important;
+    width: 6mm !important;
+    height: 6mm !important;
     border-radius: 3px !important;
     background: #eff6ff !important;
     color: #0044aa !important;
-    font-size: 7px !important;
+    font-size: 5px !important;
     font-weight: 900 !important;
   }
 
@@ -582,13 +582,13 @@ code {
   .print-exact-kpi small {
     display: block !important;
     color: #061731 !important;
-    font-size: 8px !important;
+    font-size: 6px !important;
     font-weight: 800 !important;
   }
 
   .print-exact-meta strong {
     color: #061731 !important;
-    font-size: 14px !important;
+    font-size: 9px !important;
     font-weight: 900 !important;
   }
 
@@ -597,23 +597,23 @@ code {
     border-radius: 5px !important;
     background: #ffffff !important;
     color: #003087 !important;
-    padding: 3mm 6mm !important;
-    font-size: 10px !important;
+    padding: 1.5mm 3mm !important;
+    font-size: 7px !important;
     font-weight: 700 !important;
   }
 
   .print-exact-kpis {
     display: grid !important;
     grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-    margin-top: 3mm !important;
-    padding: 4mm 3mm !important;
+    margin-top: 2mm !important;
+    padding: 2.2mm 2mm !important;
   }
 
   .print-exact-kpi {
     display: flex !important;
-    gap: 2.5mm !important;
+    gap: 1.3mm !important;
     align-items: center !important;
-    padding: 0 2.5mm !important;
+    padding: 0 1.6mm !important;
     border-right: 1px solid #d7e2ef !important;
   }
 
@@ -624,20 +624,20 @@ code {
   .print-exact-kpi > span {
     display: grid !important;
     place-items: center !important;
-    width: 8mm !important;
-    height: 8mm !important;
-    min-width: 8mm !important;
+    width: 5.8mm !important;
+    height: 5.8mm !important;
+    min-width: 5.8mm !important;
     border-radius: 999px !important;
     color: #ffffff !important;
-    font-size: 7px !important;
+    font-size: 5px !important;
     font-weight: 900 !important;
   }
 
   .print-exact-kpi strong {
     display: block !important;
-    margin-top: 1.4mm !important;
+    margin-top: 0.8mm !important;
     color: #061731 !important;
-    font-size: 15px !important;
+    font-size: 10px !important;
     line-height: 1 !important;
     font-weight: 900 !important;
   }
@@ -645,46 +645,46 @@ code {
   .print-exact-grid {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 3mm !important;
-    margin-top: 3mm !important;
+    gap: 2mm !important;
+    margin-top: 2mm !important;
   }
 
   .print-exact-card {
-    padding: 3.5mm !important;
-    min-height: 58mm !important;
+    padding: 2.2mm !important;
+    min-height: 40mm !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
   .print-exact-card h2 {
-    margin: 0 0 4mm !important;
+    margin: 0 0 2mm !important;
     color: #003087 !important;
-    font-size: 11px !important;
+    font-size: 8px !important;
     line-height: 1.15 !important;
     font-weight: 900 !important;
   }
 
   .print-exact-bars {
     display: grid !important;
-    gap: 4mm !important;
+    gap: 2.2mm !important;
   }
 
   .print-exact-bar-row {
     display: grid !important;
-    grid-template-columns: 28mm 1fr 17mm !important;
-    gap: 2.5mm !important;
+    grid-template-columns: 24mm 1fr 15mm !important;
+    gap: 1.8mm !important;
     align-items: center !important;
   }
 
   .print-exact-bar-row label,
   .print-exact-bar-row strong {
     color: #061731 !important;
-    font-size: 8px !important;
+    font-size: 6px !important;
     font-weight: 800 !important;
   }
 
   .print-exact-bar-row div {
-    height: 4.3mm !important;
+    height: 2.8mm !important;
     background: #eef4fb !important;
     border-radius: 2px !important;
     overflow: hidden !important;
@@ -696,13 +696,13 @@ code {
   }
 
   .print-exact-insight {
-    margin: 6mm 0 0 !important;
-    padding: 2.3mm !important;
+    margin: 3mm 0 0 !important;
+    padding: 1.5mm !important;
     border: 1px solid #d7e2ef !important;
     border-radius: 5px !important;
     background: #eff6ff !important;
     color: #003087 !important;
-    font-size: 8px !important;
+    font-size: 6px !important;
     line-height: 1.25 !important;
   }
 
@@ -725,9 +725,9 @@ code {
   }
 
   .print-exact-table span {
-    padding: 1.7mm 2.2mm !important;
+    padding: 1mm 1.6mm !important;
     border-right: 1px solid #d7e2ef !important;
-    font-size: 8px !important;
+    font-size: 6px !important;
     line-height: 1.1 !important;
   }
 
@@ -747,28 +747,28 @@ code {
 
   .print-exact-donut-wrap {
     display: grid !important;
-    grid-template-columns: 43mm 1fr !important;
-    gap: 7mm !important;
+    grid-template-columns: 31mm 1fr !important;
+    gap: 5mm !important;
     align-items: center !important;
   }
 
   .print-exact-donut {
     position: relative !important;
-    width: 42mm !important;
-    height: 42mm !important;
+    width: 30mm !important;
+    height: 30mm !important;
     border-radius: 999px !important;
   }
 
   .print-exact-donut i {
     position: absolute !important;
-    inset: 11mm !important;
+    inset: 8mm !important;
     border-radius: 999px !important;
     background: #ffffff !important;
   }
 
   .print-exact-legend {
     display: grid !important;
-    gap: 3mm !important;
+    gap: 1.8mm !important;
   }
 
   .print-exact-legend div {
@@ -776,7 +776,7 @@ code {
     justify-content: space-between !important;
     gap: 3mm !important;
     color: #061731 !important;
-    font-size: 10px !important;
+    font-size: 7px !important;
   }
 
   .print-exact-legend span {
@@ -787,8 +787,8 @@ code {
 
   .print-exact-legend i {
     display: inline-block !important;
-    width: 2.6mm !important;
-    height: 2.6mm !important;
+    width: 2mm !important;
+    height: 2mm !important;
     border-radius: 999px !important;
   }
 
@@ -797,17 +797,17 @@ code {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
     align-items: end !important;
-    gap: 8mm !important;
-    min-height: 44mm !important;
-    padding: 4mm 4mm 0 !important;
+    gap: 5mm !important;
+    min-height: 29mm !important;
+    padding: 2mm 3mm 0 !important;
   }
 
   .print-exact-waterfall::before {
     content: "" !important;
     position: absolute !important;
-    left: 26mm !important;
-    right: 26mm !important;
-    top: 21mm !important;
+    left: 21mm !important;
+    right: 21mm !important;
+    top: 15mm !important;
     border-top: 1px dashed #94a3b8 !important;
   }
 
@@ -816,52 +816,52 @@ code {
     z-index: 1 !important;
     display: grid !important;
     justify-items: center !important;
-    gap: 1.7mm !important;
+    gap: 1mm !important;
     color: #061731 !important;
-    font-size: 9px !important;
+    font-size: 6px !important;
     text-align: center !important;
   }
 
   .print-exact-waterfall i {
     display: block !important;
-    width: 16mm !important;
+    width: 13mm !important;
   }
 
   .print-exact-insights {
     display: grid !important;
-    gap: 3.2mm !important;
-    padding: 2mm !important;
+    gap: 1.7mm !important;
+    padding: 1mm !important;
   }
 
   .print-exact-insights p {
     display: grid !important;
-    grid-template-columns: 8mm 1fr !important;
-    gap: 2mm !important;
+    grid-template-columns: 5mm 1fr !important;
+    gap: 1.2mm !important;
     margin: 0 !important;
     color: #061731 !important;
-    font-size: 9px !important;
+    font-size: 6px !important;
     line-height: 1.25 !important;
   }
 
   .print-exact-insights span {
-    font-size: 13px !important;
+    font-size: 8px !important;
     font-weight: 900 !important;
   }
 
   .print-exact-actions {
     min-height: 0 !important;
-    margin-top: 3mm !important;
+    margin-top: 2mm !important;
   }
 
   .print-exact-actions > div {
     display: grid !important;
     grid-template-columns: repeat(4, 1fr) !important;
-    gap: 3mm !important;
+    gap: 2mm !important;
   }
 
   .print-exact-actions article {
-    min-height: 31mm !important;
-    padding: 4mm !important;
+    min-height: 18mm !important;
+    padding: 2mm !important;
     border: 1px solid #d7e2ef !important;
     border-radius: 5px !important;
     background: #ffffff !important;
@@ -870,27 +870,27 @@ code {
   .print-exact-actions article span {
     display: grid !important;
     place-items: center !important;
-    width: 9mm !important;
-    height: 9mm !important;
+    width: 5.5mm !important;
+    height: 5.5mm !important;
     border: 1.5px solid !important;
     border-radius: 999px !important;
-    font-size: 7px !important;
+    font-size: 5px !important;
     font-weight: 900 !important;
   }
 
   .print-exact-actions article strong {
     display: block !important;
-    margin-top: 2mm !important;
+    margin-top: 1mm !important;
     color: #061731 !important;
-    font-size: 9px !important;
+    font-size: 6px !important;
     line-height: 1.2 !important;
   }
 
   .print-exact-actions article p {
-    margin-top: 5mm !important;
+    margin-top: 2mm !important;
     color: #061731 !important;
-    font-size: 8px !important;
-    line-height: 1.35 !important;
+    font-size: 5.5px !important;
+    line-height: 1.15 !important;
   }
 
   .executive-hover-card:hover,
