@@ -2749,7 +2749,11 @@ function DashboardApp({ session, onLogout }) {
               <div style={{ color: "#fff", maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 15, fontWeight: 950 }}>{portalUserName}</div>
               <div><span style={{ color: "#22d3ee", textTransform: "uppercase" }}>{session?.role ?? "Viewer"}</span> | Last updated: {lastUpdatedLabel}</div>
             </div>
-            <div style={{ position: "relative" }}>
+            <div
+              onMouseEnter={() => setIsUserMenuOpen(true)}
+              onFocus={() => setIsUserMenuOpen(true)}
+              style={{ position: "relative" }}
+            >
               <button
                 type="button"
                 onClick={() => {
