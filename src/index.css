@@ -444,7 +444,7 @@ code {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 9mm;
+    margin: 4mm;
   }
 
   html,
@@ -485,8 +485,8 @@ code {
   }
 
   .profitability-report-page {
-    width: 190mm !important;
-    max-width: 190mm !important;
+    width: 202mm !important;
+    max-width: 202mm !important;
     margin: 0 auto !important;
     padding: 0 !important;
     border: 0 !important;
@@ -497,14 +497,14 @@ code {
   }
 
   .profitability-report-header {
-    padding: 9mm 8mm !important;
+    padding: 6mm 7mm !important;
     border-radius: 5px 5px 0 0 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
   .profitability-report-header h2 {
-    font-size: 22px !important;
+    font-size: 21px !important;
     line-height: 1.05 !important;
     max-width: 118mm !important;
   }
@@ -515,15 +515,15 @@ code {
   }
 
   .profitability-report-content {
-    padding: 4mm !important;
-    gap: 4mm !important;
+    padding: 3mm !important;
+    gap: 3mm !important;
     background: #ffffff !important;
   }
 
   .profitability-report-info {
     grid-template-columns: 1fr 1fr !important;
-    padding: 3.5mm !important;
-    gap: 4mm !important;
+    padding: 3mm !important;
+    gap: 3mm !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
@@ -549,14 +549,14 @@ code {
   .profitability-kpi-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
     gap: 0 !important;
-    padding: 3mm !important;
+    padding: 2.4mm !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
   .profitability-kpi-card {
     min-height: 0 !important;
-    padding: 1.5mm 2mm !important;
+    padding: 1.2mm 1.8mm !important;
     border-right: 1px solid #d7e2ef !important;
   }
 
@@ -566,9 +566,9 @@ code {
   }
 
   .profitability-kpi-card span {
-    width: 22px !important;
-    height: 22px !important;
-    min-width: 22px !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
     font-size: 7px !important;
   }
 
@@ -578,19 +578,19 @@ code {
   }
 
   .profitability-kpi-card div[style*="font-size: 22px"] {
-    font-size: 14px !important;
+    font-size: 13px !important;
   }
 
   .profitability-report-row {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 4mm !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
+    gap: 3mm !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
   }
 
   .profitability-report-card {
-    padding: 3.5mm !important;
+    padding: 3mm !important;
     border: 1px solid #d6e2ef !important;
     border-radius: 6px !important;
     background: #ffffff !important;
@@ -600,7 +600,7 @@ code {
   }
 
   .profitability-report-card h3 {
-    font-size: 11px !important;
+    font-size: 10px !important;
     line-height: 1.2 !important;
     margin-bottom: 2mm !important;
     color: #003087 !important;
@@ -610,29 +610,50 @@ code {
   .profitability-report-card span,
   .profitability-report-card strong,
   .profitability-report-card p {
-    font-size: 8px !important;
-    line-height: 1.25 !important;
+    font-size: 7px !important;
+    line-height: 1.18 !important;
   }
 
   .profitability-report-card [style*="height: 24px"] {
-    height: 13px !important;
+    height: 10px !important;
+  }
+
+  .profitability-report-card [style*="gap: 18px"] {
+    gap: 2.4mm !important;
+  }
+
+  .profitability-report-card [style*="margin-top: 28px"] {
+    margin-top: 5mm !important;
+  }
+
+  .profitability-report-card [style*="margin-top: 24px"] {
+    margin-top: 4mm !important;
+  }
+
+  .profitability-report-card [style*="padding: 13px"] {
+    padding: 2mm !important;
+  }
+
+  .profitability-report-card [style*="padding: 11px 14px"],
+  .profitability-report-card [style*="padding: 10px 14px"] {
+    padding: 1.6mm 2mm !important;
   }
 
   .profitability-report-card [style*="width: 170px"] {
-    width: 34mm !important;
-    height: 34mm !important;
+    width: 31mm !important;
+    height: 31mm !important;
   }
 
   .profitability-report-card [style*="inset: 46px"] {
-    inset: 9mm !important;
+    inset: 8mm !important;
   }
 
   .profitability-report-card [style*="height: 240px"] {
-    height: 42mm !important;
+    height: 39mm !important;
   }
 
   .profitability-report-card [style*="height: 230px"] {
-    height: 42mm !important;
+    height: 39mm !important;
   }
 
   .profitability-report-card [style*="width: 58%"] {
@@ -646,22 +667,24 @@ code {
 
   .profitability-actions-card {
     page-break-before: auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .profitability-actions-card > div {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 3mm !important;
+    gap: 2.5mm !important;
   }
 
   .profitability-actions-card .executive-hover-card {
     min-height: 0 !important;
-    padding: 3mm !important;
+    padding: 2.5mm !important;
   }
 
   .profitability-actions-card .executive-hover-card span {
-    width: 24px !important;
-    height: 24px !important;
-    min-width: 24px !important;
+    width: 21px !important;
+    height: 21px !important;
+    min-width: 21px !important;
     font-size: 7px !important;
   }
 
