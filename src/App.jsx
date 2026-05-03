@@ -2257,6 +2257,24 @@ function DashboardApp({ session, onLogout }) {
   const costTrendPoints = executiveTrendRows.map((row, index) => getTrendPoint(row, index, "cost")).join(" ");
   const approvedTrendPoints = executiveTrendRows.map((row, index) => getTrendPoint(row, index, "approved")).join(" ");
   const latestTrendRow = executiveTrendRows[executiveTrendRows.length - 1];
+  const getMiniTrend = (field, width = 110, height = 44, padding = 5) => {
+    const rows = executiveTrendRows.filter((row) => Number.isFinite(Number(row[field])));
+    if (!rows.length) return { points: "", latest: null };
+    const values = rows.map((row) => Number(row[field]) || 0);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || Math.max(Math.abs(max), 1);
+    const points = values.map((value, index) => {
+      const x = rows.length > 1
+        ? padding + (index / (rows.length - 1)) * (width - padding * 2)
+        : width / 2;
+      const normalized = max === min ? 0.5 : (value - min) / range;
+      const y = height - padding - normalized * (height - padding * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    const [latestX, latestY] = points[points.length - 1].split(",");
+    return { points: points.join(" "), latest: { x: latestX, y: latestY } };
+  };
   const afpTrendRows = filters.month ? monthlyCommercialRows : comparisonMonthlyCommercialRows;
   const approvalCenterRows = [...centerSummaryRows]
     .filter((row) => row.submitted > 0)
@@ -3329,6 +3347,21 @@ function DashboardApp({ session, onLogout }) {
           <div style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(240px, 0.72fr) minmax(0, 1.28fr)", gap: 16, alignItems: "stretch", marginBottom: 16 }}>
             <div style={{ position: "relative", overflow: "hidden", border: `1px solid ${profitColor(revenueSurplus)}33`, borderRadius: 14, padding: "22px 22px", background: `linear-gradient(145deg, #ffffff 0%, ${revenueSurplus >= 0 ? "#f1fdf8" : "#fff5f5"} 100%)`, boxShadow: "0 16px 34px rgba(15,23,42,0.10)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
               <div style={{ position: "absolute", right: -30, bottom: -30, width: 130, height: 130, borderRadius: "50%", background: `${profitColor(revenueSurplus)}14` }} />
+              {(() => {
+                const netTrend = getMiniTrend("net", 132, 52, 6);
+                return (
+                  <div style={{ position: "absolute", right: 16, bottom: 18, width: 132, height: 52, opacity: 0.24 }}>
+                    <svg viewBox="0 0 132 52" aria-hidden="true" style={{ width: "100%", height: "100%" }}>
+                      {netTrend.points && (
+                        <>
+                          <polyline points={netTrend.points} fill="none" stroke={profitColor(revenueSurplus)} strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+                          {netTrend.latest && <circle cx={netTrend.latest.x} cy={netTrend.latest.y} r="3.5" fill={profitColor(revenueSurplus)} stroke="#fff" strokeWidth="1.5" />}
+                        </>
+                      )}
+                    </svg>
+                  </div>
+                );
+              })()}
               <div style={{ color: "#334155", fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>Net Position</div>
               <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, marginTop: 7, whiteSpace: "nowrap" }}>
                 <strong style={{ color: profitColor(revenueSurplus), fontSize: 34, lineHeight: 1, fontWeight: 950 }}>{formatCompactCurrency(revenueSurplus)}</strong>
@@ -3347,24 +3380,32 @@ function DashboardApp({ session, onLogout }) {
             <div style={{ display: "grid", gridTemplateRows: "1fr auto", gap: 10 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
                 {[
-                  ["Approved AFP", formatCompactCurrency(approvedRevenue), getKpiChange("approved"), "#059669"],
-                  [costViewLabel, formatCompactCurrency(visibleTotal), getKpiChange("cost", true), "#2563eb"],
-                  ["Margin / Coverage", formatPercent(approvedRevenue ? revenueSurplus / approvedRevenue : 0), { arrow: "", text: `Coverage ${formatPercent(costCoverage)}`, color: costCoverage >= 1 ? "#059669" : "#dc2626", muted: false }, costCoverage >= 1 ? "#059669" : "#dc2626"],
-                ].map(([label, value, change, accent]) => (
-                  <div key={label} style={{ position: "relative", overflow: "hidden", border: `1px solid ${accent}20`, borderRadius: 14, padding: "18px 18px", background: `linear-gradient(145deg, #ffffff 0%, ${accent}0d 100%)`, minWidth: 0, boxShadow: "0 14px 30px rgba(15,23,42,0.08)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
-                    <div style={{ position: "absolute", right: 12, bottom: 10, width: 110, height: 44, opacity: 0.22 }}>
-                      <svg viewBox="0 0 110 44" aria-hidden="true" style={{ width: "100%", height: "100%" }}>
-                        <path d="M3 35 C20 23, 31 30, 44 18 S72 26, 88 8 S101 16, 107 5" fill="none" stroke={accent} strokeWidth="3" strokeLinecap="round" />
-                      </svg>
+                  ["Approved AFP", formatCompactCurrency(approvedRevenue), getKpiChange("approved"), "#059669", "approved"],
+                  [costViewLabel, formatCompactCurrency(visibleTotal), getKpiChange("cost", true), "#2563eb", "cost"],
+                  ["Margin / Coverage", formatPercent(approvedRevenue ? revenueSurplus / approvedRevenue : 0), { arrow: "", text: `Coverage ${formatPercent(costCoverage)}`, color: costCoverage >= 1 ? "#059669" : "#dc2626", muted: false }, costCoverage >= 1 ? "#059669" : "#dc2626", "margin"],
+                ].map(([label, value, change, accent, trendField]) => {
+                  const miniTrend = getMiniTrend(trendField);
+                  return (
+                    <div key={label} style={{ position: "relative", overflow: "hidden", border: `1px solid ${accent}20`, borderRadius: 14, padding: "18px 18px", background: `linear-gradient(145deg, #ffffff 0%, ${accent}0d 100%)`, minWidth: 0, boxShadow: "0 14px 30px rgba(15,23,42,0.08)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
+                      <div style={{ position: "absolute", right: 12, bottom: 10, width: 110, height: 44, opacity: 0.32 }}>
+                        <svg viewBox="0 0 110 44" aria-hidden="true" style={{ width: "100%", height: "100%" }}>
+                          {miniTrend.points && (
+                            <>
+                              <polyline points={miniTrend.points} fill="none" stroke={accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                              {miniTrend.latest && <circle cx={miniTrend.latest.x} cy={miniTrend.latest.y} r="3.2" fill={accent} stroke="#fff" strokeWidth="1.5" />}
+                            </>
+                          )}
+                        </svg>
+                      </div>
+                      <div style={{ color: "#334155", fontSize: 10, lineHeight: 1, fontWeight: 950, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minHeight: 10 }}>{label}</div>
+                      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginTop: 7, whiteSpace: "nowrap", minHeight: 18 }}>
+                        <strong style={{ color: accent === theme.accentWarm ? "#2563eb" : accent, fontSize: 24, lineHeight: 1, fontWeight: 950 }}>{value}</strong>
+                        <span style={{ color: change.color, opacity: change.muted ? 0.58 : 1, fontSize: change.muted ? 10 : 12, lineHeight: 1, fontWeight: change.muted ? 800 : 950 }}>{change.arrow} {change.text}</span>
+                      </div>
+                      <div style={{ marginTop: 10, color: "#64748b", opacity: 0.85, fontSize: 11, lineHeight: 1 }}>{change.muted ? "Actual monthly trend" : "vs previous month"}</div>
                     </div>
-                    <div style={{ color: "#334155", fontSize: 10, lineHeight: 1, fontWeight: 950, textTransform: "uppercase", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minHeight: 10 }}>{label}</div>
-                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginTop: 7, whiteSpace: "nowrap", minHeight: 18 }}>
-                      <strong style={{ color: accent === theme.accentWarm ? "#2563eb" : accent, fontSize: 24, lineHeight: 1, fontWeight: 950 }}>{value}</strong>
-                      <span style={{ color: change.color, opacity: change.muted ? 0.58 : 1, fontSize: change.muted ? 10 : 12, lineHeight: 1, fontWeight: change.muted ? 800 : 950 }}>{change.arrow} {change.text}</span>
-                    </div>
-                    <div style={{ marginTop: 10, color: "#64748b", opacity: 0.85, fontSize: 11, lineHeight: 1 }}>{change.muted ? "All months" : "vs previous month"}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div style={{ color: "#334155", fontSize: 14, fontWeight: 900, display: "flex", gap: 18, flexWrap: "wrap", padding: "14px 18px", alignItems: "center", justifyContent: "center", border: "1px solid rgba(148,163,184,0.25)", borderRadius: 12, background: "rgba(255,255,255,0.76)", boxShadow: "0 10px 24px rgba(15,23,42,0.05)" }}>
                 <span>Approval Rate: <strong style={{ color: approvalRate >= 0.85 ? "#059669" : "#b45309" }}>{formatPercent(approvalRate)}</strong></span>
