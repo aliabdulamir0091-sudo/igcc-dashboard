@@ -528,6 +528,8 @@ function DashboardApp({ session, onLogout }) {
   const [loadedSpentDetailPeriods, setLoadedSpentDetailPeriods] = useState([]);
   const [spentImportSummary, setSpentImportSummary] = useState(null);
   const [creditNoteImportSummary, setCreditNoteImportSummary] = useState(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [activeUserModal, setActiveUserModal] = useState("");
   const filters = pageFilters[activePage] ?? DEFAULT_FILTERS;
   const setFilters = (updater) => {
     setPageFilters((current) => {
@@ -913,6 +915,26 @@ function DashboardApp({ session, onLogout }) {
   )
     .map((row) => ({ ...row, netImpact: row.cnReceived - row.cnIssued }))
     .sort((a, b) => a.order - b.order);
+  const topCreditReceivingCenters = Array.from(
+    filteredCreditNoteData
+      .filter((item) => (Number(item.cnReceived) || 0) > 0)
+      .reduce((map, item) => {
+        const key = item.costCenter || "Unmapped";
+        const category = normalizeCreditNoteCategory(item.category);
+        const issuer = category === "workshop" ? WORKSHOP_CREDIT_NOTE_ISSUER : CAMP_CREDIT_NOTE_ISSUER;
+        const current = map.get(key) ?? { costCenter: key, cnReceived: 0, sources: new Set(), rows: 0 };
+        current.cnReceived += Number(item.cnReceived) || 0;
+        current.sources.add(issuer);
+        current.rows += 1;
+        map.set(key, current);
+        return map;
+      }, new Map())
+      .values()
+  )
+    .map((row) => ({ ...row, sourceLabel: Array.from(row.sources).sort().join(" / ") }))
+    .sort((a, b) => b.cnReceived - a.cnReceived)
+    .slice(0, 8);
+  const maxTopCreditReceived = Math.max(...topCreditReceivingCenters.map((row) => row.cnReceived), 0);
 
   const sortedData = [...filteredData].sort((a, b) => b.amount - a.amount);
   const spentHasActiveFilter = Boolean(filters.portfolio || filters.hub || filters.costCenter || filters.year || filters.month);
@@ -2221,18 +2243,6 @@ function DashboardApp({ session, onLogout }) {
   });
   const executiveTrendRows = filters.month ? monthlyCommercialRows : comparisonMonthlyCommercialRows;
   const maxTrendValue = Math.max(...executiveTrendRows.flatMap((row) => [Math.abs(row.cost), Math.abs(row.approved)]), 0);
-  const hubsWithoutApprovedRevenue = hubPerformanceSummaryRows
-    .filter((row) => row.cost > 0 && row.approved <= 0)
-    .sort((a, b) => b.cost - a.cost)
-    .slice(0, 3);
-  const hubsWithApprovedRevenue = hubPerformanceSummaryRows
-    .filter((row) => row.approved > 0)
-    .sort((a, b) => a.net - b.net || b.cost - a.cost)
-    .slice(0, 3);
-  const maxTopHubRiskValue = Math.max(
-    ...[...hubsWithoutApprovedRevenue, ...hubsWithApprovedRevenue].flatMap((row) => [Math.abs(row.cost), Math.abs(row.approved)]),
-    0
-  );
   const chartWidth = 360;
   const chartHeight = 150;
   const chartPadding = 18;
@@ -2600,6 +2610,45 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
+      {activeUserModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 45, display: "grid", placeItems: "center", padding: 20, background: themeMode === "light" ? "rgba(15,23,42,0.38)" : "rgba(2,6,23,0.68)" }}>
+          <div style={{ width: "min(520px, 100%)", border: `1px solid ${theme.border}`, borderRadius: 16, background: theme.panelBg, boxShadow: "0 26px 70px rgba(15,23,42,0.30)", overflow: "hidden" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", padding: "18px 20px", background: theme.accentSoft, borderBottom: `1px solid ${theme.border}` }}>
+              <h3 style={{ margin: 0, color: theme.text, fontSize: 18, fontWeight: 950 }}>
+                {activeUserModal === "contact" ? "Contact Us" : activeUserModal === "settings" ? "Settings" : activeUserModal === "login" ? "Login Info" : "Profile / Personal Info"}
+              </h3>
+              <button type="button" onClick={() => setActiveUserModal("")} style={{ border: `1px solid ${theme.border}`, borderRadius: 10, background: theme.panelBg, color: theme.text, width: 34, height: 32, cursor: "pointer", fontWeight: 950 }}>x</button>
+            </div>
+            <div style={{ padding: 20, display: "grid", gap: 12 }}>
+              {(activeUserModal === "profile" || activeUserModal === "login") && [
+                ["User email", session?.email || "Not available"],
+                ["Role", session?.role || "Viewer"],
+                ["Last login", session?.lastLogin || session?.lastLoginAt || "Current session"],
+                ["Access type", isAdmin ? "Administrator" : "Viewer"],
+                ["Approved user status", APPROVED_ACCESS[String(session?.email ?? "").trim().toLowerCase()] ? "Approved" : "Not listed"],
+              ].map(([label, value]) => (
+                <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: 14, borderBottom: `1px solid ${theme.border}`, paddingBottom: 10 }}>
+                  <span style={{ color: theme.subtext, fontWeight: 850 }}>{label}</span>
+                  <strong style={{ color: theme.text, textAlign: "right", overflowWrap: "anywhere" }}>{value}</strong>
+                </div>
+              ))}
+              {activeUserModal === "contact" && (
+                <>
+                  <div style={{ color: theme.text, fontWeight: 950 }}>System owner / Admin contact</div>
+                  <div style={{ color: theme.subtext }}>Ali Abdulamir</div>
+                  <div style={{ color: theme.text, fontWeight: 950, marginTop: 8 }}>Support email</div>
+                  <div style={{ color: theme.subtext }}>support@igccgroup.com</div>
+                  <div style={{ marginTop: 10, color: theme.text, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 12, padding: 14, lineHeight: 1.5 }}>For access or dashboard support, please contact the system administrator.</div>
+                </>
+              )}
+              {activeUserModal === "settings" && (
+                <div style={{ color: theme.subtext, lineHeight: 1.5 }}>Settings are currently limited to dashboard preferences such as light and dark mode. Additional profile settings can be added when access management is expanded.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {isLoading && (
         <div style={{ marginBottom: 12, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 8, padding: "10px 14px", boxShadow: theme.cardShadow, color: theme.subtext, fontSize: 13, fontWeight: 850 }}>
           Loading financial data in the background...
@@ -2624,13 +2673,39 @@ function DashboardApp({ session, onLogout }) {
               <div style={{ color: "#fff", maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 15, fontWeight: 950 }}>{portalUserName}</div>
               <div><span style={{ color: "#22d3ee", textTransform: "uppercase" }}>{session?.role ?? "Viewer"}</span> | Last updated: {lastUpdatedLabel}</div>
             </div>
-            <button
-              type="button"
-              onClick={onLogout}
-              style={{ padding: "14px 24px", cursor: "pointer", backgroundColor: "rgba(255,255,255,0.07)", color: "#fff", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 16, fontWeight: 950, fontSize: 14, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
-            >
-              Logout
-            </button>
+            <div style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() => setIsUserMenuOpen((current) => !current)}
+                aria-label="Open user menu"
+                style={{ width: 46, height: 42, cursor: "pointer", backgroundColor: "rgba(255,255,255,0.07)", color: "#fff", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 14, fontWeight: 950, fontSize: 22, lineHeight: 1, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
+              >
+                ...
+              </button>
+              {isUserMenuOpen && (
+                <div style={{ position: "absolute", right: 0, top: 50, zIndex: 20, minWidth: 230, border: `1px solid ${theme.border}`, borderRadius: 14, padding: 8, background: theme.panelBg, boxShadow: "0 20px 48px rgba(15,23,42,0.24)" }}>
+                  {[
+                    ["profile", "Profile / Personal Info"],
+                    ["login", "Login Info"],
+                    ["contact", "Contact Us"],
+                    ["settings", "Settings"],
+                  ].map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        setActiveUserModal(key);
+                        setIsUserMenuOpen(false);
+                      }}
+                      style={{ width: "100%", border: "none", borderRadius: 10, padding: "10px 11px", background: "transparent", color: theme.text, textAlign: "left", cursor: "pointer", fontWeight: 850 }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  <button type="button" onClick={onLogout} style={{ width: "100%", border: "none", borderRadius: 10, padding: "10px 11px", background: "rgba(220,38,38,0.10)", color: theme.danger, textAlign: "left", cursor: "pointer", fontWeight: 950 }}>Logout</button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         {activePage !== "home" && (
@@ -3227,9 +3302,6 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
 
-          {renderExecutiveInsights(insightContextLabel, keyInsights)}
-          {renderCostSourceBreakdown()}
-
           <div style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(240px, 0.72fr) minmax(0, 1.28fr)", gap: 16, alignItems: "stretch", marginBottom: 16 }}>
             <div style={{ position: "relative", overflow: "hidden", border: `1px solid ${profitColor(revenueSurplus)}33`, borderRadius: 14, padding: "22px 22px", background: `linear-gradient(145deg, #ffffff 0%, ${revenueSurplus >= 0 ? "#f1fdf8" : "#fff5f5"} 100%)`, boxShadow: "0 16px 34px rgba(15,23,42,0.10)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
               <div style={{ position: "absolute", right: -30, bottom: -30, width: 130, height: 130, borderRadius: "50%", background: `${profitColor(revenueSurplus)}14` }} />
@@ -3251,9 +3323,9 @@ function DashboardApp({ session, onLogout }) {
             <div style={{ display: "grid", gridTemplateRows: "1fr auto", gap: 10 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
                 {[
-                  [costViewLabel, formatCompactCurrency(visibleTotal), getKpiChange("cost", true), theme.accentWarm],
-                  ["Submitted AFP", formatCompactCurrency(submittedRevenue), getKpiChange("submitted"), "#2563eb"],
                   ["Approved AFP", formatCompactCurrency(approvedRevenue), getKpiChange("approved"), "#059669"],
+                  [costViewLabel, formatCompactCurrency(visibleTotal), getKpiChange("cost", true), "#2563eb"],
+                  ["Margin / Coverage", formatPercent(approvedRevenue ? revenueSurplus / approvedRevenue : 0), { arrow: "", text: `Coverage ${formatPercent(costCoverage)}`, color: costCoverage >= 1 ? "#059669" : "#dc2626", muted: false }, costCoverage >= 1 ? "#059669" : "#dc2626"],
                 ].map(([label, value, change, accent]) => (
                   <div key={label} style={{ position: "relative", overflow: "hidden", border: `1px solid ${accent}20`, borderRadius: 14, padding: "18px 18px", background: `linear-gradient(145deg, #ffffff 0%, ${accent}0d 100%)`, minWidth: 0, boxShadow: "0 14px 30px rgba(15,23,42,0.08)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
                     <div style={{ position: "absolute", right: 12, bottom: 10, width: 110, height: 44, opacity: 0.22 }}>
@@ -3278,7 +3350,56 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
 
-          {renderWorkshopCreditImpact()}
+          <section style={{ marginBottom: 16, border: "1px solid rgba(148,163,184,0.25)", borderRadius: 16, padding: 18, background: "#fff", boxShadow: "0 16px 38px rgba(15,23,42,0.08)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 14 }}>
+              <div>
+                <h2 style={{ margin: 0, color: "#071a3a", fontSize: 20, fontWeight: 950 }}>Credit Note Impact</h2>
+                <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: 12 }}>Internal reallocations by receiving cost center and issuing source.</p>
+              </div>
+              <span style={{ color: cnNetImpact >= 0 ? "#059669" : "#dc2626", background: "#f8fafc", border: "1px solid rgba(148,163,184,0.22)", borderRadius: 999, padding: "9px 13px", fontSize: 12, fontWeight: 950 }}>
+                Net CN {formatCompactCurrency(cnNetImpact)}
+              </span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(260px, 0.72fr) minmax(0, 1.28fr)", gap: 16 }}>
+              <div style={{ display: "grid", gap: 10 }}>
+                {[
+                  ["CN Issued", cnIssuedTotal, "#dc2626"],
+                  ["CN Received", cnReceivedTotal, "#059669"],
+                  ["Net CN Impact", cnNetImpact, cnNetImpact >= 0 ? "#059669" : "#dc2626"],
+                ].map(([label, value, accent]) => (
+                  <div key={label} style={{ border: `1px solid ${accent}24`, borderRadius: 12, padding: 14, background: `${accent}0d` }}>
+                    <div style={{ color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                    <div style={{ marginTop: 7, color: accent, fontSize: 22, fontWeight: 950 }}>{formatCurrency(value)}</div>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <h3 style={{ margin: "0 0 10px", color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Top Receiving Cost Centers</h3>
+                <div style={{ display: "grid", gap: 8 }}>
+                  {topCreditReceivingCenters.map((row, index) => {
+                    const width = `${Math.max(4, (row.cnReceived / (maxTopCreditReceived || 1)) * 100)}%`;
+                    return (
+                      <div key={row.costCenter} className="executive-hover-card" style={{ display: "grid", gridTemplateColumns: "minmax(120px, 0.55fr) minmax(0, 1fr) 138px", gap: 10, alignItems: "center", border: "1px solid rgba(148,163,184,0.24)", borderRadius: 12, padding: "11px 12px", background: "#f8fafc", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
+                        <div>
+                          <strong style={{ color: "#10233f" }}>{index + 1}. {row.costCenter}</strong>
+                          <div style={{ marginTop: 4, color: "#64748b", fontSize: 11 }}>Source: {row.sourceLabel}</div>
+                        </div>
+                        <div style={{ height: 11, borderRadius: 999, background: "#e5edf5", overflow: "hidden" }}>
+                          <div style={{ width, height: "100%", borderRadius: 999, background: "linear-gradient(90deg, #0f766e, #2563eb)" }} />
+                        </div>
+                        <div style={{ textAlign: "right", color: "#0f766e", fontWeight: 950 }}>{formatCompactCurrency(row.cnReceived)}</div>
+                      </div>
+                    );
+                  })}
+                  {!topCreditReceivingCenters.length && <div style={{ color: theme.subtext }}>No receiving cost centers match the current filters.</div>}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section style={{ marginBottom: 16 }}>
+            {renderExecutiveInsights("Strategic Insights", summaryInsights)}
+          </section>
 
           <div style={{ display: "none" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 12 }}>
@@ -3306,7 +3427,7 @@ function DashboardApp({ session, onLogout }) {
 
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", margin: "10px 0 14px" }}>
             <div>
-              <h2 style={{ margin: 0, color: "#071a3a", fontSize: 20, fontWeight: 950 }}>Performance Charts</h2>
+              <h2 style={{ margin: 0, color: "#071a3a", fontSize: 20, fontWeight: 950 }}>Performance View</h2>
               <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: 12 }}>Trend, concentration, and cost drivers for the current selection.</p>
             </div>
             {latestTrendRow && (
@@ -3382,47 +3503,15 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: 16 }}>
-            <div style={{ border: "1px solid rgba(148,163,184,0.25)", borderRadius: 14, padding: 18, background: "#fff", minHeight: 210, boxSizing: "border-box", boxShadow: "0 16px 38px rgba(15,23,42,0.09)" }}>
-              <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Hub Risk Classification</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 9 }}>
-                {[
-                  ["No Approved Revenue", hubsWithoutApprovedRevenue, theme.danger],
-                  ["With Approved Revenue", hubsWithApprovedRevenue, theme.accentStrong],
-                ].map(([groupLabel, rows, groupColor]) => (
-                  <div key={groupLabel} style={{ display: "grid", gap: 7, alignContent: "start" }}>
-                    <div style={{ color: groupColor, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{groupLabel}</div>
-                    {rows.map((row) => (
-                      <div key={`${groupLabel}-${row.hub}`} style={{ display: "grid", gridTemplateColumns: "82px minmax(0, 1fr) 104px", gap: 7, alignItems: "center" }}>
-                        <span style={{ color: row.net < 0 ? theme.danger : theme.text, fontSize: 12, fontWeight: 900 }}>{row.hub}</span>
-                        <div style={{ display: "grid", gap: 3 }}>
-                          <div style={{ height: 7, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }} title="Cost">
-                            <div style={{ width: `${Math.max(3, (Math.abs(row.cost) / (maxTopHubRiskValue || 1)) * 100)}%`, height: "100%", borderRadius: 999, background: theme.accentWarm }} />
-                          </div>
-                          <div style={{ height: 7, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }} title="Approved AFP">
-                            <div style={{ width: `${Math.max(3, (Math.abs(row.approved) / (maxTopHubRiskValue || 1)) * 100)}%`, height: "100%", borderRadius: 999, background: theme.accentStrong }} />
-                          </div>
-                        </div>
-                        <div style={{ textAlign: "right", fontSize: 10, color: theme.subtext, lineHeight: 1.2 }}>
-                          <div>{formatCompactCurrency(row.cost)} cost</div>
-                          <strong style={{ color: profitColor(row.net), fontSize: 12 }}>{formatCompactCurrency(row.net)} net</strong>
-                        </div>
-                      </div>
-                    ))}
-                    {!rows.length && <div style={{ color: theme.subtext, fontSize: 12 }}>No hubs in this classification.</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
+          <div style={{ display: "grid", gap: 16 }}>
             <div style={{ border: "1px solid rgba(148,163,184,0.25)", borderRadius: 14, padding: 18, background: "#fff", minHeight: 210, boxSizing: "border-box", boxShadow: "0 16px 38px rgba(15,23,42,0.09)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
                 <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Cost by GL Name</h3>
                 {costByGlRows[0] && <span style={{ color: theme.accentStrong, fontSize: 11, fontWeight: 900 }}>Top driver: {costByGlRows[0].glName}</span>}
               </div>
               <div style={{ display: "grid", gap: 8 }}>
-                {costByGlRows.slice(0, 5).map((row, index) => (
-                  <div key={row.glName} style={{ display: "grid", gridTemplateColumns: "minmax(120px, 1fr) minmax(0, 1fr) 130px", gap: 8, alignItems: "center" }}>
+                {costByGlRows.slice(0, 7).map((row, index) => (
+                  <div key={row.glName} style={{ display: "grid", gridTemplateColumns: "minmax(180px, 0.8fr) minmax(0, 1fr) 150px", gap: 12, alignItems: "center" }}>
                     <span style={{ color: index === 0 ? theme.accentStrong : theme.text, fontSize: 12, fontWeight: index === 0 ? 950 : 850, overflowWrap: "anywhere" }}>{row.glName}</span>
                     <div style={{ height: 10, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
                       <div style={{ width: `${Math.max(3, (Math.abs(row.cost) / (maxGlCost || 1)) * 100)}%`, height: "100%", borderRadius: 999, background: index === 0 ? theme.accentStrong : "#0e7490" }} />
