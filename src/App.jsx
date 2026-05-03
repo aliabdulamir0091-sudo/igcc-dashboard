@@ -4626,7 +4626,7 @@ function DashboardApp({ session, onLogout }) {
               ))}
               <div className="profitability-print-actions" style={{ display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <div style={{ minWidth: 238 }}>{renderCostViewToggle()}</div>
-                <button type="button" onClick={filters.costCenter ? handlePrintCostCenterReport : () => window.print()} style={{ border: `1px solid ${theme.border}`, borderRadius: 8, background: theme.panelBg, color: "#0f5fb8", padding: "12px 16px", cursor: "pointer", fontWeight: 900, boxShadow: "0 8px 18px rgba(15,23,42,0.08)" }}>
+                <button type="button" onClick={() => window.print()} style={{ border: `1px solid ${theme.border}`, borderRadius: 8, background: theme.panelBg, color: "#0f5fb8", padding: "12px 16px", cursor: "pointer", fontWeight: 900, boxShadow: "0 8px 18px rgba(15,23,42,0.08)" }}>
                   ⇩ Export Report
                 </button>
               </div>
