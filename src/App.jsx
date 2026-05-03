@@ -2628,48 +2628,12 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
-      {activeUserModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 45, display: "grid", placeItems: "center", padding: 20, background: themeMode === "light" ? "rgba(15,23,42,0.38)" : "rgba(2,6,23,0.68)" }}>
-          <div style={{ width: "min(520px, 100%)", border: `1px solid ${theme.border}`, borderRadius: 16, background: theme.panelBg, boxShadow: "0 26px 70px rgba(15,23,42,0.30)", overflow: "hidden" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", padding: "18px 20px", background: theme.accentSoft, borderBottom: `1px solid ${theme.border}` }}>
-              <h3 style={{ margin: 0, color: theme.text, fontSize: 18, fontWeight: 950 }}>
-                {activeUserModal === "contact" ? "Contact Us" : activeUserModal === "settings" ? "Settings" : activeUserModal === "login" ? "Login Info" : "Profile / Personal Info"}
-              </h3>
-              <button type="button" onClick={() => setActiveUserModal("")} style={{ border: `1px solid ${theme.border}`, borderRadius: 10, background: theme.panelBg, color: theme.text, width: 34, height: 32, cursor: "pointer", fontWeight: 950 }}>x</button>
-            </div>
-            <div style={{ padding: 20, display: "grid", gap: 12 }}>
-              {(activeUserModal === "profile" || activeUserModal === "login") && [
-                ["User email", session?.email || "Not available"],
-                ["Role", session?.role || "Viewer"],
-                ["Last login", session?.lastLogin || session?.lastLoginAt || "Current session"],
-                ["Access type", isAdmin ? "Administrator" : "Viewer"],
-                ["Approved user status", APPROVED_ACCESS[String(session?.email ?? "").trim().toLowerCase()] ? "Approved" : "Not listed"],
-              ].map(([label, value]) => (
-                <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: 14, borderBottom: `1px solid ${theme.border}`, paddingBottom: 10 }}>
-                  <span style={{ color: theme.subtext, fontWeight: 850 }}>{label}</span>
-                  <strong style={{ color: theme.text, textAlign: "right", overflowWrap: "anywhere" }}>{value}</strong>
-                </div>
-              ))}
-              {activeUserModal === "contact" && (
-                <>
-                  <div style={{ color: theme.text, fontWeight: 950 }}>System owner / Admin contact</div>
-                  <div style={{ color: theme.subtext }}>Ali Abdulamir</div>
-                  <div style={{ color: theme.text, fontWeight: 950, marginTop: 8 }}>Support email</div>
-                  <div style={{ color: theme.subtext }}>support@igccgroup.com</div>
-                  <div style={{ marginTop: 10, color: theme.text, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 12, padding: 14, lineHeight: 1.5 }}>For access or dashboard support, please contact the system administrator.</div>
-                </>
-              )}
-              {activeUserModal === "settings" && (
-                <div style={{ color: theme.subtext, lineHeight: 1.5 }}>Settings are currently limited to dashboard preferences such as light and dark mode. Additional profile settings can be added when access management is expanded.</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {isUserMenuOpen && (
         <div
-          onClick={() => setIsUserMenuOpen(false)}
+          onClick={() => {
+            setIsUserMenuOpen(false);
+            setActiveUserModal("");
+          }}
           style={{ position: "fixed", inset: 0, zIndex: 55, background: themeMode === "light" ? "rgba(15,23,42,0.28)" : "rgba(2,6,23,0.62)", display: "flex", justifyContent: "flex-end" }}
         >
           <aside
@@ -2682,30 +2646,77 @@ function DashboardApp({ session, onLogout }) {
                 <h3 style={{ margin: "5px 0 0", color: theme.text, fontSize: 20, fontWeight: 950 }}>{portalUserName}</h3>
                 <div style={{ marginTop: 5, color: theme.subtext, fontSize: 12 }}>{session?.role ?? "Viewer"} | Last updated: {lastUpdatedLabel}</div>
               </div>
-              <button type="button" onClick={() => setIsUserMenuOpen(false)} style={{ border: `1px solid ${theme.border}`, borderRadius: 10, background: theme.inputBg, color: theme.text, width: 34, height: 32, cursor: "pointer", fontWeight: 950 }}>x</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsUserMenuOpen(false);
+                  setActiveUserModal("");
+                }}
+                style={{ border: `1px solid ${theme.border}`, borderRadius: 10, background: theme.inputBg, color: theme.text, width: 34, height: 32, cursor: "pointer", fontWeight: 950 }}
+              >
+                x
+              </button>
             </div>
 
-            <div style={{ display: "grid", gap: 8 }}>
-              {[
-                ["profile", "Profile / Personal Info", "User email, role, access, and approval status"],
-                ["login", "Login Info", "Last login and current access type"],
-                ["contact", "Contact Us", "System owner and support information"],
-                ["settings", "Settings", "Dashboard preferences and access settings"],
-              ].map(([key, label, note]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => {
-                    setActiveUserModal(key);
-                    setIsUserMenuOpen(false);
-                  }}
-                  style={{ width: "100%", border: `1px solid ${theme.border}`, borderRadius: 14, padding: "14px 15px", background: themeMode === "light" ? "#ffffff" : theme.inputBg, color: theme.text, textAlign: "left", cursor: "pointer", boxShadow: "0 10px 22px rgba(15,23,42,0.06)" }}
-                >
-                  <strong style={{ display: "block", fontSize: 14 }}>{label}</strong>
-                  <span style={{ display: "block", marginTop: 4, color: theme.subtext, fontSize: 12, lineHeight: 1.35 }}>{note}</span>
+            {activeUserModal ? (
+              <div style={{ display: "grid", gap: 14 }}>
+                <button type="button" onClick={() => setActiveUserModal("")} style={{ justifySelf: "start", border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", background: theme.inputBg, color: theme.text, cursor: "pointer", fontWeight: 900 }}>
+                  Back
                 </button>
-              ))}
-            </div>
+                <div style={{ border: `1px solid ${theme.border}`, borderRadius: 16, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)", overflow: "hidden" }}>
+                  <div style={{ padding: "16px 18px", background: theme.accentSoft, borderBottom: `1px solid ${theme.border}` }}>
+                    <h3 style={{ margin: 0, color: theme.text, fontSize: 18, fontWeight: 950 }}>
+                      {activeUserModal === "contact" ? "Contact Us" : activeUserModal === "settings" ? "Settings" : activeUserModal === "login" ? "Login Info" : "Profile / Personal Info"}
+                    </h3>
+                  </div>
+                  <div style={{ padding: 18, display: "grid", gap: 12 }}>
+                    {(activeUserModal === "profile" || activeUserModal === "login") && [
+                      ["User email", session?.email || "Not available"],
+                      ["Role", session?.role || "Viewer"],
+                      ["Last login", session?.lastLogin || session?.lastLoginAt || "Current session"],
+                      ["Access type", isAdmin ? "Administrator" : "Viewer"],
+                      ["Approved user status", APPROVED_ACCESS[String(session?.email ?? "").trim().toLowerCase()] ? "Approved" : "Not listed"],
+                    ].map(([label, value]) => (
+                      <div key={label} style={{ display: "grid", gap: 4, borderBottom: `1px solid ${theme.border}`, paddingBottom: 10 }}>
+                        <span style={{ color: theme.subtext, fontSize: 12, fontWeight: 850 }}>{label}</span>
+                        <strong style={{ color: theme.text, overflowWrap: "anywhere" }}>{value}</strong>
+                      </div>
+                    ))}
+                    {activeUserModal === "contact" && (
+                      <>
+                        <div style={{ color: theme.text, fontWeight: 950 }}>System owner / Admin contact</div>
+                        <div style={{ color: theme.subtext }}>Ali Abdulamir</div>
+                        <div style={{ color: theme.text, fontWeight: 950, marginTop: 8 }}>Support email</div>
+                        <div style={{ color: theme.subtext }}>support@igccgroup.com</div>
+                        <div style={{ marginTop: 10, color: theme.text, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 12, padding: 14, lineHeight: 1.5 }}>For access or dashboard support, please contact the system administrator.</div>
+                      </>
+                    )}
+                    {activeUserModal === "settings" && (
+                      <div style={{ color: theme.subtext, lineHeight: 1.5 }}>Settings are currently limited to dashboard preferences such as light and dark mode. Additional profile settings can be added when access management is expanded.</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: 8 }}>
+                {[
+                  ["profile", "Profile / Personal Info", "User email, role, access, and approval status"],
+                  ["login", "Login Info", "Last login and current access type"],
+                  ["contact", "Contact Us", "System owner and support information"],
+                  ["settings", "Settings", "Dashboard preferences and access settings"],
+                ].map(([key, label, note]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setActiveUserModal(key)}
+                    style={{ width: "100%", border: `1px solid ${theme.border}`, borderRadius: 14, padding: "14px 15px", background: themeMode === "light" ? "#ffffff" : theme.inputBg, color: theme.text, textAlign: "left", cursor: "pointer", boxShadow: "0 10px 22px rgba(15,23,42,0.06)" }}
+                  >
+                    <strong style={{ display: "block", fontSize: 14 }}>{label}</strong>
+                    <span style={{ display: "block", marginTop: 4, color: theme.subtext, fontSize: 12, lineHeight: 1.35 }}>{note}</span>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div style={{ marginTop: "auto", borderTop: `1px solid ${theme.border}`, paddingTop: 16 }}>
               <button type="button" onClick={onLogout} style={{ width: "100%", border: "none", borderRadius: 14, padding: "13px 15px", background: "rgba(220,38,38,0.10)", color: theme.danger, textAlign: "left", cursor: "pointer", fontWeight: 950 }}>Logout</button>
@@ -2741,7 +2752,10 @@ function DashboardApp({ session, onLogout }) {
             <div style={{ position: "relative" }}>
               <button
                 type="button"
-                onClick={() => setIsUserMenuOpen((current) => !current)}
+                onClick={() => {
+                  if (isUserMenuOpen) setActiveUserModal("");
+                  setIsUserMenuOpen((current) => !current);
+                }}
                 aria-label="Open user menu"
                 style={{ width: 46, height: 42, cursor: "pointer", backgroundColor: "rgba(255,255,255,0.07)", color: "#fff", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 14, fontWeight: 950, fontSize: 22, lineHeight: 1, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
               >
