@@ -529,6 +529,9 @@ function DashboardApp({ session, onLogout }) {
   const [spentImportSummary, setSpentImportSummary] = useState(null);
   const [creditNoteImportSummary, setCreditNoteImportSummary] = useState(null);
   const [isCeoPnLExpanded, setIsCeoPnLExpanded] = useState(false);
+  const [ceoPnLStatusFilter, setCeoPnLStatusFilter] = useState("all");
+  const [ceoPnLSortMode, setCeoPnLSortMode] = useState("risk");
+  const [ceoPnLSearch, setCeoPnLSearch] = useState("");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [activeUserModal, setActiveUserModal] = useState("");
   const filters = pageFilters[activePage] ?? DEFAULT_FILTERS;
@@ -1794,6 +1797,17 @@ function DashboardApp({ session, onLogout }) {
       };
     })
     .sort((a, b) => a.status.rank - b.status.rank || a.margin - b.margin || b.totalCost - a.totalCost);
+  const filteredCeoPnLRows = ceoPnLRows
+    .filter((row) => ceoPnLStatusFilter === "all" || row.status.label === ceoPnLStatusFilter)
+    .filter((row) => row.costCenter.toLowerCase().includes(ceoPnLSearch.trim().toLowerCase()))
+    .sort((a, b) => {
+      if (ceoPnLSortMode === "marginBest") return b.margin - a.margin || b.net - a.net;
+      if (ceoPnLSortMode === "marginWorst") return a.margin - b.margin || a.net - b.net;
+      if (ceoPnLSortMode === "costHigh") return b.totalCost - a.totalCost;
+      if (ceoPnLSortMode === "cnImpact") return Math.abs(b.cnReceived - b.cnIssued) - Math.abs(a.cnReceived - a.cnIssued);
+      if (ceoPnLSortMode === "approvedHigh") return b.approved - a.approved;
+      return a.status.rank - b.status.rank || a.margin - b.margin || b.totalCost - a.totalCost;
+    });
   const shouldShowCeoCnCards = Math.abs(cnNetImpact) > 1;
   const profitabilityRows = centerSummaryRows
     .map((row) => ({
@@ -3975,7 +3989,7 @@ function DashboardApp({ session, onLogout }) {
                 <h2 style={{ margin: 0, color: "#071a3a", fontSize: 22, fontWeight: 950 }}>CEO Profit &amp; Loss Summary</h2>
                 <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: 12 }}>All cost centers in one compact view, including CN impact and margin health.</p>
               </div>
-              <span style={{ color: "#5b21b6", background: "#f5f3ff", border: "1px solid rgba(124,58,237,0.18)", borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>{ceoPnLRows.length.toLocaleString()} cost centers</span>
+              <span style={{ color: "#5b21b6", background: "#f5f3ff", border: "1px solid rgba(124,58,237,0.18)", borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>{filteredCeoPnLRows.length.toLocaleString()} / {ceoPnLRows.length.toLocaleString()} cost centers</span>
             </div>
 
             {shouldShowCeoCnCards && (
@@ -3997,6 +4011,46 @@ function DashboardApp({ session, onLogout }) {
             </div>
             )}
 
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(180px, 1fr) minmax(150px, 180px) minmax(190px, 220px)", gap: 10, alignItems: "end", marginBottom: 12 }}>
+              <label style={{ display: "grid", gap: 6, color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>
+                Search Cost Center
+                <input
+                  value={ceoPnLSearch}
+                  onChange={(event) => setCeoPnLSearch(event.target.value)}
+                  placeholder="Type cost center..."
+                  style={{ width: "100%", boxSizing: "border-box", border: "1px solid rgba(148,163,184,0.38)", borderRadius: 10, padding: "10px 12px", background: "#f8fafc", color: "#10233f", fontSize: 12, fontWeight: 800, outline: "none" }}
+                />
+              </label>
+              <label style={{ display: "grid", gap: 6, color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>
+                Status
+                <select
+                  value={ceoPnLStatusFilter}
+                  onChange={(event) => setCeoPnLStatusFilter(event.target.value)}
+                  style={{ width: "100%", boxSizing: "border-box", border: "1px solid rgba(148,163,184,0.38)", borderRadius: 10, padding: "10px 12px", background: "#f8fafc", color: "#10233f", fontSize: 12, fontWeight: 900, outline: "none" }}
+                >
+                  <option value="all">All status</option>
+                  <option value="At Risk">At Risk</option>
+                  <option value="Monitor">Monitor</option>
+                  <option value="Healthy">Healthy</option>
+                </select>
+              </label>
+              <label style={{ display: "grid", gap: 6, color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>
+                Sort By
+                <select
+                  value={ceoPnLSortMode}
+                  onChange={(event) => setCeoPnLSortMode(event.target.value)}
+                  style={{ width: "100%", boxSizing: "border-box", border: "1px solid rgba(148,163,184,0.38)", borderRadius: 10, padding: "10px 12px", background: "#f8fafc", color: "#10233f", fontSize: 12, fontWeight: 900, outline: "none" }}
+                >
+                  <option value="risk">Risk first</option>
+                  <option value="marginWorst">Lowest margin</option>
+                  <option value="marginBest">Highest margin</option>
+                  <option value="costHigh">Highest total cost</option>
+                  <option value="approvedHigh">Highest approved AFP</option>
+                  <option value="cnImpact">Largest CN impact</option>
+                </select>
+              </label>
+            </div>
+
             <div className="ceo-pnl-scroll" style={{ height: isCeoPnLExpanded ? 560 : 344, overflowY: "auto", overflowX: "auto", border: "1px solid rgba(148,163,184,0.28)", borderRadius: 12, background: "#fff", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)" }}>
               <table style={{ width: "100%", minWidth: 920, borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
                 <thead>
@@ -4016,7 +4070,7 @@ function DashboardApp({ session, onLogout }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {ceoPnLRows.map((row, index) => (
+                  {filteredCeoPnLRows.map((row, index) => (
                     <tr key={row.costCenter} className="ceo-pnl-row" style={{ background: index % 2 === 0 ? "#ffffff" : "#f8fafc" }}>
                       <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: 950, borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{row.costCenter}</td>
                       <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: 850, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.submitted)}</td>
@@ -4040,9 +4094,9 @@ function DashboardApp({ session, onLogout }) {
                       </td>
                     </tr>
                   ))}
-                  {!ceoPnLRows.length && (
+                  {!filteredCeoPnLRows.length && (
                     <tr>
-                      <td colSpan={8} style={{ padding: 22, textAlign: "center", color: "#64748b", fontWeight: 850 }}>No cost center P&amp;L data matches the current filters.</td>
+                      <td colSpan={8} style={{ padding: 22, textAlign: "center", color: "#64748b", fontWeight: 850 }}>No cost center P&amp;L data matches the current table filters.</td>
                     </tr>
                   )}
                 </tbody>
