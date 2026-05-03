@@ -3968,6 +3968,7 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </section>
 
+          {hasActiveGlobalFilter && (
           <section style={{ position: "relative", marginBottom: 22, border: "1px solid rgba(124,58,237,0.30)", borderRadius: 16, padding: 20, background: "linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)", boxShadow: "0 18px 42px rgba(15,23,42,0.10)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "flex-start", marginBottom: 16, flexWrap: "wrap" }}>
               <div>
@@ -4056,6 +4057,7 @@ function DashboardApp({ session, onLogout }) {
               </button>
             </div>
           </section>
+          )}
 
           <div style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(280px, 0.82fr) minmax(0, 1.18fr)", gap: 16, alignItems: "stretch", marginBottom: 22 }}>
             <div style={{ position: "relative", overflow: "hidden", border: `1px solid ${profitColor(revenueSurplus)}33`, borderRadius: 14, padding: "22px 22px", background: `linear-gradient(145deg, #ffffff 0%, ${revenueSurplus >= 0 ? "#f1fdf8" : "#fff5f5"} 100%)`, boxShadow: "0 16px 34px rgba(15,23,42,0.10)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
