@@ -2708,6 +2708,8 @@ function DashboardApp({ session, onLogout }) {
                   <button
                     key={key}
                     type="button"
+                    onMouseEnter={() => setActiveUserModal(key)}
+                    onFocus={() => setActiveUserModal(key)}
                     onClick={() => setActiveUserModal(key)}
                     style={{ width: "100%", border: `1px solid ${theme.border}`, borderRadius: 14, padding: "14px 15px", background: themeMode === "light" ? "#ffffff" : theme.inputBg, color: theme.text, textAlign: "left", cursor: "pointer", boxShadow: "0 10px 22px rgba(15,23,42,0.06)" }}
                   >
