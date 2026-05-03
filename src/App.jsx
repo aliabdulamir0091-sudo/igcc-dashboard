@@ -1931,6 +1931,27 @@ function DashboardApp({ session, onLogout }) {
     { key: "margin", label: "Profit Margin %", align: "right", filterType: "range", group: "margin", minField: "marginMin", maxField: "marginMax", suffix: "%" },
     { key: "status", label: "Status", align: "left", filterType: "status", group: "status" },
   ];
+  const ceoReportTotals = ceoPnLRows.reduce(
+    (summary, row) => ({
+      submitted: summary.submitted + row.submitted,
+      approved: summary.approved + row.approved,
+      totalCost: summary.totalCost + row.totalCost,
+      netProfit: summary.netProfit + row.net,
+    }),
+    { submitted: 0, approved: 0, totalCost: 0, netProfit: 0 }
+  );
+  const ceoReportMargin = ceoReportTotals.approved ? ceoReportTotals.netProfit / ceoReportTotals.approved : ceoReportTotals.totalCost ? -1 : 0;
+  const ceoTopPerformer = [...ceoPnLRows].sort((a, b) => b.margin - a.margin || b.net - a.net)[0];
+  const ceoHighestCostCenter = [...ceoPnLRows].sort((a, b) => b.totalCost - a.totalCost)[0];
+  const ceoLowestMarginCenter = [...ceoPnLRows].sort((a, b) => a.margin - b.margin || b.totalCost - a.totalCost)[0];
+  const ceoStatusDistribution = ["Healthy", "Monitor", "At Risk", "Critical"].map((statusLabel) => ({
+    label: statusLabel,
+    count: ceoPnLRows.filter((row) => row.status.label === statusLabel).length,
+    color: statusLabel === "Healthy" ? "#059669" : statusLabel === "Monitor" ? "#d97706" : statusLabel === "At Risk" ? "#dc2626" : "#7c3aed",
+  }));
+  const ceoReportPeriodLabel = filters.month || filters.year
+    ? [filters.month || "All months", filters.year || "All years"].join(" / ")
+    : "All available periods";
   const renderCeoPnLFilterPanel = (column) => {
     if (activeCeoPnLFilter !== column.key) return null;
 
@@ -4150,10 +4171,36 @@ function DashboardApp({ session, onLogout }) {
           <section style={{ position: "relative", marginBottom: 22, border: "1px solid rgba(124,58,237,0.30)", borderRadius: 16, padding: 20, background: "linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)", boxShadow: "0 18px 42px rgba(15,23,42,0.10)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "flex-start", marginBottom: 16, flexWrap: "wrap" }}>
               <div>
-                <h2 style={{ margin: 0, color: "#071a3a", fontSize: 22, fontWeight: 950 }}>CEO Profit &amp; Loss Summary</h2>
-                <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: 12 }}>All cost centers in one compact view, including CN impact and margin health.</p>
+                <div style={{ color: "#64748b", fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>CEO Report</div>
+                <h2 style={{ margin: "4px 0 0", color: "#071a3a", fontSize: 25, fontWeight: 950 }}>CEO Profit &amp; Loss Summary Report</h2>
+                <p style={{ margin: "6px 0 0", color: "#335174", fontSize: 13 }}>Performance overview across all cost centers with AFP, cost, margin, and risk signals.</p>
               </div>
-              <span style={{ color: "#5b21b6", background: "#f5f3ff", border: "1px solid rgba(124,58,237,0.18)", borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>{filteredCeoPnLRows.length.toLocaleString()} / {ceoPnLRows.length.toLocaleString()} cost centers</span>
+              <div style={{ display: "grid", gap: 5, color: "#10233f", fontSize: 12, fontWeight: 850 }}>
+                <span>Report Date: <strong>{new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</strong></span>
+                <span>Reporting Period: <strong>{ceoReportPeriodLabel}</strong></span>
+                <span>Currency: <strong>USD</strong></span>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12, marginBottom: 18 }}>
+              {[
+                ["Total Approved AFP", ceoReportTotals.approved, "#059669", "Approved commercial value"],
+                ["Total Submitted AFP", ceoReportTotals.submitted, "#2563eb", "Submitted AFP pipeline"],
+                ["Total Cost", ceoReportTotals.totalCost, "#f97316", "Cost after CN impact"],
+                ["Total Net Profit", ceoReportTotals.netProfit, profitColor(ceoReportTotals.netProfit), "Approved AFP - total cost"],
+                ["Overall Profit Margin", ceoReportMargin, profitColor(ceoReportTotals.netProfit), "Net profit / approved AFP", "percent"],
+              ].map(([label, value, color, detail, type]) => (
+                <div key={label} className="executive-hover-card" style={{ position: "relative", overflow: "hidden", border: `1px solid ${color}24`, borderRadius: 12, padding: 15, background: `${color}08`, minHeight: 104, boxShadow: "0 10px 24px rgba(15,23,42,0.06)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
+                  <div style={{ color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                  <strong style={{ display: "block", marginTop: 8, color: "#071a3a", fontSize: 22, lineHeight: 1.05, fontWeight: 950 }}>{type === "percent" ? formatPercent(value) : formatCompactCurrency(value)}</strong>
+                  <div style={{ marginTop: 7, color: "#64748b", fontSize: 11, lineHeight: 1.35 }}>{detail}</div>
+                  <svg viewBox="0 0 110 28" aria-hidden="true" style={{ position: "absolute", right: 12, bottom: 10, width: 92, height: 24, opacity: 0.34 }}>
+                    {getMiniTrend(type === "percent" ? "margin" : label.includes("Cost") ? "cost" : label.includes("Submitted") ? "submitted" : label.includes("Approved") ? "approved" : "net", 110, 28, 3).points && (
+                      <polyline points={getMiniTrend(type === "percent" ? "margin" : label.includes("Cost") ? "cost" : label.includes("Submitted") ? "submitted" : label.includes("Approved") ? "approved" : "net", 110, 28, 3).points} fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                    )}
+                  </svg>
+                </div>
+              ))}
             </div>
 
             {shouldShowCeoCnCards && (
@@ -4252,6 +4299,18 @@ function DashboardApp({ session, onLogout }) {
                       </td>
                     </tr>
                   ))}
+                  {filteredCeoPnLRows.length > 0 && (
+                    <tr style={{ background: "linear-gradient(90deg, #eef3f8, #f8fafc)" }}>
+                      <td style={{ padding: "13px 14px", color: "#0b2a55", fontWeight: 950, borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>TOTAL</td>
+                      <td style={{ padding: "13px 14px", color: "#0b2a55", fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatCompactCurrency(filteredCeoPnLRows.reduce((sum, row) => sum + row.submitted, 0))}</td>
+                      <td style={{ padding: "13px 14px", color: "#0b2a55", fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatCompactCurrency(filteredCeoPnLRows.reduce((sum, row) => sum + row.approved, 0))}</td>
+                      <td style={{ padding: "13px 14px", color: "#059669", fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatCompactCurrency(filteredCeoPnLRows.reduce((sum, row) => sum + row.cnReceived, 0))}</td>
+                      <td style={{ padding: "13px 14px", color: "#dc2626", fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatCompactCurrency(filteredCeoPnLRows.reduce((sum, row) => sum + row.cnIssued, 0))}</td>
+                      <td style={{ padding: "13px 14px", color: "#0b2a55", fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatCompactCurrency(filteredCeoPnLRows.reduce((sum, row) => sum + row.totalCost, 0))}</td>
+                      <td style={{ padding: "13px 14px", color: profitColor(filteredCeoPnLRows.reduce((sum, row) => sum + row.net, 0)), fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatPercent(filteredCeoPnLRows.reduce((sum, row) => sum + row.approved, 0) ? filteredCeoPnLRows.reduce((sum, row) => sum + row.net, 0) / filteredCeoPnLRows.reduce((sum, row) => sum + row.approved, 0) : 0)}</td>
+                      <td style={{ padding: "13px 14px", color: "#64748b", fontWeight: 900, borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{filteredCeoPnLRows.length.toLocaleString()} centers</td>
+                    </tr>
+                  )}
                   {!filteredCeoPnLRows.length && (
                     <tr>
                       <td colSpan={8} style={{ padding: 22, textAlign: "center", color: "#64748b", fontWeight: 850 }}>No cost center P&amp;L data matches the current table filters.</td>
@@ -4259,6 +4318,92 @@ function DashboardApp({ session, onLogout }) {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.15fr) minmax(240px, 0.85fr) minmax(240px, 0.85fr)", gap: 14, marginTop: 14 }}>
+              <div style={{ border: "1px solid rgba(148,163,184,0.24)", borderRadius: 12, padding: 16, background: "#fff", boxShadow: "0 10px 24px rgba(15,23,42,0.06)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 8 }}>
+                  <h3 style={{ margin: 0, color: "#071a3a", fontSize: 14, fontWeight: 950 }}>Portfolio Trend</h3>
+                  <span style={{ color: "#64748b", fontSize: 11, fontWeight: 850 }}>Last visible months</span>
+                </div>
+                {executiveTrendRows.length ? (
+                  <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="img" aria-label="CEO report portfolio trend" style={{ width: "100%", height: 150, display: "block" }}>
+                    <line x1={chartPadding} y1={chartHeight - chartPadding} x2={chartWidth - chartPadding} y2={chartHeight - chartPadding} stroke="rgba(148,163,184,0.22)" strokeWidth="1" />
+                    <polyline points={approvedTrendPoints} fill="none" stroke="#059669" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+                    <polyline points={costTrendPoints} fill="none" stroke="#f97316" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+                    {executiveTrendRows.map((row, index) => {
+                      const [approvedX, approvedY] = getTrendPoint(row, index, "approved").split(",");
+                      const [costX, costY] = getTrendPoint(row, index, "cost").split(",");
+                      return (
+                        <g key={`ceo-trend-${row.key}`}>
+                          <circle cx={approvedX} cy={approvedY} r="3.4" fill="#059669" stroke="#fff" strokeWidth="1.5" />
+                          <circle cx={costX} cy={costY} r="3.4" fill="#f97316" stroke="#fff" strokeWidth="1.5" />
+                          <text x={approvedX} y={chartHeight - 4} textAnchor="middle" fill="#64748b" fontSize="8" fontWeight="800">{row.label.split(" ")[0]}</text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                ) : (
+                  <div style={{ color: "#64748b", fontSize: 12 }}>No trend data available.</div>
+                )}
+              </div>
+
+              <div style={{ border: "1px solid rgba(148,163,184,0.24)", borderRadius: 12, padding: 16, background: "#fff", boxShadow: "0 10px 24px rgba(15,23,42,0.06)" }}>
+                <h3 style={{ margin: 0, color: "#071a3a", fontSize: 14, fontWeight: 950 }}>Key Highlights</h3>
+                <div style={{ display: "grid", gap: 12, marginTop: 14 }}>
+                  {[
+                    ["Top Performer", ceoTopPerformer?.costCenter ?? "N/A", ceoTopPerformer ? formatPercent(ceoTopPerformer.margin) : "-", "#059669"],
+                    ["Highest Cost Center", ceoHighestCostCenter?.costCenter ?? "N/A", ceoHighestCostCenter ? formatCompactCurrency(ceoHighestCostCenter.totalCost) : "-", "#f97316"],
+                    ["Lowest Margin / Risk", ceoLowestMarginCenter?.costCenter ?? "N/A", ceoLowestMarginCenter ? formatPercent(ceoLowestMarginCenter.margin) : "-", "#dc2626"],
+                  ].map(([label, value, metric, color]) => (
+                    <div key={label} style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "center", borderBottom: "1px solid rgba(226,232,240,0.86)", paddingBottom: 10 }}>
+                      <span>
+                        <span style={{ display: "block", color: "#64748b", fontSize: 11, fontWeight: 850 }}>{label}</span>
+                        <strong style={{ display: "block", marginTop: 3, color: "#071a3a", fontSize: 14 }}>{value}</strong>
+                      </span>
+                      <strong style={{ color, fontSize: 13 }}>{metric}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ border: "1px solid rgba(148,163,184,0.24)", borderRadius: 12, padding: 16, background: "#fff", boxShadow: "0 10px 24px rgba(15,23,42,0.06)" }}>
+                <h3 style={{ margin: 0, color: "#071a3a", fontSize: 14, fontWeight: 950 }}>Margin Distribution</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "112px 1fr", gap: 14, alignItems: "center", marginTop: 12 }}>
+                  {(() => {
+                    const total = Math.max(ceoPnLRows.length, 1);
+                    let cumulative = 0;
+                    const gradient = ceoStatusDistribution.map((item) => {
+                      const start = cumulative;
+                      cumulative += (item.count / total) * 100;
+                      return `${item.color} ${start}% ${cumulative}%`;
+                    }).join(", ");
+                    return (
+                      <div style={{ width: 112, height: 112, borderRadius: "50%", background: `conic-gradient(${gradient})`, display: "grid", placeItems: "center" }}>
+                        <div style={{ width: 66, height: 66, borderRadius: "50%", background: "#fff", display: "grid", placeItems: "center", color: "#071a3a", fontWeight: 950, textAlign: "center", lineHeight: 1.15 }}>{ceoPnLRows.length}<br /><span style={{ fontSize: 10, color: "#64748b" }}>Centers</span></div>
+                      </div>
+                    );
+                  })()}
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {ceoStatusDistribution.map((item) => (
+                      <div key={item.label} style={{ display: "flex", justifyContent: "space-between", gap: 8, color: "#10233f", fontSize: 12, fontWeight: 850 }}>
+                        <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: item.color, marginRight: 7 }} />{item.label}</span>
+                        <strong>{item.count}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 14, border: "1px solid rgba(124,58,237,0.22)", borderRadius: 12, padding: 16, background: "linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 0.42fr)", gap: 14, alignItems: "center" }}>
+              <div>
+                <h3 style={{ margin: 0, color: "#071a3a", fontSize: 15, fontWeight: 950 }}>Margin Impact from Head Office Allocation</h3>
+                <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: 12 }}>Margins include the selected cost basis and CN adjustments where applicable.</p>
+              </div>
+              <div style={{ color: "#071a3a", fontSize: 13, lineHeight: 1.55 }}>
+                <strong>Insight:</strong> Current fully loaded margin is <strong style={{ color: profitColor(ceoReportTotals.netProfit) }}>{formatPercent(ceoReportMargin)}</strong>. {ceoLowestMarginCenter ? `${ceoLowestMarginCenter.costCenter} is the lowest-margin center and should be reviewed first.` : "No margin risk center is available."}
+              </div>
             </div>
 
             <div style={{ display: "flex", justifyContent: "center", marginTop: 14 }}>
