@@ -529,9 +529,24 @@ function DashboardApp({ session, onLogout }) {
   const [spentImportSummary, setSpentImportSummary] = useState(null);
   const [creditNoteImportSummary, setCreditNoteImportSummary] = useState(null);
   const [isCeoPnLExpanded, setIsCeoPnLExpanded] = useState(false);
-  const [ceoPnLStatusFilter, setCeoPnLStatusFilter] = useState("all");
-  const [ceoPnLSortMode, setCeoPnLSortMode] = useState("risk");
-  const [ceoPnLSearch, setCeoPnLSearch] = useState("");
+  const [activeCeoPnLFilter, setActiveCeoPnLFilter] = useState("");
+  const [ceoPnLSort, setCeoPnLSort] = useState({ key: "status", direction: "asc" });
+  const [ceoPnLColumnFilters, setCeoPnLColumnFilters] = useState({
+    costCenter: "",
+    submittedMin: "",
+    submittedMax: "",
+    approvedMin: "",
+    approvedMax: "",
+    cnReceivedMin: "",
+    cnReceivedMax: "",
+    cnIssuedMin: "",
+    cnIssuedMax: "",
+    totalCostMin: "",
+    totalCostMax: "",
+    marginMin: "",
+    marginMax: "",
+    status: "all",
+  });
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [activeUserModal, setActiveUserModal] = useState("");
   const filters = pageFilters[activePage] ?? DEFAULT_FILTERS;
@@ -1777,10 +1792,12 @@ function DashboardApp({ session, onLogout }) {
     return { points: points.join(" "), color: values[values.length - 1] >= 0 ? "#059669" : "#dc2626" };
   };
   const getCeoPnLStatus = (margin, totalCost, approved) => {
-    if (!approved && totalCost) return { label: "At Risk", color: "#dc2626", bg: "#fff1f2", rank: 0 };
-    if (margin >= 0.15) return { label: "Healthy", color: "#059669", bg: "#ecfdf5", rank: 2 };
-    if (margin >= 0) return { label: "Monitor", color: "#d97706", bg: "#fff7ed", rank: 1 };
-    return { label: "At Risk", color: "#dc2626", bg: "#fff1f2", rank: 0 };
+    if (!approved && totalCost > 500000) return { label: "Critical", color: "#991b1b", bg: "#fef2f2", rank: 0 };
+    if (margin <= -0.25) return { label: "Critical", color: "#991b1b", bg: "#fef2f2", rank: 0 };
+    if (!approved && totalCost) return { label: "At Risk", color: "#dc2626", bg: "#fff1f2", rank: 1 };
+    if (margin >= 0.15) return { label: "Healthy", color: "#059669", bg: "#ecfdf5", rank: 3 };
+    if (margin >= 0) return { label: "Monitor", color: "#d97706", bg: "#fff7ed", rank: 2 };
+    return { label: "At Risk", color: "#dc2626", bg: "#fff1f2", rank: 1 };
   };
   const ceoPnLRows = centerSummaryRows
     .map((row) => {
@@ -1797,18 +1814,165 @@ function DashboardApp({ session, onLogout }) {
       };
     })
     .sort((a, b) => a.status.rank - b.status.rank || a.margin - b.margin || b.totalCost - a.totalCost);
+  const numberFilterValue = (value) => {
+    if (value === "" || value === null || value === undefined) return null;
+    const number = Number(String(value).replace(/[$,%\s,]+/g, ""));
+    return Number.isFinite(number) ? number : null;
+  };
+  const passesRangeFilter = (value, minRaw, maxRaw) => {
+    const min = numberFilterValue(minRaw);
+    const max = numberFilterValue(maxRaw);
+    if (min !== null && value < min) return false;
+    if (max !== null && value > max) return false;
+    return true;
+  };
+  const getCeoPnLSortValue = (row, key) => {
+    if (key === "costCenter") return row.costCenter;
+    if (key === "submitted") return row.submitted;
+    if (key === "approved") return row.approved;
+    if (key === "cnReceived") return row.cnReceived;
+    if (key === "cnIssued") return row.cnIssued;
+    if (key === "totalCost") return row.totalCost;
+    if (key === "margin") return row.margin;
+    if (key === "status") return row.status.rank;
+    return row.totalCost;
+  };
   const filteredCeoPnLRows = ceoPnLRows
-    .filter((row) => ceoPnLStatusFilter === "all" || row.status.label === ceoPnLStatusFilter)
-    .filter((row) => row.costCenter.toLowerCase().includes(ceoPnLSearch.trim().toLowerCase()))
+    .filter((row) => !ceoPnLColumnFilters.costCenter || row.costCenter.toLowerCase().includes(ceoPnLColumnFilters.costCenter.trim().toLowerCase()))
+    .filter((row) => ceoPnLColumnFilters.status === "all" || row.status.label === ceoPnLColumnFilters.status)
+    .filter((row) => passesRangeFilter(row.submitted, ceoPnLColumnFilters.submittedMin, ceoPnLColumnFilters.submittedMax))
+    .filter((row) => passesRangeFilter(row.approved, ceoPnLColumnFilters.approvedMin, ceoPnLColumnFilters.approvedMax))
+    .filter((row) => passesRangeFilter(row.cnReceived, ceoPnLColumnFilters.cnReceivedMin, ceoPnLColumnFilters.cnReceivedMax))
+    .filter((row) => passesRangeFilter(row.cnIssued, ceoPnLColumnFilters.cnIssuedMin, ceoPnLColumnFilters.cnIssuedMax))
+    .filter((row) => passesRangeFilter(row.totalCost, ceoPnLColumnFilters.totalCostMin, ceoPnLColumnFilters.totalCostMax))
+    .filter((row) => passesRangeFilter(row.margin * 100, ceoPnLColumnFilters.marginMin, ceoPnLColumnFilters.marginMax))
     .sort((a, b) => {
-      if (ceoPnLSortMode === "marginBest") return b.margin - a.margin || b.net - a.net;
-      if (ceoPnLSortMode === "marginWorst") return a.margin - b.margin || a.net - b.net;
-      if (ceoPnLSortMode === "costHigh") return b.totalCost - a.totalCost;
-      if (ceoPnLSortMode === "cnImpact") return Math.abs(b.cnReceived - b.cnIssued) - Math.abs(a.cnReceived - a.cnIssued);
-      if (ceoPnLSortMode === "approvedHigh") return b.approved - a.approved;
-      return a.status.rank - b.status.rank || a.margin - b.margin || b.totalCost - a.totalCost;
+      const aValue = getCeoPnLSortValue(a, ceoPnLSort.key);
+      const bValue = getCeoPnLSortValue(b, ceoPnLSort.key);
+      const direction = ceoPnLSort.direction === "asc" ? 1 : -1;
+      if (typeof aValue === "string") return aValue.localeCompare(bValue) * direction;
+      return (aValue - bValue) * direction || a.status.rank - b.status.rank || a.margin - b.margin;
     });
   const shouldShowCeoCnCards = Math.abs(cnNetImpact) > 1;
+  const ceoPnLCostCenterOptions = ceoPnLRows.map((row) => row.costCenter).sort((a, b) => a.localeCompare(b));
+  const updateCeoPnLFilter = (field, value) => {
+    setCeoPnLColumnFilters((current) => ({ ...current, [field]: value }));
+  };
+  const clearCeoPnLFilters = () => {
+    setCeoPnLColumnFilters({
+      costCenter: "",
+      submittedMin: "",
+      submittedMax: "",
+      approvedMin: "",
+      approvedMax: "",
+      cnReceivedMin: "",
+      cnReceivedMax: "",
+      cnIssuedMin: "",
+      cnIssuedMax: "",
+      totalCostMin: "",
+      totalCostMax: "",
+      marginMin: "",
+      marginMax: "",
+      status: "all",
+    });
+    setActiveCeoPnLFilter("");
+  };
+  const applyCeoPnLQuickFilter = (mode) => {
+    if (mode === "loss") {
+      setCeoPnLColumnFilters((current) => ({ ...current, marginMax: "0", status: "all" }));
+    } else if (mode === "highMargin") {
+      setCeoPnLColumnFilters((current) => ({ ...current, marginMin: "20", status: "all" }));
+    } else if (mode === "highCost") {
+      const highCostThreshold = Math.max(...ceoPnLRows.map((row) => row.totalCost), 0) * 0.5;
+      setCeoPnLColumnFilters((current) => ({ ...current, totalCostMin: Math.round(highCostThreshold).toString(), status: "all" }));
+    }
+  };
+  const handleCeoPnLSort = (key) => {
+    setCeoPnLSort((current) => ({
+      key,
+      direction: current.key === key && current.direction === "asc" ? "desc" : "asc",
+    }));
+  };
+  const hasCeoPnLFilters = Object.entries(ceoPnLColumnFilters).some(([key, value]) => key === "status" ? value !== "all" : Boolean(value));
+  const ceoPnLActiveFilterTags = [
+    ceoPnLColumnFilters.costCenter && ["Cost Center", ceoPnLColumnFilters.costCenter, "costCenter"],
+    ceoPnLColumnFilters.status !== "all" && ["Status", ceoPnLColumnFilters.status, "status"],
+    (ceoPnLColumnFilters.submittedMin || ceoPnLColumnFilters.submittedMax) && ["Submitted AFP", `${ceoPnLColumnFilters.submittedMin || "0"} - ${ceoPnLColumnFilters.submittedMax || "any"}`, "submitted"],
+    (ceoPnLColumnFilters.approvedMin || ceoPnLColumnFilters.approvedMax) && ["Approved AFP", `${ceoPnLColumnFilters.approvedMin || "0"} - ${ceoPnLColumnFilters.approvedMax || "any"}`, "approved"],
+    (ceoPnLColumnFilters.cnReceivedMin || ceoPnLColumnFilters.cnReceivedMax) && ["Received CN", `${ceoPnLColumnFilters.cnReceivedMin || "0"} - ${ceoPnLColumnFilters.cnReceivedMax || "any"}`, "cnReceived"],
+    (ceoPnLColumnFilters.cnIssuedMin || ceoPnLColumnFilters.cnIssuedMax) && ["Issued CN", `${ceoPnLColumnFilters.cnIssuedMin || "0"} - ${ceoPnLColumnFilters.cnIssuedMax || "any"}`, "cnIssued"],
+    (ceoPnLColumnFilters.totalCostMin || ceoPnLColumnFilters.totalCostMax) && ["Total Cost", `${ceoPnLColumnFilters.totalCostMin || "0"} - ${ceoPnLColumnFilters.totalCostMax || "any"}`, "totalCost"],
+    (ceoPnLColumnFilters.marginMin || ceoPnLColumnFilters.marginMax) && ["Margin %", `${ceoPnLColumnFilters.marginMin || "-any"}% - ${ceoPnLColumnFilters.marginMax || "any"}%`, "margin"],
+  ].filter(Boolean);
+  const clearCeoPnLFilterGroup = (group) => {
+    const groupFields = {
+      costCenter: ["costCenter"],
+      status: ["status"],
+      submitted: ["submittedMin", "submittedMax"],
+      approved: ["approvedMin", "approvedMax"],
+      cnReceived: ["cnReceivedMin", "cnReceivedMax"],
+      cnIssued: ["cnIssuedMin", "cnIssuedMax"],
+      totalCost: ["totalCostMin", "totalCostMax"],
+      margin: ["marginMin", "marginMax"],
+    }[group] ?? [];
+
+    setCeoPnLColumnFilters((current) => ({
+      ...current,
+      ...Object.fromEntries(groupFields.map((field) => [field, field === "status" ? "all" : ""])),
+    }));
+  };
+  const ceoPnLColumns = [
+    { key: "costCenter", label: "Cost Center", align: "left", filterType: "costCenter", group: "costCenter" },
+    { key: "submitted", label: "Submitted AFP", align: "right", filterType: "range", group: "submitted", minField: "submittedMin", maxField: "submittedMax" },
+    { key: "approved", label: "Approved AFP", align: "right", filterType: "range", group: "approved", minField: "approvedMin", maxField: "approvedMax" },
+    { key: "cnReceived", label: "Received CN", align: "right", filterType: "range", group: "cnReceived", minField: "cnReceivedMin", maxField: "cnReceivedMax" },
+    { key: "cnIssued", label: "Issued CN", align: "right", filterType: "range", group: "cnIssued", minField: "cnIssuedMin", maxField: "cnIssuedMax" },
+    { key: "totalCost", label: "Total Cost", align: "right", filterType: "range", group: "totalCost", minField: "totalCostMin", maxField: "totalCostMax" },
+    { key: "margin", label: "Profit Margin %", align: "right", filterType: "range", group: "margin", minField: "marginMin", maxField: "marginMax", suffix: "%" },
+    { key: "status", label: "Status", align: "left", filterType: "status", group: "status" },
+  ];
+  const renderCeoPnLFilterPanel = (column) => {
+    if (activeCeoPnLFilter !== column.key) return null;
+
+    const panelInputStyle = { width: "100%", boxSizing: "border-box", border: "1px solid rgba(148,163,184,0.36)", borderRadius: 8, padding: "9px 10px", background: "#fff", color: "#10233f", fontSize: 12, fontWeight: 800, outline: "none" };
+    const panelButtonStyle = { border: "1px solid rgba(148,163,184,0.32)", borderRadius: 8, padding: "8px 10px", background: "#f8fafc", color: "#334155", cursor: "pointer", fontSize: 11, fontWeight: 950 };
+
+    return (
+      <div onClick={(event) => event.stopPropagation()} style={{ position: "absolute", top: "calc(100% + 8px)", left: column.align === "right" ? "auto" : 8, right: column.align === "right" ? 8 : "auto", zIndex: 20, width: column.filterType === "range" ? 210 : 230, border: "1px solid rgba(148,163,184,0.30)", borderRadius: 12, padding: 12, background: "#ffffff", color: "#10233f", boxShadow: "0 18px 48px rgba(15,23,42,0.22)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 10 }}>
+          <strong style={{ color: "#10233f", fontSize: 12 }}>{column.label}</strong>
+          <button type="button" onClick={() => setActiveCeoPnLFilter("")} style={{ border: 0, background: "transparent", color: "#64748b", cursor: "pointer", fontWeight: 950 }}>x</button>
+        </div>
+        {column.filterType === "costCenter" && (
+          <div style={{ display: "grid", gap: 8 }}>
+            <input list="ceo-pnl-cost-centers" value={ceoPnLColumnFilters.costCenter} onChange={(event) => updateCeoPnLFilter("costCenter", event.target.value)} placeholder="Search or select..." style={panelInputStyle} />
+            <datalist id="ceo-pnl-cost-centers">
+              {ceoPnLCostCenterOptions.map((center) => <option key={center} value={center} />)}
+            </datalist>
+          </div>
+        )}
+        {column.filterType === "range" && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <input value={ceoPnLColumnFilters[column.minField]} onChange={(event) => updateCeoPnLFilter(column.minField, event.target.value)} placeholder={`Min${column.suffix ?? ""}`} inputMode="decimal" style={panelInputStyle} />
+            <input value={ceoPnLColumnFilters[column.maxField]} onChange={(event) => updateCeoPnLFilter(column.maxField, event.target.value)} placeholder={`Max${column.suffix ?? ""}`} inputMode="decimal" style={panelInputStyle} />
+          </div>
+        )}
+        {column.filterType === "status" && (
+          <select value={ceoPnLColumnFilters.status} onChange={(event) => updateCeoPnLFilter("status", event.target.value)} style={panelInputStyle}>
+            <option value="all">All status</option>
+            <option value="Healthy">Healthy</option>
+            <option value="Monitor">Monitor</option>
+            <option value="At Risk">At Risk</option>
+            <option value="Critical">Critical</option>
+          </select>
+        )}
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginTop: 10 }}>
+          <button type="button" onClick={() => clearCeoPnLFilterGroup(column.group)} style={panelButtonStyle}>Clear</button>
+          <button type="button" onClick={() => setActiveCeoPnLFilter("")} style={{ ...panelButtonStyle, background: "#eff6ff", color: "#0b4db3", borderColor: "rgba(37,99,235,0.24)" }}>Done</button>
+        </div>
+      </div>
+    );
+  };
   const profitabilityRows = centerSummaryRows
     .map((row) => ({
       ...row,
@@ -4011,61 +4175,55 @@ function DashboardApp({ session, onLogout }) {
             </div>
             )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(180px, 1fr) minmax(150px, 180px) minmax(190px, 220px)", gap: 10, alignItems: "end", marginBottom: 12 }}>
-              <label style={{ display: "grid", gap: 6, color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>
-                Search Cost Center
-                <input
-                  value={ceoPnLSearch}
-                  onChange={(event) => setCeoPnLSearch(event.target.value)}
-                  placeholder="Type cost center..."
-                  style={{ width: "100%", boxSizing: "border-box", border: "1px solid rgba(148,163,184,0.38)", borderRadius: 10, padding: "10px 12px", background: "#f8fafc", color: "#10233f", fontSize: 12, fontWeight: 800, outline: "none" }}
-                />
-              </label>
-              <label style={{ display: "grid", gap: 6, color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>
-                Status
-                <select
-                  value={ceoPnLStatusFilter}
-                  onChange={(event) => setCeoPnLStatusFilter(event.target.value)}
-                  style={{ width: "100%", boxSizing: "border-box", border: "1px solid rgba(148,163,184,0.38)", borderRadius: 10, padding: "10px 12px", background: "#f8fafc", color: "#10233f", fontSize: 12, fontWeight: 900, outline: "none" }}
-                >
-                  <option value="all">All status</option>
-                  <option value="At Risk">At Risk</option>
-                  <option value="Monitor">Monitor</option>
-                  <option value="Healthy">Healthy</option>
-                </select>
-              </label>
-              <label style={{ display: "grid", gap: 6, color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>
-                Sort By
-                <select
-                  value={ceoPnLSortMode}
-                  onChange={(event) => setCeoPnLSortMode(event.target.value)}
-                  style={{ width: "100%", boxSizing: "border-box", border: "1px solid rgba(148,163,184,0.38)", borderRadius: 10, padding: "10px 12px", background: "#f8fafc", color: "#10233f", fontSize: 12, fontWeight: 900, outline: "none" }}
-                >
-                  <option value="risk">Risk first</option>
-                  <option value="marginWorst">Lowest margin</option>
-                  <option value="marginBest">Highest margin</option>
-                  <option value="costHigh">Highest total cost</option>
-                  <option value="approvedHigh">Highest approved AFP</option>
-                  <option value="cnImpact">Largest CN impact</option>
-                </select>
-              </label>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+              <span style={{ color: "#10233f", fontSize: 12, fontWeight: 950 }}>Quick Filters</span>
+              {[
+                ["Show Loss Making Only", "loss", "#dc2626"],
+                ["High Margin (>20%)", "highMargin", "#059669"],
+                ["High Cost Centers", "highCost", "#b45309"],
+              ].map(([label, mode, color]) => (
+                <button key={mode} type="button" onClick={() => applyCeoPnLQuickFilter(mode)} style={{ border: `1px solid ${color}24`, borderRadius: 10, padding: "9px 12px", background: `${color}0d`, color, cursor: "pointer", fontSize: 12, fontWeight: 950 }}>
+                  {label}
+                </button>
+              ))}
+              <button type="button" onClick={clearCeoPnLFilters} disabled={!hasCeoPnLFilters} style={{ marginLeft: "auto", border: "1px solid rgba(37,99,235,0.24)", borderRadius: 10, padding: "9px 12px", background: hasCeoPnLFilters ? "#eff6ff" : "#f8fafc", color: hasCeoPnLFilters ? "#0b4db3" : "#94a3b8", cursor: hasCeoPnLFilters ? "pointer" : "default", fontSize: 12, fontWeight: 950 }}>
+                Clear Filters
+              </button>
+            </div>
+
+            {ceoPnLActiveFilterTags.length > 0 && (
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 12, padding: "10px 12px", border: "1px solid rgba(148,163,184,0.24)", borderRadius: 12, background: "#f8fafc" }}>
+                <span style={{ color: "#64748b", fontSize: 11, fontWeight: 950 }}>Active filters:</span>
+                {ceoPnLActiveFilterTags.map(([label, value, group]) => (
+                  <button key={`${label}-${value}`} type="button" onClick={() => clearCeoPnLFilterGroup(group)} style={{ display: "inline-flex", alignItems: "center", gap: 8, border: "1px solid rgba(37,99,235,0.18)", borderRadius: 999, padding: "7px 10px", background: "#ffffff", color: "#10233f", cursor: "pointer", fontSize: 11, fontWeight: 900 }}>
+                    <span style={{ color: "#64748b" }}>{label}:</span>
+                    <strong>{value}</strong>
+                    <span style={{ color: "#2563eb", fontWeight: 950 }}>x</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div style={{ marginBottom: 10, color: "#64748b", fontSize: 11, fontWeight: 850 }}>
+              Click a column name to sort. Use the small filter button in each header for precise filters.
             </div>
 
             <div className="ceo-pnl-scroll" style={{ height: isCeoPnLExpanded ? 560 : 344, overflowY: "auto", overflowX: "auto", border: "1px solid rgba(148,163,184,0.28)", borderRadius: 12, background: "#fff", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)" }}>
               <table style={{ width: "100%", minWidth: 920, borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
                 <thead>
                   <tr>
-                    {[
-                      ["Cost Center", "left"],
-                      ["Submitted AFP", "right"],
-                      ["Approved AFP", "right"],
-                      ["Received CN", "right"],
-                      ["Issued CN", "right"],
-                      ["Total Cost", "right"],
-                      ["Profit Margin %", "right"],
-                      ["Status", "left"],
-                    ].map(([label, align], index) => (
-                      <th key={label} style={{ position: "sticky", top: 0, zIndex: 2, padding: "13px 14px", textAlign: align, color: "#e5f2ff", background: "linear-gradient(180deg, #08264a 0%, #061b35 100%)", borderBottom: "1px solid rgba(148,163,184,0.30)", borderLeft: index === 0 ? 0 : "1px solid rgba(148,163,184,0.20)", fontSize: 11, fontWeight: 950, whiteSpace: "nowrap" }}>{label}</th>
+                    {ceoPnLColumns.map((column, index) => (
+                      <th key={column.key} style={{ position: "sticky", top: 0, zIndex: activeCeoPnLFilter === column.key ? 8 : 2, padding: "10px 12px", textAlign: column.align, color: "#e5f2ff", background: "linear-gradient(180deg, #08264a 0%, #061b35 100%)", borderBottom: "1px solid rgba(148,163,184,0.30)", borderLeft: index === 0 ? 0 : "1px solid rgba(148,163,184,0.20)", fontSize: 11, fontWeight: 950, whiteSpace: "nowrap" }}>
+                        <span style={{ display: "flex", justifyContent: column.align === "right" ? "flex-end" : "flex-start", alignItems: "center", gap: 7 }}>
+                          <button type="button" onClick={() => handleCeoPnLSort(column.key)} style={{ border: 0, padding: 0, background: "transparent", color: "#e5f2ff", cursor: "pointer", fontSize: 11, fontWeight: 950 }}>
+                            {column.label} {ceoPnLSort.key === column.key ? (ceoPnLSort.direction === "asc" ? "^" : "v") : ""}
+                          </button>
+                          <button type="button" aria-label={`Filter ${column.label}`} onClick={(event) => { event.stopPropagation(); setActiveCeoPnLFilter((current) => current === column.key ? "" : column.key); }} style={{ display: "inline-grid", placeItems: "center", width: 22, height: 22, border: `1px solid ${activeCeoPnLFilter === column.key ? "rgba(94,234,212,0.65)" : "rgba(226,242,255,0.30)"}`, borderRadius: 7, background: activeCeoPnLFilter === column.key ? "rgba(20,184,166,0.22)" : "rgba(255,255,255,0.07)", color: "#dbeafe", cursor: "pointer", fontSize: 11, fontWeight: 950 }}>
+                            F
+                          </button>
+                          {renderCeoPnLFilterPanel(column)}
+                        </span>
+                      </th>
                     ))}
                   </tr>
                 </thead>
