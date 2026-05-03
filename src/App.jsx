@@ -2055,6 +2055,123 @@ function DashboardApp({ session, onLogout }) {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  const handlePrintCeoPnLReport = () => {
+    const reportDate = new Date().toLocaleString();
+    const rows = filteredCeoPnLRows;
+    const submittedTotal = rows.reduce((sum, row) => sum + row.submitted, 0);
+    const approvedTotal = rows.reduce((sum, row) => sum + row.approved, 0);
+    const costTotal = rows.reduce((sum, row) => sum + row.totalCost, 0);
+    const netTotal = rows.reduce((sum, row) => sum + row.net, 0);
+    const marginTotal = approvedTotal ? netTotal / approvedTotal : costTotal ? -1 : 0;
+    const statusStyle = (status) => {
+      if (status === "Healthy") return "healthy";
+      if (status === "Monitor") return "monitor";
+      if (status === "Critical") return "critical";
+      return "risk";
+    };
+    const reportRows = rows.map((row) => `
+      <tr>
+        <td>${htmlEscape(row.costCenter)}</td>
+        <td>${htmlEscape(formatCompactCurrency(row.submitted))}</td>
+        <td>${htmlEscape(formatCompactCurrency(row.approved))}</td>
+        <td>${htmlEscape(formatCompactCurrency(row.totalCost))}</td>
+        <td class="${row.net >= 0 ? "positive" : "negative"}">${htmlEscape(formatPercent(row.margin))}</td>
+        <td><span class="pill ${statusStyle(row.status.label)}">${htmlEscape(row.status.label)}</span></td>
+      </tr>
+    `).join("");
+    const statusItems = ceoStatusDistribution.map((item) => `
+      <div class="dist-row"><span><i style="background:${item.color}"></i>${htmlEscape(item.label)}</span><b>${item.count}</b></div>
+    `).join("");
+    const reportWindow = window.open("", "_blank", "width=1180,height=820");
+
+    if (!reportWindow) {
+      setError("Popup blocked. Please allow popups to print the CEO P&L report.");
+      return;
+    }
+
+    reportWindow.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <title>CEO Profit & Loss Summary Report</title>
+          <style>
+            body{margin:0;background:#eef3f8;color:#071a3a;font-family:Inter,Arial,sans-serif;}
+            .page{max-width:1180px;margin:18px auto;padding:24px;background:#fff;border:1px solid #dbe4ef;border-radius:16px;box-shadow:0 18px 54px rgba(15,23,42,.12);}
+            .top{display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start;border-bottom:1px solid #dbe4ef;padding-bottom:18px;}
+            h1{margin:0;font-size:28px;letter-spacing:0;color:#071a3a;}
+            .subtitle{margin-top:8px;color:#335174;font-weight:700;}
+            .meta{font-size:12px;line-height:1.8;color:#10233f;}
+            .meta b{float:right;color:#071a3a;}
+            .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0;}
+            .kpi{border:1px solid #dbe4ef;border-radius:12px;padding:14px;background:#fbfdff;}
+            .kpi span{display:block;color:#64748b;font-size:10px;font-weight:900;text-transform:uppercase;}
+            .kpi b{display:block;margin-top:8px;font-size:22px;color:#071a3a;}
+            table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #dbe4ef;border-radius:12px;overflow:hidden;font-size:12px;}
+            th{background:#061b35;color:#e5f2ff;text-align:right;padding:12px;border-left:1px solid rgba(255,255,255,.12);}
+            th:first-child,td:first-child{text-align:left;}
+            td{text-align:right;padding:11px 12px;border-top:1px solid #e5edf5;font-weight:800;}
+            tr:nth-child(even) td{background:#f8fafc;}
+            .total td{background:#eef3f8!important;color:#071a3a;font-weight:950;}
+            .positive{color:#059669}.negative{color:#dc2626}
+            .pill{display:inline-block;border-radius:999px;padding:5px 9px;font-weight:950}
+            .healthy{color:#059669;background:#ecfdf5}.monitor{color:#d97706;background:#fff7ed}.risk{color:#dc2626;background:#fff1f2}.critical{color:#991b1b;background:#fef2f2}
+            .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:16px;}
+            .panel{border:1px solid #dbe4ef;border-radius:12px;padding:15px;background:#fff;}
+            .panel h3{margin:0 0 12px;font-size:14px;}
+            .highlight{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #e5edf5;padding:9px 0;font-size:12px;}
+            .dist-row{display:flex;justify-content:space-between;gap:10px;margin:8px 0;font-size:12px;font-weight:850}
+            .dist-row i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
+            .notes{margin-top:16px;border-top:1px solid #dbe4ef;padding-top:12px;color:#475569;font-size:11px;line-height:1.6;}
+            @media print{body{background:#fff}.page{margin:0;max-width:none;box-shadow:none;border:0;border-radius:0}.print{display:none}}
+          </style>
+        </head>
+        <body>
+          <main class="page">
+            <section class="top">
+              <div>
+                <h1>CEO Profit &amp; Loss Summary Report</h1>
+                <div class="subtitle">Performance overview across cost centers</div>
+              </div>
+              <div class="meta">
+                <div>Report Date <b>${htmlEscape(reportDate)}</b></div>
+                <div>Reporting Period <b>${htmlEscape(ceoReportPeriodLabel)}</b></div>
+                <div>Currency <b>USD</b></div>
+                <div>Cost Centers <b>${rows.length.toLocaleString()} / ${ceoPnLRows.length.toLocaleString()}</b></div>
+              </div>
+            </section>
+            <section class="kpis">
+              <div class="kpi"><span>Approved AFP</span><b>${htmlEscape(formatCompactCurrency(approvedTotal))}</b></div>
+              <div class="kpi"><span>Submitted AFP</span><b>${htmlEscape(formatCompactCurrency(submittedTotal))}</b></div>
+              <div class="kpi"><span>Total Cost</span><b>${htmlEscape(formatCompactCurrency(costTotal))}</b></div>
+              <div class="kpi"><span>Net Profit</span><b>${htmlEscape(formatCompactCurrency(netTotal))}</b></div>
+              <div class="kpi"><span>Profit Margin</span><b>${htmlEscape(formatPercent(marginTotal))}</b></div>
+            </section>
+            <table>
+              <thead><tr><th>Cost Center</th><th>Submitted AFP</th><th>Approved AFP</th><th>Total Cost</th><th>Profit Margin %</th><th>Status</th></tr></thead>
+              <tbody>
+                ${reportRows || `<tr><td colspan="6">No rows match the current filters.</td></tr>`}
+                <tr class="total"><td>TOTAL</td><td>${htmlEscape(formatCompactCurrency(submittedTotal))}</td><td>${htmlEscape(formatCompactCurrency(approvedTotal))}</td><td>${htmlEscape(formatCompactCurrency(costTotal))}</td><td>${htmlEscape(formatPercent(marginTotal))}</td><td>${rows.length.toLocaleString()} centers</td></tr>
+              </tbody>
+            </table>
+            <section class="grid">
+              <div class="panel"><h3>Key Highlights</h3>
+                <div class="highlight"><span>Top Performer</span><b>${htmlEscape(ceoTopPerformer?.costCenter ?? "N/A")} ${ceoTopPerformer ? htmlEscape(formatPercent(ceoTopPerformer.margin)) : ""}</b></div>
+                <div class="highlight"><span>Highest Cost Center</span><b>${htmlEscape(ceoHighestCostCenter?.costCenter ?? "N/A")} ${ceoHighestCostCenter ? htmlEscape(formatCompactCurrency(ceoHighestCostCenter.totalCost)) : ""}</b></div>
+                <div class="highlight"><span>Lowest Margin / Risk</span><b>${htmlEscape(ceoLowestMarginCenter?.costCenter ?? "N/A")} ${ceoLowestMarginCenter ? htmlEscape(formatPercent(ceoLowestMarginCenter.margin)) : ""}</b></div>
+              </div>
+              <div class="panel"><h3>Margin Distribution</h3>${statusItems}</div>
+              <div class="panel"><h3>Insight</h3><p>Current fully loaded margin is <b>${htmlEscape(formatPercent(ceoReportMargin))}</b>. ${ceoLowestMarginCenter ? `${htmlEscape(ceoLowestMarginCenter.costCenter)} is the lowest-margin center and should be reviewed first.` : "No margin risk center is available."}</p></div>
+            </section>
+            <section class="notes">
+              <b>Notes:</b> AFP means Approved / Submitted Financial Plan. Profit Margin % is calculated as (Approved AFP - Total Cost) / Approved AFP. CN impact is included in total cost where applicable.
+            </section>
+          </main>
+          <script>window.print();</script>
+        </body>
+      </html>
+    `);
+    reportWindow.document.close();
+  };
   const handlePrintCostCenterReport = () => {
     if (!filters.costCenter) return;
 
@@ -4171,14 +4288,22 @@ function DashboardApp({ session, onLogout }) {
           <section style={{ position: "relative", marginBottom: 22, border: "1px solid rgba(124,58,237,0.30)", borderRadius: 16, padding: 20, background: "linear-gradient(180deg, #ffffff 0%, #fbfdff 100%)", boxShadow: "0 18px 42px rgba(15,23,42,0.10)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 14, alignItems: "flex-start", marginBottom: 16, flexWrap: "wrap" }}>
               <div>
-                <div style={{ color: "#64748b", fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>CEO Report</div>
-                <h2 style={{ margin: "4px 0 0", color: "#071a3a", fontSize: 25, fontWeight: 950 }}>CEO Profit &amp; Loss Summary Report</h2>
+                <div style={{ color: "#64748b", fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>CEO View</div>
+                <h2 style={{ margin: "4px 0 0", color: "#071a3a", fontSize: 25, fontWeight: 950 }}>CEO Profit &amp; Loss Summary</h2>
                 <p style={{ margin: "6px 0 0", color: "#335174", fontSize: 13 }}>Performance overview across all cost centers with AFP, cost, margin, and risk signals.</p>
               </div>
-              <div style={{ display: "grid", gap: 5, color: "#10233f", fontSize: 12, fontWeight: 850 }}>
-                <span>Report Date: <strong>{new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</strong></span>
-                <span>Reporting Period: <strong>{ceoReportPeriodLabel}</strong></span>
-                <span>Currency: <strong>USD</strong></span>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                <div style={{ display: "grid", gap: 5, color: "#10233f", fontSize: 12, fontWeight: 850 }}>
+                  <span>Period: <strong>{ceoReportPeriodLabel}</strong></span>
+                  <span>Currency: <strong>USD</strong></span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handlePrintCeoPnLReport}
+                  style={{ border: "1px solid rgba(37,99,235,0.24)", borderRadius: 10, padding: "10px 14px", background: "#eff6ff", color: "#0b4db3", cursor: "pointer", fontSize: 12, fontWeight: 950, boxShadow: "0 8px 20px rgba(37,99,235,0.10)" }}
+                >
+                  Print
+                </button>
               </div>
             </div>
 
