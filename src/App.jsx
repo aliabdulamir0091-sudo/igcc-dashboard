@@ -512,7 +512,6 @@ function DashboardApp({ session, onLogout }) {
   const [activePage, setActivePage] = useState("home");
   const [transactionPage, setTransactionPage] = useState(1);
   const [spentGroupBy, setSpentGroupBy] = useState("gl");
-  const [spentExplorerView, setSpentExplorerView] = useState("ranking");
   const [selectedSpentGlNames, setSelectedSpentGlNames] = useState([]);
   const [spentSelectedGroupKey, setSpentSelectedGroupKey] = useState("");
   const [spentDetailSort, setSpentDetailSort] = useState({ field: "amount", direction: "desc" });
@@ -986,27 +985,6 @@ function DashboardApp({ session, onLogout }) {
   const spentGlFilteredRows = selectedSpentGlNames.length
     ? filteredData.filter((item) => selectedSpentGlSet.has(item.category || "Uncategorized"))
     : filteredData;
-  const spentGlRankingRows = Array.from(
-    spentGlFilteredRows
-      .reduce((map, item) => {
-        const label = item.category || "Uncategorized";
-        const current = map.get(label) ?? { label, amount: 0, rows: 0, costCenters: new Set(), months: new Set() };
-        current.amount += Number(item.amount) || 0;
-        current.rows += Number(item.rows) || 1;
-        current.costCenters.add(item.costCenter);
-        current.months.add(item.month);
-        map.set(label, current);
-        return map;
-      }, new Map())
-      .values()
-  )
-    .map((row) => ({
-      ...row,
-      costCenterCount: Array.from(row.costCenters).filter(Boolean).length,
-      monthCount: Array.from(row.months).filter(Boolean).length,
-    }))
-    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
-  const maxSpentGlRankingAmount = Math.max(...spentGlRankingRows.map((row) => Math.abs(row.amount)), 0);
   const costCenterCostTotals = filteredData.reduce((map, item) => {
     const center = item.costCenter || "Unmapped";
     map.set(center, (map.get(center) || 0) + (Number(item.amount) || 0));
@@ -1063,6 +1041,7 @@ function DashboardApp({ session, onLogout }) {
     const index = Math.max(0, selectedSpentGlNames.indexOf(glName));
     return spentGlPalette[index % spentGlPalette.length];
   };
+  const isSpentGlComparisonActive = spentGroupBy === "gl" && selectedSpentGlNames.length > 0;
   const selectedSpentGroup = spentGroupedRows.find((row) => row.key === spentSelectedGroupKey);
   const spentSelectedRows = selectedSpentGroup
     ? filteredData.filter((item) => getSpentGroupInfo(item, spentGroupBy).key === spentSelectedGroup.key)
@@ -1100,13 +1079,11 @@ function DashboardApp({ session, onLogout }) {
       const next = current.includes(glName)
         ? current.filter((item) => item !== glName)
         : [...current, glName].sort((a, b) => a.localeCompare(b));
-      if (next.length) setSpentExplorerView("comparison");
       return next;
     });
   };
   const clearSpentGlSelection = () => {
     setSelectedSpentGlNames([]);
-    setSpentExplorerView("ranking");
     setSpentSelectedGroupKey("");
     setTransactionPage(1);
   };
@@ -2789,60 +2766,48 @@ function DashboardApp({ session, onLogout }) {
               <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Compare GL cost distribution across cost centers.</p>
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <details style={{ position: "relative" }}>
-                <summary style={{ listStyle: "none", cursor: "pointer", border: `1px solid ${theme.border}`, borderRadius: 10, padding: "10px 12px", background: theme.panelBg, color: theme.text, fontSize: 12, fontWeight: 950, minWidth: 220 }}>
-                  GL Name {selectedSpentGlNames.length ? `(${selectedSpentGlNames.length} selected)` : "(All)"}
-                </summary>
-                <div style={{ position: "absolute", right: 0, zIndex: 5, marginTop: 8, width: 310, maxHeight: 340, overflowY: "auto", border: `1px solid ${theme.border}`, borderRadius: 12, padding: 10, background: theme.panelBg, boxShadow: "0 18px 38px rgba(15,23,42,0.18)" }}>
-                  <button type="button" onClick={clearSpentGlSelection} style={{ width: "100%", border: `1px solid ${theme.border}`, borderRadius: 8, background: theme.inputBg, color: theme.text, padding: "8px 10px", cursor: "pointer", fontSize: 12, fontWeight: 950, marginBottom: 8 }}>Clear selection</button>
-                  <div style={{ display: "grid", gap: 4 }}>
-                    {spentGlOptions.map((glName) => (
-                      <label key={glName} style={{ display: "flex", gap: 9, alignItems: "center", padding: "8px 7px", borderRadius: 8, cursor: "pointer", color: theme.text, fontSize: 12, fontWeight: 800 }}>
-                        <input type="checkbox" checked={selectedSpentGlSet.has(glName)} onChange={() => toggleSpentGlSelection(glName)} />
-                        <span style={{ overflowWrap: "anywhere" }}>{glName}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </details>
-              <div style={{ display: "flex", gap: 6, padding: 4, borderRadius: 12, background: theme.accentSoft, border: `1px solid ${theme.border}`, flexWrap: "wrap" }}>
-                {[
-                  ["ranking", "Ranking View"],
-                  ["comparison", "Comparison View"],
-                ].map(([value, label]) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setSpentExplorerView(value)}
-                    style={{ border: "none", borderRadius: 9, padding: "9px 12px", cursor: "pointer", background: spentExplorerView === value ? theme.panelBg : "transparent", color: spentExplorerView === value ? theme.accentStrong : theme.text, boxShadow: spentExplorerView === value ? "0 4px 14px rgba(15,23,42,0.10)" : "none", fontSize: 12, fontWeight: 950 }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
               <div style={{ display: "flex", gap: 6, padding: 4, borderRadius: 12, background: theme.accentSoft, border: `1px solid ${theme.border}`, flexWrap: "wrap" }}>
                 {spentGroupOptions.map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => handleSpentGroupChange(value)}
-                  disabled={spentExplorerView === "comparison"}
-                  style={{ border: "none", borderRadius: 9, padding: "9px 12px", cursor: "pointer", background: spentGroupBy === value ? theme.panelBg : "transparent", color: spentGroupBy === value ? theme.accentStrong : theme.text, boxShadow: spentGroupBy === value ? "0 4px 14px rgba(15,23,42,0.10)" : "none", fontSize: 12, fontWeight: 950 }}
-                >
-                  {label}
-                </button>
+                  value === "gl" ? (
+                    <details key={value} style={{ position: "relative" }}>
+                      <summary
+                        onClick={() => handleSpentGroupChange(value)}
+                        style={{ listStyle: "none", border: "none", borderRadius: 9, padding: "9px 12px", cursor: "pointer", background: spentGroupBy === value ? theme.panelBg : "transparent", color: spentGroupBy === value ? theme.accentStrong : theme.text, boxShadow: spentGroupBy === value ? "0 4px 14px rgba(15,23,42,0.10)" : "none", fontSize: 12, fontWeight: 950 }}
+                      >
+                        {label}{selectedSpentGlNames.length ? ` (${selectedSpentGlNames.length})` : ""}
+                      </summary>
+                      <div style={{ position: "absolute", right: 0, zIndex: 5, marginTop: 8, width: 310, maxHeight: 340, overflowY: "auto", border: `1px solid ${theme.border}`, borderRadius: 12, padding: 10, background: theme.panelBg, boxShadow: "0 18px 38px rgba(15,23,42,0.18)" }}>
+                        <button type="button" onClick={clearSpentGlSelection} style={{ width: "100%", border: `1px solid ${theme.border}`, borderRadius: 8, background: theme.inputBg, color: theme.text, padding: "8px 10px", cursor: "pointer", fontSize: 12, fontWeight: 950, marginBottom: 8 }}>Clear GL choices</button>
+                        <div style={{ display: "grid", gap: 4 }}>
+                          {spentGlOptions.map((glName) => (
+                            <label key={glName} style={{ display: "flex", gap: 9, alignItems: "center", padding: "8px 7px", borderRadius: 8, cursor: "pointer", color: theme.text, fontSize: 12, fontWeight: 800 }}>
+                              <input type="checkbox" checked={selectedSpentGlSet.has(glName)} onChange={() => toggleSpentGlSelection(glName)} />
+                              <span style={{ overflowWrap: "anywhere" }}>{glName}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </details>
+                  ) : (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => handleSpentGroupChange(value)}
+                      style={{ border: "none", borderRadius: 9, padding: "9px 12px", cursor: "pointer", background: spentGroupBy === value ? theme.panelBg : "transparent", color: spentGroupBy === value ? theme.accentStrong : theme.text, boxShadow: spentGroupBy === value ? "0 4px 14px rgba(15,23,42,0.10)" : "none", fontSize: 12, fontWeight: 950 }}
+                    >
+                      {label}
+                    </button>
+                  )
                 ))}
               </div>
             </div>
           </div>
 
           <div style={{ marginTop: 12, display: "grid", gap: 9 }}>
-            {spentExplorerView === "ranking" && (
+            {!isSpentGlComparisonActive && (
               <>
-                {(selectedSpentGlNames.length ? spentGlRankingRows : spentGroupedRows).slice(0, 18).map((row, index) => {
-                  const width = selectedSpentGlNames.length
-                    ? (maxSpentGlRankingAmount ? Math.max(4, Math.round((Math.abs(row.amount) / maxSpentGlRankingAmount) * 100)) : 0)
-                    : (maxSpentGroupAmount ? Math.max(4, Math.round((Math.abs(row.amount) / maxSpentGroupAmount) * 100)) : 0);
+                {spentGroupedRows.slice(0, 18).map((row, index) => {
+                  const width = maxSpentGroupAmount ? Math.max(4, Math.round((Math.abs(row.amount) / maxSpentGroupAmount) * 100)) : 0;
                   const costShare = spentTotalAmount ? row.amount / spentTotalAmount : 0;
                   const revenueShare = approvedRevenue ? row.amount / approvedRevenue : null;
                   return (
@@ -2855,7 +2820,7 @@ function DashboardApp({ session, onLogout }) {
                           <span style={{ display: "grid", placeItems: "center", width: 28, height: 28, borderRadius: 8, background: theme.accentSoft, color: theme.accentStrong, fontSize: 12, fontWeight: 950 }}>{index + 1}</span>
                           <strong style={{ overflowWrap: "anywhere" }}>{row.label}</strong>
                         </div>
-                        <div style={{ marginTop: 6, color: theme.subtext, fontSize: 12 }}>{selectedSpentGlNames.length ? "GL Name" : row.sublabel} | {row.costCenterCount} centers | {row.monthCount} months</div>
+                        <div style={{ marginTop: 6, color: theme.subtext, fontSize: 12 }}>{row.sublabel} | {row.costCenterCount} centers | {row.monthCount} months</div>
                       </div>
                       <div>
                         <div style={{ height: 13, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
@@ -2874,17 +2839,13 @@ function DashboardApp({ session, onLogout }) {
                     </div>
                   );
                 })}
-                {!(selectedSpentGlNames.length ? spentGlRankingRows : spentGroupedRows).length && (
+                {!spentGroupedRows.length && (
                   <div style={{ border: `1px dashed ${theme.border}`, borderRadius: 12, padding: 18, color: theme.subtext, background: theme.inputBg }}>No spend groups match the current filters.</div>
                 )}
               </>
             )}
 
-            {spentExplorerView === "comparison" && selectedSpentGlNames.length === 0 && (
-              <div style={{ border: `1px dashed ${theme.border}`, borderRadius: 12, padding: 18, color: theme.subtext, background: theme.inputBg }}>Select one or more GL names to compare across cost centers.</div>
-            )}
-
-            {spentExplorerView === "comparison" && selectedSpentGlNames.length === 1 && (
+            {isSpentGlComparisonActive && selectedSpentGlNames.length === 1 && (
               <>
                 {spentGlComparisonRows.slice(0, 24).map((row, index) => {
                   const width = maxSpentGlComparisonAmount ? Math.max(4, Math.round((Math.abs(row.amount) / maxSpentGlComparisonAmount) * 100)) : 0;
@@ -2915,7 +2876,7 @@ function DashboardApp({ session, onLogout }) {
               </>
             )}
 
-            {spentExplorerView === "comparison" && selectedSpentGlNames.length > 1 && (
+            {isSpentGlComparisonActive && selectedSpentGlNames.length > 1 && (
               <>
                 {spentGlComparisonByCenter.slice(0, 18).map((centerRow, index) => {
                   const totalWidth = maxSpentGlCenterTotal ? Math.max(4, Math.round((Math.abs(centerRow.total) / maxSpentGlCenterTotal) * 100)) : 0;
