@@ -531,6 +531,7 @@ function DashboardApp({ session, onLogout }) {
   const [isCeoPnLExpanded, setIsCeoPnLExpanded] = useState(false);
   const [activeCeoPnLFilter, setActiveCeoPnLFilter] = useState("");
   const [ceoPnLSort, setCeoPnLSort] = useState({ key: "status", direction: "asc" });
+  const [collapsedCeoPnLGroups, setCollapsedCeoPnLGroups] = useState({});
   const [ceoPnLColumnFilters, setCeoPnLColumnFilters] = useState({
     costCenter: "",
     submittedMin: "",
@@ -545,6 +546,8 @@ function DashboardApp({ session, onLogout }) {
     totalCostMax: "",
     marginMin: "",
     marginMax: "",
+    netMin: "",
+    netMax: "",
     status: "all",
   });
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -1834,6 +1837,7 @@ function DashboardApp({ session, onLogout }) {
     if (key === "cnIssued") return row.cnIssued;
     if (key === "totalCost") return row.totalCost;
     if (key === "margin") return row.margin;
+    if (key === "net") return row.net;
     if (key === "status") return row.status.rank;
     return row.totalCost;
   };
@@ -1846,6 +1850,7 @@ function DashboardApp({ session, onLogout }) {
     .filter((row) => passesRangeFilter(row.cnIssued, ceoPnLColumnFilters.cnIssuedMin, ceoPnLColumnFilters.cnIssuedMax))
     .filter((row) => passesRangeFilter(row.totalCost, ceoPnLColumnFilters.totalCostMin, ceoPnLColumnFilters.totalCostMax))
     .filter((row) => passesRangeFilter(row.margin * 100, ceoPnLColumnFilters.marginMin, ceoPnLColumnFilters.marginMax))
+    .filter((row) => passesRangeFilter(row.net, ceoPnLColumnFilters.netMin, ceoPnLColumnFilters.netMax))
     .sort((a, b) => {
       const aValue = getCeoPnLSortValue(a, ceoPnLSort.key);
       const bValue = getCeoPnLSortValue(b, ceoPnLSort.key);
@@ -1873,6 +1878,8 @@ function DashboardApp({ session, onLogout }) {
       totalCostMax: "",
       marginMin: "",
       marginMax: "",
+      netMin: "",
+      netMax: "",
       status: "all",
     });
     setActiveCeoPnLFilter("");
@@ -1903,6 +1910,7 @@ function DashboardApp({ session, onLogout }) {
     (ceoPnLColumnFilters.cnIssuedMin || ceoPnLColumnFilters.cnIssuedMax) && ["Issued CN", `${ceoPnLColumnFilters.cnIssuedMin || "0"} - ${ceoPnLColumnFilters.cnIssuedMax || "any"}`, "cnIssued"],
     (ceoPnLColumnFilters.totalCostMin || ceoPnLColumnFilters.totalCostMax) && ["Total Cost", `${ceoPnLColumnFilters.totalCostMin || "0"} - ${ceoPnLColumnFilters.totalCostMax || "any"}`, "totalCost"],
     (ceoPnLColumnFilters.marginMin || ceoPnLColumnFilters.marginMax) && ["Margin %", `${ceoPnLColumnFilters.marginMin || "-any"}% - ${ceoPnLColumnFilters.marginMax || "any"}%`, "margin"],
+    (ceoPnLColumnFilters.netMin || ceoPnLColumnFilters.netMax) && ["Net Profit", `${ceoPnLColumnFilters.netMin || "0"} - ${ceoPnLColumnFilters.netMax || "any"}`, "net"],
   ].filter(Boolean);
   const clearCeoPnLFilterGroup = (group) => {
     const groupFields = {
@@ -1914,6 +1922,7 @@ function DashboardApp({ session, onLogout }) {
       cnIssued: ["cnIssuedMin", "cnIssuedMax"],
       totalCost: ["totalCostMin", "totalCostMax"],
       margin: ["marginMin", "marginMax"],
+      net: ["netMin", "netMax"],
     }[group] ?? [];
 
     setCeoPnLColumnFilters((current) => ({
@@ -1921,15 +1930,70 @@ function DashboardApp({ session, onLogout }) {
       ...Object.fromEntries(groupFields.map((field) => [field, field === "status" ? "all" : ""])),
     }));
   };
+  const toggleCeoPnLGroup = (key) => {
+    setCollapsedCeoPnLGroups((current) => ({ ...current, [key]: !current[key] }));
+  };
+  const getCeoPnLAggregateRow = (rows, label, type, key, extra = {}) => {
+    const submitted = rows.reduce((sum, row) => sum + row.submitted, 0);
+    const approved = rows.reduce((sum, row) => sum + row.approved, 0);
+    const totalCost = rows.reduce((sum, row) => sum + row.totalCost, 0);
+    const net = approved - totalCost;
+    const margin = approved ? net / approved : totalCost ? -1 : 0;
+    return {
+      ...extra,
+      key,
+      type,
+      costCenter: label,
+      submitted,
+      approved,
+      totalCost,
+      net,
+      margin,
+      status: getCeoPnLStatus(margin, totalCost, approved),
+      sparkline: rows[0]?.sparkline ?? { points: "", color: theme.subtext },
+      childCount: rows.length,
+    };
+  };
+  const ceoPnLGroupedRows = Array.from(
+    filteredCeoPnLRows.reduce((portfolioMap, row) => {
+      const portfolioKey = row.portfolio || "Unmapped Portfolio";
+      const hubKey = row.hub || "Unmapped Hub";
+      const portfolio = portfolioMap.get(portfolioKey) ?? new Map();
+      const hubRows = portfolio.get(hubKey) ?? [];
+      hubRows.push(row);
+      portfolio.set(hubKey, hubRows);
+      portfolioMap.set(portfolioKey, portfolio);
+      return portfolioMap;
+    }, new Map())
+  ).flatMap(([portfolio, hubMap]) => {
+    const portfolioRows = Array.from(hubMap.values()).flat();
+    const portfolioKey = `portfolio:${portfolio}`;
+    const isPortfolioCollapsed = Boolean(collapsedCeoPnLGroups[portfolioKey]);
+    const rows = [getCeoPnLAggregateRow(portfolioRows, portfolio, "portfolio", portfolioKey, { portfolio })];
+
+    if (!isPortfolioCollapsed) {
+      Array.from(hubMap.entries()).forEach(([hub, hubRows]) => {
+        const hubKey = `hub:${portfolio}:${hub}`;
+        const isHubCollapsed = Boolean(collapsedCeoPnLGroups[hubKey]);
+        rows.push(getCeoPnLAggregateRow(hubRows, hub, "hub", hubKey, { portfolio, hub }));
+
+        if (!isHubCollapsed) {
+          hubRows.forEach((row) => rows.push({ ...row, type: "center", key: `center:${row.costCenter}` }));
+        }
+      });
+    }
+
+    return rows;
+  });
   const ceoPnLColumns = [
-    { key: "costCenter", label: "Cost Center", align: "left", filterType: "costCenter", group: "costCenter" },
+    { key: "costCenter", label: "Name", align: "left", filterType: "costCenter", group: "costCenter" },
     { key: "submitted", label: "Submitted AFP", align: "right", filterType: "range", group: "submitted", minField: "submittedMin", maxField: "submittedMax" },
     { key: "approved", label: "Approved AFP", align: "right", filterType: "range", group: "approved", minField: "approvedMin", maxField: "approvedMax" },
-    { key: "cnReceived", label: "Received CN", align: "right", filterType: "range", group: "cnReceived", minField: "cnReceivedMin", maxField: "cnReceivedMax" },
-    { key: "cnIssued", label: "Issued CN", align: "right", filterType: "range", group: "cnIssued", minField: "cnIssuedMin", maxField: "cnIssuedMax" },
     { key: "totalCost", label: "Total Cost", align: "right", filterType: "range", group: "totalCost", minField: "totalCostMin", maxField: "totalCostMax" },
     { key: "margin", label: "Profit Margin %", align: "right", filterType: "range", group: "margin", minField: "marginMin", maxField: "marginMax", suffix: "%" },
+    { key: "net", label: "Net Profit", align: "right", filterType: "range", group: "net", minField: "netMin", maxField: "netMax" },
     { key: "status", label: "Status", align: "left", filterType: "status", group: "status" },
+    { key: "trend", label: "Trend", align: "right", filterType: "none", group: "trend" },
   ];
   const ceoReportTotals = ceoPnLRows.reduce(
     (summary, row) => ({
@@ -4347,6 +4411,8 @@ function DashboardApp({ session, onLogout }) {
             </div>
             )}
 
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.55fr) minmax(300px, 0.75fr)", gap: 16, alignItems: "start" }}>
+              <div>
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
               <span style={{ color: "#10233f", fontSize: 12, fontWeight: 950 }}>Quick Filters</span>
               {[
@@ -4381,7 +4447,7 @@ function DashboardApp({ session, onLogout }) {
             </div>
 
             <div className="ceo-pnl-scroll" style={{ height: isCeoPnLExpanded ? 560 : 344, overflowY: "auto", overflowX: "auto", border: "1px solid rgba(148,163,184,0.28)", borderRadius: 12, background: "#fff", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)" }}>
-              <table style={{ width: "100%", minWidth: 920, borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+              <table style={{ width: "100%", minWidth: 1060, borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
                 <thead>
                   <tr>
                     {ceoPnLColumns.map((column, index) => (
@@ -4400,40 +4466,50 @@ function DashboardApp({ session, onLogout }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredCeoPnLRows.map((row, index) => (
-                    <tr key={row.costCenter} className="ceo-pnl-row" style={{ background: index % 2 === 0 ? "#ffffff" : "#f8fafc" }}>
-                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: 950, borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{row.costCenter}</td>
-                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: 850, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.submitted)}</td>
-                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: 850, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.approved)}</td>
-                      <td style={{ padding: "12px 14px", color: "#059669", fontWeight: 900, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.cnReceived)}</td>
-                      <td style={{ padding: "12px 14px", color: "#dc2626", fontWeight: 900, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.cnIssued)}</td>
-                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: 950, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.totalCost)}</td>
-                      <td style={{ padding: "10px 14px", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>
-                        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 9 }}>
-                          <svg viewBox="0 0 64 22" aria-hidden="true" style={{ width: 64, height: 22, display: "block" }}>
-                            {row.sparkline.points && <polyline points={row.sparkline.points} fill="none" stroke={row.sparkline.color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />}
-                          </svg>
-                          <strong style={{ color: profitColor(row.net), fontSize: 12 }}>{formatPercent(row.margin)}</strong>
-                        </div>
+                  {ceoPnLGroupedRows.map((row, index) => {
+                    const isGroup = row.type !== "center";
+                    const isCollapsed = Boolean(collapsedCeoPnLGroups[row.key]);
+                    const rowBg = row.type === "portfolio" ? "#f1f5ff" : row.type === "hub" ? "#f8fafc" : index % 2 === 0 ? "#ffffff" : "#fbfdff";
+                    return (
+                    <tr key={row.key} className="ceo-pnl-row" style={{ background: rowBg }}>
+                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: isGroup ? 950 : 850, borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 8, paddingLeft: row.type === "hub" ? 18 : row.type === "center" ? 38 : 0 }}>
+                          {isGroup ? (
+                            <button type="button" onClick={() => toggleCeoPnLGroup(row.key)} style={{ width: 22, height: 22, border: "1px solid rgba(148,163,184,0.35)", borderRadius: 7, background: "#fff", color: "#0b2a55", cursor: "pointer", fontWeight: 950 }}>{isCollapsed ? "+" : "-"}</button>
+                          ) : <span style={{ width: 22, display: "inline-block" }} />}
+                          {row.costCenter}
+                        </span>
                       </td>
+                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: isGroup ? 950 : 850, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.submitted)}</td>
+                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: isGroup ? 950 : 850, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.approved)}</td>
+                      <td style={{ padding: "12px 14px", color: "#10233f", fontWeight: 950, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.totalCost)}</td>
+                      <td style={{ padding: "10px 14px", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap", textAlign: "right" }}>
+                        <strong style={{ color: profitColor(row.net), fontSize: 12 }}>{formatPercent(row.margin)}</strong>
+                      </td>
+                      <td style={{ padding: "12px 14px", color: profitColor(row.net), fontWeight: 950, textAlign: "right", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>{formatCompactCurrency(row.net)}</td>
                       <td style={{ padding: "12px 14px", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color: row.status.color, background: row.status.bg, border: `1px solid ${row.status.color}24`, borderRadius: 999, padding: "6px 10px", fontSize: 11, fontWeight: 950 }}>
                           <span style={{ width: 7, height: 7, borderRadius: "50%", background: row.status.color }} />
                           {row.status.label}
                         </span>
                       </td>
+                      <td style={{ padding: "10px 14px", borderBottom: "1px solid rgba(226,232,240,0.92)", whiteSpace: "nowrap" }}>
+                        <svg viewBox="0 0 64 22" aria-hidden="true" style={{ width: 64, height: 22, display: "block", marginLeft: "auto" }}>
+                          {row.sparkline.points && <polyline points={row.sparkline.points} fill="none" stroke={row.sparkline.color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />}
+                        </svg>
+                      </td>
                     </tr>
-                  ))}
+                  );})}
                   {filteredCeoPnLRows.length > 0 && (
                     <tr style={{ background: "linear-gradient(90deg, #eef3f8, #f8fafc)" }}>
                       <td style={{ padding: "13px 14px", color: "#0b2a55", fontWeight: 950, borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>TOTAL</td>
                       <td style={{ padding: "13px 14px", color: "#0b2a55", fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatCompactCurrency(filteredCeoPnLRows.reduce((sum, row) => sum + row.submitted, 0))}</td>
                       <td style={{ padding: "13px 14px", color: "#0b2a55", fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatCompactCurrency(filteredCeoPnLRows.reduce((sum, row) => sum + row.approved, 0))}</td>
-                      <td style={{ padding: "13px 14px", color: "#059669", fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatCompactCurrency(filteredCeoPnLRows.reduce((sum, row) => sum + row.cnReceived, 0))}</td>
-                      <td style={{ padding: "13px 14px", color: "#dc2626", fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatCompactCurrency(filteredCeoPnLRows.reduce((sum, row) => sum + row.cnIssued, 0))}</td>
                       <td style={{ padding: "13px 14px", color: "#0b2a55", fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatCompactCurrency(filteredCeoPnLRows.reduce((sum, row) => sum + row.totalCost, 0))}</td>
                       <td style={{ padding: "13px 14px", color: profitColor(filteredCeoPnLRows.reduce((sum, row) => sum + row.net, 0)), fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatPercent(filteredCeoPnLRows.reduce((sum, row) => sum + row.approved, 0) ? filteredCeoPnLRows.reduce((sum, row) => sum + row.net, 0) / filteredCeoPnLRows.reduce((sum, row) => sum + row.approved, 0) : 0)}</td>
+                      <td style={{ padding: "13px 14px", color: profitColor(filteredCeoPnLRows.reduce((sum, row) => sum + row.net, 0)), fontWeight: 950, textAlign: "right", borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{formatCompactCurrency(filteredCeoPnLRows.reduce((sum, row) => sum + row.net, 0))}</td>
                       <td style={{ padding: "13px 14px", color: "#64748b", fontWeight: 900, borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }}>{filteredCeoPnLRows.length.toLocaleString()} centers</td>
+                      <td style={{ padding: "13px 14px", color: "#64748b", fontWeight: 900, borderTop: "1px solid rgba(148,163,184,0.28)", whiteSpace: "nowrap" }} />
                     </tr>
                   )}
                   {!filteredCeoPnLRows.length && (
@@ -4445,7 +4521,9 @@ function DashboardApp({ session, onLogout }) {
               </table>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.15fr) minmax(240px, 0.85fr) minmax(240px, 0.85fr)", gap: 14, marginTop: 14 }}>
+              </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 14 }}>
               <div style={{ border: "1px solid rgba(148,163,184,0.24)", borderRadius: 12, padding: 16, background: "#fff", boxShadow: "0 10px 24px rgba(15,23,42,0.06)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 8 }}>
                   <h3 style={{ margin: 0, color: "#071a3a", fontSize: 14, fontWeight: 950 }}>Portfolio Trend</h3>
@@ -4519,6 +4597,7 @@ function DashboardApp({ session, onLogout }) {
                   </div>
                 </div>
               </div>
+            </div>
             </div>
 
             <div style={{ marginTop: 14, border: "1px solid rgba(124,58,237,0.22)", borderRadius: 12, padding: 16, background: "linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%)", display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 0.42fr)", gap: 14, alignItems: "center" }}>
