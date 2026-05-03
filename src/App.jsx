@@ -1747,6 +1747,7 @@ function DashboardApp({ session, onLogout }) {
     : null;
   const selectedPeriodLabel = [filters.month || "All months", filters.year || "All years"].join(" | ");
   const selectedCostCenterApproved = selectedCostCenterProfitabilityRow?.approved ?? approvedRevenue;
+  const selectedCostCenterSubmitted = selectedCostCenterProfitabilityRow?.submitted ?? submittedRevenue;
   const selectedCostCenterProfit = selectedCostCenterApproved - adjustedCostPreviewTotal;
   const selectedCostCenterMargin = selectedCostCenterApproved ? selectedCostCenterProfit / selectedCostCenterApproved : null;
   const costCenterOfficialRows = filteredOfficialData.filter((item) => item.costCenter === filters.costCenter);
@@ -1765,6 +1766,181 @@ function DashboardApp({ session, onLogout }) {
   ).sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
   const maxCostCenterGlAmount = Math.max(...costCenterGlBreakdownRows.map((row) => Math.abs(row.amount)), 0);
   const costCenterDetailRows = [...costCenterOfficialRows].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+  const htmlEscape = (value) =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  const handlePrintCostCenterReport = () => {
+    if (!filters.costCenter) return;
+
+    const reportDate = new Date().toLocaleString();
+    const cnCost = cnReceivedTotal - cnIssuedTotal;
+    const approvedIncome = selectedCostCenterApproved;
+    const submittedIncome = selectedCostCenterSubmitted;
+    const cnIssuedIncome = cnIssuedTotal;
+    const costWithReceivedCn = officialVisibleTotal + cnReceivedTotal;
+    const approvedMargin = approvedIncome ? (approvedIncome - officialVisibleTotal) / approvedIncome : null;
+    const submittedMargin = submittedIncome ? (submittedIncome - officialVisibleTotal) / submittedIncome : null;
+    const cnIncome = approvedIncome + cnIssuedIncome;
+    const cnMargin = cnIncome ? (cnIncome - costWithReceivedCn) / cnIncome : null;
+    const maxRevenueCost = Math.max(approvedIncome, submittedIncome, cnIssuedIncome, officialVisibleTotal, adjustedCostPreviewTotal, 1);
+    const maxGlCost = Math.max(...costCenterGlBreakdownRows.slice(0, 8).map((row) => Math.abs(row.amount)), 1);
+    const formatPrintPercent = (value) => (value === null ? "N/A" : formatPercent(value));
+    const metricCard = (label, value, tone = "teal") => `<div class="card ${tone}"><div class="label">${htmlEscape(label)}</div><div class="value">${htmlEscape(value)}</div></div>`;
+    const barRow = (label, value, color) => `
+      <div class="bar-row">
+        <div class="bar-label">${htmlEscape(label)}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, Math.min(100, (Math.abs(value) / maxRevenueCost) * 100))}%; background:${color};"></div></div>
+        <div class="bar-value">${htmlEscape(formatCurrency(value))}</div>
+      </div>`;
+    const marginRow = (label, value, color) => `
+      <div class="margin-row">
+        <div><strong>${htmlEscape(label)}</strong><span>${htmlEscape(formatPrintPercent(value))}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${value === null ? 0 : Math.max(3, Math.min(100, Math.abs(value) * 100))}%; background:${color};"></div></div>
+      </div>`;
+    const glRows = costCenterGlBreakdownRows.slice(0, 8).map((row) => `
+      <div class="gl-row">
+        <div><strong>${htmlEscape(row.label)}</strong><span>${row.rows.toLocaleString()} rows</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, (Math.abs(row.amount) / maxGlCost) * 100)}%; background:#0f766e;"></div></div>
+        <div>${htmlEscape(formatCurrency(row.amount))}</div>
+      </div>`).join("");
+    const reportHtml = `<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Cost Center Report - ${htmlEscape(filters.costCenter)}</title>
+          <style>
+            @page { size: A4; margin: 14mm; }
+            * { box-sizing: border-box; }
+            body { margin: 0; background: #fff; color: #10233f; font-family: Arial, Helvetica, sans-serif; }
+            .report { width: 100%; max-width: 190mm; margin: 0 auto; }
+            .header { border-bottom: 3px solid #0f766e; padding: 0 0 14px; margin-bottom: 18px; display: flex; justify-content: space-between; gap: 18px; }
+            .eyebrow { color: #0f766e; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+            h1 { margin: 5px 0 0; font-size: 25px; line-height: 1.1; }
+            h2 { margin: 22px 0 10px; font-size: 16px; color: #10233f; }
+            .meta { text-align: right; color: #475569; font-size: 11px; line-height: 1.55; }
+            .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .grid.four { grid-template-columns: repeat(4, 1fr); }
+            .card { border: 1px solid #cbd5e1; border-top: 4px solid #0f766e; border-radius: 10px; padding: 12px; min-height: 72px; background: #fff; }
+            .card.blue { border-top-color: #2563eb; }
+            .card.green { border-top-color: #059669; }
+            .card.red { border-top-color: #dc2626; }
+            .card.amber { border-top-color: #b45309; }
+            .label { color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+            .value { margin-top: 7px; font-size: 16px; font-weight: 900; color: #0f172a; }
+            .section { break-inside: avoid; margin-top: 16px; }
+            .panel { border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px; background: #f8fafc; }
+            .bar-row, .gl-row { display: grid; grid-template-columns: 132px 1fr 112px; gap: 10px; align-items: center; margin: 10px 0; font-size: 11px; }
+            .bar-label { font-weight: 800; }
+            .bar-track { height: 12px; border-radius: 999px; background: #e5edf5; overflow: hidden; }
+            .bar-fill { height: 100%; border-radius: 999px; }
+            .bar-value, .gl-row > div:last-child { text-align: right; font-weight: 800; }
+            .bridge { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+            .bridge-step { border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; background: #fff; }
+            .bridge-step strong { display: block; font-size: 11px; color: #64748b; text-transform: uppercase; }
+            .bridge-step span { display: block; margin-top: 7px; font-size: 15px; font-weight: 900; }
+            .margin-row { margin: 12px 0; }
+            .margin-row > div:first-child { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; }
+            .gl-row strong { display: block; }
+            .gl-row span { display: block; color: #64748b; font-size: 10px; margin-top: 3px; }
+            .footer { border-top: 1px solid #cbd5e1; margin-top: 24px; padding-top: 10px; color: #64748b; font-size: 10px; display: flex; justify-content: space-between; }
+            @media print { button { display: none; } .report { max-width: none; } }
+          </style>
+        </head>
+        <body>
+          <main class="report">
+            <section class="header">
+              <div>
+                <div class="eyebrow">IGCC Financial Portal</div>
+                <h1>Cost Center Report</h1>
+                <div style="margin-top:8px;font-weight:800;">Cost Center: ${htmlEscape(filters.costCenter)}</div>
+              </div>
+              <div class="meta">
+                <div>Selected Period: <strong>${htmlEscape(selectedPeriodLabel)}</strong></div>
+                <div>Report Date: <strong>${htmlEscape(reportDate)}</strong></div>
+                <div>View Type: <strong>${htmlEscape(costViewLabel)}</strong></div>
+              </div>
+            </section>
+
+            <section class="section">
+              <h2>Financial Summary</h2>
+              <div class="grid">
+                ${metricCard("Approved AFP", formatCurrency(selectedCostCenterApproved), "green")}
+                ${metricCard("Submitted AFP", formatCurrency(selectedCostCenterSubmitted), "blue")}
+                ${metricCard("Cost from Spent Report", formatCurrency(officialVisibleTotal), "amber")}
+                ${metricCard("Cost from Credit Note", formatCurrency(cnCost), cnCost >= 0 ? "green" : "red")}
+                ${metricCard("Total Adjusted Cost", formatCurrency(adjustedCostPreviewTotal), "green")}
+                ${metricCard("Profit", formatCurrency(selectedCostCenterProfit), selectedCostCenterProfit >= 0 ? "green" : "red")}
+              </div>
+            </section>
+
+            <section class="section">
+              <h2>Revenue Section</h2>
+              <div class="grid">
+                ${metricCard("Revenue based on Approved AFP", formatCurrency(approvedIncome), "green")}
+                ${metricCard("Revenue based on Submitted AFP", formatCurrency(submittedIncome), "blue")}
+                ${metricCard("Revenue based on Issued CN", formatCurrency(cnIssuedIncome), "amber")}
+              </div>
+            </section>
+
+            <section class="section panel">
+              <h2 style="margin-top:0;">Revenue vs Cost</h2>
+              ${barRow("Approved AFP", approvedIncome, "#059669")}
+              ${barRow("Submitted AFP", submittedIncome, "#2563eb")}
+              ${barRow("Issued CN", cnIssuedIncome, "#b45309")}
+              ${barRow("Spent Cost", officialVisibleTotal, "#dc2626")}
+              ${barRow("Adjusted Cost", adjustedCostPreviewTotal, "#0f766e")}
+            </section>
+
+            <section class="section panel">
+              <h2 style="margin-top:0;">Margin Section</h2>
+              ${marginRow("Margin based on Approved AFP", approvedMargin, "#059669")}
+              ${marginRow("Margin based on Submitted AFP", submittedMargin, "#2563eb")}
+              ${marginRow("Margin including CN impact", cnMargin, "#0f766e")}
+            </section>
+
+            <section class="section">
+              <h2>Credit Note Section</h2>
+              <div class="grid">
+                ${metricCard("CN Received", formatCurrency(cnReceivedTotal), "green")}
+                ${metricCard("CN Issued", formatCurrency(cnIssuedTotal), "red")}
+                ${metricCard("Net CN Impact", formatCurrency(cnNetImpact), cnNetImpact >= 0 ? "green" : "red")}
+              </div>
+              <div class="bridge" style="margin-top:10px;">
+                <div class="bridge-step"><strong>Official Cost</strong><span>${htmlEscape(formatCurrency(officialVisibleTotal))}</span></div>
+                <div class="bridge-step"><strong>+ CN Received</strong><span>${htmlEscape(formatCurrency(cnReceivedTotal))}</span></div>
+                <div class="bridge-step"><strong>- CN Issued</strong><span>${htmlEscape(formatCurrency(cnIssuedTotal))}</span></div>
+                <div class="bridge-step"><strong>Adjusted Cost</strong><span>${htmlEscape(formatCurrency(adjustedCostPreviewTotal))}</span></div>
+              </div>
+            </section>
+
+            <section class="section panel">
+              <h2 style="margin-top:0;">Top GL Cost Drivers</h2>
+              ${glRows || "<div style='color:#64748b;font-size:12px;'>No GL cost drivers match the current filters.</div>"}
+            </section>
+
+            <footer class="footer">
+              <span>Prepared from IGCC Financial Portal</span>
+              <span>Cost Center: ${htmlEscape(filters.costCenter)}</span>
+            </footer>
+          </main>
+          <script>window.onload = () => { window.focus(); window.print(); };</script>
+        </body>
+      </html>`;
+
+    const reportWindow = window.open("", "_blank", "noopener,noreferrer,width=1024,height=768");
+    if (!reportWindow) {
+      setError("Popup blocked. Please allow popups to print the cost center report.");
+      return;
+    }
+
+    reportWindow.document.open();
+    reportWindow.document.write(reportHtml);
+    reportWindow.document.close();
+  };
   const renderCostCenterProfitabilityDetail = () => {
     if (!filters.costCenter) return null;
 
@@ -1793,6 +1969,13 @@ function DashboardApp({ session, onLogout }) {
                 <span style={{ color: isAdjustedCostActive ? "#0f766e" : theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>{costViewLabel}</span>
                 <span style={{ color: profitColor(selectedCostCenterProfit), background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>Profit {formatCompactCurrency(selectedCostCenterProfit)}</span>
                 <span style={{ color: theme.subtext, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>Margin {selectedCostCenterMargin == null ? "N/A" : formatPercent(selectedCostCenterMargin)}</span>
+                <button
+                  type="button"
+                  onClick={handlePrintCostCenterReport}
+                  style={{ border: "none", borderRadius: 999, padding: "8px 13px", background: "#0f766e", color: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 950, boxShadow: "0 8px 18px rgba(15,118,110,0.22)" }}
+                >
+                  Print Cost Center Report
+                </button>
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(128px, 1fr))", gap: 10 }}>
