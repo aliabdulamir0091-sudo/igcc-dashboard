@@ -4597,8 +4597,8 @@ function DashboardApp({ session, onLogout }) {
       )}
 
       {activePage === "profitability" && (
-        <div style={{ ...panelStyle, padding: 0, overflow: "hidden", background: themeMode === "light" ? "#ffffff" : theme.panelBg, borderRadius: 10 }}>
-          <div style={{ background: "linear-gradient(135deg, #05295a 0%, #07366f 54%, #06254f 100%)", color: "#fff", padding: "28px 30px 22px", display: "flex", justifyContent: "space-between", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
+        <div className="profitability-report-page" style={{ ...panelStyle, padding: 0, overflow: "hidden", background: themeMode === "light" ? "#ffffff" : theme.panelBg, borderRadius: 10 }}>
+          <div className="profitability-report-header" style={{ background: "linear-gradient(135deg, #05295a 0%, #07366f 54%, #06254f 100%)", color: "#fff", padding: "28px 30px 22px", display: "flex", justifyContent: "space-between", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ minWidth: 0 }}>
               <h2 style={{ margin: 0, color: "#fff", fontSize: 32, lineHeight: 1.05, fontWeight: 950, letterSpacing: 0 }}>P&amp;L REPORT - {profitabilityScopeType.toUpperCase()} VIEW</h2>
               <p style={{ margin: "7px 0 0", color: "rgba(255,255,255,0.88)", fontSize: 15 }}>{profitabilityScopeName} performance overview</p>
@@ -4609,8 +4609,8 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
 
-          <div style={{ padding: 18, display: "grid", gap: 18 }}>
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 10, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 10px 26px rgba(15,23,42,0.06)", display: "grid", gridTemplateColumns: "minmax(220px, 1fr) minmax(260px, 1.25fr) auto", gap: 18, alignItems: "center" }}>
+          <div className="profitability-report-content" style={{ padding: 18, display: "grid", gap: 18 }}>
+            <div className="profitability-report-info" style={{ border: `1px solid ${theme.border}`, borderRadius: 10, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 10px 26px rgba(15,23,42,0.06)", display: "grid", gridTemplateColumns: "minmax(220px, 1fr) minmax(260px, 1.25fr) auto", gap: 18, alignItems: "center" }}>
               {[
                 [profitabilityScopeType, profitabilityScopeName, "Selected scope", "▦", "#0f5fb8"],
                 ["Period", profitabilityPeriodLabel, costViewLabel, "▣", "#0f5fb8"],
@@ -4624,7 +4624,7 @@ function DashboardApp({ session, onLogout }) {
                   </div>
                 </div>
               ))}
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <div className="profitability-print-actions" style={{ display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                 <div style={{ minWidth: 238 }}>{renderCostViewToggle()}</div>
                 <button type="button" onClick={filters.costCenter ? handlePrintCostCenterReport : () => window.print()} style={{ border: `1px solid ${theme.border}`, borderRadius: 8, background: theme.panelBg, color: "#0f5fb8", padding: "12px 16px", cursor: "pointer", fontWeight: 900, boxShadow: "0 8px 18px rgba(15,23,42,0.08)" }}>
                   ⇩ Export Report
@@ -4632,7 +4632,7 @@ function DashboardApp({ session, onLogout }) {
               </div>
             </div>
 
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
+            <div className="profitability-kpi-grid" style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
               {[
                 ["Approved AFP", approvedRevenue, "#16a34a", "AA"],
                 ["Submitted AFP", submittedRevenue, "#0f5fb8", "SA"],
@@ -4641,7 +4641,7 @@ function DashboardApp({ session, onLogout }) {
                 ["Net Profit", profitabilityNetProfit, profitColor(profitabilityNetProfit), "NP"],
                 ["Profit Margin", profitabilityMargin, profitColor(profitabilityNetProfit), "%"],
               ].map(([label, value, color, icon]) => (
-                <div key={label} className="executive-hover-card" style={{ borderRight: `1px solid ${theme.border}`, padding: "8px 14px", minHeight: 96, transition: "transform 160ms ease, box-shadow 160ms ease" }}>
+                <div key={label} className="profitability-kpi-card executive-hover-card" style={{ borderRight: `1px solid ${theme.border}`, padding: "8px 14px", minHeight: 96, transition: "transform 160ms ease, box-shadow 160ms ease" }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: "50%", background: color, color: "#fff", fontSize: 12, fontWeight: 950, boxShadow: `0 10px 20px ${color}28` }}>{icon}</span>
                     <div>
@@ -4653,8 +4653,8 @@ function DashboardApp({ session, onLogout }) {
               ))}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 430px), 1fr))", gap: 16 }}>
-              <section style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
+            <div className="profitability-report-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 430px), 1fr))", gap: 16 }}>
+              <section className="profitability-report-card" style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
                 <h3 style={{ margin: 0, color: "#003087", fontSize: 16, fontWeight: 950 }}>1. Revenue Status (Approved vs Submitted)</h3>
                 <div style={{ display: "grid", gap: 18, marginTop: 28 }}>
                   {[
@@ -4676,7 +4676,7 @@ function DashboardApp({ session, onLogout }) {
                 </div>
               </section>
 
-              <section style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
+              <section className="profitability-report-card" style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
                 <h3 style={{ margin: 0, color: "#003087", fontSize: 16, fontWeight: 950 }}>2. Cost Breakdown by GL</h3>
                 <div style={{ marginTop: 16, overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 8 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.45fr) 120px 72px", background: "linear-gradient(135deg, #063366, #05295a)", color: "#fff", fontSize: 13, fontWeight: 950 }}>
@@ -4707,8 +4707,8 @@ function DashboardApp({ session, onLogout }) {
               </section>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 430px), 1fr))", gap: 16 }}>
-              <section style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
+            <div className="profitability-report-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 430px), 1fr))", gap: 16 }}>
+              <section className="profitability-report-card" style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
                 <h3 style={{ margin: 0, color: "#003087", fontSize: 16, fontWeight: 950 }}>3. Cost Distribution</h3>
                 <div style={{ display: "grid", gridTemplateColumns: "180px minmax(0, 1fr)", gap: 24, alignItems: "center", marginTop: 22 }}>
                   <div style={{ width: 170, height: 170, borderRadius: "50%", background: `conic-gradient(${profitabilityDistributionStops}, #e2e8f0 ${Math.min(100, profitabilityDistributionCursor)}% 100%)`, position: "relative", boxShadow: "inset 0 0 0 1px rgba(15,23,42,0.08)" }}>
@@ -4728,7 +4728,7 @@ function DashboardApp({ session, onLogout }) {
                 </div>
               </section>
 
-              <section style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
+              <section className="profitability-report-card" style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
                 <h3 style={{ margin: 0, color: "#003087", fontSize: 16, fontWeight: 950 }}>4. Credit Notes Impact</h3>
                 <div style={{ marginTop: 16, overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 8 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 120px minmax(130px, 0.8fr)", background: "linear-gradient(135deg, #063366, #05295a)", color: "#fff", fontSize: 13, fontWeight: 950 }}>
@@ -4758,8 +4758,8 @@ function DashboardApp({ session, onLogout }) {
               </section>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 430px), 1fr))", gap: 16 }}>
-              <section style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
+            <div className="profitability-report-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 430px), 1fr))", gap: 16 }}>
+              <section className="profitability-report-card profitability-report-card-keep" style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
                 <h3 style={{ margin: 0, color: "#003087", fontSize: 16, fontWeight: 950 }}>5. Profitability Movement</h3>
                 <div style={{ position: "relative", height: 240, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22, alignItems: "end", padding: "24px 10px 0" }}>
                   <div style={{ position: "absolute", left: "22%", right: "22%", top: 102, borderTop: `2px dashed ${theme.border}`, pointerEvents: "none" }} />
@@ -4776,7 +4776,7 @@ function DashboardApp({ session, onLogout }) {
                 </div>
               </section>
 
-              <section style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
+              <section className="profitability-report-card profitability-report-card-keep" style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
                 <h3 style={{ margin: 0, color: "#003087", fontSize: 16, fontWeight: 950 }}>6. Executive Insights</h3>
                 <div style={{ display: "grid", gap: 14, marginTop: 18 }}>
                   {profitabilityDashboardInsights.map((item, index) => (
@@ -4792,7 +4792,7 @@ function DashboardApp({ session, onLogout }) {
               </section>
             </div>
 
-            <section style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
+            <section className="profitability-report-card profitability-actions-card" style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
               <h3 style={{ margin: 0, color: "#003087", fontSize: 16, fontWeight: 950 }}>7. Strategic Actions</h3>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 16, marginTop: 18 }}>
                 {profitabilityStrategicActions.map(([title, detail, color, icon]) => (
