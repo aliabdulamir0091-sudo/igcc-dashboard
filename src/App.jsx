@@ -1927,11 +1927,18 @@ function DashboardApp({ session, onLogout }) {
               <span>Cost Center: ${htmlEscape(filters.costCenter)}</span>
             </footer>
           </main>
-          <script>window.onload = () => { window.focus(); window.print(); };</script>
+          <script>
+            window.addEventListener("load", () => {
+              setTimeout(() => {
+                window.focus();
+                window.print();
+              }, 250);
+            });
+          </script>
         </body>
       </html>`;
 
-    const reportWindow = window.open("", "_blank", "noopener,noreferrer,width=1024,height=768");
+    const reportWindow = window.open("", "_blank", "width=1024,height=768");
     if (!reportWindow) {
       setError("Popup blocked. Please allow popups to print the cost center report.");
       return;
@@ -1940,6 +1947,7 @@ function DashboardApp({ session, onLogout }) {
     reportWindow.document.open();
     reportWindow.document.write(reportHtml);
     reportWindow.document.close();
+    reportWindow.focus();
   };
   const renderCostCenterProfitabilityDetail = () => {
     if (!filters.costCenter) return null;
