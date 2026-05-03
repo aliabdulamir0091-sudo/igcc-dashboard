@@ -1742,12 +1742,16 @@ function DashboardApp({ session, onLogout }) {
   const bestProfitabilityRow = [...profitabilityRows].sort((a, b) => b.approvedNet - a.approvedNet)[0];
   const riskProfitabilityRow = [...profitabilityRows].sort((a, b) => a.approvedNet - b.approvedNet || b.cost - a.cost)[0];
   const positiveProfitabilityCount = profitabilityRows.filter((row) => row.approvedNet >= 0).length;
-  const selectedCostCenterProfitabilityRow = filters.costCenter
-    ? profitabilityRows.find((row) => row.costCenter === filters.costCenter)
-    : null;
   const selectedPeriodLabel = [filters.month || "All months", filters.year || "All years"].join(" | ");
-  const selectedCostCenterApproved = selectedCostCenterProfitabilityRow?.approved ?? approvedRevenue;
-  const selectedCostCenterSubmitted = selectedCostCenterProfitabilityRow?.submitted ?? submittedRevenue;
+  const selectedCostCenterRevenueRows = filters.costCenter
+    ? filteredRevenueData.filter((item) => item.costCenter === filters.costCenter)
+    : filteredRevenueData;
+  const selectedCostCenterApproved = selectedCostCenterRevenueRows
+    .filter((item) => item.status === "approved")
+    .reduce((sum, item) => sum + item.amount, 0);
+  const selectedCostCenterSubmitted = selectedCostCenterRevenueRows
+    .filter((item) => item.status === "submitted")
+    .reduce((sum, item) => sum + item.amount, 0);
   const selectedCostCenterProfit = selectedCostCenterApproved - adjustedCostPreviewTotal;
   const selectedCostCenterMargin = selectedCostCenterApproved ? selectedCostCenterProfit / selectedCostCenterApproved : null;
   const costCenterOfficialRows = filteredOfficialData.filter((item) => item.costCenter === filters.costCenter);
