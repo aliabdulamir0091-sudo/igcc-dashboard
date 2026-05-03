@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" role="img" aria-label="IGCC logo">
+  <defs>
+    <linearGradient id="g1" x1="30" x2="160" y1="40" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1f2933"/>
+      <stop offset="1" stop-color="#9ca3af"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="175" x2="315" y1="25" y2="205" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f1c7a8"/>
+      <stop offset=".45" stop-color="#e23b43"/>
+      <stop offset="1" stop-color="#b91c1c"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="300" fill="#fff"/>
+  <g transform="skewY(-7)">
+    <path fill="url(#g1)" d="M45 75 156 100v125L45 197z"/>
+    <path fill="url(#g2)" d="M178 45 315 20v172l-137 34z"/>
+    <g fill="#fff" opacity=".96">
+      <rect x="65" y="94" width="18" height="22"/><rect x="93" y="100" width="18" height="22"/><rect x="121" y="106" width="18" height="22"/>
+      <rect x="65" y="128" width="18" height="22"/><rect x="93" y="134" width="18" height="22"/><rect x="121" y="140" width="18" height="22"/>
+      <rect x="65" y="162" width="18" height="22"/><rect x="93" y="168" width="18" height="22"/><rect x="121" y="174" width="18" height="22"/>
+      <rect x="197" y="61" width="21" height="26"/><rect x="231" y="54" width="21" height="26"/><rect x="265" y="47" width="21" height="26"/>
+      <rect x="197" y="100" width="21" height="26"/><rect x="231" y="93" width="21" height="26"/><rect x="265" y="86" width="21" height="26"/>
+      <rect x="197" y="139" width="21" height="26"/><rect x="231" y="132" width="21" height="26"/><rect x="265" y="125" width="21" height="26"/>
+      <rect x="197" y="178" width="21" height="26"/><rect x="231" y="171" width="21" height="26"/><rect x="265" y="164" width="21" height="26"/>
+    </g>
+  </g>
+  <text x="180" y="270" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="800" fill="#2f7d32" stroke="#16451b" stroke-width="1.5">IGCC</text>
+</svg>

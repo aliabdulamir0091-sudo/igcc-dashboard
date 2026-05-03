@@ -1855,117 +1855,218 @@ function DashboardApp({ session, onLogout }) {
         <div class="bar-track"><div class="bar-fill" style="width:${Math.max(3, (row.cnReceived / maxReportCnReceived) * 100)}%; background:#0f766e;"></div></div>
         <div>${htmlEscape(compactMoney(row.cnReceived))}</div>
       </div>`).join("");
+    const logoUrl = `${window.location.origin}${getPublicAssetUrl("igcc-logo.svg")}`;
+    const grossProfitBeforeCn = approvedIncome - officialVisibleTotal;
+    const costDriverTableRows = topReportGlRows.map((row) => {
+      const share = officialVisibleTotal ? row.amount / officialVisibleTotal : 0;
+      return `<tr><td>${htmlEscape(row.label)}</td><td>${htmlEscape(compactMoney(row.amount))}</td><td>${htmlEscape(compactPercent(share))}</td></tr>`;
+    }).join("");
+    const costLegendRows = topReportGlRows.map((row, index) => {
+      const share = officialVisibleTotal ? row.amount / officialVisibleTotal : 0;
+      const colors = ["#1565c0", "#2ea84a", "#fb8c00", "#7e57c2", "#20a7ad"];
+      return `<div class="legend-row"><span><i style="background:${colors[index] || "#64748b"}"></i>${htmlEscape(row.label)}</span><strong>${htmlEscape(compactPercent(share))}</strong></div>`;
+    }).join("");
+    const donutStops = (() => {
+      const colors = ["#1565c0", "#2ea84a", "#fb8c00", "#7e57c2", "#20a7ad"];
+      let cursor = 0;
+      const parts = topReportGlRows.map((row, index) => {
+        const share = Math.max(0, officialVisibleTotal ? row.amount / officialVisibleTotal : 0);
+        const start = cursor;
+        cursor += share * 100;
+        return `${colors[index] || "#64748b"} ${start}% ${cursor}%`;
+      });
+      return parts.length ? parts.join(", ") : "#e5edf5 0% 100%";
+    })();
+    const cnImpactTableRows = [
+      ["CN Received", cnReceivedTotal, "Cost addition", "#059669"],
+      ["CN Issued", -cnIssuedTotal, "Cost recovery", "#dc2626"],
+      ["Net CN Impact", cnCost, "Net reallocation", cnCost >= 0 ? "#dc2626" : "#059669"],
+    ].map(([label, value, impact, color]) => `<tr><td>${htmlEscape(label)}</td><td style="color:${color};">${htmlEscape(compactMoney(value))}</td><td>${htmlEscape(impact)}</td></tr>`).join("");
+    const actionCards = [
+      ["Accelerate AFP approval", "Improve certification turnaround time to strengthen cash flow."],
+      ["Control top GL driver", topDriver ? `Review ${topDriver.label} spend and optimize execution mix.` : "Review the highest cost category once available."],
+      ["Track CN separately", "Maintain transparency between operational cost and internal reallocations."],
+      ["Review execution strategy", "Validate make-or-buy decisions and margin impact."],
+    ].map(([title, detail]) => `<div class="action-card"><div class="action-icon">i</div><strong>${htmlEscape(title)}</strong><p>${htmlEscape(detail)}</p></div>`).join("");
     const reportHtml = `<!doctype html>
       <html>
         <head>
           <meta charset="utf-8" />
           <title>Cost Center Report - ${htmlEscape(filters.costCenter)}</title>
           <style>
-            @page { size: A4; margin: 12mm; }
+            @page { size: A4; margin: 8mm; }
             * { box-sizing: border-box; }
-            body { margin: 0; background: #fff; color: #10233f; font-family: Arial, Helvetica, sans-serif; }
-            .report { width: 100%; max-width: 190mm; margin: 0 auto; }
-            .header { padding: 18px 20px; margin-bottom: 16px; border-radius: 18px; color: #fff; background: linear-gradient(135deg, #062b4f 0%, #0f766e 100%); display: flex; justify-content: space-between; gap: 18px; }
-            .eyebrow { color: #a7f3d0; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
-            h1 { margin: 5px 0 0; font-size: 26px; line-height: 1.05; }
-            h2 { margin: 0 0 12px; font-size: 15px; color: #10233f; }
-            .meta { text-align: right; color: rgba(255,255,255,.82); font-size: 10px; line-height: 1.65; }
-            .section { break-inside: avoid; margin-top: 14px; }
-            .panel { border: 1px solid #d8e2ee; border-radius: 16px; padding: 15px; background: #f8fafc; box-shadow: 0 10px 24px rgba(15,23,42,.06); }
-            .summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-            .insight { border-left: 4px solid #0f766e; border-radius: 12px; padding: 10px 12px; background: #fff; color: #334155; font-size: 11px; line-height: 1.4; }
-            .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-            .kpi { border: 1px solid #d8e2ee; border-radius: 15px; padding: 13px; background: #fff; min-height: 82px; }
-            .kpi.teal { border-top: 4px solid #0f766e; }
-            .kpi.green { border-top: 4px solid #059669; }
-            .kpi.red { border-top: 4px solid #dc2626; }
-            .kpi.blue { border-top: 4px solid #2563eb; }
-            .label { color: #64748b; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; }
-            .kpi-value { margin-top: 9px; font-size: 22px; line-height: 1; font-weight: 900; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .bar-row, .driver-row { display: grid; grid-template-columns: 132px 1fr 92px; gap: 10px; align-items: center; margin: 9px 0; font-size: 11px; }
-            .bar-label { font-weight: 800; }
-            .bar-track { height: 11px; border-radius: 999px; background: #e5edf5; overflow: hidden; }
-            .bar-fill { height: 100%; border-radius: 999px; }
-            .bar-value, .driver-row > div:last-child { text-align: right; font-weight: 900; }
-            .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-            .flow-card { border: 1px solid #d8e2ee; border-radius: 14px; padding: 12px; background: #fff; min-height: 82px; }
-            .flow-value { margin-top: 8px; font-size: 18px; line-height: 1; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .detail, .driver-row span { display: block; margin-top: 5px; color: #64748b; font-size: 10px; line-height: 1.35; }
-            .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-            .note { color: #0f766e; font-size: 11px; font-weight: 900; margin-top: 8px; }
-            .footer { border-top: 1px solid #d8e2ee; margin-top: 22px; padding-top: 10px; color: #64748b; font-size: 10px; display: flex; justify-content: space-between; }
-            @media print { button { display: none; } .report { max-width: none; } }
+            body { margin: 0; background: #f4f7fb; color: #09162f; font-family: Arial, Helvetica, sans-serif; }
+            .report { width: 100%; max-width: 200mm; margin: 0 auto; background:#fff; border:1px solid #d9e2ef; border-radius:8px; overflow:hidden; }
+            .header { padding: 22px 26px; color: #fff; background: linear-gradient(135deg, #06234a 0%, #07396f 100%); display:flex; justify-content:space-between; gap:18px; align-items:center; }
+            .title { display:flex; align-items:center; gap:14px; }
+            .logo { width:58px; height:58px; border-radius:10px; background:#fff; object-fit:contain; padding:4px; }
+            h1 { margin: 0; font-size: 29px; line-height: 1; letter-spacing: -.02em; }
+            .subtitle { margin-top:8px; color:#e6eefb; font-size:14px; }
+            .brand { text-align:right; font-size:13px; color:#fff; display:flex; align-items:center; gap:12px; }
+            .doc-icon { border:1px solid rgba(255,255,255,.75); border-radius:4px; padding:4px 6px; font-weight:900; }
+            .info-strip { margin:14px; border:1px solid #d9e2ef; border-radius:8px; padding:16px 18px; display:grid; grid-template-columns:1fr 1fr auto; gap:20px; align-items:center; box-shadow:0 7px 18px rgba(15,23,42,.05); }
+            .info-item { display:flex; align-items:center; gap:12px; border-right:1px solid #d9e2ef; min-height:42px; }
+            .info-item:last-child { border-right:0; justify-content:flex-end; }
+            .info-icon { width:34px; height:34px; display:grid; place-items:center; color:#00338d; font-weight:900; border:1px solid #d9e2ef; border-radius:8px; }
+            .info-label { font-size:12px; color:#09162f; }
+            .info-value { margin-top:4px; font-size:18px; font-weight:900; }
+            .export { border:1px solid #cfd9e8; border-radius:6px; padding:10px 14px; color:#00338d; font-size:13px; font-weight:800; }
+            .kpi-grid { margin:14px; border:1px solid #d9e2ef; border-radius:8px; padding:18px; display:grid; grid-template-columns:repeat(6,1fr); gap:0; box-shadow:0 7px 18px rgba(15,23,42,.05); }
+            .kpi { display:flex; gap:11px; align-items:flex-start; padding:0 14px; border-right:1px solid #d9e2ef; min-width:0; }
+            .kpi:last-child { border-right:0; }
+            .circle { width:38px; height:38px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:17px; font-weight:900; flex:0 0 auto; }
+            .green-bg { background:#37a852; } .blue-bg { background:#1565c0; } .orange-bg { background:#fb8c00; } .purple-bg { background:#8b5cf6; } .teal-bg { background:#20a7ad; } .red-bg { background:#dc2626; }
+            .label { color:#09162f; font-size:11px; line-height:1.25; font-weight:800; }
+            .kpi-value { margin-top:10px; font-size:22px; line-height:1; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+            .content { padding: 0 14px 14px; }
+            .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+            .panel { border:1px solid #d9e2ef; border-radius:8px; padding:16px; background:#fff; box-shadow:0 7px 18px rgba(15,23,42,.04); break-inside:avoid; }
+            h2 { margin:0 0 14px; color:#00338d; font-size:14px; text-transform:uppercase; }
+            .bar-row, .driver-row { display:grid; grid-template-columns:120px 1fr 70px; gap:10px; align-items:center; margin:14px 0; font-size:12px; }
+            .bar-track { height:18px; background:#eef3f8; overflow:hidden; }
+            .bar-fill { height:100%; }
+            .bar-value, .driver-row > div:last-child { text-align:right; font-size:17px; font-weight:900; }
+            .driver-row { grid-template-columns:1fr 120px 70px; margin:9px 0; }
+            .driver-row span { display:block; color:#64748b; font-size:11px; margin-top:4px; }
+            table { width:100%; border-collapse:collapse; font-size:12px; overflow:hidden; border-radius:6px; }
+            th { background:#07396f; color:#fff; padding:9px; text-align:left; }
+            th:nth-child(n+2), td:nth-child(n+2) { text-align:right; }
+            td { border:1px solid #d9e2ef; padding:8px 9px; }
+            tr.total td { background:#dbeafe; color:#00338d; font-weight:900; }
+            .insight-box { margin-top:12px; background:#eef6ff; border:1px solid #dbeafe; border-radius:6px; padding:12px; color:#00338d; font-size:12px; line-height:1.35; }
+            .donut-wrap { display:grid; grid-template-columns:190px 1fr; gap:24px; align-items:center; }
+            .donut { width:170px; height:170px; border-radius:50%; background:conic-gradient(${donutStops}); position:relative; }
+            .donut:after { content:""; position:absolute; inset:46px; border-radius:50%; background:#fff; }
+            .legend-row { display:flex; justify-content:space-between; gap:10px; margin:12px 0; font-size:13px; }
+            .legend-row i { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:8px; vertical-align:-1px; }
+            .waterfall { height:170px; display:flex; align-items:flex-end; gap:42px; padding:18px 30px 10px; border-bottom:1px solid #94a3b8; }
+            .wf-bar { width:78px; background:#1565c0; color:#09162f; text-align:center; position:relative; }
+            .wf-bar.green { background:#37a852; } .wf-bar.red { background:#dc2626; }
+            .wf-bar span { position:absolute; top:-22px; left:-20px; right:-20px; font-weight:900; }
+            .wf-labels { display:flex; gap:42px; padding:8px 30px 0; font-size:12px; text-align:center; }
+            .wf-labels div { width:78px; }
+            .insights-list { display:grid; gap:11px; font-size:12px; }
+            .insights-list div { display:grid; grid-template-columns:24px 1fr; gap:10px; align-items:start; }
+            .badge { width:22px; height:22px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:11px; font-weight:900; }
+            .actions { grid-column:1 / -1; }
+            .action-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+            .action-card { border:1px solid #d9e2ef; border-radius:7px; padding:16px; min-height:138px; }
+            .action-card strong { display:block; font-size:13px; line-height:1.25; }
+            .action-card p { margin:14px 0 0; color:#334155; font-size:12px; line-height:1.35; }
+            .action-icon { width:34px; height:34px; border-radius:50%; border:2px solid #20a7ad; color:#20a7ad; display:grid; place-items:center; font-weight:900; margin-bottom:10px; }
+            .footer { border-top:1px solid #d9e2ef; margin:14px; padding-top:10px; color:#64748b; font-size:10px; display:flex; justify-content:space-between; }
+            @media print { body{background:#fff;} .report{border:0;border-radius:0;} .export{display:none;} }
           </style>
         </head>
         <body>
           <main class="report">
-            <section class="header">
-              <div>
-                <div class="eyebrow">IGCC Financial Portal</div>
-                <h1>Cost Center Report</h1>
-                <div style="margin-top:8px;font-weight:800;">Cost Center: ${htmlEscape(filters.costCenter)}</div>
+            <header class="header">
+              <div class="title">
+                <img class="logo" src="${htmlEscape(logoUrl)}" alt="IGCC logo" />
+                <div>
+                  <h1>P&amp;L REPORT - COST CENTER VIEW</h1>
+                  <div class="subtitle">Single Cost Center Performance Overview</div>
+                </div>
               </div>
-              <div class="meta">
-                <div>Selected Period: <strong>${htmlEscape(selectedPeriodLabel)}</strong></div>
-                <div>Report Date: <strong>${htmlEscape(reportDate)}</strong></div>
-                <div>View Type: <strong>${htmlEscape(costViewLabel)}</strong></div>
+              <div class="brand">
+                <span>IGCC | Commercial Dashboard</span>
+                <span class="doc-icon">R</span>
+              </div>
+            </header>
+
+            <section class="info-strip">
+              <div class="info-item">
+                <div class="info-icon">CC</div>
+                <div><div class="info-label">Cost Center</div><div class="info-value">${htmlEscape(filters.costCenter)}</div></div>
+              </div>
+              <div class="info-item">
+                <div class="info-icon">MO</div>
+                <div><div class="info-label">Period</div><div class="info-value">${htmlEscape(selectedPeriodLabel)}</div></div>
+              </div>
+              <div class="info-item">
+                <div class="export">Export Report</div>
               </div>
             </section>
 
-            <section class="section panel">
-              <h2>Executive Summary</h2>
-              <div class="summary">
-                ${insightItems.map((item) => `<div class="insight">${htmlEscape(item)}</div>`).join("")}
-              </div>
+            <section class="kpi-grid">
+              <div class="kpi"><div class="circle green-bg">$</div><div><div class="label">Total Revenue<br>(Approved)</div><div class="kpi-value">${htmlEscape(compactMoney(approvedIncome))}</div></div></div>
+              <div class="kpi"><div class="circle blue-bg">$</div><div><div class="label">Total Revenue<br>(Submitted)</div><div class="kpi-value">${htmlEscape(compactMoney(submittedIncome))}</div></div></div>
+              <div class="kpi"><div class="circle orange-bg">$</div><div><div class="label">Direct Cost</div><div class="kpi-value">${htmlEscape(compactMoney(officialVisibleTotal))}</div></div></div>
+              <div class="kpi"><div class="circle green-bg">GP</div><div><div class="label">Gross Profit</div><div class="kpi-value">${htmlEscape(compactMoney(grossProfitBeforeCn))}</div></div></div>
+              <div class="kpi"><div class="circle purple-bg">NP</div><div><div class="label">Net Profit</div><div class="kpi-value">${htmlEscape(compactMoney(netProfit))}</div></div></div>
+              <div class="kpi"><div class="circle teal-bg">%</div><div><div class="label">Profit Margin</div><div class="kpi-value">${htmlEscape(compactPercent(reportMargin))}</div></div></div>
             </section>
 
-            <section class="section">
-              <div class="kpi-grid">
-                ${kpiCard("Revenue", compactMoney(approvedIncome), "green")}
-                ${kpiCard("Total Cost", compactMoney(totalAdjustedCost), "blue")}
-                ${kpiCard("Net Profit", compactMoney(netProfit), netProfit >= 0 ? "green" : "red")}
-                ${kpiCard("Margin %", compactPercent(reportMargin), reportMargin !== null && reportMargin >= 0 ? "teal" : "red")}
-              </div>
-            </section>
+            <div class="content">
+              <section class="grid-2">
+                <div class="panel">
+                  <h2>1. Revenue Status (Approved vs Submitted)</h2>
+                  ${afpRow("Submitted AFP", submittedIncome, "#1565c0")}
+                  ${afpRow("Approved AFP", approvedIncome, "#37a852")}
+                  ${afpRow("Gap (Pending Approval)", approvalGapForReport, "#fb8c00")}
+                  <div class="insight-box"><strong>INSIGHT:</strong> ${htmlEscape(approvalGapForReport === 0 ? "AFP is fully approved for this cost center." : "Delay in certification can affect cash flow. Track approval cycle efficiency.")}</div>
+                </div>
 
-            <section class="section panel">
-              <h2>AFP Status</h2>
-              ${afpRow("Submitted AFP", submittedIncome, "#2563eb")}
-              ${afpRow("Approved AFP", approvedIncome, "#059669")}
-              ${afpRow("Approval Gap", approvalGapForReport, approvalGapForReport > 0 ? "#dc2626" : "#059669")}
-              ${afpRow("Approval Rate", approvalRateForReport, approvalRateForReport >= 0.85 ? "#059669" : "#b45309")}
-              ${approvalGapForReport === 0 ? "<div class='note'>Fully Approved</div>" : ""}
-            </section>
+                <div class="panel">
+                  <h2>2. Cost Breakdown by GL (This Cost Center Only)</h2>
+                  <table>
+                    <thead><tr><th>GL Category</th><th>Value ($)</th><th>%</th></tr></thead>
+                    <tbody>
+                      ${costDriverTableRows || "<tr><td colspan='3'>No GL cost drivers match the current filters.</td></tr>"}
+                      <tr class="total"><td>Total Direct Cost</td><td>${htmlEscape(compactMoney(officialVisibleTotal))}</td><td>100%</td></tr>
+                    </tbody>
+                  </table>
+                  <div class="insight-box"><strong>INSIGHT:</strong> ${htmlEscape(topDriver ? `${topDriver.label} is the largest cost driver at ${compactPercent(topDriverShare)}.` : "No GL driver available.")}</div>
+                </div>
+              </section>
 
-            <section class="section panel">
-              <h2>Profit Bridge</h2>
-              <div class="flow">
-                ${flowStep("Revenue", approvedIncome, "Approved AFP", "#059669")}
-                ${flowStep("Spent Cost", -officialVisibleTotal, "Spent report", "#dc2626")}
-                ${flowStep("CN Impact", cnCost, "Received - issued", cnCost >= 0 ? "#dc2626" : "#059669")}
-                ${flowStep("Net Profit", netProfit, "Revenue - adjusted cost", netProfit >= 0 ? "#059669" : "#dc2626")}
-              </div>
-            </section>
+              <section class="grid-2">
+                <div class="panel">
+                  <h2>3. Cost Distribution (Visual)</h2>
+                  <div class="donut-wrap">
+                    <div class="donut"></div>
+                    <div>${costLegendRows || "<div style='color:#64748b;font-size:12px;'>No cost distribution available.</div>"}</div>
+                  </div>
+                </div>
 
-            <section class="section two-col">
-              <div class="panel">
-                <h2>Credit Note Impact</h2>
-                ${flowStep("+ Received", cnReceivedTotal, "CN received", "#059669")}
-                <div style="height:8px;"></div>
-                ${flowStep("- Issued", cnIssuedTotal, "CN issued", "#dc2626")}
-                <div style="height:8px;"></div>
-                ${flowStep("= Net Impact", cnCost, "Internal reallocation", cnCost >= 0 ? "#dc2626" : "#059669")}
-              </div>
-              <div class="panel">
-                <h2>Top Receiving Cost Centers</h2>
-                ${cnReceiverRows || "<div style='color:#64748b;font-size:12px;'>No receiving cost centers match the current filters.</div>"}
-              </div>
-            </section>
+                <div class="panel">
+                  <h2>4. Credit Notes (CN Impact - This Cost Center Only)</h2>
+                  <table>
+                    <thead><tr><th>Source</th><th>Value ($)</th><th>Impact</th></tr></thead>
+                    <tbody>
+                      ${cnImpactTableRows}
+                    </tbody>
+                  </table>
+                  <div class="insight-box"><strong>INSIGHT:</strong> CNs are internal reallocations and should be tracked separately from operational cost.</div>
+                </div>
+              </section>
 
-            <section class="section panel">
-              <h2>Cost Drivers</h2>
-              ${glRows || "<div style='color:#64748b;font-size:12px;'>No GL cost drivers match the current filters.</div>"}
-            </section>
+              <section class="grid-2">
+                <div class="panel">
+                  <h2>5. Profitability Movement</h2>
+                  <div class="waterfall">
+                    <div class="wf-bar ${grossProfitBeforeCn >= 0 ? "" : "red"}" style="height:${Math.max(16, Math.min(145, Math.abs(grossProfitBeforeCn) / maxFlowReport * 145))}px"><span>${htmlEscape(compactMoney(grossProfitBeforeCn))}</span></div>
+                    <div class="wf-bar ${cnCost >= 0 ? "red" : "green"}" style="height:${Math.max(16, Math.min(145, Math.abs(cnCost) / maxFlowReport * 145))}px"><span>${htmlEscape(compactMoney(cnCost))}</span></div>
+                    <div class="wf-bar ${netProfit >= 0 ? "" : "red"}" style="height:${Math.max(16, Math.min(145, Math.abs(netProfit) / maxFlowReport * 145))}px"><span>${htmlEscape(compactMoney(netProfit))}</span></div>
+                  </div>
+                  <div class="wf-labels"><div>Gross Profit<br>Before CN</div><div>CN Impact</div><div>Final Net<br>Profit</div></div>
+                </div>
+
+                <div class="panel">
+                  <h2>6. Executive Insights (Auto-Generated)</h2>
+                  <div class="insights-list">
+                    ${insightItems.map((item, index) => `<div><span class="badge ${index === 0 && netProfit < 0 ? "red-bg" : index === 1 ? "orange-bg" : index === 2 ? "blue-bg" : "purple-bg"}">${index + 1}</span><span>${htmlEscape(item)}</span></div>`).join("")}
+                    <div><span class="badge teal-bg">5</span><span>${htmlEscape(reportMargin !== null && reportMargin < 0.1 ? "Profitability is low; management review is recommended." : "Profitability is within the current reporting context.")}</span></div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel actions">
+                <h2>7. Strategic Actions</h2>
+                <div class="action-grid">${actionCards}</div>
+              </section>
+            </div>
 
             <footer class="footer">
               <span>Prepared from IGCC Financial Portal | Confidential</span>
