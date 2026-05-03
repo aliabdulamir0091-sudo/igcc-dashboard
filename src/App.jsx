@@ -1647,6 +1647,147 @@ function DashboardApp({ session, onLogout }) {
   const bestProfitabilityRow = [...profitabilityRows].sort((a, b) => b.approvedNet - a.approvedNet)[0];
   const riskProfitabilityRow = [...profitabilityRows].sort((a, b) => a.approvedNet - b.approvedNet || b.cost - a.cost)[0];
   const positiveProfitabilityCount = profitabilityRows.filter((row) => row.approvedNet >= 0).length;
+  const selectedCostCenterProfitabilityRow = filters.costCenter
+    ? profitabilityRows.find((row) => row.costCenter === filters.costCenter)
+    : null;
+  const selectedPeriodLabel = [filters.month || "All months", filters.year || "All years"].join(" | ");
+  const selectedCostCenterApproved = selectedCostCenterProfitabilityRow?.approved ?? approvedRevenue;
+  const selectedCostCenterProfit = selectedCostCenterApproved - adjustedCostPreviewTotal;
+  const selectedCostCenterMargin = selectedCostCenterApproved ? selectedCostCenterProfit / selectedCostCenterApproved : null;
+  const costCenterOfficialRows = filteredOfficialData.filter((item) => item.costCenter === filters.costCenter);
+  const costCenterGlBreakdownRows = Array.from(
+    costCenterOfficialRows
+      .reduce((map, item) => {
+        const label = item.category || "Uncategorized";
+        const key = normalizeValue(label).toLowerCase() || "uncategorized";
+        const current = map.get(key) ?? { label, amount: 0, rows: 0 };
+        current.amount += Number(item.amount) || 0;
+        current.rows += Number(item.rows) || 1;
+        map.set(key, current);
+        return map;
+      }, new Map())
+      .values()
+  ).sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+  const maxCostCenterGlAmount = Math.max(...costCenterGlBreakdownRows.map((row) => Math.abs(row.amount)), 0);
+  const costCenterDetailRows = [...costCenterOfficialRows].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+  const renderCostCenterProfitabilityDetail = () => {
+    if (!filters.costCenter) return null;
+
+    const bridgeSteps = [
+      ["Official Cost", officialVisibleTotal, theme.accentStrong, "Base from Spent Report"],
+      ["CN Received", cnReceivedTotal, "#059669", "Added allocation"],
+      ["CN Issued", -cnIssuedTotal, theme.danger, "Internal recovery"],
+      ["Adjusted Cost", adjustedCostPreviewTotal, "#0f766e", "Final cost base"],
+    ];
+    const summaryMetrics = [
+      ["Official Cost", officialVisibleTotal, theme.accentStrong],
+      ["CN Received", cnReceivedTotal, "#059669"],
+      ["CN Issued", cnIssuedTotal, theme.danger],
+      ["Adjusted Cost", adjustedCostPreviewTotal, "#0f766e"],
+    ];
+
+    return (
+      <div style={{ display: "grid", gap: 18 }}>
+        <section style={{ border: `1px solid ${theme.border}`, borderRadius: 16, padding: 20, background: themeMode === "light" ? "linear-gradient(135deg, #f8fbff 0%, #ffffff 58%, #f0fdfa 100%)" : theme.inputBg, boxShadow: "0 18px 38px rgba(15,23,42,0.08)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(min(100%, 280px), 1fr) minmax(min(100%, 520px), 1.45fr)", gap: 18, alignItems: "center" }}>
+            <div>
+              <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>Cost Center Detail</div>
+              <h3 style={{ margin: "8px 0 0", color: theme.text, fontSize: 30, lineHeight: 1.05, fontWeight: 950 }}>{filters.costCenter}</h3>
+              <div style={{ marginTop: 9, color: theme.subtext, fontSize: 13, fontWeight: 800 }}>{selectedPeriodLabel}</div>
+              <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <span style={{ color: isAdjustedCostActive ? "#0f766e" : theme.subtext, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>{costViewLabel}</span>
+                <span style={{ color: profitColor(selectedCostCenterProfit), background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>Profit {formatCompactCurrency(selectedCostCenterProfit)}</span>
+                <span style={{ color: theme.subtext, background: theme.panelBg, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>Margin {selectedCostCenterMargin == null ? "N/A" : formatPercent(selectedCostCenterMargin)}</span>
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(128px, 1fr))", gap: 10 }}>
+              {summaryMetrics.map(([label, value, accent]) => (
+                <div key={label} className="executive-hover-card" style={{ border: `1px solid ${theme.border}`, borderRadius: 10, padding: 14, background: theme.panelBg, transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease" }}>
+                  <div style={{ color: theme.subtext, fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                  <div style={{ marginTop: 8, color: accent, fontSize: 20, lineHeight: 1.05, fontWeight: 950 }}>{formatCompactCurrency(value)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <details open style={{ border: `1px solid ${theme.border}`, borderRadius: 16, overflow: "hidden", background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 14px 30px rgba(15,23,42,0.07)" }}>
+          <summary style={{ padding: "16px 18px", cursor: "pointer", listStyle: "none", color: theme.text, fontWeight: 950, background: theme.accentSoft }}>Credit Note Impact</summary>
+          <div style={{ padding: 18 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, alignItems: "stretch" }}>
+              {bridgeSteps.map(([label, value, accent, detail], index) => (
+                <Fragment key={label}>
+                  <div style={{ border: `1px solid ${theme.border}`, borderRadius: 12, padding: 15, background: theme.panelBg }}>
+                    <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                    <div style={{ marginTop: 8, color: accent, fontSize: 22, lineHeight: 1.05, fontWeight: 950 }}>{formatCurrency(value)}</div>
+                    <div style={{ marginTop: 8, color: theme.subtext, fontSize: 12 }}>{detail}</div>
+                  </div>
+                  {index < bridgeSteps.length - 1 && <div style={{ alignSelf: "center", justifySelf: "center", color: theme.subtext, fontSize: 18, fontWeight: 950 }}>→</div>}
+                </Fragment>
+              ))}
+            </div>
+          </div>
+        </details>
+
+        <details open style={{ border: `1px solid ${theme.border}`, borderRadius: 16, overflow: "hidden", background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 14px 30px rgba(15,23,42,0.07)" }}>
+          <summary style={{ padding: "16px 18px", cursor: "pointer", listStyle: "none", color: theme.text, fontWeight: 950, background: theme.accentSoft }}>Spend Breakdown</summary>
+          <div style={{ padding: 18, display: "grid", gap: 12 }}>
+            {costCenterGlBreakdownRows.slice(0, 10).map((row) => {
+              const width = `${Math.max(3, (Math.abs(row.amount) / (maxCostCenterGlAmount || 1)) * 100)}%`;
+              return (
+                <div key={row.label} className="executive-hover-card" style={{ border: `1px solid ${theme.border}`, borderRadius: 12, padding: 14, background: theme.panelBg, transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "minmax(150px, 0.75fr) minmax(0, 1fr) 130px", gap: 14, alignItems: "center" }}>
+                    <div>
+                      <div style={{ color: theme.text, fontSize: 13, fontWeight: 950, overflowWrap: "anywhere" }}>{row.label}</div>
+                      <div style={{ marginTop: 4, color: theme.subtext, fontSize: 12 }}>{row.rows} entries</div>
+                    </div>
+                    <div style={{ height: 12, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                      <div style={{ width, height: "100%", borderRadius: 999, background: theme.accentStrong }} />
+                    </div>
+                    <div style={{ textAlign: "right", color: theme.text, fontSize: 13, fontWeight: 950 }}>{formatCurrency(row.amount)}</div>
+                  </div>
+                </div>
+              );
+            })}
+            {!costCenterGlBreakdownRows.length && <div style={{ color: theme.subtext, fontSize: 13 }}>No GL spend breakdown matches the current filters.</div>}
+          </div>
+        </details>
+
+        <details style={{ border: `1px solid ${theme.border}`, borderRadius: 16, overflow: "hidden", background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 14px 30px rgba(15,23,42,0.07)" }}>
+          <summary style={{ padding: "16px 18px", cursor: "pointer", listStyle: "none", color: theme.text, fontWeight: 950, background: theme.accentSoft }}>View Details</summary>
+          <div style={{ padding: 16, overflowX: "auto" }}>
+            <table style={{ width: "100%", minWidth: 820, borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={leftHeaderStyle}>Month</th>
+                  <th style={leftHeaderStyle}>GL Name</th>
+                  <th style={leftHeaderStyle}>Vendor</th>
+                  <th style={tableHeaderStyle}>Amount</th>
+                  <th style={leftHeaderStyle}>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {costCenterDetailRows.slice(0, 200).map((row, index) => (
+                  <tr key={`${row.id || row.costCenter}-${row.month}-${row.category}-${index}`}>
+                    <td style={leftCellStyle}>{row.month}</td>
+                    <td style={leftCellStyle}>{row.category || "Uncategorized"}</td>
+                    <td style={leftCellStyle}>{row.vendor || "-"}</td>
+                    <td style={tableCellStyle}>{formatCurrency(row.amount)}</td>
+                    <td style={leftCellStyle}>{row.source || "Spent Report"}</td>
+                  </tr>
+                ))}
+                {!costCenterDetailRows.length && (
+                  <tr>
+                    <td colSpan={5} style={{ ...leftCellStyle, color: theme.subtext }}>No detail rows match the current filters.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+    );
+  };
   const portfolioPerformanceRows = portfolioSummaries.map((portfolio) => ({
     ...portfolio,
     gap: portfolio.submitted - portfolio.approved,
@@ -3397,117 +3538,84 @@ function DashboardApp({ session, onLogout }) {
           </div>
 
           {renderExecutiveInsights("Profitability Narrative", profitabilityInsights)}
-          {renderCostSourceBreakdown()}
+          {filters.costCenter ? (
+            renderCostCenterProfitabilityDetail()
+          ) : (
+            <>
+              {renderCostSourceBreakdown()}
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12, marginBottom: 16 }}>
-            {[
-              [costViewLabel, formatCompactCurrency(visibleTotal), isAdjustedCostActive ? `Gross ${formatCompactCurrency(officialVisibleTotal)} | CN ${formatCompactCurrency(cnNetImpact)}` : "Filtered cost base", "CO", theme.accentWarm],
-              ["Approved AFP", formatCompactCurrency(approvedRevenue), "Recognized value", "AF", theme.accentStrong],
-              ["Best Center", bestProfitabilityRow?.costCenter || "No data", bestProfitabilityRow ? formatCompactCurrency(bestProfitabilityRow.approvedNet) : "-", "BC", "#2563eb"],
-              ["At Risk Center", riskProfitabilityRow?.costCenter || "No data", riskProfitabilityRow ? formatCompactCurrency(riskProfitabilityRow.approvedNet) : "-", "RC", theme.danger],
-              ["Positive Centers", `${positiveProfitabilityCount}/${profitabilityRows.length || 0}`, "Approved profit position", "PC", "#16a34a"],
-            ].map(([label, value, detail, icon, accent]) => (
-              <div className="executive-hover-card" key={label} style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)", transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease" }}>
-                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                  <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: 12, background: `${accent}14`, color: accent, fontSize: 13, fontWeight: 950 }}>{icon}</span>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
-                    <div style={{ marginTop: 7, color: accent, fontSize: 22, lineHeight: 1.1, fontWeight: 950, overflowWrap: "anywhere" }}>{value}</div>
-                    <div style={{ marginTop: 9, color: theme.subtext, fontSize: 12 }}>{detail}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {renderWorkshopCreditImpact()}
-
-          <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)", margin: "16px 0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
-              <div>
-                <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Cost Center CN View</h3>
-                <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Gross cost remains the Spent Report total; adjusted cost applies CN received minus CN issued.</p>
-              </div>
-              <span style={{ color: theme.accentStrong, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>{costViewLabel}</span>
-            </div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", minWidth: 760, borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>
-                    <th style={leftHeaderStyle}>Cost Center</th>
-                    <th style={tableHeaderStyle}>Gross Cost</th>
-                    <th style={tableHeaderStyle}>CN Received</th>
-                    <th style={tableHeaderStyle}>CN Issued</th>
-                    <th style={tableHeaderStyle}>Adjusted Cost</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {centerSummaryRows.slice(0, 10).map((row) => (
-                    <tr key={`cn-${row.costCenter}`}>
-                      <td style={leftCellStyle}>{row.costCenter}</td>
-                      <td style={tableCellStyle}>{formatCurrency(row.grossCost)}</td>
-                      <td style={{ ...tableCellStyle, color: theme.accentStrong }}>{formatCurrency(row.cnReceived)}</td>
-                      <td style={{ ...tableCellStyle, color: theme.danger }}>{formatCurrency(row.cnIssued)}</td>
-                      <td style={{ ...tableCellStyle, fontWeight: 950 }}>{formatCurrency(row.adjustedCost)}</td>
-                    </tr>
-                  ))}
-                  {!centerSummaryRows.length && (
-                    <tr>
-                      <td colSpan={5} style={{ ...leftCellStyle, color: theme.subtext }}>No cost center CN detail matches the current filters.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)", marginBottom: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
-              <div>
-                <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Profitability Explorer</h3>
-                <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Cost centers ranked by approved profit position.</p>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <div style={{ display: "flex", gap: 6, padding: 4, borderRadius: 12, background: theme.accentSoft, border: `1px solid ${theme.border}`, flexWrap: "wrap" }}>
-                  {profitabilitySortOptions.map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setProfitabilitySortMode(value)}
-                      style={{ border: "none", borderRadius: 9, padding: "8px 10px", cursor: "pointer", background: profitabilitySortMode === value ? theme.panelBg : "transparent", color: profitabilitySortMode === value ? theme.accentStrong : theme.text, boxShadow: profitabilitySortMode === value ? "0 4px 14px rgba(15,23,42,0.10)" : "none", fontSize: 11, fontWeight: 950 }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <span style={{ color: theme.subtext, fontSize: 12, fontWeight: 900 }}>{profitabilityFocusRows.length} centers shown</span>
-              </div>
-            </div>
-            <div style={{ display: "grid", gap: 10 }}>
-              {profitabilityFocusRows.map((row, index) => {
-                const width = `${Math.max(4, (Math.abs(row.approvedNet) / (maxProfitabilityExposure || 1)) * 100)}%`;
-                const accent = profitColor(row.approvedNet);
-                return (
-                  <div key={row.costCenter} style={{ display: "grid", gridTemplateColumns: "minmax(180px, 0.75fr) minmax(160px, 1fr) 140px", gap: 12, alignItems: "center", border: `1px solid ${theme.border}`, borderRadius: 12, padding: "12px 14px", background: theme.panelBg }}>
-                    <div>
-                      <strong style={{ color: theme.text }}>{index + 1}. {row.costCenter}</strong>
-                      <div style={{ marginTop: 4, color: theme.subtext, fontSize: 12 }}>{row.portfolio} | {row.hub}</div>
-                    </div>
-                    <div style={{ height: 13, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
-                      <div style={{ width, height: "100%", borderRadius: 999, background: accent }} />
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ color: accent, fontWeight: 950 }}>{formatCompactCurrency(row.approvedNet)}</div>
-                      <div style={{ marginTop: 4, color: theme.subtext, fontSize: 12 }}>{formatPercent(row.approvedMargin)}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12, marginBottom: 16 }}>
+                {[
+                  [costViewLabel, formatCompactCurrency(visibleTotal), isAdjustedCostActive ? `Gross ${formatCompactCurrency(officialVisibleTotal)} | CN ${formatCompactCurrency(cnNetImpact)}` : "Filtered cost base", "CO", theme.accentWarm],
+                  ["Approved AFP", formatCompactCurrency(approvedRevenue), "Recognized value", "AF", theme.accentStrong],
+                  ["Best Center", bestProfitabilityRow?.costCenter || "No data", bestProfitabilityRow ? formatCompactCurrency(bestProfitabilityRow.approvedNet) : "-", "BC", "#2563eb"],
+                  ["At Risk Center", riskProfitabilityRow?.costCenter || "No data", riskProfitabilityRow ? formatCompactCurrency(riskProfitabilityRow.approvedNet) : "-", "RC", theme.danger],
+                  ["Positive Centers", `${positiveProfitabilityCount}/${profitabilityRows.length || 0}`, "Approved profit position", "PC", "#16a34a"],
+                ].map(([label, value, detail, icon, accent]) => (
+                  <div className="executive-hover-card" key={label} style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.08)", transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease" }}>
+                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: 12, background: `${accent}14`, color: accent, fontSize: 13, fontWeight: 950 }}>{icon}</span>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                        <div style={{ marginTop: 7, color: accent, fontSize: 22, lineHeight: 1.1, fontWeight: 950, overflowWrap: "anywhere" }}>{value}</div>
+                        <div style={{ marginTop: 9, color: theme.subtext, fontSize: 12 }}>{detail}</div>
+                      </div>
                     </div>
                   </div>
-                );
-              })}
-              {!profitabilityFocusRows.length && <div style={{ color: theme.subtext }}>No profitability data matches the current filters.</div>}
-            </div>
-          </div>
+                ))}
+              </div>
 
-          <details style={{ border: `1px solid ${theme.border}`, borderRadius: 14, overflow: "hidden", background: theme.panelBg }}>
+              {renderWorkshopCreditImpact()}
+
+              <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 16, background: themeMode === "light" ? "linear-gradient(145deg, #ffffff 0%, #f8fbff 100%)" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)", marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
+                  <div>
+                    <h3 style={{ margin: 0, color: theme.text, fontSize: 18 }}>Profitability Explorer</h3>
+                    <p style={{ margin: "5px 0 0", color: theme.subtext, fontSize: 12 }}>Cost centers ranked by approved profit position.</p>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 6, padding: 4, borderRadius: 12, background: theme.accentSoft, border: `1px solid ${theme.border}`, flexWrap: "wrap" }}>
+                      {profitabilitySortOptions.map(([value, label]) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setProfitabilitySortMode(value)}
+                          style={{ border: "none", borderRadius: 9, padding: "8px 10px", cursor: "pointer", background: profitabilitySortMode === value ? theme.panelBg : "transparent", color: profitabilitySortMode === value ? theme.accentStrong : theme.text, boxShadow: profitabilitySortMode === value ? "0 4px 14px rgba(15,23,42,0.10)" : "none", fontSize: 11, fontWeight: 950 }}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <span style={{ color: theme.subtext, fontSize: 12, fontWeight: 900 }}>{profitabilityFocusRows.length} centers shown</span>
+                  </div>
+                </div>
+                <div style={{ display: "grid", gap: 10 }}>
+                  {profitabilityFocusRows.map((row, index) => {
+                    const width = `${Math.max(4, (Math.abs(row.approvedNet) / (maxProfitabilityExposure || 1)) * 100)}%`;
+                    const accent = profitColor(row.approvedNet);
+                    return (
+                      <div key={row.costCenter} style={{ display: "grid", gridTemplateColumns: "minmax(180px, 0.75fr) minmax(160px, 1fr) 140px", gap: 12, alignItems: "center", border: `1px solid ${theme.border}`, borderRadius: 12, padding: "12px 14px", background: theme.panelBg }}>
+                        <div>
+                          <strong style={{ color: theme.text }}>{index + 1}. {row.costCenter}</strong>
+                          <div style={{ marginTop: 4, color: theme.subtext, fontSize: 12 }}>{row.portfolio} | {row.hub}</div>
+                        </div>
+                        <div style={{ height: 13, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
+                          <div style={{ width, height: "100%", borderRadius: 999, background: accent }} />
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <div style={{ color: accent, fontWeight: 950 }}>{formatCompactCurrency(row.approvedNet)}</div>
+                          <div style={{ marginTop: 4, color: theme.subtext, fontSize: 12 }}>{formatPercent(row.approvedMargin)}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!profitabilityFocusRows.length && <div style={{ color: theme.subtext }}>No profitability data matches the current filters.</div>}
+                </div>
+              </div>
+            </>
+          )}
+
+          {!filters.costCenter && <details style={{ border: `1px solid ${theme.border}`, borderRadius: 14, overflow: "hidden", background: theme.panelBg }}>
             <summary style={{ padding: "14px 16px", cursor: "pointer", listStyle: "none", color: theme.text, fontWeight: 950, background: theme.accentSoft }}>Open full Profit &amp; Loss drilldown</summary>
             <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", minWidth: 980, borderCollapse: "collapse", background: theme.panelBg }}>
@@ -3700,7 +3808,7 @@ function DashboardApp({ session, onLogout }) {
               </tbody>
             </table>
           </div>
-          </details>
+          </details>}
         </div>
       )}
 
