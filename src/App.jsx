@@ -53,6 +53,7 @@ const MONTH_LABELS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"
 const SPENT_SUMMARY_FILE = "data/spent-report/summary/monthly_summary.json";
 const CREDIT_NOTE_SUMMARY_FILE = "data/spent-report/credit-note/credit_note_summary.json";
 const CREDIT_NOTE_DATA_VERSION = "workshop-received-v2";
+const DEFAULT_FILTERS = { portfolio: "", hub: "", costCenter: "", month: "", year: "" };
 const getPublicAssetUrl = (filename) => `${import.meta.env.BASE_URL}${String(filename).split("/").map(encodeURIComponent).join("/")}`;
 const IGCC_LEVEL_LABEL = "IGCC Level 1 - IRAQ GATE CONTRACTING COMPANY";
 const NAV_ITEMS = [
@@ -505,9 +506,9 @@ function DashboardApp({ session, onLogout }) {
   const [revenueFilename, setRevenueFilename] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState({ portfolio: "", hub: "", costCenter: "", month: "", year: "" });
+  const [pageFilters, setPageFilters] = useState({});
   const [detailCostCenter, setDetailCostCenter] = useState("KAZ_23");
-  const [periodView, setPeriodView] = useState("monthly");
+  const [pagePeriodViews, setPagePeriodViews] = useState({});
   const [overviewPeriodView, setOverviewPeriodView] = useState("monthly");
   const [activePage, setActivePage] = useState("home");
   const [transactionPage, setTransactionPage] = useState(1);
@@ -527,6 +528,22 @@ function DashboardApp({ session, onLogout }) {
   const [loadedSpentDetailPeriods, setLoadedSpentDetailPeriods] = useState([]);
   const [spentImportSummary, setSpentImportSummary] = useState(null);
   const [creditNoteImportSummary, setCreditNoteImportSummary] = useState(null);
+  const filters = pageFilters[activePage] ?? DEFAULT_FILTERS;
+  const setFilters = (updater) => {
+    setPageFilters((current) => {
+      const currentFilters = current[activePage] ?? DEFAULT_FILTERS;
+      const nextFilters = typeof updater === "function" ? updater(currentFilters) : updater;
+      return { ...current, [activePage]: nextFilters };
+    });
+  };
+  const periodView = pagePeriodViews[activePage] ?? "monthly";
+  const setPeriodView = (updater) => {
+    setPagePeriodViews((current) => {
+      const currentView = current[activePage] ?? "monthly";
+      const nextView = typeof updater === "function" ? updater(currentView) : updater;
+      return { ...current, [activePage]: nextView };
+    });
+  };
 
   const theme = {
     light: {
