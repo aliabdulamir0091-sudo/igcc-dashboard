@@ -81,6 +81,10 @@ svg {
   max-width: 100%;
 }
 
+.profitability-print-exact {
+  display: none;
+}
+
 .dashboard-shell,
 .login-page {
   width: 100%;
@@ -496,196 +500,397 @@ code {
     color: #071b3a !important;
   }
 
-  .profitability-report-header {
-    padding: 6mm 7mm !important;
-    border-radius: 5px 5px 0 0 !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .profitability-report-header h2 {
-    font-size: 21px !important;
-    line-height: 1.05 !important;
-    max-width: 118mm !important;
-  }
-
-  .profitability-report-header p,
-  .profitability-report-header span {
-    font-size: 9px !important;
-  }
-
+  .profitability-report-header,
   .profitability-report-content {
-    padding: 3mm !important;
-    gap: 3mm !important;
+    display: none !important;
+  }
+
+  .profitability-print-exact {
+    display: block !important;
+    width: 202mm !important;
+    max-width: 202mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
     background: #ffffff !important;
+    color: #061731 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
   }
 
-  .profitability-report-info {
-    grid-template-columns: 1fr 1fr !important;
-    padding: 3mm !important;
+  .print-exact-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    padding: 6mm !important;
+    border-radius: 4px 4px 0 0 !important;
+    background: linear-gradient(135deg, #05295a, #073b77) !important;
+    color: #ffffff !important;
+  }
+
+  .print-exact-header h1 {
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-size: 22px !important;
+    line-height: 1 !important;
+    font-weight: 900 !important;
+  }
+
+  .print-exact-header p,
+  .print-exact-brand {
+    margin: 2mm 0 0 !important;
+    color: #ffffff !important;
+    font-size: 10px !important;
+  }
+
+  .print-exact-meta,
+  .print-exact-kpis,
+  .print-exact-card {
+    border: 1px solid #d7e2ef !important;
+    border-radius: 7px !important;
+    background: #ffffff !important;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06) !important;
+  }
+
+  .print-exact-meta {
+    display: grid !important;
+    grid-template-columns: 1fr 1.3fr auto !important;
+    gap: 5mm !important;
+    align-items: center !important;
+    padding: 4mm !important;
+    margin-top: 3mm !important;
+  }
+
+  .print-exact-meta-item {
+    display: flex !important;
     gap: 3mm !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .profitability-report-info > div {
-    min-width: 0 !important;
-  }
-
-  .profitability-report-info span {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 13px !important;
-  }
-
-  .profitability-report-info div {
-    font-size: 9px !important;
-  }
-
-  .profitability-report-info div[style*="font-size: 19px"] {
-    font-size: 13px !important;
-  }
-
-  .profitability-kpi-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-    gap: 0 !important;
-    padding: 2.4mm !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .profitability-kpi-card {
-    min-height: 0 !important;
-    padding: 1.2mm 1.8mm !important;
+    align-items: center !important;
     border-right: 1px solid #d7e2ef !important;
   }
 
-  .profitability-kpi-card > div {
-    gap: 1.5mm !important;
-    align-items: center !important;
-  }
-
-  .profitability-kpi-card span {
-    width: 20px !important;
-    height: 20px !important;
-    min-width: 20px !important;
+  .print-exact-icon {
+    display: grid !important;
+    place-items: center !important;
+    width: 9mm !important;
+    height: 9mm !important;
+    border-radius: 3px !important;
+    background: #eff6ff !important;
+    color: #0044aa !important;
     font-size: 7px !important;
+    font-weight: 900 !important;
   }
 
-  .profitability-kpi-card div {
+  .print-exact-meta small,
+  .print-exact-kpi small {
+    display: block !important;
+    color: #061731 !important;
     font-size: 8px !important;
-    line-height: 1.15 !important;
+    font-weight: 800 !important;
   }
 
-  .profitability-kpi-card div[style*="font-size: 22px"] {
-    font-size: 13px !important;
+  .print-exact-meta strong {
+    color: #061731 !important;
+    font-size: 14px !important;
+    font-weight: 900 !important;
   }
 
-  .profitability-report-row {
+  .print-exact-meta button {
+    border: 1px solid #cbd8e7 !important;
+    border-radius: 5px !important;
+    background: #ffffff !important;
+    color: #003087 !important;
+    padding: 3mm 6mm !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+  }
+
+  .print-exact-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    margin-top: 3mm !important;
+    padding: 4mm 3mm !important;
+  }
+
+  .print-exact-kpi {
+    display: flex !important;
+    gap: 2.5mm !important;
+    align-items: center !important;
+    padding: 0 2.5mm !important;
+    border-right: 1px solid #d7e2ef !important;
+  }
+
+  .print-exact-kpi:last-child {
+    border-right: 0 !important;
+  }
+
+  .print-exact-kpi > span {
+    display: grid !important;
+    place-items: center !important;
+    width: 8mm !important;
+    height: 8mm !important;
+    min-width: 8mm !important;
+    border-radius: 999px !important;
+    color: #ffffff !important;
+    font-size: 7px !important;
+    font-weight: 900 !important;
+  }
+
+  .print-exact-kpi strong {
+    display: block !important;
+    margin-top: 1.4mm !important;
+    color: #061731 !important;
+    font-size: 15px !important;
+    line-height: 1 !important;
+    font-weight: 900 !important;
+  }
+
+  .print-exact-grid {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     gap: 3mm !important;
-    page-break-inside: auto !important;
-    break-inside: auto !important;
+    margin-top: 3mm !important;
   }
 
-  .profitability-report-card {
-    padding: 3mm !important;
-    border: 1px solid #d6e2ef !important;
-    border-radius: 6px !important;
-    background: #ffffff !important;
-    min-height: 0 !important;
+  .print-exact-card {
+    padding: 3.5mm !important;
+    min-height: 58mm !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
-  .profitability-report-card h3 {
-    font-size: 10px !important;
-    line-height: 1.2 !important;
-    margin-bottom: 2mm !important;
+  .print-exact-card h2 {
+    margin: 0 0 4mm !important;
     color: #003087 !important;
+    font-size: 11px !important;
+    line-height: 1.15 !important;
+    font-weight: 900 !important;
   }
 
-  .profitability-report-card div,
-  .profitability-report-card span,
-  .profitability-report-card strong,
-  .profitability-report-card p {
-    font-size: 7px !important;
-    line-height: 1.18 !important;
+  .print-exact-bars {
+    display: grid !important;
+    gap: 4mm !important;
   }
 
-  .profitability-report-card [style*="height: 24px"] {
-    height: 10px !important;
+  .print-exact-bar-row {
+    display: grid !important;
+    grid-template-columns: 28mm 1fr 17mm !important;
+    gap: 2.5mm !important;
+    align-items: center !important;
   }
 
-  .profitability-report-card [style*="gap: 18px"] {
-    gap: 2.4mm !important;
+  .print-exact-bar-row label,
+  .print-exact-bar-row strong {
+    color: #061731 !important;
+    font-size: 8px !important;
+    font-weight: 800 !important;
   }
 
-  .profitability-report-card [style*="margin-top: 28px"] {
-    margin-top: 5mm !important;
+  .print-exact-bar-row div {
+    height: 4.3mm !important;
+    background: #eef4fb !important;
+    border-radius: 2px !important;
+    overflow: hidden !important;
   }
 
-  .profitability-report-card [style*="margin-top: 24px"] {
-    margin-top: 4mm !important;
+  .print-exact-bar-row i {
+    display: block !important;
+    height: 100% !important;
   }
 
-  .profitability-report-card [style*="padding: 13px"] {
+  .print-exact-insight {
+    margin: 6mm 0 0 !important;
+    padding: 2.3mm !important;
+    border: 1px solid #d7e2ef !important;
+    border-radius: 5px !important;
+    background: #eff6ff !important;
+    color: #003087 !important;
+    font-size: 8px !important;
+    line-height: 1.25 !important;
+  }
+
+  .print-exact-table {
+    overflow: hidden !important;
+    border: 1px solid #d7e2ef !important;
+    border-radius: 4px !important;
+  }
+
+  .print-exact-table .thead,
+  .print-exact-table .tr {
+    display: grid !important;
+    grid-template-columns: 1.45fr 0.7fr 0.55fr !important;
+  }
+
+  .print-exact-table .thead {
+    background: linear-gradient(135deg, #05295a, #073b77) !important;
+    color: #ffffff !important;
+    font-weight: 900 !important;
+  }
+
+  .print-exact-table span {
+    padding: 1.7mm 2.2mm !important;
+    border-right: 1px solid #d7e2ef !important;
+    font-size: 8px !important;
+    line-height: 1.1 !important;
+  }
+
+  .print-exact-table .thead span {
+    border-right-color: rgba(255,255,255,0.28) !important;
+  }
+
+  .print-exact-table .tr {
+    border-top: 1px solid #d7e2ef !important;
+  }
+
+  .print-exact-table .tr.total {
+    background: #e8f2ff !important;
+    color: #003087 !important;
+    font-weight: 900 !important;
+  }
+
+  .print-exact-donut-wrap {
+    display: grid !important;
+    grid-template-columns: 43mm 1fr !important;
+    gap: 7mm !important;
+    align-items: center !important;
+  }
+
+  .print-exact-donut {
+    position: relative !important;
+    width: 42mm !important;
+    height: 42mm !important;
+    border-radius: 999px !important;
+  }
+
+  .print-exact-donut i {
+    position: absolute !important;
+    inset: 11mm !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+  }
+
+  .print-exact-legend {
+    display: grid !important;
+    gap: 3mm !important;
+  }
+
+  .print-exact-legend div {
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 3mm !important;
+    color: #061731 !important;
+    font-size: 10px !important;
+  }
+
+  .print-exact-legend span {
+    display: flex !important;
+    gap: 2mm !important;
+    align-items: center !important;
+  }
+
+  .print-exact-legend i {
+    display: inline-block !important;
+    width: 2.6mm !important;
+    height: 2.6mm !important;
+    border-radius: 999px !important;
+  }
+
+  .print-exact-waterfall {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    align-items: end !important;
+    gap: 8mm !important;
+    min-height: 44mm !important;
+    padding: 4mm 4mm 0 !important;
+  }
+
+  .print-exact-waterfall::before {
+    content: "" !important;
+    position: absolute !important;
+    left: 26mm !important;
+    right: 26mm !important;
+    top: 21mm !important;
+    border-top: 1px dashed #94a3b8 !important;
+  }
+
+  .print-exact-waterfall div {
+    position: relative !important;
+    z-index: 1 !important;
+    display: grid !important;
+    justify-items: center !important;
+    gap: 1.7mm !important;
+    color: #061731 !important;
+    font-size: 9px !important;
+    text-align: center !important;
+  }
+
+  .print-exact-waterfall i {
+    display: block !important;
+    width: 16mm !important;
+  }
+
+  .print-exact-insights {
+    display: grid !important;
+    gap: 3.2mm !important;
     padding: 2mm !important;
   }
 
-  .profitability-report-card [style*="padding: 11px 14px"],
-  .profitability-report-card [style*="padding: 10px 14px"] {
-    padding: 1.6mm 2mm !important;
+  .print-exact-insights p {
+    display: grid !important;
+    grid-template-columns: 8mm 1fr !important;
+    gap: 2mm !important;
+    margin: 0 !important;
+    color: #061731 !important;
+    font-size: 9px !important;
+    line-height: 1.25 !important;
   }
 
-  .profitability-report-card [style*="width: 170px"] {
-    width: 31mm !important;
-    height: 31mm !important;
+  .print-exact-insights span {
+    font-size: 13px !important;
+    font-weight: 900 !important;
   }
 
-  .profitability-report-card [style*="inset: 46px"] {
-    inset: 8mm !important;
-  }
-
-  .profitability-report-card [style*="height: 240px"] {
-    height: 39mm !important;
-  }
-
-  .profitability-report-card [style*="height: 230px"] {
-    height: 39mm !important;
-  }
-
-  .profitability-report-card [style*="width: 58%"] {
-    width: 48% !important;
-  }
-
-  .profitability-report-card-keep {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .profitability-actions-card {
-    page-break-before: auto !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .profitability-actions-card > div {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 2.5mm !important;
-  }
-
-  .profitability-actions-card .executive-hover-card {
+  .print-exact-actions {
     min-height: 0 !important;
-    padding: 2.5mm !important;
+    margin-top: 3mm !important;
   }
 
-  .profitability-actions-card .executive-hover-card span {
-    width: 21px !important;
-    height: 21px !important;
-    min-width: 21px !important;
+  .print-exact-actions > div {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 3mm !important;
+  }
+
+  .print-exact-actions article {
+    min-height: 31mm !important;
+    padding: 4mm !important;
+    border: 1px solid #d7e2ef !important;
+    border-radius: 5px !important;
+    background: #ffffff !important;
+  }
+
+  .print-exact-actions article span {
+    display: grid !important;
+    place-items: center !important;
+    width: 9mm !important;
+    height: 9mm !important;
+    border: 1.5px solid !important;
+    border-radius: 999px !important;
     font-size: 7px !important;
+    font-weight: 900 !important;
+  }
+
+  .print-exact-actions article strong {
+    display: block !important;
+    margin-top: 2mm !important;
+    color: #061731 !important;
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+
+  .print-exact-actions article p {
+    margin-top: 5mm !important;
+    color: #061731 !important;
+    font-size: 8px !important;
+    line-height: 1.35 !important;
   }
 
   .executive-hover-card:hover,

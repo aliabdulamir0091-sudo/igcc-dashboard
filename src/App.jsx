@@ -4809,6 +4809,148 @@ function DashboardApp({ session, onLogout }) {
               </div>
             </section>
           </div>
+
+          <div className="profitability-print-exact">
+            <div className="print-exact-header">
+              <div>
+                <h1>P&amp;L REPORT - {profitabilityScopeType.toUpperCase()} VIEW</h1>
+                <p>{profitabilityScopeType === "Cost Center" ? "Single Cost Center" : profitabilityScopeType} Performance Overview</p>
+              </div>
+              <div className="print-exact-brand">IGCC | Commercial Dashboard <span>▤</span></div>
+            </div>
+
+            <div className="print-exact-meta">
+              <div className="print-exact-meta-item">
+                <span className="print-exact-icon">CC</span>
+                <div>
+                  <small>{profitabilityScopeType}</small>
+                  <strong>{profitabilityScopeName}</strong>
+                </div>
+              </div>
+              <div className="print-exact-meta-item">
+                <span className="print-exact-icon">MO</span>
+                <div>
+                  <small>Period</small>
+                  <strong>{profitabilityPeriodLabel}</strong>
+                </div>
+              </div>
+              <button type="button">Export Report</button>
+            </div>
+
+            <div className="print-exact-kpis">
+              {[
+                ["$", "Total Revenue (Approved)", approvedRevenue, "#22a852"],
+                ["SA", "Total Revenue (Submitted)", submittedRevenue, "#1267bf"],
+                ["DC", "Direct Cost", profitabilityDirectCost, "#f28a16"],
+                ["GP", "Gross Profit", profitabilityGrossBeforeCn, "#33a852"],
+                ["NP", "Net Profit", profitabilityNetProfit, "#8b5cf6"],
+                ["%", "Profit Margin", profitabilityMargin, "#18a6aa"],
+              ].map(([icon, label, value, color]) => (
+                <div className="print-exact-kpi" key={label}>
+                  <span style={{ background: color }}>{icon}</span>
+                  <div>
+                    <small>{label}</small>
+                    <strong>{label === "Profit Margin" ? formatPercent(value) : formatCompactCurrency(value)}</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="print-exact-grid">
+              <section className="print-exact-card">
+                <h2>1. Revenue Status (Approved vs Submitted)</h2>
+                <div className="print-exact-bars">
+                  {[
+                    ["Submitted AFP", submittedRevenue, "#1267bf"],
+                    ["Approved AFP", approvedRevenue, "#22a852"],
+                    ["Gap (Pending Approval)", profitabilityApprovalGap, "#f28a16"],
+                  ].map(([label, value, color]) => (
+                    <div className="print-exact-bar-row" key={label}>
+                      <label>{label}</label>
+                      <div><i style={{ width: `${Math.max(value ? 7 : 0, Math.min(100, (Math.abs(value) / profitabilityRevenueMax) * 100))}%`, background: color }} /></div>
+                      <strong>{formatCompactCurrency(value)}</strong>
+                    </div>
+                  ))}
+                </div>
+                <p className="print-exact-insight">i&nbsp;&nbsp;<b>INSIGHT:</b> {profitabilityApprovalGap > 0 ? "Delay in approval creates cash flow pressure." : "AFP is fully approved for this selection."}</p>
+              </section>
+
+              <section className="print-exact-card">
+                <h2>2. Cost Breakdown by GL (This Selection Only)</h2>
+                <div className="print-exact-table">
+                  <div className="thead"><span>GL Category</span><span>Value ($)</span><span>%</span></div>
+                  {profitabilityTopGlRows.map((row) => (
+                    <div className="tr" key={row.glName}>
+                      <span>{row.glName}</span>
+                      <span>{formatCompactCurrency(row.amount)}</span>
+                      <span>{formatPercent(profitabilityDirectCost ? row.amount / profitabilityDirectCost : 0)}</span>
+                    </div>
+                  ))}
+                  <div className="tr total"><span>Total Direct Cost</span><span>{formatCompactCurrency(profitabilityDirectCost)}</span><span>100%</span></div>
+                </div>
+                <p className="print-exact-insight">i&nbsp;&nbsp;<b>INSIGHT:</b> {profitabilityTopDriver ? `${profitabilityTopDriver.glName} is the largest cost driver.` : "No cost driver available."}</p>
+              </section>
+
+              <section className="print-exact-card">
+                <h2>3. Cost Distribution (Visual)</h2>
+                <div className="print-exact-donut-wrap">
+                  <div className="print-exact-donut" style={{ background: `conic-gradient(${profitabilityDistributionStops}, #e2e8f0 ${Math.min(100, profitabilityDistributionCursor)}% 100%)` }}><i /></div>
+                  <div className="print-exact-legend">
+                    {profitabilityDistributionRows.map((row) => (
+                      <div key={row.key}><span><i style={{ background: row.color }} />{row.label}</span><b>{formatPercent(profitabilityDirectCost ? row.amount / profitabilityDirectCost : 0)}</b></div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+
+              <section className="print-exact-card">
+                <h2>4. Credit Notes (CN Impact - This Selection Only)</h2>
+                <div className="print-exact-table">
+                  <div className="thead"><span>Source</span><span>Value ($)</span><span>Impact</span></div>
+                  {profitabilityCnRows.map((row) => (
+                    <div className="tr" key={row.key}><span>{row.label} CN</span><span>{formatCompactCurrency(row.net)}</span><span>{row.impact}</span></div>
+                  ))}
+                  <div className="tr total"><span>Total CN Impact</span><span>{formatCompactCurrency(profitabilityCnImpactTotal)}</span><span>{isAdjustedCostActive ? "Included" : "Tracked"}</span></div>
+                </div>
+                <p className="print-exact-insight">i&nbsp;&nbsp;<b>INSIGHT:</b> CNs should be tracked separately from operational cost.</p>
+              </section>
+
+              <section className="print-exact-card">
+                <h2>5. Profitability Movement</h2>
+                <div className="print-exact-waterfall">
+                  {profitabilityMovementRows.map((row, index) => (
+                    <div key={row.label}>
+                      <b>{index === 1 && row.value > 0 ? "+" : ""}{formatCompactCurrency(row.value)}</b>
+                      <i style={{ height: `${Math.max(15, (Math.abs(row.value) / profitabilityMovementMax) * 68)}px`, background: row.color }} />
+                      <span>{row.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="print-exact-card">
+                <h2>6. Executive Insights (Auto-Generated)</h2>
+                <div className="print-exact-insights">
+                  {profitabilityDashboardInsights.map((item, index) => (
+                    <p key={item.label}><span style={{ color: item.color }}>{index + 1}</span>{item.detail}</p>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            <section className="print-exact-card print-exact-actions">
+              <h2>7. Strategic Actions</h2>
+              <div>
+                {profitabilityStrategicActions.map(([title, detail, color, icon]) => (
+                  <article key={title}>
+                    <span style={{ color, borderColor: color }}>{icon}</span>
+                    <strong>{title}</strong>
+                    <p>{detail}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </div>
         </div>
       )}
 
