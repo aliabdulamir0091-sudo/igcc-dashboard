@@ -2493,7 +2493,126 @@ function DashboardApp({ session, onLogout }) {
     },
   ];
   const keyInsights = filters.month ? issueInsights : summaryInsights;
-  const insightContextLabel = filters.month ? `Monthly Insights - ${filters.month}` : "Strategic Insights - All Months";
+  const executiveScopeLabel = filters.costCenter || filters.hub || filters.portfolio || "All Portfolios";
+  const strategicInsightTitle = `Strategic Insights - ${executiveScopeLabel}`;
+  const trendLookbackRows = comparisonMonthlyCommercialRows.slice(-3);
+  const trendStart = trendLookbackRows[0];
+  const trendEnd = trendLookbackRows[trendLookbackRows.length - 1];
+  const costTrendDelta = trendStart && trendEnd ? trendEnd.cost - trendStart.cost : 0;
+  const costTrendRate = trendStart?.cost ? costTrendDelta / Math.abs(trendStart.cost) : null;
+  const costTrendState = Math.abs(costTrendRate ?? costTrendDelta) < 0.03 ? "Stable" : costTrendDelta > 0 ? "Increasing" : "Decreasing";
+  const topFilteredCostCenter = Array.from(
+    filteredData
+      .reduce((map, item) => {
+        const key = item.costCenter || "Unmapped";
+        map.set(key, (map.get(key) || 0) + (Number(item.amount) || 0));
+        return map;
+      }, new Map())
+      .entries()
+  ).sort((a, b) => b[1] - a[1])[0];
+  const topFilteredHub = Array.from(
+    filteredData
+      .reduce((map, item) => {
+        const key = resolveHub(item);
+        map.set(key, (map.get(key) || 0) + (Number(item.amount) || 0));
+        return map;
+      }, new Map())
+      .entries()
+  ).sort((a, b) => b[1] - a[1])[0];
+  const topFilteredPortfolio = Array.from(
+    filteredData
+      .reduce((map, item) => {
+        const key = resolvePortfolio(item);
+        map.set(key, (map.get(key) || 0) + (Number(item.amount) || 0));
+        return map;
+      }, new Map())
+      .entries()
+  ).sort((a, b) => b[1] - a[1])[0];
+  const topContributor = filters.costCenter
+    ? [topCostDriver?.glName, topCostDriver?.cost, "GL driver"]
+    : filters.hub
+      ? [topFilteredCostCenter?.[0], topFilteredCostCenter?.[1], "Cost center"]
+      : filters.portfolio
+        ? [topFilteredHub?.[0], topFilteredHub?.[1], "Hub"]
+        : [topFilteredPortfolio?.[0], topFilteredPortfolio?.[1], "Portfolio"];
+  const executiveSummaryItems = [
+    {
+      label: "Cost Trend",
+      value: costTrendState,
+      detail: trendStart && trendEnd
+        ? `${trendStart.label} to ${trendEnd.label}: ${costTrendRate === null ? formatCompactCurrency(costTrendDelta) : formatPercent(costTrendRate)}`
+        : "No monthly trend available",
+      color: costTrendDelta > 0 ? theme.danger : costTrendDelta < 0 ? theme.accentStrong : theme.subtext,
+    },
+    {
+      label: "Top Cost Driver",
+      value: topCostDriver?.glName ?? "No GL driver",
+      detail: topCostDriver ? `${formatCompactCurrency(topCostDriver.cost)} (${formatPercent(visibleTotal ? topCostDriver.cost / visibleTotal : 0)} of cost)` : "No GL cost data",
+      color: theme.accentStrong,
+    },
+    {
+      label: "Highest Contributor",
+      value: topContributor[0] || "No contributor",
+      detail: topContributor[1] ? `${topContributor[2]} contributing ${formatCompactCurrency(topContributor[1])}` : "No contribution in current filters",
+      color: "#2563eb",
+    },
+    {
+      label: "Portfolio Exposure",
+      value: largestPortfolioExposure?.label ?? "No portfolio",
+      detail: largestPortfolioExposure ? `${formatCompactCurrency(largestPortfolioExposure.cost)} selected cost exposure` : "No portfolio exposure",
+      color: largestPortfolioExposure?.accent ?? theme.accentWarm,
+    },
+    ...(isAdjustedCostActive
+      ? [{
+          label: "CN Impact",
+          value: cnNetImpact >= 0 ? "Adds Cost" : "Reduces Cost",
+          detail: topCreditReceivingCenters[0]
+            ? `Net ${formatCompactCurrency(cnNetImpact)}; top receiver ${topCreditReceivingCenters[0].costCenter}`
+            : `Net ${formatCompactCurrency(cnNetImpact)}`,
+          color: cnNetImpact >= 0 ? theme.danger : theme.accentStrong,
+        }]
+      : []),
+  ].slice(0, 5);
+  const dynamicStrategicInsights = [
+    {
+      label: "Top cost driver",
+      icon: "GL",
+      value: topCostDriver?.glName ?? "No GL performance",
+      detail: topCostDriver ? `${formatCompactCurrency(topCostDriver.cost)} (${formatPercent(visibleTotal ? topCostDriver.cost / visibleTotal : 0)})` : "No cost category available",
+      color: theme.accentStrong,
+    },
+    {
+      label: filters.costCenter ? "Cost center focus" : filters.hub ? "Highest center" : filters.portfolio ? "Highest hub" : "Highest portfolio",
+      icon: "TOP",
+      value: topContributor[0] || "No contributor",
+      detail: topContributor[1] ? formatCompactCurrency(topContributor[1]) : "No cost contribution available",
+      color: "#2563eb",
+    },
+    {
+      label: "Largest exposure",
+      icon: "EXP",
+      value: filters.costCenter ? (filters.costCenter || "No center") : largestPortfolioExposure?.label ?? "No portfolio",
+      detail: filters.costCenter ? formatCompactCurrency(visibleTotal) : largestPortfolioExposure ? formatCompactCurrency(largestPortfolioExposure.cost) : "No exposure",
+      color: largestPortfolioExposure?.accent ?? theme.accentWarm,
+    },
+    {
+      label: "Trend",
+      icon: costTrendState === "Increasing" ? "UP" : costTrendState === "Decreasing" ? "DN" : "FLAT",
+      value: costTrendState,
+      detail: trendStart && trendEnd ? `${trendStart.label} to ${trendEnd.label}` : "No trend available",
+      color: costTrendDelta > 0 ? theme.danger : costTrendDelta < 0 ? theme.accentStrong : theme.subtext,
+    },
+    ...(isAdjustedCostActive
+      ? [{
+          label: "CN adjusted view",
+          icon: "CN",
+          value: formatCompactCurrency(cnNetImpact),
+          detail: "Adjusted Cost = Spent + received - issued",
+          color: cnNetImpact >= 0 ? theme.danger : theme.accentStrong,
+        }]
+      : []),
+  ];
+  const insightContextLabel = filters.month ? `Monthly Insights - ${filters.month}` : strategicInsightTitle;
   const largestApprovalGapHub = [...hubCostCenterBreakdown]
     .map((hub) => ({ ...hub, approvalGap: hub.submitted - hub.approved }))
     .filter((hub) => hub.approvalGap > 0)
@@ -3372,7 +3491,26 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
 
-          <div style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(240px, 0.72fr) minmax(0, 1.28fr)", gap: 16, alignItems: "stretch", marginBottom: 16 }}>
+          <section style={{ position: "relative", marginBottom: 22, border: "1px solid rgba(148,163,184,0.24)", borderRadius: 16, padding: 20, background: "#fff", boxShadow: "0 16px 38px rgba(15,23,42,0.08)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
+              <div>
+                <h2 style={{ margin: 0, color: "#071a3a", fontSize: 22, fontWeight: 950 }}>Executive Summary</h2>
+                <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: 12 }}>Filter-aware decision signals for {executiveScopeLabel}.</p>
+              </div>
+              <span style={{ color: "#0f766e", background: "#ecfdf5", border: "1px solid rgba(15,118,110,0.16)", borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 950 }}>{costViewLabel}</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 12 }}>
+              {executiveSummaryItems.map((item) => (
+                <div key={item.label} className="executive-hover-card" style={{ border: `1px solid ${item.color}22`, borderRadius: 14, padding: 16, background: `${item.color}0b`, transition: "transform 160ms ease, box-shadow 160ms ease" }}>
+                  <div style={{ color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>{item.label}</div>
+                  <div style={{ marginTop: 8, color: item.color, fontSize: 20, fontWeight: 950, lineHeight: 1.1, overflowWrap: "anywhere" }}>{item.value}</div>
+                  <div style={{ marginTop: 7, color: "#475569", fontSize: 12, lineHeight: 1.45 }}>{item.detail}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div style={{ position: "relative", display: "grid", gridTemplateColumns: "minmax(280px, 0.82fr) minmax(0, 1.18fr)", gap: 16, alignItems: "stretch", marginBottom: 22 }}>
             <div style={{ position: "relative", overflow: "hidden", border: `1px solid ${profitColor(revenueSurplus)}33`, borderRadius: 14, padding: "22px 22px", background: `linear-gradient(145deg, #ffffff 0%, ${revenueSurplus >= 0 ? "#f1fdf8" : "#fff5f5"} 100%)`, boxShadow: "0 16px 34px rgba(15,23,42,0.10)", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
               <div style={{ position: "absolute", right: -30, bottom: -30, width: 130, height: 130, borderRadius: "50%", background: `${profitColor(revenueSurplus)}14` }} />
               {(() => {
@@ -3408,8 +3546,8 @@ function DashboardApp({ session, onLogout }) {
             <div style={{ display: "grid", gridTemplateRows: "1fr auto", gap: 10 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
                 {[
+                  ["Total Cost", formatCompactCurrency(visibleTotal), getKpiChange("cost", true), "#2563eb", "cost"],
                   ["Approved AFP", formatCompactCurrency(approvedRevenue), getKpiChange("approved"), "#059669", "approved"],
-                  [costViewLabel, formatCompactCurrency(visibleTotal), getKpiChange("cost", true), "#2563eb", "cost"],
                   ["Margin / Coverage", formatPercent(approvedRevenue ? revenueSurplus / approvedRevenue : 0), { arrow: "", text: `Coverage ${formatPercent(costCoverage)}`, color: costCoverage >= 1 ? "#059669" : "#dc2626", muted: false }, costCoverage >= 1 ? "#059669" : "#dc2626", "margin"],
                 ].map(([label, value, change, accent, trendField]) => {
                   const miniTrend = getMiniTrend(trendField);
@@ -3436,35 +3574,39 @@ function DashboardApp({ session, onLogout }) {
                 })}
               </div>
               <div style={{ color: "#334155", fontSize: 14, fontWeight: 900, display: "flex", gap: 18, flexWrap: "wrap", padding: "14px 18px", alignItems: "center", justifyContent: "center", border: "1px solid rgba(148,163,184,0.25)", borderRadius: 12, background: "rgba(255,255,255,0.76)", boxShadow: "0 10px 24px rgba(15,23,42,0.05)" }}>
-                <span>Approval Rate: <strong style={{ color: approvalRate >= 0.85 ? "#059669" : "#b45309" }}>{formatPercent(approvalRate)}</strong></span>
+                <span>Scope: <strong style={{ color: "#0f766e" }}>{executiveScopeLabel}</strong></span>
                 <span style={{ color: "#cbd5e1" }}>|</span>
-                <span>Cost Coverage: <strong style={{ color: costCoverage >= 1 ? "#059669" : "#dc2626" }}>{formatPercent(costCoverage)}</strong></span>
+                <span>Period: <strong style={{ color: "#2563eb" }}>{filters.month || filters.year || "All months"}</strong></span>
               </div>
             </div>
           </div>
 
-          <section style={{ marginBottom: 16, border: "1px solid rgba(148,163,184,0.25)", borderRadius: 16, padding: 18, background: "#fff", boxShadow: "0 16px 38px rgba(15,23,42,0.08)" }}>
+          {isAdjustedCostActive && (
+          <section style={{ marginBottom: 22, border: "1px solid rgba(148,163,184,0.25)", borderRadius: 16, padding: 20, background: "#fff", boxShadow: "0 16px 38px rgba(15,23,42,0.08)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 14 }}>
               <div>
-                <h2 style={{ margin: 0, color: "#071a3a", fontSize: 20, fontWeight: 950 }}>Credit Note Impact</h2>
-                <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: 12 }}>Internal reallocations by receiving cost center and issuing source.</p>
+                <h2 style={{ margin: 0, color: "#071a3a", fontSize: 20, fontWeight: 950 }}>Credit Note Cost Flow</h2>
+                <p style={{ margin: "5px 0 0", color: "#64748b", fontSize: 12 }}>Internal reallocation only. Applied at hub and cost center level.</p>
               </div>
-              <span style={{ color: cnNetImpact >= 0 ? "#059669" : "#dc2626", background: "#f8fafc", border: "1px solid rgba(148,163,184,0.22)", borderRadius: 999, padding: "9px 13px", fontSize: 12, fontWeight: 950 }}>
-                Net CN {formatCompactCurrency(cnNetImpact)}
-              </span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "minmax(260px, 0.72fr) minmax(0, 1.28fr)", gap: 16 }}>
-              <div style={{ display: "grid", gap: 10 }}>
-                {[
-                  ["CN Issued", cnIssuedTotal, "#dc2626"],
-                  ["CN Received", cnReceivedTotal, "#059669"],
-                  ["Net CN Impact", cnNetImpact, cnNetImpact >= 0 ? "#059669" : "#dc2626"],
-                ].map(([label, value, accent]) => (
-                  <div key={label} style={{ border: `1px solid ${accent}24`, borderRadius: 12, padding: 14, background: `${accent}0d` }}>
-                    <div style={{ color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
-                    <div style={{ marginTop: 7, color: accent, fontSize: 22, fontWeight: 950 }}>{formatCurrency(value)}</div>
-                  </div>
-                ))}
+              <div style={{ border: "1px solid rgba(148,163,184,0.24)", borderRadius: 14, padding: 18, background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)" }}>
+                <div style={{ color: "#64748b", fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>Workshop Cost Flow</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto 1fr", gap: 10, alignItems: "center", marginTop: 16 }}>
+                  {[
+                    ["Issued", cnIssuedTotal, "#dc2626"],
+                    ["Received", cnReceivedTotal, "#059669"],
+                    ["Net", cnNetImpact, cnNetImpact >= 0 ? "#dc2626" : "#059669"],
+                  ].map(([label, value, color], index) => (
+                    <Fragment key={label}>
+                      <div style={{ textAlign: "center", border: `1px solid ${color}24`, borderRadius: 14, padding: "15px 10px", background: `${color}0d` }}>
+                        <div style={{ color: "#64748b", fontSize: 10, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
+                        <div style={{ marginTop: 7, color, fontSize: 20, fontWeight: 950 }}>{formatCompactCurrency(value)}</div>
+                      </div>
+                      {index < 2 && <div style={{ color: "#94a3b8", fontWeight: 950 }}>-&gt;</div>}
+                    </Fragment>
+                  ))}
+                </div>
               </div>
               <div>
                 <h3 style={{ margin: "0 0 10px", color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Top Receiving Cost Centers</h3>
@@ -3475,7 +3617,6 @@ function DashboardApp({ session, onLogout }) {
                       <div key={row.costCenter} className="executive-hover-card" style={{ display: "grid", gridTemplateColumns: "minmax(120px, 0.55fr) minmax(0, 1fr) 138px", gap: 10, alignItems: "center", border: "1px solid rgba(148,163,184,0.24)", borderRadius: 12, padding: "11px 12px", background: "#f8fafc", transition: "transform 160ms ease, box-shadow 160ms ease" }}>
                         <div>
                           <strong style={{ color: "#10233f" }}>{index + 1}. {row.costCenter}</strong>
-                          <div style={{ marginTop: 4, color: "#64748b", fontSize: 11 }}>Source: {row.sourceLabel}</div>
                         </div>
                         <div style={{ height: 11, borderRadius: 999, background: "#e5edf5", overflow: "hidden" }}>
                           <div style={{ width, height: "100%", borderRadius: 999, background: "linear-gradient(90deg, #0f766e, #2563eb)" }} />
@@ -3489,9 +3630,10 @@ function DashboardApp({ session, onLogout }) {
               </div>
             </div>
           </section>
+          )}
 
           <section style={{ marginBottom: 16 }}>
-            {renderExecutiveInsights("Strategic Insights", summaryInsights)}
+            {renderExecutiveInsights(strategicInsightTitle, dynamicStrategicInsights)}
           </section>
 
           <div style={{ display: "none" }}>
@@ -3530,8 +3672,8 @@ function DashboardApp({ session, onLogout }) {
             )}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.15fr) minmax(320px, 0.85fr)", gap: 16, marginBottom: 16 }}>
-            <div style={{ border: "1px solid rgba(148,163,184,0.25)", borderRadius: 14, padding: 18, background: "#fff", minHeight: 250, boxSizing: "border-box", boxShadow: "0 16px 38px rgba(15,23,42,0.09)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, marginBottom: 16 }}>
+            <div style={{ border: "1px solid rgba(148,163,184,0.25)", borderRadius: 14, padding: 22, background: "#fff", minHeight: 320, boxSizing: "border-box", boxShadow: "0 16px 38px rgba(15,23,42,0.09)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", marginBottom: 6 }}>
                 <h3 style={{ margin: 0, color: "#071a3a", fontSize: 16, fontWeight: 950 }}>Monthly Trend</h3>
                 <div style={{ display: "flex", gap: 12, color: "#64748b", fontSize: 11 }}>
@@ -3540,9 +3682,8 @@ function DashboardApp({ session, onLogout }) {
                 </div>
               </div>
               {executiveTrendRows.length ? (
-                <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="img" aria-label="Monthly trend line chart comparing cost and approved AFP" style={{ width: "100%", height: 160, display: "block" }}>
-                  <line x1={chartPadding} y1={chartHeight - chartPadding} x2={chartWidth - chartPadding} y2={chartHeight - chartPadding} stroke="rgba(148,163,184,0.28)" strokeWidth="1" />
-                  <line x1={chartPadding} y1={chartPadding} x2={chartPadding} y2={chartHeight - chartPadding} stroke="rgba(148,163,184,0.20)" strokeWidth="1" />
+                <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="img" aria-label="Monthly trend line chart comparing cost and approved AFP" style={{ width: "100%", height: 220, display: "block", marginTop: 8 }}>
+                  <line x1={chartPadding} y1={chartHeight - chartPadding} x2={chartWidth - chartPadding} y2={chartHeight - chartPadding} stroke="rgba(148,163,184,0.18)" strokeWidth="1" />
                   <polyline points={costTrendPoints} fill="none" stroke={theme.accentWarm} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
                   <polyline points={approvedTrendPoints} fill="none" stroke="#059669" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
                   {executiveTrendRows.map((row, index) => {
