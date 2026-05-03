@@ -1983,6 +1983,7 @@ function DashboardApp({ session, onLogout }) {
       ["Cost", -officialVisibleTotal, theme.danger, "Spent report"],
       ["CN Impact", cnReceivedTotal - cnIssuedTotal, cnReceivedTotal - cnIssuedTotal >= 0 ? theme.danger : theme.accentStrong, "Received - issued"],
       ["Net Profit", selectedProfitAmount, profitColor(selectedProfitAmount), "Revenue - adjusted cost"],
+      ["Margin %", selectedProfitMargin, profitColor(selectedProfitAmount), "Net profit / revenue", "percent"],
     ];
     const summaryMetrics = [];
 
@@ -2075,12 +2076,12 @@ function DashboardApp({ session, onLogout }) {
         <details open style={{ border: `1px solid ${theme.border}`, borderRadius: 16, overflow: "hidden", background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 14px 30px rgba(15,23,42,0.07)" }}>
           <summary style={{ padding: "16px 18px", cursor: "pointer", listStyle: "none", color: theme.text, fontWeight: 950, background: theme.accentSoft }}>Profit Bridge</summary>
           <div style={{ padding: 18 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, alignItems: "stretch" }}>
-              {bridgeSteps.map(([label, value, accent, detail], index) => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, alignItems: "stretch" }}>
+              {bridgeSteps.map(([label, value, accent, detail, type], index) => (
                 <Fragment key={label}>
-                  <div style={{ border: `1px solid ${theme.border}`, borderRadius: 12, padding: 15, background: theme.panelBg }}>
+                  <div style={{ border: `1px solid ${theme.border}`, borderRadius: 12, padding: 13, background: theme.panelBg, minWidth: 0, boxSizing: "border-box", overflow: "hidden" }}>
                     <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>{label}</div>
-                    <div style={{ marginTop: 8, color: accent, fontSize: 22, lineHeight: 1.05, fontWeight: 950 }}>{formatCurrency(value)}</div>
+                    <div style={{ marginTop: 8, color: accent, fontSize: 19, lineHeight: 1.05, fontWeight: 950, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{type === "percent" ? (value == null ? "N/A" : formatPercent(value)) : formatCompactCurrency(value)}</div>
                     <div style={{ marginTop: 8, color: theme.subtext, fontSize: 12 }}>{detail}</div>
                   </div>
                   {index < bridgeSteps.length - 1 && <div style={{ alignSelf: "center", justifySelf: "center", color: theme.subtext, fontSize: 18, fontWeight: 950 }}>→</div>}
