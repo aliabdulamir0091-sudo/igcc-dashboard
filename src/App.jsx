@@ -2916,13 +2916,25 @@ function DashboardApp({ session, onLogout }) {
   ].slice(0, 5);
   const profitabilityScopeType = filters.costCenter ? "Cost Center" : filters.hub ? "Hub" : "Portfolio";
   const profitabilityScopeName = filters.costCenter || filters.hub || filters.portfolio || "All Portfolios";
-  const profitabilityPeriodLabel = `${filters.month || "All months"} | ${filters.year || "All years"}`;
+  const profitabilityPeriodRows = [...filteredOfficialData, ...filteredRevenueData, ...filteredCreditNoteData]
+    .filter((item) => item.year && item.monthNumber)
+    .map((item) => ({ year: Number(item.year), monthNumber: Number(item.monthNumber) }))
+    .sort((a, b) => a.year - b.year || a.monthNumber - b.monthNumber);
+  const profitabilityFirstPeriod = profitabilityPeriodRows[0];
+  const profitabilityLastPeriod = profitabilityPeriodRows[profitabilityPeriodRows.length - 1];
+  const formatProfitabilityPeriod = (period) => period ? `${MONTH_LABELS[period.monthNumber]} ${period.year}` : "";
+  const profitabilityPeriodLabel = profitabilityFirstPeriod && profitabilityLastPeriod
+    ? profitabilityFirstPeriod.year === profitabilityLastPeriod.year && profitabilityFirstPeriod.monthNumber === profitabilityLastPeriod.monthNumber
+      ? formatProfitabilityPeriod(profitabilityFirstPeriod)
+      : `${formatProfitabilityPeriod(profitabilityFirstPeriod)} - ${formatProfitabilityPeriod(profitabilityLastPeriod)}`
+    : `${filters.month || "All months"} | ${filters.year || "All years"}`;
   const profitabilityDirectCost = officialVisibleTotal;
   const profitabilityAppliedCnImpact = isAdjustedCostActive ? cnNetImpact : 0;
   const profitabilityCnImpactTotal = cnNetImpact;
   const profitabilityTotalCost = profitabilityDirectCost + profitabilityAppliedCnImpact;
   const profitabilityGrossBeforeCn = approvedRevenue - profitabilityDirectCost;
   const profitabilityNetProfit = approvedRevenue - profitabilityTotalCost;
+  const profitabilityCnProfitImpact = -profitabilityAppliedCnImpact;
   const profitabilityMargin = approvedRevenue ? profitabilityNetProfit / approvedRevenue : profitabilityTotalCost ? -1 : 0;
   const profitabilityApprovalGap = Math.max(submittedRevenue - approvedRevenue, 0);
   const profitabilityRevenueMax = Math.max(submittedRevenue, approvedRevenue, profitabilityApprovalGap, 1);
@@ -2939,15 +2951,35 @@ function DashboardApp({ session, onLogout }) {
       .values()
   ).sort((a, b) => b.amount - a.amount);
   const profitabilityTopGlRows = profitabilityGlRows.slice(0, 6);
-  const profitabilityMaxGlAmount = Math.max(...profitabilityTopGlRows.map((row) => Math.abs(row.amount)), 1);
   const profitabilityTopDriver = profitabilityTopGlRows[0];
-  const profitabilityCnCategoryOrder = ["fa", "store", "scaffolding", "materials", "workshop"];
+  const profitabilityCostGroupDefinitions = [
+    { key: "manpower", label: "Manpower", color: "#0f5fb8", match: (name) => /manpower|staff|salary|compensation/i.test(name) },
+    { key: "materials", label: "Materials & Supplies", color: "#16a34a", match: (name) => /material|suppl/i.test(name) },
+    { key: "equipment", label: "Equipment Rental", color: "#f59e0b", match: (name) => /equipment|rental|lease/i.test(name) },
+    { key: "subcontract", label: "Subcontractor", color: "#7c3aed", match: (name) => /subcontract/i.test(name) },
+    { key: "others", label: "Others", color: "#14b8a6", match: () => true },
+  ];
+  const profitabilityDistributionMap = profitabilityCostGroupDefinitions.reduce((map, definition) => {
+    map.set(definition.key, { ...definition, amount: 0 });
+    return map;
+  }, new Map());
+  profitabilityGlRows.forEach((row) => {
+    const group = profitabilityCostGroupDefinitions.find((definition) => definition.key !== "others" && definition.match(row.glName)) ?? profitabilityCostGroupDefinitions[profitabilityCostGroupDefinitions.length - 1];
+    profitabilityDistributionMap.get(group.key).amount += row.amount;
+  });
+  const profitabilityDistributionRows = Array.from(profitabilityDistributionMap.values()).filter((row) => row.amount || row.key !== "others");
+  const profitabilityCnCategoryOrder = ["workshop", "scaffolding", "store", "fa"];
   const profitabilityCnCategoryLabels = {
     fa: "FA",
     store: "Store",
     scaffolding: "Scaffolding",
-    materials: "Materials",
     workshop: "Workshop",
+  };
+  const profitabilityCnImpactLabels = {
+    workshop: "Cost Reduction",
+    scaffolding: "Cost Adjustment",
+    store: "Material Return",
+    fa: "Asset Adjustment",
   };
   const profitabilityCnRows = profitabilityCnCategoryOrder.map((categoryKey) => {
     const matchingRows = filteredCreditNoteData.filter((item) => normalizeCreditNoteCategory(item.category) === categoryKey);
@@ -2956,25 +2988,24 @@ function DashboardApp({ session, onLogout }) {
     return {
       key: categoryKey,
       label: profitabilityCnCategoryLabels[categoryKey],
+      impact: profitabilityCnImpactLabels[categoryKey],
       received,
       issued,
       net: received - issued,
     };
-  }).filter((row) => row.received || row.issued || row.key !== "materials");
-  const profitabilityMaxCnAmount = Math.max(...profitabilityCnRows.map((row) => Math.abs(row.net)), Math.abs(profitabilityCnImpactTotal), 1);
-  const profitabilityDistributionColors = ["#0f5fb8", "#16a34a", "#f59e0b", "#7c3aed", "#14b8a6", "#64748b"];
+  });
   let profitabilityDistributionCursor = 0;
-  const profitabilityDistributionStops = profitabilityTopGlRows.length
-    ? profitabilityTopGlRows.map((row, index) => {
+  const profitabilityDistributionStops = profitabilityDistributionRows.length
+    ? profitabilityDistributionRows.map((row) => {
         const share = profitabilityDirectCost ? Math.max((row.amount / profitabilityDirectCost) * 100, 0) : 0;
         const start = profitabilityDistributionCursor;
         profitabilityDistributionCursor += share;
-        return `${profitabilityDistributionColors[index % profitabilityDistributionColors.length]} ${start}% ${profitabilityDistributionCursor}%`;
+        return `${row.color} ${start}% ${profitabilityDistributionCursor}%`;
       }).join(", ")
     : "#e2e8f0 0% 100%";
   const profitabilityMovementRows = [
     { label: "Gross Profit Before CN", value: profitabilityGrossBeforeCn, color: "#0f5fb8" },
-    { label: "CN Impact", value: profitabilityAppliedCnImpact, color: profitabilityAppliedCnImpact >= 0 ? theme.danger : theme.accentStrong },
+    { label: "CN Impact", value: profitabilityCnProfitImpact, color: profitabilityCnProfitImpact >= 0 ? theme.accentStrong : theme.danger },
     { label: "Final Gross Profit", value: profitabilityNetProfit, color: profitColor(profitabilityNetProfit) },
   ];
   const profitabilityMovementMax = Math.max(...profitabilityMovementRows.map((row) => Math.abs(row.value)), 1);
@@ -3001,11 +3032,20 @@ function DashboardApp({ session, onLogout }) {
       color: isAdjustedCostActive ? (profitabilityCnImpactTotal >= 0 ? theme.danger : theme.accentStrong) : theme.subtext,
     },
     {
-      label: "AFP Approval Status",
+      label: "AFP Gap Impact",
       detail: profitabilityApprovalGap > 0
         ? `${formatCompactCurrency(profitabilityApprovalGap)} remains pending; approval rate is ${formatPercent(approvalRate)}.`
         : `AFP is fully approved at ${formatPercent(approvalRate)} approval rate.`,
       color: profitabilityApprovalGap > 0 ? theme.accentWarm : theme.accentStrong,
+    },
+    {
+      label: "Margin Quality",
+      detail: profitabilityMargin < 0
+        ? "Margin is negative and requires immediate commercial recovery action."
+        : profitabilityMargin < 0.1
+          ? "Reported margin is positive but thin; operational margin should be protected."
+          : "Margin quality is healthy for the selected scope.",
+      color: profitabilityMargin < 0.1 ? theme.accentWarm : theme.accentStrong,
     },
   ];
   const profitabilityStrategicActions = [
@@ -4557,30 +4597,29 @@ function DashboardApp({ session, onLogout }) {
       )}
 
       {activePage === "profitability" && (
-        <div style={{ ...panelStyle, padding: 0, overflow: "hidden", background: themeMode === "light" ? "#ffffff" : theme.panelBg }}>
-          <div style={{ background: "linear-gradient(135deg, #05295a 0%, #07366f 54%, #06254f 100%)", color: "#fff", padding: "26px 28px", display: "flex", justifyContent: "space-between", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ ...panelStyle, padding: 0, overflow: "hidden", background: themeMode === "light" ? "#ffffff" : theme.panelBg, borderRadius: 10 }}>
+          <div style={{ background: "linear-gradient(135deg, #05295a 0%, #07366f 54%, #06254f 100%)", color: "#fff", padding: "28px 30px 22px", display: "flex", justifyContent: "space-between", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 16, minWidth: 0 }}>
               <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC" style={{ width: 58, height: 58, borderRadius: 12, background: "#fff", objectFit: "contain", padding: 5, boxShadow: "0 10px 24px rgba(0,0,0,0.18)" }} />
               <div style={{ minWidth: 0 }}>
-                <h2 style={{ margin: 0, color: "#fff", fontSize: 32, lineHeight: 1.05, fontWeight: 950, letterSpacing: 0 }}>P&amp;L Report - {profitabilityScopeType} View</h2>
-                <p style={{ margin: "7px 0 0", color: "rgba(255,255,255,0.84)", fontSize: 15 }}>{profitabilityScopeName} performance overview</p>
+                <h2 style={{ margin: 0, color: "#fff", fontSize: 32, lineHeight: 1.05, fontWeight: 950, letterSpacing: 0 }}>P&amp;L REPORT - {profitabilityScopeType.toUpperCase()} VIEW</h2>
+                <p style={{ margin: "7px 0 0", color: "rgba(255,255,255,0.88)", fontSize: 15 }}>{profitabilityScopeName} performance overview</p>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
               <span style={{ color: "rgba(255,255,255,0.88)", fontSize: 14, fontWeight: 850 }}>IGCC | Commercial Dashboard</span>
-              <div style={{ minWidth: 260 }}>{renderCostViewToggle()}</div>
+              <span style={{ display: "grid", placeItems: "center", width: 28, height: 34, border: "1px solid rgba(255,255,255,0.55)", borderRadius: 5, color: "#fff", fontSize: 18, fontWeight: 900 }}>▤</span>
             </div>
           </div>
 
           <div style={{ padding: 18, display: "grid", gap: 18 }}>
-            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 12, padding: 16, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.06)", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, alignItems: "center" }}>
+            <div style={{ border: `1px solid ${theme.border}`, borderRadius: 10, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 10px 26px rgba(15,23,42,0.06)", display: "grid", gridTemplateColumns: "minmax(220px, 1fr) minmax(260px, 1.25fr) auto", gap: 18, alignItems: "center" }}>
               {[
-                ["Scope", profitabilityScopeName, profitabilityScopeType, "SC", "#0f5fb8"],
-                ["Period", profitabilityPeriodLabel, "Selected date range", "PD", "#0f766e"],
-                ["View Type", costViewLabel, isAdjustedCostActive ? "CN applied where applicable" : "Spent report only", "VT", "#7c3aed"],
+                [profitabilityScopeType, profitabilityScopeName, "Selected scope", "▦", "#0f5fb8"],
+                ["Period", profitabilityPeriodLabel, costViewLabel, "▣", "#0f5fb8"],
               ].map(([label, value, detail, icon, color]) => (
                 <div key={label} style={{ display: "flex", gap: 12, alignItems: "center", minWidth: 0 }}>
-                  <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: 10, background: `${color}14`, color, fontSize: 12, fontWeight: 950 }}>{icon}</span>
+                  <span style={{ display: "grid", placeItems: "center", width: 44, height: 44, borderRadius: 8, background: `${color}12`, color, fontSize: 22, fontWeight: 950 }}>{icon}</span>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ color: theme.subtext, fontSize: 12, fontWeight: 900 }}>{label}</div>
                     <div style={{ color: theme.text, fontSize: 19, fontWeight: 950, overflowWrap: "anywhere" }}>{value}</div>
@@ -4588,28 +4627,28 @@ function DashboardApp({ session, onLogout }) {
                   </div>
                 </div>
               ))}
-              {filters.costCenter && (
-                <button type="button" onClick={handlePrintCostCenterReport} style={{ justifySelf: "end", border: `1px solid ${theme.border}`, borderRadius: 10, background: theme.panelBg, color: "#0f5fb8", padding: "12px 16px", cursor: "pointer", fontWeight: 950, boxShadow: "0 8px 18px rgba(15,23,42,0.08)" }}>
-                  Print Cost Center Report
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <div style={{ minWidth: 238 }}>{renderCostViewToggle()}</div>
+                <button type="button" onClick={filters.costCenter ? handlePrintCostCenterReport : () => window.print()} style={{ border: `1px solid ${theme.border}`, borderRadius: 8, background: theme.panelBg, color: "#0f5fb8", padding: "12px 16px", cursor: "pointer", fontWeight: 900, boxShadow: "0 8px 18px rgba(15,23,42,0.08)" }}>
+                  ⇩ Export Report
                 </button>
-              )}
+              </div>
             </div>
 
             <div style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12 }}>
               {[
                 ["Approved AFP", approvedRevenue, "#16a34a", "AA"],
                 ["Submitted AFP", submittedRevenue, "#0f5fb8", "SA"],
-                ["AFP Gap", profitabilityApprovalGap, profitabilityApprovalGap > 0 ? "#f59e0b" : "#16a34a", "GP"],
                 ["Direct Cost", profitabilityDirectCost, "#f97316", "DC"],
                 ["Gross Profit", profitabilityGrossBeforeCn, profitColor(profitabilityGrossBeforeCn), "GR"],
                 ["Net Profit", profitabilityNetProfit, profitColor(profitabilityNetProfit), "NP"],
                 ["Profit Margin", profitabilityMargin, profitColor(profitabilityNetProfit), "%"],
               ].map(([label, value, color, icon]) => (
-                <div key={label} className="executive-hover-card" style={{ borderRight: `1px solid ${theme.border}`, padding: "8px 12px", minHeight: 92, transition: "transform 160ms ease, box-shadow 160ms ease" }}>
-                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                    <span style={{ display: "grid", placeItems: "center", width: 36, height: 36, borderRadius: "50%", background: color, color: "#fff", fontSize: 12, fontWeight: 950 }}>{icon}</span>
+                <div key={label} className="executive-hover-card" style={{ borderRight: `1px solid ${theme.border}`, padding: "8px 14px", minHeight: 96, transition: "transform 160ms ease, box-shadow 160ms ease" }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <span style={{ display: "grid", placeItems: "center", width: 42, height: 42, borderRadius: "50%", background: color, color: "#fff", fontSize: 12, fontWeight: 950, boxShadow: `0 10px 20px ${color}28` }}>{icon}</span>
                     <div>
-                      <div style={{ color: theme.text, fontSize: 12, fontWeight: 950 }}>{label}</div>
+                      <div style={{ color: theme.text, fontSize: 12, fontWeight: 950, lineHeight: 1.25 }}>{label}</div>
                       <div style={{ marginTop: 8, color: theme.text, fontSize: 22, lineHeight: 1.05, fontWeight: 950, whiteSpace: "nowrap" }}>{label === "Profit Margin" ? formatPercent(value) : formatCompactCurrency(value)}</div>
                     </div>
                   </div>
@@ -4642,22 +4681,31 @@ function DashboardApp({ session, onLogout }) {
 
               <section style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
                 <h3 style={{ margin: 0, color: "#003087", fontSize: 16, fontWeight: 950 }}>2. Cost Breakdown by GL</h3>
-                <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
-                  {profitabilityTopGlRows.map((row, index) => {
+                <div style={{ marginTop: 16, overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 8 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.45fr) 120px 72px", background: "linear-gradient(135deg, #063366, #05295a)", color: "#fff", fontSize: 13, fontWeight: 950 }}>
+                    <div style={{ padding: "11px 14px" }}>GL Category</div>
+                    <div style={{ padding: "11px 14px", textAlign: "right", borderLeft: "1px solid rgba(255,255,255,0.25)" }}>Value ($)</div>
+                    <div style={{ padding: "11px 14px", textAlign: "center", borderLeft: "1px solid rgba(255,255,255,0.25)" }}>%</div>
+                  </div>
+                  {profitabilityTopGlRows.map((row) => {
                     const share = profitabilityDirectCost ? row.amount / profitabilityDirectCost : 0;
                     return (
-                      <div key={row.glName} className="executive-hover-card" style={{ border: `1px solid ${theme.border}`, borderRadius: 10, padding: 12, background: theme.panelBg, transition: "transform 160ms ease, box-shadow 160ms ease" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
-                          <strong style={{ color: theme.text, fontSize: 13 }}>{index + 1}. {row.glName}</strong>
-                          <span style={{ color: theme.text, fontSize: 13, fontWeight: 950 }}>{formatCompactCurrency(row.amount)} | {formatPercent(share)}</span>
-                        </div>
-                        <div style={{ marginTop: 8, height: 10, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
-                          <div style={{ width: `${Math.max(3, (Math.abs(row.amount) / profitabilityMaxGlAmount) * 100)}%`, height: "100%", borderRadius: 999, background: profitabilityDistributionColors[index % profitabilityDistributionColors.length] }} />
-                        </div>
+                      <div key={row.glName} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.45fr) 120px 72px", borderTop: `1px solid ${theme.border}`, background: themeMode === "light" ? "#ffffff" : theme.panelBg, color: theme.text, fontSize: 13 }}>
+                        <div style={{ padding: "10px 14px", overflowWrap: "anywhere" }}>{row.glName}</div>
+                        <div style={{ padding: "10px 14px", textAlign: "right", borderLeft: `1px solid ${theme.border}`, fontWeight: 850 }}>{formatCompactCurrency(row.amount)}</div>
+                        <div style={{ padding: "10px 14px", textAlign: "center", borderLeft: `1px solid ${theme.border}`, fontWeight: 850 }}>{formatPercent(share)}</div>
                       </div>
                     );
                   })}
-                  {!profitabilityTopGlRows.length && <div style={{ color: theme.subtext }}>No GL cost data matches the selected scope.</div>}
+                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.45fr) 120px 72px", borderTop: `1px solid ${theme.border}`, background: themeMode === "light" ? "#e8f2ff" : theme.accentSoft, color: "#003087", fontSize: 13, fontWeight: 950 }}>
+                    <div style={{ padding: "11px 14px" }}>Total Direct Cost</div>
+                    <div style={{ padding: "11px 14px", textAlign: "right", borderLeft: `1px solid ${theme.border}` }}>{formatCompactCurrency(profitabilityDirectCost)}</div>
+                    <div style={{ padding: "11px 14px", textAlign: "center", borderLeft: `1px solid ${theme.border}` }}>100%</div>
+                  </div>
+                </div>
+                {!profitabilityTopGlRows.length && <div style={{ color: theme.subtext, marginTop: 12 }}>No GL cost data matches the selected scope.</div>}
+                <div style={{ marginTop: 12, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, background: themeMode === "light" ? "#eff6ff" : theme.panelBg, color: "#003087", fontSize: 13, lineHeight: 1.4 }}>
+                  <strong>Insight:</strong> {profitabilityTopDriver ? `${profitabilityTopDriver.glName} is the main cost driver at ${formatPercent(profitabilityDirectCost ? profitabilityTopDriver.amount / profitabilityDirectCost : 0)}.` : "No cost driver available for this scope."}
                 </div>
               </section>
             </div>
@@ -4670,11 +4718,11 @@ function DashboardApp({ session, onLogout }) {
                     <div style={{ position: "absolute", inset: 46, borderRadius: "50%", background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "inset 0 0 0 1px rgba(15,23,42,0.08)" }} />
                   </div>
                   <div style={{ display: "grid", gap: 12 }}>
-                    {profitabilityTopGlRows.slice(0, 5).map((row, index) => (
-                      <div key={row.glName} style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+                    {profitabilityDistributionRows.map((row) => (
+                      <div key={row.key} style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
                         <span style={{ display: "flex", gap: 9, alignItems: "center", color: theme.text, fontSize: 13, fontWeight: 800 }}>
-                          <i style={{ width: 10, height: 10, borderRadius: "50%", background: profitabilityDistributionColors[index % profitabilityDistributionColors.length], display: "inline-block" }} />
-                          {row.glName}
+                          <i style={{ width: 10, height: 10, borderRadius: "50%", background: row.color, display: "inline-block" }} />
+                          {row.label}
                         </span>
                         <strong style={{ color: theme.text }}>{formatPercent(profitabilityDirectCost ? row.amount / profitabilityDirectCost : 0)}</strong>
                       </div>
@@ -4685,23 +4733,30 @@ function DashboardApp({ session, onLogout }) {
 
               <section style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
                 <h3 style={{ margin: 0, color: "#003087", fontSize: 16, fontWeight: 950 }}>4. Credit Notes Impact</h3>
-                <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
+                <div style={{ marginTop: 16, overflow: "hidden", border: `1px solid ${theme.border}`, borderRadius: 8 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 120px minmax(130px, 0.8fr)", background: "linear-gradient(135deg, #063366, #05295a)", color: "#fff", fontSize: 13, fontWeight: 950 }}>
+                    <div style={{ padding: "11px 14px" }}>Source</div>
+                    <div style={{ padding: "11px 14px", textAlign: "right", borderLeft: "1px solid rgba(255,255,255,0.25)" }}>Value ($)</div>
+                    <div style={{ padding: "11px 14px", textAlign: "center", borderLeft: "1px solid rgba(255,255,255,0.25)" }}>Impact</div>
+                  </div>
                   {profitabilityCnRows.map((row) => {
-                    const color = row.net >= 0 ? theme.danger : theme.accentStrong;
+                    const color = row.net >= 0 ? "#047857" : theme.danger;
                     return (
-                      <div key={row.key} style={{ display: "grid", gridTemplateColumns: "105px minmax(0, 1fr) 105px", gap: 10, alignItems: "center", border: `1px solid ${theme.border}`, borderRadius: 10, padding: 11, background: theme.panelBg }}>
-                        <strong style={{ color: theme.text, fontSize: 13 }}>{row.label}</strong>
-                        <div style={{ height: 10, borderRadius: 999, background: theme.accentSoft, overflow: "hidden" }}>
-                          <div style={{ width: `${Math.max(row.net ? 4 : 0, (Math.abs(row.net) / profitabilityMaxCnAmount) * 100)}%`, height: "100%", borderRadius: 999, background: color }} />
-                        </div>
-                        <span style={{ color, textAlign: "right", fontSize: 13, fontWeight: 950 }}>{formatCompactCurrency(row.net)}</span>
+                      <div key={row.key} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 120px minmax(130px, 0.8fr)", borderTop: `1px solid ${theme.border}`, background: themeMode === "light" ? "#ffffff" : theme.panelBg, color: theme.text, fontSize: 13 }}>
+                        <div style={{ padding: "10px 14px" }}>{row.label} CN</div>
+                        <div style={{ padding: "10px 14px", textAlign: "right", borderLeft: `1px solid ${theme.border}`, fontWeight: 850, color }}>{formatCompactCurrency(row.net)}</div>
+                        <div style={{ padding: "10px 14px", textAlign: "center", borderLeft: `1px solid ${theme.border}`, color: "#047857", fontWeight: 850 }}>{row.impact}</div>
                       </div>
                     );
                   })}
+                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 120px minmax(130px, 0.8fr)", borderTop: `1px solid ${theme.border}`, background: themeMode === "light" ? "#e8f2ff" : theme.accentSoft, color: "#003087", fontSize: 13, fontWeight: 950 }}>
+                    <div style={{ padding: "11px 14px" }}>Total CN Impact</div>
+                    <div style={{ padding: "11px 14px", textAlign: "right", borderLeft: `1px solid ${theme.border}`, color: profitabilityCnImpactTotal >= 0 ? "#047857" : theme.danger }}>{formatCompactCurrency(profitabilityCnImpactTotal)}</div>
+                    <div style={{ padding: "11px 14px", textAlign: "center", borderLeft: `1px solid ${theme.border}` }}>{isAdjustedCostActive ? "Included" : "Tracked separately"}</div>
+                  </div>
                 </div>
-                <div style={{ marginTop: 14, display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", borderRadius: 10, padding: 13, background: themeMode === "light" ? "#eff6ff" : theme.panelBg, border: `1px solid ${theme.border}` }}>
-                  <span style={{ color: theme.text, fontWeight: 950 }}>Total CN Impact</span>
-                  <strong style={{ color: profitabilityCnImpactTotal >= 0 ? theme.danger : theme.accentStrong, fontSize: 18 }}>{formatCompactCurrency(profitabilityCnImpactTotal)}</strong>
+                <div style={{ marginTop: 12, border: `1px solid ${theme.border}`, borderRadius: 8, padding: 11, background: themeMode === "light" ? "#eff6ff" : theme.panelBg, color: "#003087", fontSize: 13, lineHeight: 1.4 }}>
+                  <strong>Insight:</strong> CNs are shown as internal reallocations and must stay separate from operating cost.
                 </div>
               </section>
             </div>
@@ -4709,14 +4764,15 @@ function DashboardApp({ session, onLogout }) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 430px), 1fr))", gap: 16 }}>
               <section style={{ border: `1px solid ${theme.border}`, borderRadius: 14, padding: 18, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 30px rgba(15,23,42,0.07)" }}>
                 <h3 style={{ margin: 0, color: "#003087", fontSize: 16, fontWeight: 950 }}>5. Profitability Movement</h3>
-                <div style={{ height: 230, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22, alignItems: "end", padding: "22px 10px 0" }}>
-                  {profitabilityMovementRows.map((row) => {
+                <div style={{ position: "relative", height: 240, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22, alignItems: "end", padding: "24px 10px 0" }}>
+                  <div style={{ position: "absolute", left: "22%", right: "22%", top: 102, borderTop: `2px dashed ${theme.border}`, pointerEvents: "none" }} />
+                  {profitabilityMovementRows.map((row, index) => {
                     const barHeight = Math.max(18, (Math.abs(row.value) / profitabilityMovementMax) * 150);
                     return (
-                      <div key={row.label} style={{ display: "grid", justifyItems: "center", gap: 8 }}>
-                        <strong style={{ color: row.color, fontSize: 14 }}>{formatCompactCurrency(row.value)}</strong>
-                        <div style={{ width: "70%", height: barHeight, borderRadius: "8px 8px 0 0", background: row.color, boxShadow: `0 12px 22px ${row.color}30` }} />
-                        <span style={{ color: theme.text, fontSize: 12, fontWeight: 850, textAlign: "center" }}>{row.label}</span>
+                      <div key={row.label} style={{ display: "grid", justifyItems: "center", gap: 8, zIndex: 1 }}>
+                        <strong style={{ color: theme.text, fontSize: 15 }}>{index === 1 && row.value > 0 ? "+" : ""}{formatCompactCurrency(row.value)}</strong>
+                        <div style={{ width: "58%", height: barHeight, borderRadius: "4px 4px 0 0", background: `linear-gradient(135deg, ${row.color}, ${row.color}dd)`, boxShadow: `0 12px 22px ${row.color}30` }} />
+                        <span style={{ color: theme.text, fontSize: 12, fontWeight: 850, textAlign: "center", lineHeight: 1.2 }}>{row.label}</span>
                       </div>
                     );
                   })}
