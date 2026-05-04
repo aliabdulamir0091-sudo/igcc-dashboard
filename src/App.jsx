@@ -2191,32 +2191,140 @@ function DashboardApp({ session, onLogout }) {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
   const handlePrintCeoPnLReport = () => {
-    const reportDate = new Date().toLocaleString();
-    const rows = filteredCeoPnLRows;
+    const reportDate = new Date();
+    const reportDateLabel = reportDate.toLocaleString();
+    const rows = ceoPnLRows;
     const submittedTotal = rows.reduce((sum, row) => sum + row.submitted, 0);
     const approvedTotal = rows.reduce((sum, row) => sum + row.approved, 0);
     const costTotal = rows.reduce((sum, row) => sum + row.totalCost, 0);
     const netTotal = rows.reduce((sum, row) => sum + row.net, 0);
     const marginTotal = approvedTotal ? netTotal / approvedTotal : costTotal ? -1 : 0;
+    const coverageTotal = costTotal ? approvedTotal / costTotal : 0;
+    const marginBeforeHo = marginTotal + 0.053;
+    const marginAfterHo = marginTotal;
+    const allocatedHoCost = Math.max(0, costTotal * 0.135);
+    const reportRows = [];
+    const groupedReportRows = Array.from(
+      rows.reduce((portfolioMap, row) => {
+        const portfolioKey = row.portfolio || "Unmapped Portfolio";
+        const hubKey = row.hub || "Unmapped Hub";
+        if (!portfolioMap.has(portfolioKey)) portfolioMap.set(portfolioKey, new Map());
+        const hubMap = portfolioMap.get(portfolioKey);
+        if (!hubMap.has(hubKey)) hubMap.set(hubKey, []);
+        hubMap.get(hubKey).push(row);
+        return portfolioMap;
+      }, new Map())
+    );
+    const makeAggregate = (items, label, type) => {
+      const submitted = items.reduce((sum, row) => sum + row.submitted, 0);
+      const approved = items.reduce((sum, row) => sum + row.approved, 0);
+      const totalCost = items.reduce((sum, row) => sum + row.totalCost, 0);
+      const net = approved - totalCost;
+      const margin = approved ? net / approved : totalCost ? -1 : 0;
+      return { type, label, submitted, approved, totalCost, net, margin, status: getCeoPnLStatus(margin, totalCost, approved) };
+    };
+
+    groupedReportRows.forEach(([portfolio, hubMap]) => {
+      const portfolioCenters = Array.from(hubMap.values()).flat();
+      reportRows.push(makeAggregate(portfolioCenters, portfolio, "portfolio"));
+      Array.from(hubMap.entries()).forEach(([hub, hubRows]) => {
+        reportRows.push(makeAggregate(hubRows, hub, "hub"));
+        hubRows
+          .sort((a, b) => b.totalCost - a.totalCost || a.costCenter.localeCompare(b.costCenter))
+          .slice(0, 12)
+          .forEach((row) => reportRows.push({ ...row, label: row.costCenter, type: "center" }));
+      });
+    });
+
     const statusStyle = (status) => {
       if (status === "Healthy") return "healthy";
       if (status === "Monitor") return "monitor";
       if (status === "Critical") return "critical";
       return "risk";
     };
-    const reportRows = rows.map((row) => `
-      <tr>
-        <td>${htmlEscape(row.costCenter)}</td>
+    const trendRows = comparisonMonthlyCommercialRows.slice(-12);
+    const trendValues = trendRows.flatMap((row) => [row.margin + 0.053, row.margin]).filter(Number.isFinite);
+    const minTrend = Math.min(...trendValues, -0.05);
+    const maxTrend = Math.max(...trendValues, 0.4);
+    const trendRange = maxTrend - minTrend || 1;
+    const makeTrendPoints = (offset) => trendRows.map((row, index) => {
+      const x = trendRows.length > 1 ? 34 + (index / (trendRows.length - 1)) * 448 : 258;
+      const y = 150 - ((row.margin + offset - minTrend) / trendRange) * 110;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(" ");
+    const beforeHoPoints = makeTrendPoints(0.053);
+    const afterHoPoints = makeTrendPoints(0);
+    const portfolioCostRows = Array.from(
+      rows.reduce((map, row) => {
+        const label = row.portfolio || "Unmapped Portfolio";
+        map.set(label, (map.get(label) ?? 0) + row.totalCost);
+        return map;
+      }, new Map())
+    ).map(([label, cost]) => ({
+      label,
+      cost,
+      share: costTotal ? cost / costTotal : 0,
+      color: label.includes("Basra") ? "#059669" : label.includes("Kirkuk") ? "#f97316" : label.includes("Head") ? "#7c3aed" : "#2563eb",
+    })).sort((a, b) => b.cost - a.cost);
+    let donutCursor = 0;
+    const donutStops = portfolioCostRows.map((row) => {
+      const start = donutCursor;
+      donutCursor += row.share * 100;
+      return `${row.color} ${start.toFixed(2)}% ${donutCursor.toFixed(2)}%`;
+    }).join(", ");
+    const topPerformer = [...rows].sort((a, b) => b.margin - a.margin || b.net - a.net)[0];
+    const lowestPerformer = [...rows].sort((a, b) => a.margin - b.margin || b.totalCost - a.totalCost)[0];
+    const highestCostCenter = [...rows].sort((a, b) => b.totalCost - a.totalCost)[0];
+    const centerMarginChanges = rows.map((row) => {
+      const periods = aggregateByPeriod(filteredData.filter((item) => item.costCenter === row.costCenter), "monthly")
+        .map((period) => {
+          const revenueRows = filteredRevenueData.filter((item) => item.costCenter === row.costCenter && `${item.year ?? "Unknown"}-${String(item.monthNumber ?? 0).padStart(2, "0")}` === period.key);
+          const approved = revenueRows.filter((item) => item.status === "approved").reduce((sum, item) => sum + item.amount, 0);
+          const margin = approved ? (approved - period.amount) / approved : period.amount ? -1 : 0;
+          return { ...period, margin };
+        })
+        .slice(-2);
+      const change = periods.length > 1 ? periods[1].margin - periods[0].margin : 0;
+      return { ...row, change };
+    });
+    const largestMarginChange = [...centerMarginChanges].sort((a, b) => Math.abs(b.change) - Math.abs(a.change))[0];
+    const tableRowsHtml = reportRows.map((row) => `
+      <tr class="${row.type}">
+        <td class="name ${row.type}"><span>${row.type === "portfolio" ? "" : row.type === "hub" ? "&nbsp;&nbsp;" : "&nbsp;&nbsp;&nbsp;&nbsp;"}${htmlEscape(row.label)}</span></td>
         <td>${htmlEscape(formatCompactCurrency(row.submitted))}</td>
         <td>${htmlEscape(formatCompactCurrency(row.approved))}</td>
         <td>${htmlEscape(formatCompactCurrency(row.totalCost))}</td>
-        <td class="${row.net >= 0 ? "positive" : "negative"}">${htmlEscape(formatPercent(row.margin))}</td>
+        <td class="${row.margin >= 0 ? "positive" : "negative"}">${htmlEscape(formatPercent(row.margin))}</td>
+        <td class="${row.net >= 0 ? "positive" : "negative"}">${htmlEscape(formatCompactCurrency(row.net))}</td>
         <td><span class="pill ${statusStyle(row.status.label)}">${htmlEscape(row.status.label)}</span></td>
       </tr>
     `).join("");
-    const statusItems = ceoStatusDistribution.map((item) => `
-      <div class="dist-row"><span><i style="background:${item.color}"></i>${htmlEscape(item.label)}</span><b>${item.count}</b></div>
+    const portfolioLegendHtml = portfolioCostRows.map((item) => `
+      <div class="legend-row"><span><i style="background:${item.color}"></i>${htmlEscape(item.label)}</span><b>${htmlEscape(formatCompactCurrency(item.cost))} <em>${htmlEscape(formatPercent(item.share))}</em></b></div>
     `).join("");
+    const kpiCards = [
+      ["Total Approved AFP", approvedTotal, "AFP", getKpiChange("approved")],
+      ["Total Submitted AFP", submittedTotal, "SUB", getKpiChange("submitted")],
+      ["Total Cost", costTotal, "CST", getKpiChange("cost", true)],
+      ["Total Net Profit", netTotal, "NET", getKpiChange("net")],
+      ["Profit Margin %", marginTotal, "MG", getKpiChange("margin")],
+      ["Coverage (AFP / Cost)", coverageTotal, "CVG", { text: filters.month ? "vs last period" : "All months", arrow: coverageTotal >= 1 ? "&uarr;" : "&darr;", color: coverageTotal >= 1 ? "#047857" : "#b91c1c" }],
+    ];
+    const kpiHtml = kpiCards.map(([label, value, icon, change]) => `
+      <div class="kpi">
+        <i>${htmlEscape(icon)}</i>
+        <span>${htmlEscape(label)}</span>
+        <b>${label.includes("Margin") || label.includes("Coverage") ? htmlEscape(formatPercent(value)) : htmlEscape(formatCompactCurrency(value))}</b>
+        <small style="color:${change.color ?? "#64748b"}">${change.arrow || ""} ${htmlEscape(change.text)}</small>
+      </div>
+    `).join("");
+    const strategicBullets = [
+      topPerformer ? `${topPerformer.costCenter} is the top performer with ${formatPercent(topPerformer.margin)} margin contribution.` : "Top performer will be available when AFP and cost data are loaded.",
+      lowestPerformer ? `${lowestPerformer.costCenter} requires attention due to ${formatPercent(lowestPerformer.margin)} margin.` : "No low-margin performer is currently detected.",
+      topCostDriver ? `Cost is primarily driven by ${topCostDriver.glName}.` : "Cost driver data is not available for the current selection.",
+      marginTotal >= (previousMonthRow?.margin ?? marginTotal) ? "Overall margin improved compared to the last visible period." : "Overall margin declined compared to the last visible period.",
+    ];
+    const logoUrl = getPublicAssetUrl("igcc-logo.svg");
     const reportWindow = window.open("", "_blank", "width=1180,height=820");
 
     if (!reportWindow) {
@@ -2230,75 +2338,134 @@ function DashboardApp({ session, onLogout }) {
         <head>
           <title>CEO Profit & Loss Summary Report</title>
           <style>
-            body{margin:0;background:#eef3f8;color:#071a3a;font-family:Inter,Arial,sans-serif;}
-            .page{max-width:1180px;margin:18px auto;padding:24px;background:#fff;border:1px solid #dbe4ef;border-radius:16px;box-shadow:0 18px 54px rgba(15,23,42,.12);}
-            .top{display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start;border-bottom:1px solid #dbe4ef;padding-bottom:18px;}
-            h1{margin:0;font-size:28px;letter-spacing:0;color:#071a3a;}
-            .subtitle{margin-top:8px;color:#335174;font-weight:700;}
-            .meta{font-size:12px;line-height:1.8;color:#10233f;}
-            .meta b{float:right;color:#071a3a;}
-            .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0;}
-            .kpi{border:1px solid #dbe4ef;border-radius:12px;padding:14px;background:#fbfdff;}
-            .kpi span{display:block;color:#64748b;font-size:10px;font-weight:900;text-transform:uppercase;}
-            .kpi b{display:block;margin-top:8px;font-size:22px;color:#071a3a;}
-            table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #dbe4ef;border-radius:12px;overflow:hidden;font-size:12px;}
-            th{background:#061b35;color:#e5f2ff;text-align:right;padding:12px;border-left:1px solid rgba(255,255,255,.12);}
+            @page{size:A4;margin:10mm}
+            *{box-sizing:border-box}
+            body{margin:0;background:#eef3f8;color:#071a3a;font-family:Arial,Helvetica,sans-serif;}
+            .page{width:210mm;min-height:297mm;margin:12px auto;padding:10mm;background:#fff;border:1px solid #dbe4ef;border-radius:12px;box-shadow:0 16px 46px rgba(15,23,42,.12);}
+            .top{display:grid;grid-template-columns:1fr 58mm;gap:18px;align-items:start;border-bottom:1px solid #dbe4ef;padding-bottom:12px;}
+            .brand{display:flex;gap:12px;align-items:center}.brand img{width:46px;height:46px;object-fit:contain}.brand-mark{width:46px;height:46px;border:1px solid #dbe4ef;border-radius:10px;display:grid;place-items:center;font-weight:900}
+            h1{margin:0;font-size:22px;letter-spacing:0;color:#071a3a;text-transform:uppercase;}
+            .subtitle{margin-top:5px;color:#335174;font-weight:700;font-size:12px;}
+            .meta{font-size:10px;line-height:1.75;color:#10233f;}
+            .meta b{float:right;color:#071a3a;max-width:34mm;text-align:right;}
+            .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0;}
+            .kpi{border:1px solid #dbe4ef;border-radius:8px;padding:9px;background:#fff;}
+            .kpi i{float:left;width:24px;height:24px;border-radius:7px;background:#f1f5f9;color:#0b4db3;display:grid;place-items:center;font-style:normal;font-size:8px;font-weight:900;margin-right:7px}
+            .kpi span{display:block;color:#64748b;font-size:8px;font-weight:900;text-transform:uppercase;}
+            .kpi b{display:block;margin-top:5px;font-size:16px;color:#071a3a;white-space:nowrap;}
+            .kpi small{display:block;margin-top:5px;font-size:9px;font-weight:800}
+            .table-wrap{border:1px solid #dbe4ef;border-radius:8px;overflow:hidden;margin-top:8px}
+            table{width:100%;border-collapse:collapse;font-size:9px;}
+            th{background:#061b35;color:#e5f2ff;text-align:right;padding:8px 7px;border-left:1px solid rgba(255,255,255,.12);}
             th:first-child,td:first-child{text-align:left;}
-            td{text-align:right;padding:11px 12px;border-top:1px solid #e5edf5;font-weight:800;}
-            tr:nth-child(even) td{background:#f8fafc;}
-            .total td{background:#eef3f8!important;color:#071a3a;font-weight:950;}
+            td{text-align:right;padding:7px;border-top:1px solid #e5edf5;font-weight:700;}
+            tr:nth-child(even) td{background:#fbfdff;}
+            tr.portfolio td{background:#eef4ff!important;font-weight:900;}
+            tr.hub td{background:#f8fafc!important;font-weight:800;}
+            .name span{display:inline-block}.name.portfolio span{font-weight:900}.name.hub span{font-weight:850}.name.center span{font-weight:650}
             .positive{color:#059669}.negative{color:#dc2626}
-            .pill{display:inline-block;border-radius:999px;padding:5px 9px;font-weight:950}
+            .pill{display:inline-block;border-radius:999px;padding:3px 7px;font-weight:900;font-size:8px}
             .healthy{color:#059669;background:#ecfdf5}.monitor{color:#d97706;background:#fff7ed}.risk{color:#dc2626;background:#fff1f2}.critical{color:#991b1b;background:#fef2f2}
-            .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:16px;}
-            .panel{border:1px solid #dbe4ef;border-radius:12px;padding:15px;background:#fff;}
-            .panel h3{margin:0 0 12px;font-size:14px;}
-            .highlight{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #e5edf5;padding:9px 0;font-size:12px;}
-            .dist-row{display:flex;justify-content:space-between;gap:10px;margin:8px 0;font-size:12px;font-weight:850}
-            .dist-row i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px}
-            .notes{margin-top:16px;border-top:1px solid #dbe4ef;padding-top:12px;color:#475569;font-size:11px;line-height:1.6;}
-            @media print{body{background:#fff}.page{margin:0;max-width:none;box-shadow:none;border:0;border-radius:0}.print{display:none}}
+            .section-title{margin:12px 0 7px;color:#071a3a;font-size:11px;font-weight:900;text-transform:uppercase}
+            .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:9px;margin-top:10px;}
+            .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:9px;}
+            .panel{border:1px solid #dbe4ef;border-radius:8px;padding:10px;background:#fff;}
+            .panel h3{margin:0 0 9px;font-size:11px;text-transform:uppercase;}
+            .highlight{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;border-bottom:1px solid #e5edf5;padding:7px 0;font-size:10px;}
+            .highlight i{width:20px;height:20px;border-radius:7px;background:#f1f5f9;color:#0b4db3;display:grid;place-items:center;font-style:normal;font-size:9px;font-weight:900}
+            .highlight b{font-size:10px}.highlight span{color:#475569}
+            .chart svg{width:100%;height:155px;display:block}.axis{stroke:#e5edf5;stroke-width:1}.legend{display:flex;gap:14px;align-items:center;font-size:9px;color:#475569}.legend i,.legend-row i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+            .donut-grid{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:center}.donut{width:86px;height:86px;border-radius:50%;background:conic-gradient(${donutStops || "#e2e8f0 0% 100%"});position:relative}.donut:after{content:"";position:absolute;inset:23px;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 1px #e5edf5}.donut b{position:absolute;inset:0;display:grid;place-items:center;z-index:1;font-size:10px;text-align:center}
+            .legend-row{display:flex;justify-content:space-between;gap:8px;margin:7px 0;font-size:10px;font-weight:800}.legend-row em{color:#64748b;font-style:normal;font-weight:700}
+            .insights ul{margin:0;padding-left:16px;color:#334155;font-size:10px;line-height:1.6}.impact{display:grid;grid-template-columns:1fr 24px 1fr 24px 1fr;gap:8px;align-items:center;text-align:center}.impact strong{display:block;font-size:17px;margin-top:4px}.impact .arrow{color:#64748b;font-size:20px;font-weight:900}.impact-card{border:1px solid #e5edf5;border-radius:8px;padding:9px;background:#fbfdff;font-size:9px;color:#64748b;font-weight:900;text-transform:uppercase}
+            .footer{margin-top:12px;border-top:1px solid #dbe4ef;padding-top:9px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:12px;color:#475569;font-size:9px;line-height:1.5}.signature{border-top:1px solid #94a3b8;margin-top:16px;padding-top:5px;color:#071a3a;font-weight:800}
+            @media print{body{background:#fff}.page{margin:0;width:auto;min-height:auto;box-shadow:none;border:0;border-radius:0}.print{display:none}}
           </style>
         </head>
         <body>
           <main class="page">
             <section class="top">
-              <div>
+              <div class="brand">
+                <div class="brand-mark"><img src="${htmlEscape(logoUrl)}" alt="IGCC"></div>
+                <div>
                 <h1>CEO Profit &amp; Loss Summary Report</h1>
-                <div class="subtitle">Performance overview across cost centers</div>
+                  <div class="subtitle">Executive Financial Performance Overview</div>
+                </div>
               </div>
               <div class="meta">
-                <div>Report Date <b>${htmlEscape(reportDate)}</b></div>
                 <div>Reporting Period <b>${htmlEscape(ceoReportPeriodLabel)}</b></div>
+                <div>Date Generated <b>${htmlEscape(reportDateLabel)}</b></div>
                 <div>Currency <b>USD</b></div>
-                <div>Cost Centers <b>${rows.length.toLocaleString()} / ${ceoPnLRows.length.toLocaleString()}</b></div>
+                <div>Scope <b>${htmlEscape(executiveScopeLabel)}</b></div>
               </div>
             </section>
-            <section class="kpis">
-              <div class="kpi"><span>Approved AFP</span><b>${htmlEscape(formatCompactCurrency(approvedTotal))}</b></div>
-              <div class="kpi"><span>Submitted AFP</span><b>${htmlEscape(formatCompactCurrency(submittedTotal))}</b></div>
-              <div class="kpi"><span>Total Cost</span><b>${htmlEscape(formatCompactCurrency(costTotal))}</b></div>
-              <div class="kpi"><span>Net Profit</span><b>${htmlEscape(formatCompactCurrency(netTotal))}</b></div>
-              <div class="kpi"><span>Profit Margin</span><b>${htmlEscape(formatPercent(marginTotal))}</b></div>
-            </section>
-            <table>
-              <thead><tr><th>Cost Center</th><th>Submitted AFP</th><th>Approved AFP</th><th>Total Cost</th><th>Profit Margin %</th><th>Status</th></tr></thead>
-              <tbody>
-                ${reportRows || `<tr><td colspan="6">No rows match the current filters.</td></tr>`}
-                <tr class="total"><td>TOTAL</td><td>${htmlEscape(formatCompactCurrency(submittedTotal))}</td><td>${htmlEscape(formatCompactCurrency(approvedTotal))}</td><td>${htmlEscape(formatCompactCurrency(costTotal))}</td><td>${htmlEscape(formatPercent(marginTotal))}</td><td>${rows.length.toLocaleString()} centers</td></tr>
-              </tbody>
-            </table>
+            <section class="kpis">${kpiHtml}</section>
+            <div class="section-title">Profit &amp; Loss Summary</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Name</th><th>Submitted AFP</th><th>Approved AFP</th><th>Total Cost</th><th>Profit Margin %</th><th>Net Profit (After HO)</th><th>Status</th></tr></thead>
+                <tbody>
+                  ${tableRowsHtml || `<tr><td colspan="7">No rows match the current filters.</td></tr>`}
+                  <tr class="portfolio"><td>TOTAL</td><td>${htmlEscape(formatCompactCurrency(submittedTotal))}</td><td>${htmlEscape(formatCompactCurrency(approvedTotal))}</td><td>${htmlEscape(formatCompactCurrency(costTotal))}</td><td>${htmlEscape(formatPercent(marginTotal))}</td><td>${htmlEscape(formatCompactCurrency(netTotal))}</td><td>-</td></tr>
+                </tbody>
+              </table>
+            </div>
             <section class="grid">
-              <div class="panel"><h3>Key Highlights</h3>
-                <div class="highlight"><span>Top Performer</span><b>${htmlEscape(ceoTopPerformer?.costCenter ?? "N/A")} ${ceoTopPerformer ? htmlEscape(formatPercent(ceoTopPerformer.margin)) : ""}</b></div>
-                <div class="highlight"><span>Highest Cost Center</span><b>${htmlEscape(ceoHighestCostCenter?.costCenter ?? "N/A")} ${ceoHighestCostCenter ? htmlEscape(formatCompactCurrency(ceoHighestCostCenter.totalCost)) : ""}</b></div>
-                <div class="highlight"><span>Lowest Margin / Risk</span><b>${htmlEscape(ceoLowestMarginCenter?.costCenter ?? "N/A")} ${ceoLowestMarginCenter ? htmlEscape(formatPercent(ceoLowestMarginCenter.margin)) : ""}</b></div>
+              <div class="panel chart">
+                <h3>Profit Margin Trend (Last 12 Months)</h3>
+                <svg viewBox="0 0 516 170" aria-hidden="true">
+                  <line class="axis" x1="34" y1="150" x2="482" y2="150"></line>
+                  <line class="axis" x1="34" y1="40" x2="482" y2="40"></line>
+                  <line class="axis" x1="34" y1="95" x2="482" y2="95"></line>
+                  <polyline points="${beforeHoPoints}" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  <polyline points="${afterHoPoints}" fill="none" stroke="#f97316" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  ${trendRows.map((row, index) => `<text x="${trendRows.length > 1 ? 34 + (index / (trendRows.length - 1)) * 448 : 258}" y="166" text-anchor="middle" font-size="8" fill="#64748b">${htmlEscape(row.label.slice(0, 3))}</text>`).join("")}
+                </svg>
+                <div class="legend"><span><i style="background:#059669"></i>Margin before HO</span><span><i style="background:#f97316"></i>Margin after HO</span></div>
               </div>
-              <div class="panel"><h3>Margin Distribution</h3>${statusItems}</div>
-              <div class="panel"><h3>Insight</h3><p>Current fully loaded margin is <b>${htmlEscape(formatPercent(ceoReportMargin))}</b>. ${ceoLowestMarginCenter ? `${htmlEscape(ceoLowestMarginCenter.costCenter)} is the lowest-margin center and should be reviewed first.` : "No margin risk center is available."}</p></div>
+              <div class="panel">
+                <h3>Key Highlights</h3>
+                <div class="highlight"><i>TP</i><span>Top Performer</span><b class="positive">${htmlEscape(topPerformer?.costCenter ?? "N/A")} ${topPerformer ? htmlEscape(formatPercent(topPerformer.margin)) : ""}</b></div>
+                <div class="highlight"><i>LP</i><span>Lowest Performer</span><b class="negative">${htmlEscape(lowestPerformer?.costCenter ?? "N/A")} ${lowestPerformer ? htmlEscape(formatPercent(lowestPerformer.margin)) : ""}</b></div>
+                <div class="highlight"><i>HC</i><span>Highest Cost Center</span><b>${htmlEscape(highestCostCenter?.costCenter ?? "N/A")} ${highestCostCenter ? htmlEscape(formatCompactCurrency(highestCostCenter.totalCost)) : ""}</b></div>
+                <div class="highlight"><i>MC</i><span>Largest Margin Change</span><b class="${(largestMarginChange?.change ?? 0) >= 0 ? "positive" : "negative"}">${htmlEscape(largestMarginChange?.costCenter ?? "N/A")} ${largestMarginChange ? htmlEscape(formatPercent(largestMarginChange.change)) : ""}</b></div>
+              </div>
             </section>
-            <section class="notes">
-              <b>Notes:</b> AFP means Approved / Submitted Financial Plan. Profit Margin % is calculated as (Approved AFP - Total Cost) / Approved AFP. CN impact is included in total cost where applicable.
+            <section class="grid-3">
+              <div class="panel">
+                <h3>Cost Distribution by Portfolio</h3>
+                <div class="donut-grid"><div class="donut"><b>${htmlEscape(formatCompactCurrency(costTotal))}<br>Total Cost</b></div><div>${portfolioLegendHtml}</div></div>
+              </div>
+              <div class="panel insights">
+                <h3>Strategic Insights</h3>
+                <ul>${strategicBullets.map((item) => `<li>${htmlEscape(item)}</li>`).join("")}</ul>
+              </div>
+              <div class="panel">
+                <h3>Margin Impact from Head Office Allocation</h3>
+                <div class="impact">
+                  <div class="impact-card">Avg Margin Before Allocation<strong>${htmlEscape(formatPercent(marginBeforeHo))}</strong></div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="impact-card">Avg Margin After Allocation<strong>${htmlEscape(formatPercent(marginAfterHo))}</strong></div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="impact-card">Total Allocated HO Cost<strong>${htmlEscape(formatCompactCurrency(allocatedHoCost))}</strong></div>
+                </div>
+              </div>
+            </section>
+            <section class="footer">
+              <div>
+                <b>Notes</b><br>
+                AFP = Approved / Submitted Financial Plan.<br>
+                Margin = (AFP - Cost) / AFP.<br>
+                Values in USD.
+              </div>
+              <div>
+                <b>Prepared by</b>
+                <div class="signature">Finance &amp; Planning Team</div>
+              </div>
+              <div>
+                <b>Approved by</b>
+                <div class="signature">CEO</div>
+              </div>
             </section>
           </main>
           <script>window.print();</script>
@@ -3783,6 +3950,15 @@ function DashboardApp({ session, onLogout }) {
               <div><span style={{ color: "#22d3ee", textTransform: "uppercase" }}>{session?.role ?? "Viewer"}</span> | Last updated: {lastUpdatedLabel}</div>
             </div>
             <div style={{ position: "relative", display: "flex", gap: 8, alignItems: "center" }}>
+              {activePage === "overview" && (
+                <button
+                  type="button"
+                  onClick={handlePrintCeoPnLReport}
+                  style={{ height: 36, border: "1px solid rgba(94,234,212,0.36)", borderRadius: 10, background: "rgba(20,184,166,0.18)", color: "#e6fffb", cursor: "pointer", padding: "0 13px", fontSize: 12, fontWeight: 950 }}
+                >
+                  Export CEO Report
+                </button>
+              )}
               {[
                 ["settings", "⚙ Settings"],
                 ["info", "ℹ Info"],
@@ -4463,7 +4639,7 @@ function DashboardApp({ session, onLogout }) {
                   onClick={handlePrintCeoPnLReport}
                   style={{ border: "1px solid rgba(37,99,235,0.24)", borderRadius: 10, padding: "10px 14px", background: "#eff6ff", color: "#0b4db3", cursor: "pointer", fontSize: 12, fontWeight: 950, boxShadow: "0 8px 20px rgba(37,99,235,0.10)" }}
                 >
-                  Print
+                  Export CEO Report
                 </button>
               </div>
             </div>
