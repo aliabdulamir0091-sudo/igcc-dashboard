@@ -150,10 +150,10 @@ button {
   height: 82px;
   flex: 0 0 auto;
   border-radius: 14px;
-  background: #ffffff;
+  background: transparent;
   object-fit: contain;
-  padding: 7px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+  padding: 0;
+  box-shadow: none;
 }
 
 .brand-logo-wrap {
@@ -161,9 +161,9 @@ button {
   place-items: center;
   width: 76px;
   height: 76px;
-  border: 1px solid rgba(226, 232, 240, 0.18);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .brand-logo-wrap .brand-logo {
