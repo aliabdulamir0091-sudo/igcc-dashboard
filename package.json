@@ -7,6 +7,7 @@
     "dev": "vite --host localhost --port 5173",
     "dev:local": "vite --host localhost --port 5173",
     "generate:summary": "node scripts/generate-spent-summary.mjs",
+    "generate:inputs": "node scripts/generate-financial-inputs.mjs",
     "build": "vite build",
     "deploy": "npm run build",
     "lint": "eslint .",

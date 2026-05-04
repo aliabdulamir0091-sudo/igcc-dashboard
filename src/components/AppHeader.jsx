@@ -13,32 +13,35 @@ const HEADER_SIGNALS = [
 
 export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleTheme }) {
   const isDarkMode = theme === "dark";
-  const [selectedRegion, setSelectedRegion] = useState(ALL_FILTER_VALUE);
+  const [selectedPortfolio, setSelectedPortfolio] = useState(ALL_FILTER_VALUE);
   const [selectedHub, setSelectedHub] = useState(ALL_FILTER_VALUE);
   const [selectedCostCenter, setSelectedCostCenter] = useState(ALL_FILTER_VALUE);
-
-  const regionOptions = useMemo(
-    () => getUniqueFilterValues(COST_CENTER_HIERARCHY.map((item) => item.region)),
-    [],
-  );
+  const [selectedPeriod, setSelectedPeriod] = useState(ALL_FILTER_VALUE);
+  const [selectedMonth, setSelectedMonth] = useState(ALL_FILTER_VALUE);
 
   const hubOptions = useMemo(() => {
     const matchingRows = COST_CENTER_HIERARCHY.filter((item) => (
-      selectedRegion === ALL_FILTER_VALUE || item.region === selectedRegion
+      selectedPortfolio === ALL_FILTER_VALUE
+      || (selectedPortfolio === "basra" && item.region === "Basra")
+      || (selectedPortfolio === "kirkuk" && item.region === "Kirkuk")
+      || (selectedPortfolio === "head-office" && item.hub === "Head Office")
     ));
     return getUniqueFilterValues(matchingRows.map((item) => item.hub));
-  }, [selectedRegion]);
+  }, [selectedPortfolio]);
 
   const costCenterOptions = useMemo(() => {
     const matchingRows = COST_CENTER_HIERARCHY.filter((item) => (
-      (selectedRegion === ALL_FILTER_VALUE || item.region === selectedRegion)
+      (selectedPortfolio === ALL_FILTER_VALUE
+        || (selectedPortfolio === "basra" && item.region === "Basra")
+        || (selectedPortfolio === "kirkuk" && item.region === "Kirkuk")
+        || (selectedPortfolio === "head-office" && item.hub === "Head Office"))
       && (selectedHub === ALL_FILTER_VALUE || item.hub === selectedHub)
     ));
     return getUniqueFilterValues(matchingRows.flatMap((item) => item.costCenters));
-  }, [selectedHub, selectedRegion]);
+  }, [selectedHub, selectedPortfolio]);
 
-  const handleRegionChange = (event) => {
-    setSelectedRegion(event.target.value);
+  const handlePortfolioChange = (event) => {
+    setSelectedPortfolio(event.target.value);
     setSelectedHub(ALL_FILTER_VALUE);
     setSelectedCostCenter(ALL_FILTER_VALUE);
   };
@@ -49,9 +52,11 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
   };
 
   const clearFilters = () => {
-    setSelectedRegion(ALL_FILTER_VALUE);
+    setSelectedPortfolio(ALL_FILTER_VALUE);
     setSelectedHub(ALL_FILTER_VALUE);
     setSelectedCostCenter(ALL_FILTER_VALUE);
+    setSelectedPeriod(ALL_FILTER_VALUE);
+    setSelectedMonth(ALL_FILTER_VALUE);
   };
 
   return (
@@ -72,7 +77,7 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
             <div className="brand-copy">
               <span className="company-name">Iraq Gate Contracting Company</span>
               <h1>Financial Dashboard</h1>
-              <p>Cost, AFP, margin and portfolio performance.</p>
+              <p>Cost, AFP, credit notes and portfolio performance.</p>
             </div>
           </div>
 
@@ -112,21 +117,12 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           ))}
         </nav>
 
-        <div className="portfolio-pills" aria-label="Portfolio shortcuts">
-          {PORTFOLIOS.map((portfolio, index) => (
-            <button key={portfolio.id} className={`portfolio-pill tone-${portfolio.tone} ${index === 0 ? "is-active" : ""}`} type="button">
-              {portfolio.label}
-            </button>
-          ))}
-        </div>
-
         <div className="header-filter-row" aria-label="Dashboard filters">
           <label>
-            <span><Icon name="tower" /> Region</span>
-            <select value={selectedRegion} onChange={handleRegionChange}>
-              <option value={ALL_FILTER_VALUE}>All regions</option>
-              {regionOptions.map((region) => (
-                <option key={region} value={region}>{region}</option>
+            <span><Icon name="folder" /> Portfolio</span>
+            <select value={selectedPortfolio} onChange={handlePortfolioChange}>
+              {PORTFOLIOS.map((portfolio) => (
+                <option key={portfolio.id} value={portfolio.id}>{portfolio.label}</option>
               ))}
             </select>
           </label>
@@ -148,24 +144,22 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
               ))}
             </select>
           </label>
-          <fieldset>
-            <legend><Icon name="calendar" /> Time Mode</legend>
-            <div>
-              <button className="is-active" type="button">Monthly</button>
-              <button type="button">Quarterly</button>
-              <button type="button">Yearly</button>
-            </div>
-          </fieldset>
           <label>
-            <span><Icon name="calendar" /> Year</span>
-            <select>
-              <option>All years</option>
+            <span><Icon name="calendar" /> Period</span>
+            <select value={selectedPeriod} onChange={(event) => setSelectedPeriod(event.target.value)}>
+              <option value={ALL_FILTER_VALUE}>All periods</option>
+              <option value="monthly">Monthly</option>
+              <option value="quarterly">Quarterly</option>
+              <option value="yearly">Yearly</option>
             </select>
           </label>
           <label>
             <span><Icon name="calendar" /> Month</span>
-            <select>
-              <option>All months</option>
+            <select value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)}>
+              <option value={ALL_FILTER_VALUE}>All months</option>
+              {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((month) => (
+                <option key={month} value={month}>{month}</option>
+              ))}
             </select>
           </label>
           <button type="button" className="header-clear-button" onClick={clearFilters}>Clear</button>
