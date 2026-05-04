@@ -4,7 +4,16 @@ import { AppHeader } from "../components/AppHeader";
 import { FilterRow } from "../components/FilterRow";
 import { UserSlidePanel } from "../components/UserSlidePanel";
 
-export function AppLayout({ activePage, onNavigate, isPanelOpen, setIsPanelOpen, user, children }) {
+export function AppLayout({
+  activePage,
+  onNavigate,
+  isPanelOpen,
+  setIsPanelOpen,
+  user,
+  userProfile,
+  onLogout,
+  children,
+}) {
   useEffect(() => {
     if (!isPanelOpen) return undefined;
 
@@ -18,7 +27,13 @@ export function AppLayout({ activePage, onNavigate, isPanelOpen, setIsPanelOpen,
 
   return (
     <>
-      <UserSlidePanel isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)} user={user} />
+      <UserSlidePanel
+        isOpen={isPanelOpen}
+        onClose={() => setIsPanelOpen(false)}
+        onLogout={onLogout}
+        user={user}
+        userProfile={userProfile}
+      />
       <div className="app-shell">
         <AppHeader activePage={activePage} onNavigate={onNavigate} onMenuOpen={() => setIsPanelOpen(true)} user={user} />
         <FilterRow />

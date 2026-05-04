@@ -7,23 +7,29 @@ const PANEL_ITEMS = [
   ["What's New", "Latest updates and features", "WN"],
 ];
 
-const getUserName = (user) => {
+const getUserName = (user, userProfile) => {
+  if (userProfile?.displayName) return userProfile.displayName;
+  if (userProfile?.name) return userProfile.name;
   if (user?.displayName) return user.displayName;
   if (user?.email) return user.email.split("@")[0].replace(/[._-]+/g, " ");
   return "IGCC User";
 };
 
-export function UserSlidePanel({ isOpen, onClose, user }) {
+export function UserSlidePanel({ isOpen, onClose, onLogout, user, userProfile }) {
   if (!isOpen) return null;
 
-  const userName = getUserName(user);
+  const userName = getUserName(user, userProfile);
   const avatar = userName.slice(0, 1).toUpperCase();
+  const handleLogout = async () => {
+    await onLogout?.();
+    onClose();
+  };
 
   return (
     <div className="slide-panel-backdrop" onClick={onClose}>
       <aside className="slide-panel" onClick={(event) => event.stopPropagation()}>
         <button className="panel-close" type="button" onClick={onClose} aria-label="Close menu">
-          ×
+          x
         </button>
 
         <section className="panel-profile">
@@ -46,7 +52,7 @@ export function UserSlidePanel({ isOpen, onClose, user }) {
 
         <div className="panel-spacer" />
 
-        <button type="button" className="panel-row panel-logout">
+        <button type="button" className="panel-row panel-logout" onClick={handleLogout}>
           <span className="panel-icon">LO</span>
           <span>
             <strong>Logout</strong>

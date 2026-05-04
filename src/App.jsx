@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { AuthPage } from "./components/AuthPage";
 import { DATA_SCHEMAS } from "./data/firestoreCollections";
 import { AppLayout } from "./layouts/AppLayout";
 import { ExecutiveCockpitPage } from "./pages/ExecutiveCockpitPage";
 import { HomePage } from "./pages/HomePage";
 import { ProfitabilityPage } from "./pages/ProfitabilityPage";
 import { SpendingReportPage } from "./pages/SpendingReportPage";
-import { useFirebaseUser } from "./hooks/useFirebaseUser";
+import { useAuthorizedUser } from "./hooks/useAuthorizedUser";
 
 const PAGE_COMPONENTS = {
   executive: ExecutiveCockpitPage,
@@ -16,10 +17,14 @@ const PAGE_COMPONENTS = {
 export default function App() {
   const [activePage, setActivePage] = useState("home");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const { user } = useFirebaseUser();
+  const { user, profile, authError, isCheckingUser, signOutUser } = useAuthorizedUser();
 
   if (activePage === "home") {
     return <HomePage onNavigate={setActivePage} />;
+  }
+
+  if (!user) {
+    return <AuthPage authError={authError} isCheckingUser={isCheckingUser} />;
   }
 
   const Page = PAGE_COMPONENTS[activePage] ?? ExecutiveCockpitPage;
@@ -31,6 +36,8 @@ export default function App() {
       isPanelOpen={isPanelOpen}
       setIsPanelOpen={setIsPanelOpen}
       user={user}
+      userProfile={profile}
+      onLogout={signOutUser}
     >
       <Page dataSchemas={DATA_SCHEMAS} />
     </AppLayout>
