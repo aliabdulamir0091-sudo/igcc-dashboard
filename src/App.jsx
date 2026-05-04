@@ -3985,65 +3985,32 @@ function DashboardApp({ session, onLogout }) {
       )}
 
       {isInternalPage && (
-      <div className="dashboard-header" style={{ position: "sticky", top: 0, zIndex: 30, marginBottom: 16, overflow: "visible", background: "linear-gradient(135deg, #020b22 0%, #061b35 58%, #082d50 100%)", border: "1px solid rgba(148, 163, 184, 0.24)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(15, 23, 42, 0.18)" }}>
-        <div className="dashboard-header-main" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "22px 26px" }}>
+      <div className="dashboard-header" style={{ position: "sticky", top: 0, zIndex: 30, marginBottom: 16, overflow: "visible", background: "linear-gradient(135deg, #073b7a 0%, #0b5ca8 48%, #0ea5c8 100%)", border: "1px solid rgba(125, 211, 252, 0.38)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(14, 116, 144, 0.22)" }}>
+        <div className="dashboard-header-main" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "16px 24px" }}>
           <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <button type="button" aria-label="Open application menu" onClick={() => setIsUserMenuOpen(true)} style={{ display: "grid", placeItems: "center", width: 40, height: 40, border: "1px solid rgba(255,255,255,0.20)", borderRadius: 10, background: "rgba(255,255,255,0.07)", color: "#fff", cursor: "pointer", fontSize: 20, fontWeight: 950 }}>
+            <button type="button" aria-label="Open application menu" onClick={() => setIsUserMenuOpen(true)} style={{ display: "grid", placeItems: "center", width: 42, height: 42, border: "1px solid rgba(255,255,255,0.28)", borderRadius: 11, background: "rgba(255,255,255,0.13)", color: "#fff", cursor: "pointer", fontSize: 22, fontWeight: 950 }}>
               ☰
             </button>
-            <div style={{ width: 62, height: 62, borderRadius: 16, border: "1px solid rgba(255,255,255,0.16)", background: "#ffffff", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "0 12px 26px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.18)" }}>
-              <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC logo" style={{ width: 54, height: 54, objectFit: "contain" }} />
+            <div style={{ width: 52, height: 52, borderRadius: 14, border: "1px solid rgba(255,255,255,0.28)", background: "#ffffff", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "0 12px 26px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.20)" }}>
+              <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC logo" style={{ width: 44, height: 44, objectFit: "contain" }} />
             </div>
             <div style={{ minWidth: 0 }}>
-              <h1 style={{ margin: "4px 0 0", fontSize: 27, letterSpacing: 0, lineHeight: 1.02, fontWeight: 950, color: "#ffffff" }}>Financial Dashboard</h1>
-              <p style={{ margin: "7px 0 0", color: "rgba(226,232,240,0.86)", fontSize: 13, maxWidth: 720 }}>Executive financial performance cockpit</p>
+              <h1 style={{ margin: 0, fontSize: 24, letterSpacing: 0, lineHeight: 1.02, fontWeight: 950, color: "#ffffff" }}>IGCC Financial Dashboard</h1>
             </div>
           </div>
-          <nav aria-label="Dashboard pages" style={{ display: "flex", gap: 6, alignItems: "stretch", justifyContent: "center", flex: "1 1 420px", minWidth: 0, overflowX: "auto" }}>
-            {visibleNavItems.filter(([value]) => value !== "home").map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setActivePage(value)}
-                style={{ border: 0, borderBottom: activePage === value ? "3px solid #60a5fa" : "3px solid transparent", background: activePage === value ? "rgba(37,99,235,0.20)" : "transparent", color: activePage === value ? "#fff" : "rgba(226,232,240,0.84)", cursor: "pointer", padding: "12px 12px 9px", borderRadius: "10px 10px 0 0", fontSize: 12, fontWeight: 950, whiteSpace: "nowrap" }}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-          <div className="dashboard-user-actions" style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap", justifyContent: "flex-end", borderLeft: "1px solid rgba(255,255,255,0.16)", paddingLeft: 22 }}>
-            <label style={{ display: "grid", gap: 4, color: "rgba(226,232,240,0.75)", fontSize: 10, fontWeight: 900 }}>
+          <div className="dashboard-user-actions" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <label style={{ display: "grid", gap: 4, color: "rgba(255,255,255,0.86)", fontSize: 10, fontWeight: 900 }}>
               Reporting Period
-              <select value={filters.month} onChange={handleFilterChange("month")} style={{ height: 36, minWidth: 138, border: "1px solid rgba(255,255,255,0.18)", borderRadius: 10, background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 10px", fontSize: 12, fontWeight: 850 }}>
+              <select value={filters.month} onChange={handleFilterChange("month")} style={{ height: 40, minWidth: 160, border: "1px solid rgba(132,204,22,0.55)", borderRadius: 12, background: "#ecfccb", color: "#163314", padding: "0 12px", fontSize: 12, fontWeight: 950, boxShadow: "0 10px 24px rgba(132,204,22,0.18)" }}>
                 <option value="">All periods</option>
                 {filteredMonthOptions.map((month) => <option key={month.label} value={month.label}>{month.label}</option>)}
               </select>
             </label>
-            <div style={{ position: "relative", display: "flex", gap: 8, alignItems: "center" }}>
-                <button
-                  type="button"
-                  onClick={activePage === "overview" ? handlePrintCeoPnLReport : () => window.print()}
-                  style={{ height: 36, border: "1px solid rgba(94,234,212,0.36)", borderRadius: 10, background: "rgba(20,184,166,0.18)", color: "#e6fffb", cursor: "pointer", padding: "0 13px", fontSize: 12, fontWeight: 950 }}
-                >
-                  Export Report
-                </button>
-              <button type="button" aria-label="Notifications" style={{ position: "relative", display: "grid", placeItems: "center", width: 38, height: 36, border: "1px solid rgba(255,255,255,0.20)", borderRadius: 10, background: "rgba(255,255,255,0.07)", color: "#fff", cursor: "pointer", fontSize: 18 }}>
-                ♢
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <button type="button" aria-label="Notifications" style={{ position: "relative", display: "grid", placeItems: "center", width: 40, height: 40, border: "1px solid rgba(255,255,255,0.24)", borderRadius: 12, background: "rgba(255,255,255,0.12)", color: "transparent", cursor: "pointer", fontSize: 0, fontWeight: 950 }}>
+                <span style={{ color: "#fff", fontSize: 16 }}>!</span>
                 <span style={{ position: "absolute", right: 7, top: 6, width: 8, height: 8, borderRadius: 999, background: "#ef4444" }} />
               </button>
-              {[
-                ["settings", "⚙ Settings"],
-                ["info", "ℹ Info"],
-              ].map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setActiveHeaderTool((current) => current === key ? "" : key)}
-                  style={{ height: 36, border: "1px solid rgba(255,255,255,0.22)", borderRadius: 10, background: activeHeaderTool === key ? "rgba(37,99,235,0.42)" : "rgba(255,255,255,0.07)", color: "#fff", cursor: "pointer", padding: "0 12px", fontSize: 12, fontWeight: 950 }}
-                >
-                  {label}
-                </button>
-              ))}
               <span
                 aria-label="Current user"
                 title={session?.email || portalUserName}
@@ -4051,32 +4018,35 @@ function DashboardApp({ session, onLogout }) {
               >
                 {portalUserName.slice(0, 1).toUpperCase()}
               </span>
-              {activeHeaderTool && (
-                <div style={{ position: "absolute", right: 0, top: 44, zIndex: 60, width: 280, border: "1px solid rgba(148,163,184,0.30)", borderRadius: 14, padding: 14, background: "#ffffff", color: "#10233f", boxShadow: "0 24px 60px rgba(15,23,42,0.26)" }}>
-                  {activeHeaderTool === "settings" ? (
-                    <div style={{ display: "grid", gap: 12 }}>
-                      <strong>Table Settings</strong>
-                      <label style={{ display: "grid", gap: 6, color: "#64748b", fontSize: 11, fontWeight: 950 }}>View Type
-                        <select value={ceoViewType} onChange={(event) => setCeoViewType(event.target.value)} style={{ border: "1px solid #cbd5e1", borderRadius: 8, padding: 8, fontWeight: 850 }}>
-                          <option value="ceo">CEO View</option>
-                          <option value="project">Project Manager View</option>
-                        </select>
-                      </label>
-                      <div style={{ color: "#64748b", fontSize: 12, lineHeight: 1.45 }}>Columns: AFP, cost, margin, net profit, status, trend. Density: compact executive.</div>
-                    </div>
-                  ) : (
-                    <div style={{ display: "grid", gap: 8, fontSize: 12, lineHeight: 1.45 }}>
-                      <strong>Definitions</strong>
-                      <span><b>AFP:</b> Submitted / Approved Financial Plan.</span>
-                      <span><b>Margin:</b> (Approved AFP - Total Cost) / Approved AFP.</span>
-                      <span><b>Total Cost:</b> Spent cost plus CN impact where applicable.</span>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
+        <nav aria-label="Dashboard pages" style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 24px", minHeight: 48, borderTop: "1px solid rgba(255,255,255,0.16)", background: "rgba(2,12,27,0.20)", overflowX: "auto" }}>
+          {visibleNavItems.filter(([value]) => value !== "home").map(([value, label]) => {
+            const isActive = activePage === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setActivePage(value)}
+                style={{
+                  height: 48,
+                  border: 0,
+                  borderBottom: `3px solid ${isActive ? "#a3e635" : "transparent"}`,
+                  background: isActive ? "rgba(236,252,203,0.14)" : "transparent",
+                  color: isActive ? "#ffffff" : "rgba(255,255,255,0.78)",
+                  cursor: "pointer",
+                  padding: "0 18px",
+                  fontSize: 12,
+                  fontWeight: 950,
+                  whiteSpace: "nowrap"
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </nav>
         {activePage !== "home" && (
         <div className="portfolio-filter-strip" style={{ display: "grid", gridTemplateColumns: "minmax(175px, 1fr) minmax(175px, 1fr) minmax(175px, 1fr) minmax(260px, 1.1fr) minmax(140px, 0.75fr) minmax(160px, 0.8fr) auto auto", columnGap: 12, rowGap: 12, alignItems: "end", padding: "14px 26px 0", borderTop: "1px solid rgba(255,255,255,0.12)", background: "#ffffff" }}>
           <label style={{ display: "block", color: "#10233f", fontWeight: 900, fontSize: 10, textTransform: "uppercase" }}>
