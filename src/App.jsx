@@ -13,8 +13,10 @@ const DEFAULT_DASHBOARD_FILTERS = {
   portfolio: "all",
   hub: "all",
   costCenter: "all",
-  period: "all",
+  period: "monthly",
+  year: "all",
   month: "all",
+  quarter: "all",
 };
 
 const PAGE_COMPONENTS = {

@@ -65,7 +65,9 @@ const buildFilteredInputs = (data, filters = {}) => {
     matchesPortfolio(entry, filters.portfolio)
     && (!filters.hub || filters.hub === "all" || entry.hub === filters.hub)
     && (!filters.costCenter || filters.costCenter === "all" || entry.costCenter === filters.costCenter)
-    && (!filters.month || filters.month === "all" || entry.month === filters.month)
+    && (!filters.year || filters.year === "all" || entry.year === filters.year)
+    && (filters.period !== "monthly" || !filters.month || filters.month === "all" || entry.month === filters.month)
+    && (filters.period !== "quarterly" || !filters.quarter || filters.quarter === "all" || `Q${Math.ceil(Number(entry.period?.slice(5, 7) || 1) / 3)}` === filters.quarter)
   ));
 
   const monthlyMap = new Map();
@@ -184,7 +186,7 @@ function MonthlyTrendChart({ rows }) {
         <div className="chart-header">
           <div>
             <p className="eyebrow">Main Flow</p>
-            <h3>Financial Flow: Spent → Submitted → Approved → Adjustments</h3>
+            <h3>Financial Flow: Spent -&gt; Submitted -&gt; Approved -&gt; Adjustments</h3>
           </div>
         </div>
         <div className="empty-filter-state">No financial inputs match the selected filters.</div>
@@ -219,7 +221,7 @@ function MonthlyTrendChart({ rows }) {
       <div className="chart-header">
         <div>
           <p className="eyebrow">Main Flow</p>
-          <h3>Financial Flow: Spent → Submitted → Approved → Adjustments</h3>
+          <h3>Financial Flow: Spent -&gt; Submitted -&gt; Approved -&gt; Adjustments</h3>
         </div>
         <div className="chart-legend">
           {series.map((item) => (

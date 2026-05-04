@@ -455,7 +455,7 @@ button {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(170px, 1fr) minmax(150px, 0.95fr) minmax(210px, 1.2fr) minmax(150px, 0.85fr) minmax(140px, 0.85fr) minmax(110px, 0.55fr);
+  grid-template-columns: minmax(170px, 1fr) minmax(150px, 0.95fr) minmax(210px, 1.2fr) minmax(150px, 0.85fr) minmax(120px, 0.7fr) minmax(140px, 0.85fr) minmax(110px, 0.55fr);
   gap: 12px;
   align-items: end;
   padding: 13px 22px 16px;
@@ -1813,7 +1813,7 @@ button {
 
 .header-filter-row {
   margin-top: 12px;
-  grid-template-columns: minmax(145px, 1fr) minmax(132px, 0.9fr) minmax(190px, 1.15fr) minmax(132px, 0.8fr) minmax(132px, 0.85fr) minmax(130px, 0.72fr) minmax(82px, 0.45fr);
+  grid-template-columns: minmax(145px, 1fr) minmax(132px, 0.86fr) minmax(180px, 1.1fr) minmax(122px, 0.74fr) minmax(104px, 0.62fr) minmax(122px, 0.74fr) minmax(82px, 0.42fr);
   padding: 16px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.96);
@@ -1832,8 +1832,7 @@ button {
 }
 
 .header-filter-row select,
-.header-clear-button,
-.header-apply-button {
+.header-clear-button {
   min-height: 42px;
   border: 1px solid #dbe4ef;
   border-radius: 9px;
@@ -1843,11 +1842,9 @@ button {
   font-weight: 850;
 }
 
-.header-apply-button {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: #ffffff;
-  border-color: transparent;
-  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+.header-filter-row select:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
 }
 
 .header-clear-button {
