@@ -3860,121 +3860,124 @@ function DashboardApp({ session, onLogout }) {
             setIsUserMenuOpen(false);
             setActiveUserModal("");
           }}
-          style={{ position: "fixed", inset: 0, zIndex: 80, background: themeMode === "light" ? "rgba(15,23,42,0.30)" : "rgba(2,6,23,0.66)", display: "flex", justifyContent: "flex-start" }}
+          style={{ position: "fixed", inset: 0, zIndex: 80, background: "transparent" }}
         >
           <aside
             onClick={(event) => event.stopPropagation()}
-            style={{ width: "min(360px, 92vw)", height: "100%", background: "#ffffff", borderRight: `1px solid ${theme.border}`, boxShadow: "28px 0 70px rgba(15,23,42,0.24)", padding: 22, boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 18, animation: "slidePanelIn 180ms ease-out" }}
+            style={{ position: "absolute", left: 0, top: 0, width: "300px", maxWidth: "86vw", height: "100%", background: "#ffffff", borderRight: "1px solid rgba(226,232,240,0.95)", boxShadow: "22px 0 52px rgba(15,23,42,0.18)", padding: "22px 18px", boxSizing: "border-box", display: "flex", flexDirection: "column", animation: "slidePanelIn 160ms ease-out" }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", borderBottom: `1px solid ${theme.border}`, paddingBottom: 16 }}>
-              <div style={{ display: "flex", gap: 12, minWidth: 0 }}>
-                <span style={{ display: "grid", placeItems: "center", width: 54, height: 54, borderRadius: 999, background: "#eef6ff", color: "#0b4db3", fontSize: 18, fontWeight: 950, flex: "0 0 auto" }}>{portalUserName.slice(0, 1).toUpperCase()}</span>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>Signed in</div>
-                  <h3 style={{ margin: "5px 0 0", color: theme.text, fontSize: 18, fontWeight: 950, overflowWrap: "anywhere" }}>{portalUserName}</h3>
-                  <div style={{ marginTop: 5, color: theme.subtext, fontSize: 12, overflowWrap: "anywhere" }}>{session?.email || "No email available"}</div>
-                  <div style={{ marginTop: 3, color: "#0f766e", fontSize: 12, fontWeight: 950 }}>{session?.role || "Viewer"}</div>
-                </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC logo" style={{ width: 42, height: 42, objectFit: "contain" }} />
+                <strong style={{ color: "#06143a", fontSize: 24, fontWeight: 950 }}>IGCC</strong>
               </div>
               <button
                 type="button"
+                aria-label="Close menu"
                 onClick={() => {
                   setIsUserMenuOpen(false);
                   setActiveUserModal("");
                 }}
-                style={{ border: `1px solid ${theme.border}`, borderRadius: 10, background: theme.inputBg, color: theme.text, width: 34, height: 32, cursor: "pointer", fontWeight: 950 }}
+                style={{ border: 0, background: "transparent", color: "#06143a", width: 34, height: 34, cursor: "pointer", fontSize: 24, lineHeight: 1 }}
               >
                 x
               </button>
             </div>
 
-            <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "30px 0 22px", borderBottom: "1px solid rgba(226,232,240,0.95)" }}>
+              <span style={{ display: "grid", placeItems: "center", width: 58, height: 58, borderRadius: 999, background: "#eef2f7", color: "#64748b", fontSize: 24, fontWeight: 950, flex: "0 0 auto" }}>{portalUserName.slice(0, 1).toUpperCase()}</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ color: "#06143a", fontSize: 15, fontWeight: 950, overflowWrap: "anywhere" }}>{portalUserName}</div>
+                <div style={{ marginTop: 6, color: "#475569", fontSize: 13, fontWeight: 700 }}>Welcome back!</div>
+              </div>
+              <span style={{ marginLeft: "auto", color: "#06143a", fontSize: 20, fontWeight: 900 }}>›</span>
+            </div>
+
+            <div style={{ paddingTop: 22 }}>
+              <div style={{ color: "#06143a", fontSize: 12, fontWeight: 950, letterSpacing: 0, marginBottom: 4 }}>MENU</div>
               {[
-                ["profile", "My Profile", "View and edit your profile"],
-                ["settings", "Settings", "Preferences and configurations"],
-                ["preferences", "Preferences", "Dashboard, language, and display"],
-                ["contact", "Contact Us", "Get in touch with support"],
-                ["help", "Help Center", "Guides and documentation"],
-                ["whats-new", "What's New", "Latest updates and features"],
-                ["switch", "Switch View", "Change dashboard view"],
-              ].map(([key, label, note]) => (
+                ["profile", "P", "My Profile", "View and edit your profile", "#2563eb", "#eff6ff"],
+                ["settings", "S", "Settings", "Preferences and configurations", "#059669", "#ecfdf5"],
+                ["preferences", "PR", "Preferences", "Dashboard, language, and more", "#7c3aed", "#f5f3ff"],
+                ["contact", "C", "Contact Us", "Get in touch with support", "#f97316", "#fff7ed"],
+                ["help", "H", "Help Center", "Guides and documentation", "#3b5bdb", "#eef2ff"],
+                ["whats-new", "W", "What's New", "Latest updates and features", "#2563eb", "#eff6ff"],
+              ].map(([key, icon, label, note, color, bg]) => (
                 <button
                   key={key}
                   type="button"
                   onMouseEnter={() => setActiveUserModal(key)}
-                  onMouseOver={() => setActiveUserModal(key)}
                   onFocus={() => setActiveUserModal(key)}
                   onClick={() => setActiveUserModal(key)}
-                  style={{ width: "100%", border: `1px solid ${activeUserModal === key ? theme.accentStrong : theme.border}`, borderRadius: 14, padding: "12px 14px", background: activeUserModal === key ? theme.accentSoft : themeMode === "light" ? "#ffffff" : theme.inputBg, color: theme.text, textAlign: "left", cursor: "pointer", boxShadow: "0 10px 22px rgba(15,23,42,0.06)" }}
+                  style={{ width: "100%", display: "grid", gridTemplateColumns: "42px 1fr auto", alignItems: "center", gap: 12, border: 0, borderBottom: "1px solid rgba(226,232,240,0.95)", padding: "17px 0", background: "transparent", color: "#06143a", textAlign: "left", cursor: "pointer" }}
                 >
-                  <strong style={{ display: "block", fontSize: 14 }}>{label}</strong>
-                  <span style={{ display: "block", marginTop: 4, color: theme.subtext, fontSize: 12, lineHeight: 1.35 }}>{note}</span>
+                  <span style={{ display: "grid", placeItems: "center", width: 34, height: 34, borderRadius: 999, background: bg, color, fontSize: 12, fontWeight: 950 }}>{icon}</span>
+                  <span style={{ minWidth: 0 }}>
+                    <strong style={{ display: "block", color: "#06143a", fontSize: 14, fontWeight: 950 }}>{label}</strong>
+                    <span style={{ display: "block", marginTop: 4, color: "#475569", fontSize: 12, fontWeight: 700, lineHeight: 1.3 }}>{note}</span>
+                  </span>
+                  <span style={{ color: "#06143a", fontSize: 20, fontWeight: 900 }}>›</span>
                 </button>
               ))}
             </div>
 
-            {activeUserModal ? (
-              <div style={{ display: "grid", gap: 14 }}>
-                <div style={{ border: `1px solid ${theme.border}`, borderRadius: 16, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)", overflow: "hidden" }}>
-                  <div style={{ padding: "16px 18px", background: theme.accentSoft, borderBottom: `1px solid ${theme.border}` }}>
-                    <h3 style={{ margin: 0, color: theme.text, fontSize: 18, fontWeight: 950 }}>
-                      {activeUserModal === "contact" ? "Contact Us" : activeUserModal === "settings" ? "Settings" : activeUserModal === "preferences" ? "Preferences" : activeUserModal === "help" ? "Help Center" : activeUserModal === "whats-new" ? "What's New" : activeUserModal === "switch" ? "Switch View" : "My Profile"}
-                    </h3>
-                  </div>
-                  <div style={{ padding: 18, display: "grid", gap: 12 }}>
-                    {activeUserModal === "profile" && [
-                      ["User email", session?.email || "Not available"],
-                      ["Role", session?.role || "Viewer"],
-                      ["Last login", session?.lastLogin || session?.lastLoginAt || "Current session"],
-                      ["Access type", isAdmin ? "Administrator" : "Viewer"],
-                      ["Approved user status", APPROVED_ACCESS[String(session?.email ?? "").trim().toLowerCase()] ? "Approved" : "Not listed"],
-                    ].map(([label, value]) => (
-                      <div key={label} style={{ display: "grid", gap: 4, borderBottom: `1px solid ${theme.border}`, paddingBottom: 10 }}>
-                        <span style={{ color: theme.subtext, fontSize: 12, fontWeight: 850 }}>{label}</span>
-                        <strong style={{ color: theme.text, overflowWrap: "anywhere" }}>{value}</strong>
-                      </div>
-                    ))}
-                    {activeUserModal === "contact" && (
-                      <>
-                        <div style={{ color: theme.text, fontWeight: 950 }}>System owner / Admin contact</div>
-                        <div style={{ color: theme.subtext }}>Ali Abdulamir</div>
-                        <div style={{ color: theme.text, fontWeight: 950, marginTop: 8 }}>Support email</div>
-                        <div style={{ color: theme.subtext }}>support@igccgroup.com</div>
-                        <div style={{ marginTop: 10, color: theme.text, background: theme.accentSoft, border: `1px solid ${theme.border}`, borderRadius: 12, padding: 14, lineHeight: 1.5 }}>For access or dashboard support, please contact the system administrator.</div>
-                      </>
-                    )}
-                    {activeUserModal === "settings" && (
-                      <div style={{ color: theme.subtext, lineHeight: 1.5 }}>Settings are currently limited to dashboard preferences such as light and dark mode. Additional profile settings can be added when access management is expanded.</div>
-                    )}
-                    {activeUserModal === "preferences" && (
-                      <div style={{ color: theme.subtext, lineHeight: 1.5 }}>Use the header controls to adjust period, filters, and dashboard view. More personalization can be added after the shared shell is stable.</div>
-                    )}
-                    {activeUserModal === "help" && (
-                      <div style={{ color: theme.subtext, lineHeight: 1.5 }}>For help, use the page tabs and filters from the shared header. Detailed help content can be connected later.</div>
-                    )}
-                    {activeUserModal === "whats-new" && (
-                      <div style={{ color: theme.subtext, lineHeight: 1.5 }}>New: standardized application shell, left slide panel, shared internal navigation, and CEO report export.</div>
-                    )}
-                    {activeUserModal === "switch" && (
-                      <div style={{ display: "grid", gap: 8 }}>
-                        {visibleNavItems.filter(([value]) => value !== "home").map(([value, label]) => (
-                          <button key={value} type="button" onClick={() => { setActivePage(value); setIsUserMenuOpen(false); }} style={{ border: `1px solid ${theme.border}`, borderRadius: 10, padding: "10px 12px", background: activePage === value ? theme.accentSoft : "#fff", color: theme.text, cursor: "pointer", textAlign: "left", fontWeight: 900 }}>{label}</button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ border: `1px dashed ${theme.border}`, borderRadius: 16, padding: 16, color: theme.subtext, lineHeight: 1.45, background: themeMode === "light" ? "#ffffff" : theme.inputBg }}>
-                Move the cursor over any account option to show its details here.
-              </div>
-            )}
-
-            <div style={{ marginTop: "auto", borderTop: `1px solid ${theme.border}`, paddingTop: 16 }}>
-              <button type="button" onClick={onLogout} style={{ width: "100%", border: "1px solid rgba(220,38,38,0.18)", borderRadius: 14, padding: "13px 15px", background: "rgba(220,38,38,0.08)", color: theme.danger, textAlign: "left", cursor: "pointer", fontWeight: 950 }}>Logout</button>
+            <div style={{ marginTop: "auto", paddingTop: 18 }}>
+              <div style={{ color: "#06143a", fontSize: 12, fontWeight: 950, letterSpacing: 0, paddingBottom: 9, borderBottom: "1px solid rgba(226,232,240,0.95)" }}>OTHER</div>
+              <button
+                type="button"
+                onMouseEnter={() => setActiveUserModal("switch")}
+                onFocus={() => setActiveUserModal("switch")}
+                onClick={() => setActiveUserModal("switch")}
+                style={{ width: "100%", display: "grid", gridTemplateColumns: "42px 1fr auto", alignItems: "center", gap: 12, border: 0, borderBottom: "1px solid rgba(226,232,240,0.95)", padding: "17px 0", background: "transparent", color: "#06143a", textAlign: "left", cursor: "pointer" }}
+              >
+                <span style={{ display: "grid", placeItems: "center", width: 34, height: 34, borderRadius: 999, background: "#eff6ff", color: "#2563eb", fontSize: 12, fontWeight: 950 }}>SV</span>
+                <span>
+                  <strong style={{ display: "block", color: "#06143a", fontSize: 14, fontWeight: 950 }}>Switch View</strong>
+                  <span style={{ display: "block", marginTop: 4, color: "#475569", fontSize: 12, fontWeight: 700 }}>Change dashboard view</span>
+                </span>
+                <span style={{ color: "#06143a", fontSize: 20, fontWeight: 900 }}>›</span>
+              </button>
+              <button type="button" onClick={onLogout} style={{ width: "100%", display: "grid", gridTemplateColumns: "42px 1fr", alignItems: "center", gap: 12, border: "1px solid rgba(248,113,113,0.32)", borderRadius: 8, padding: "14px 12px", marginTop: 14, background: "#fff7f7", color: "#b91c1c", textAlign: "left", cursor: "pointer" }}>
+                <span style={{ display: "grid", placeItems: "center", width: 34, height: 34, borderRadius: 999, background: "#fff1f2", color: "#ef4444", fontSize: 12, fontWeight: 950 }}>LO</span>
+                <span>
+                  <strong style={{ display: "block", color: "#b91c1c", fontSize: 14, fontWeight: 950 }}>Logout</strong>
+                  <span style={{ display: "block", marginTop: 4, color: "#475569", fontSize: 12, fontWeight: 700 }}>Sign out from your account</span>
+                </span>
+              </button>
             </div>
           </aside>
+
+          {activeUserModal && (
+            <aside
+              onClick={(event) => event.stopPropagation()}
+              style={{ position: "absolute", left: 300, top: 0, width: "min(360px, calc(100vw - 300px))", minHeight: 220, maxHeight: "100%", overflowY: "auto", background: "#ffffff", borderRight: "1px solid rgba(226,232,240,0.95)", boxShadow: "18px 0 44px rgba(15,23,42,0.13)", padding: 20, boxSizing: "border-box", animation: "slidePanelIn 140ms ease-out" }}
+            >
+              <h3 style={{ margin: "0 0 14px", color: "#06143a", fontSize: 18, fontWeight: 950 }}>
+                {activeUserModal === "contact" ? "Contact Us" : activeUserModal === "settings" ? "Settings" : activeUserModal === "preferences" ? "Preferences" : activeUserModal === "help" ? "Help Center" : activeUserModal === "whats-new" ? "What's New" : activeUserModal === "switch" ? "Switch View" : "My Profile"}
+              </h3>
+              <div style={{ display: "grid", gap: 12, color: "#475569", fontSize: 13, lineHeight: 1.5 }}>
+                {activeUserModal === "profile" && [
+                  ["User email", session?.email || "Not available"],
+                  ["Role", session?.role || "Viewer"],
+                  ["Last login", session?.lastLogin || session?.lastLoginAt || "Current session"],
+                  ["Access type", isAdmin ? "Administrator" : "Viewer"],
+                ].map(([label, value]) => (
+                  <div key={label} style={{ borderBottom: "1px solid rgba(226,232,240,0.95)", paddingBottom: 10 }}>
+                    <span style={{ display: "block", color: "#64748b", fontSize: 11, fontWeight: 900 }}>{label}</span>
+                    <strong style={{ display: "block", marginTop: 4, color: "#06143a", overflowWrap: "anywhere" }}>{value}</strong>
+                  </div>
+                ))}
+                {activeUserModal === "contact" && <span>For access or dashboard support, contact the system administrator at support@igccgroup.com.</span>}
+                {activeUserModal === "settings" && <span>Dashboard settings and configuration preferences will appear here.</span>}
+                {activeUserModal === "preferences" && <span>Control dashboard language, display preferences, and saved layout options.</span>}
+                {activeUserModal === "help" && <span>Guides, documentation, and dashboard usage support will appear here.</span>}
+                {activeUserModal === "whats-new" && <span>Latest dashboard updates, features, and release notes will appear here.</span>}
+                {activeUserModal === "switch" && visibleNavItems.filter(([value]) => value !== "home").map(([value, label]) => (
+                  <button key={value} type="button" onClick={() => { setActivePage(value); setIsUserMenuOpen(false); setActiveUserModal(""); }} style={{ border: "1px solid rgba(226,232,240,0.95)", borderRadius: 8, padding: "10px 12px", background: activePage === value ? "#eff6ff" : "#fff", color: "#06143a", cursor: "pointer", textAlign: "left", fontWeight: 900 }}>{label}</button>
+                ))}
+              </div>
+            </aside>
+          )}
         </div>
       )}
 
@@ -3988,7 +3991,7 @@ function DashboardApp({ session, onLogout }) {
       <div className="dashboard-header" style={{ position: "sticky", top: 0, zIndex: 30, marginBottom: 16, overflow: "visible", background: "linear-gradient(135deg, #073b7a 0%, #0b5ca8 48%, #0ea5c8 100%)", border: "1px solid rgba(125, 211, 252, 0.38)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(14, 116, 144, 0.22)" }}>
         <div className="dashboard-header-main" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "16px 24px" }}>
           <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <button type="button" aria-label="Open application menu" onClick={() => setIsUserMenuOpen(true)} style={{ display: "grid", placeItems: "center", width: 42, height: 42, border: "1px solid rgba(255,255,255,0.28)", borderRadius: 11, background: "rgba(255,255,255,0.13)", color: "#fff", cursor: "pointer", fontSize: 22, fontWeight: 950 }}>
+            <button type="button" aria-label="Open application menu" onMouseEnter={() => setIsUserMenuOpen(true)} onFocus={() => setIsUserMenuOpen(true)} onClick={() => setIsUserMenuOpen(true)} style={{ display: "grid", placeItems: "center", width: 42, height: 42, border: "1px solid rgba(255,255,255,0.28)", borderRadius: 11, background: "rgba(255,255,255,0.13)", color: "#fff", cursor: "pointer", fontSize: 22, fontWeight: 950 }}>
               ☰
             </button>
             <div style={{ width: 52, height: 52, borderRadius: 14, border: "1px solid rgba(255,255,255,0.28)", background: "#ffffff", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "0 12px 26px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.20)" }}>
