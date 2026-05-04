@@ -5,7 +5,7 @@ const REASON_MESSAGES = {
   "verification-failed": "The app could not complete the Firestore access verification.",
 };
 
-export function AccessDeniedPage({ deniedEmail, reason, onBackToLogin }) {
+export function AccessDeniedPage({ deniedEmail, detail, projectId, reason, onBackToLogin }) {
   const reasonMessage = REASON_MESSAGES[reason] || REASON_MESSAGES["verification-failed"];
 
   return (
@@ -20,6 +20,12 @@ export function AccessDeniedPage({ deniedEmail, reason, onBackToLogin }) {
         </p>
         <div className="denied-reason">{reasonMessage}</div>
         {deniedEmail && <div className="denied-email">{deniedEmail}</div>}
+        {(projectId || detail) && (
+          <div className="denied-debug">
+            {projectId && <span>Firebase project: {projectId}</span>}
+            {detail && <span>{detail}</span>}
+          </div>
+        )}
         <button type="button" onClick={onBackToLogin}>
           Back to Login
         </button>

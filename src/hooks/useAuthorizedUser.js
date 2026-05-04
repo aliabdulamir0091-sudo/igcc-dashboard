@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { auth, db, isFirebaseConfigured } from "../firebase";
+import { auth, db, firebaseProjectId, isFirebaseConfigured } from "../firebase";
 import { getRolePermissions, normalizeRole } from "../data/accessControl";
 import { FIRESTORE_COLLECTIONS } from "../data/firestoreCollections";
 
@@ -59,11 +59,24 @@ function isApprovedAllowedUser(allowedUser) {
 }
 
 function buildDeniedReason(error) {
-  if (error?.code === "permission-denied") {
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || "");
+
+  if (code.includes("permission-denied") || message.toLowerCase().includes("permission")) {
     return "firestore-permission-denied";
   }
 
   return "verification-failed";
+}
+
+function buildErrorDetail(error) {
+  if (!error) {
+    return "";
+  }
+
+  const code = error.code ? `Code: ${error.code}` : "Code: unknown";
+  const message = error.message ? `Message: ${error.message}` : "";
+  return [code, message].filter(Boolean).join(" | ");
 }
 
 export function useAuthorizedUser() {
@@ -137,6 +150,8 @@ export function useAuthorizedUser() {
         setAccessDenied({
           email: nextUser.email,
           reason: buildDeniedReason(error),
+          detail: buildErrorDetail(error),
+          projectId: firebaseProjectId,
         });
         await signOut(auth);
       } finally {
@@ -152,6 +167,7 @@ export function useAuthorizedUser() {
     accessDenied,
     isCheckingUser,
     isFirebaseReady: Boolean(isFirebaseConfigured && auth && db),
+    firebaseProjectId,
     resetAccessDenied,
     signOutUser,
   };

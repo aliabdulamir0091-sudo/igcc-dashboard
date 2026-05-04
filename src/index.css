@@ -490,6 +490,21 @@ button {
   line-height: 1.45;
 }
 
+.denied-debug {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
 .auth-shell {
   width: min(1180px, 100%);
   display: grid;

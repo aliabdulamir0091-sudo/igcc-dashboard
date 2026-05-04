@@ -36,7 +36,9 @@ export default function App() {
   if (accessDenied) {
     return (
       <AccessDeniedPage
+        detail={accessDenied.detail}
         deniedEmail={accessDenied.email}
+        projectId={accessDenied.projectId}
         reason={accessDenied.reason}
         onBackToLogin={resetAccessDenied}
       />
