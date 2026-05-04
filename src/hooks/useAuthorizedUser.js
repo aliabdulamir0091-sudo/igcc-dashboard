@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { auth, db, firebaseProjectId, isFirebaseConfigured } from "../firebase";
 import { getRolePermissions, normalizeRole } from "../data/accessControl";
 import { FIRESTORE_COLLECTIONS } from "../data/firestoreCollections";
@@ -9,32 +8,64 @@ function normalizeEmail(email) {
   return email?.trim().toLowerCase() || "";
 }
 
-async function readAllowedUser(email) {
-  if (!db || !email) {
+function readRestValue(value) {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  if ("stringValue" in value) return value.stringValue;
+  if ("booleanValue" in value) return value.booleanValue;
+  if ("integerValue" in value) return Number(value.integerValue);
+  if ("doubleValue" in value) return Number(value.doubleValue);
+  if ("timestampValue" in value) return value.timestampValue;
+  if ("nullValue" in value) return null;
+
+  return undefined;
+}
+
+function convertRestDocument(document) {
+  return Object.entries(document.fields || {}).reduce(
+    (record, [key, value]) => ({
+      ...record,
+      [key]: readRestValue(value),
+    }),
+    { id: document.name?.split("/").pop() || "" },
+  );
+}
+
+async function readAllowedUser(email, firebaseUser) {
+  if (!firebaseProjectId || !firebaseUser || !email) {
     return null;
   }
 
   const normalizedEmail = normalizeEmail(email);
-  const normalizedSnap = await getDoc(doc(db, FIRESTORE_COLLECTIONS.allowedUsers, normalizedEmail));
+  const token = await firebaseUser.getIdToken();
+  const documentUrl = [
+    "https://firestore.googleapis.com/v1/projects",
+    encodeURIComponent(firebaseProjectId),
+    "databases/(default)/documents",
+    FIRESTORE_COLLECTIONS.allowedUsers,
+    encodeURIComponent(normalizedEmail),
+  ].join("/");
 
-  if (normalizedSnap.exists()) {
-    return {
-      id: normalizedSnap.id,
-      ...normalizedSnap.data(),
-    };
+  const response = await fetch(documentUrl, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (response.status === 404) {
+    return null;
   }
 
-  if (normalizedEmail !== email.trim()) {
-    const originalSnap = await getDoc(doc(db, FIRESTORE_COLLECTIONS.allowedUsers, email.trim()));
-    return originalSnap.exists()
-      ? {
-          id: originalSnap.id,
-          ...originalSnap.data(),
-        }
-      : null;
+  if (!response.ok) {
+    const detail = await response.text();
+    const error = new Error(detail || response.statusText);
+    error.code = `rest-${response.status}`;
+    throw error;
   }
 
-  return null;
+  return convertRestDocument(await response.json());
 }
 
 function readFlexibleField(record, fieldName) {
@@ -121,7 +152,7 @@ export function useAuthorizedUser() {
 
       try {
         const email = normalizeEmail(nextUser.email);
-        const allowedUser = await readAllowedUser(email);
+        const allowedUser = await readAllowedUser(email, nextUser);
 
         if (!isApprovedAllowedUser(allowedUser)) {
           setUser(null);
