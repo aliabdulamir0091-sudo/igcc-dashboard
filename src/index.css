@@ -96,6 +96,18 @@ button {
   flex: 0 0 auto;
 }
 
+.brand-logo {
+  display: block;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  background: #ffffff;
+  object-fit: contain;
+  padding: 5px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+}
+
 .app-header h1,
 .home-nav h1 {
   margin: 0;

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 180" role="img" aria-labelledby="title">
+  <title id="title">IGCC logo</title>
+  <rect width="220" height="180" rx="18" fill="#ffffff"/>
+  <g transform="translate(38 28) skewY(8)">
+    <g fill="#2f3133">
+      <rect x="0" y="0" width="13" height="13"/><rect x="18" y="0" width="13" height="13"/><rect x="36" y="0" width="13" height="13"/><rect x="54" y="0" width="13" height="13"/>
+      <rect x="0" y="18" width="13" height="13"/><rect x="18" y="18" width="13" height="13"/><rect x="36" y="18" width="13" height="13"/><rect x="54" y="18" width="13" height="13"/>
+      <rect x="0" y="36" width="13" height="13"/><rect x="18" y="36" width="13" height="13"/><rect x="36" y="36" width="13" height="13"/><rect x="54" y="36" width="13" height="13"/>
+      <rect x="0" y="54" width="13" height="13"/><rect x="18" y="54" width="13" height="13"/><rect x="36" y="54" width="13" height="13"/><rect x="54" y="54" width="13" height="13"/>
+      <rect x="0" y="72" width="13" height="13"/><rect x="18" y="72" width="13" height="13"/><rect x="36" y="72" width="13" height="13"/><rect x="54" y="72" width="13" height="13"/>
+    </g>
+  </g>
+  <g transform="translate(116 18) skewY(-8)">
+    <g>
+      <rect x="0" y="0" width="13" height="13" fill="#e8c39f"/><rect x="18" y="0" width="13" height="13" fill="#df424c"/><rect x="36" y="0" width="13" height="13" fill="#d92f3d"/><rect x="54" y="0" width="13" height="13" fill="#be2232"/>
+      <rect x="0" y="18" width="13" height="13" fill="#e4b581"/><rect x="18" y="18" width="13" height="13" fill="#e04a54"/><rect x="36" y="18" width="13" height="13" fill="#cf2c3a"/><rect x="54" y="18" width="13" height="13" fill="#b92131"/>
+      <rect x="0" y="36" width="13" height="13" fill="#dca36e"/><rect x="18" y="36" width="13" height="13" fill="#d9434e"/><rect x="36" y="36" width="13" height="13" fill="#c92a38"/><rect x="54" y="36" width="13" height="13" fill="#ad1f2e"/>
+      <rect x="0" y="54" width="13" height="13" fill="#d2935c"/><rect x="18" y="54" width="13" height="13" fill="#d13a47"/><rect x="36" y="54" width="13" height="13" fill="#bf2735"/><rect x="54" y="54" width="13" height="13" fill="#a51d2b"/>
+      <rect x="0" y="72" width="13" height="13" fill="#cc854d"/><rect x="18" y="72" width="13" height="13" fill="#c93543"/><rect x="36" y="72" width="13" height="13" fill="#b62533"/><rect x="54" y="72" width="13" height="13" fill="#9a1b29"/>
+    </g>
+  </g>
+  <text x="110" y="158" text-anchor="middle" font-family="Georgia, serif" font-size="42" font-weight="900" fill="#228048" stroke="#174022" stroke-width="1.3">IGCC</text>
+</svg>

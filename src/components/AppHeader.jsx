@@ -1,9 +1,8 @@
 import { NAV_ITEMS } from "../data/navigation";
+import igccLogo from "../assets/igcc-logo.svg";
 
 export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, user }) {
   const userInitial = (user?.displayName || user?.email || "U").slice(0, 1).toUpperCase();
-  const role = accessProfile?.role || "Viewer";
-  const isReadOnly = accessProfile?.permissions?.mode === "read-only";
 
   return (
     <header className="app-header">
@@ -16,7 +15,7 @@ export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, u
               <span />
             </span>
           </button>
-          <div className="brand-mark">IG</div>
+          <img className="brand-logo" src={igccLogo} alt="IGCC" />
           <div>
             <h1>Financial Dashboard</h1>
             <p>Executive financial performance cockpit</p>
@@ -24,18 +23,11 @@ export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, u
         </div>
 
         <div className="header-actions">
-          <span className="role-pill">
-            {role}
-            {isReadOnly ? " / Read only" : ""}
-          </span>
           <select aria-label="Reporting period" defaultValue="">
             <option value="">Reporting period</option>
           </select>
           <button type="button" className="export-button" disabled={!accessProfile?.permissions?.canExport}>
             Export Report
-          </button>
-          <button type="button" className="icon-button" aria-label="Notifications">
-            !
           </button>
           <div className="user-avatar" title={user?.email || "IGCC User"}>
             {userInitial}
