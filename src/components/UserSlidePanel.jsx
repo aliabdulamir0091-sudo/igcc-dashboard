@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 const PANEL_ITEMS = [
   ["My Profile", "View and edit your profile", "MP"],
   ["Settings", "Preferences and configuration", "ST"],
@@ -16,13 +18,20 @@ const getUserName = (user, userProfile) => {
 };
 
 export function UserSlidePanel({ isOpen, onClose, onLogout, user, userProfile }) {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   if (!isOpen) return null;
 
   const userName = getUserName(user, userProfile);
   const avatar = userName.slice(0, 1).toUpperCase();
   const handleLogout = async () => {
-    await onLogout?.();
-    onClose();
+    setIsLoggingOut(true);
+
+    try {
+      await onLogout?.();
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -52,11 +61,16 @@ export function UserSlidePanel({ isOpen, onClose, onLogout, user, userProfile })
 
         <div className="panel-spacer" />
 
-        <button type="button" className="panel-row panel-logout" onClick={handleLogout}>
+        <button
+          type="button"
+          className="panel-row panel-logout"
+          disabled={isLoggingOut}
+          onClick={handleLogout}
+        >
           <span className="panel-icon">LO</span>
           <span>
-            <strong>Logout</strong>
-            <small>Sign out from your account</small>
+            <strong>{isLoggingOut ? "Logging out" : "Logout"}</strong>
+            <small>{isLoggingOut ? "Returning to sign in" : "Sign out from your account"}</small>
           </span>
         </button>
       </aside>

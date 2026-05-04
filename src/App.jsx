@@ -18,6 +18,10 @@ export default function App() {
   const [activePage, setActivePage] = useState("home");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const { user, profile, authError, isCheckingUser, signOutUser } = useAuthorizedUser();
+  const handleLogout = async () => {
+    setIsPanelOpen(false);
+    await signOutUser();
+  };
 
   if (activePage === "home") {
     return <HomePage onNavigate={setActivePage} />;
@@ -37,7 +41,7 @@ export default function App() {
       setIsPanelOpen={setIsPanelOpen}
       user={user}
       userProfile={profile}
-      onLogout={signOutUser}
+      onLogout={handleLogout}
     >
       <Page dataSchemas={DATA_SCHEMAS} />
     </AppLayout>

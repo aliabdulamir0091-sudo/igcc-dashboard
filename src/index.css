@@ -670,6 +670,11 @@ button {
   background: #fff7f7;
 }
 
+.panel-logout:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
 @media (max-width: 1060px) {
   .header-main,
   .home-nav,
