@@ -48,18 +48,18 @@ button {
 
 .app-shell {
   min-height: 100svh;
-  padding: 16px clamp(18px, 3vw, 48px) 24px;
+  padding: 0 0 24px;
 }
 
 .app-header {
   position: sticky;
-  top: 12px;
+  top: 0;
   z-index: 20;
-  overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--navy), var(--navy-2));
-  box-shadow: var(--shadow);
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
 }
 
 .header-main,
@@ -71,8 +71,9 @@ button {
 }
 
 .header-main {
-  min-height: 96px;
-  padding: 18px 20px 14px;
+  min-height: 92px;
+  padding: 18px clamp(18px, 3vw, 48px);
+  background: linear-gradient(135deg, #07172f 0%, #102b4d 58%, #173958 100%);
 }
 
 .brand-group,
@@ -98,8 +99,8 @@ button {
 
 .brand-logo {
   display: block;
-  width: 58px;
-  height: 58px;
+  width: 62px;
+  height: 62px;
   flex: 0 0 auto;
   border-radius: 12px;
   background: #ffffff;
@@ -128,28 +129,30 @@ button {
 
 .header-tabs {
   display: flex;
-  gap: 8px;
-  padding: 0 20px 18px 84px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
+  gap: 6px;
+  padding: 10px clamp(18px, 3vw, 48px);
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
   overflow-x: auto;
 }
 
 .header-tabs button {
   border: 0;
-  border-radius: 9px;
-  margin-top: 12px;
-  padding: 11px 16px;
+  border-radius: 8px;
+  margin-top: 0;
+  padding: 10px 14px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.74);
+  color: #40516a;
   font-size: 13px;
   font-weight: 900;
   white-space: nowrap;
 }
 
 .header-tabs button.is-active {
-  background: #ffffff;
+  background: #eef7f4;
   color: var(--teal);
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.16);
 }
 
 .icon-button,
@@ -242,7 +245,7 @@ button {
   grid-template-columns: repeat(5, minmax(145px, 1fr)) auto auto;
   gap: 12px;
   align-items: end;
-  margin-top: 14px;
+  margin: 16px clamp(18px, 3vw, 48px) 0;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -266,7 +269,7 @@ button {
 }
 
 .page-content {
-  margin-top: 18px;
+  margin: 18px clamp(18px, 3vw, 48px) 0;
 }
 
 .page-stack {
@@ -403,7 +406,7 @@ button {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 18px;
+  margin: 18px clamp(18px, 3vw, 48px) 0;
   padding: 16px 18px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -914,7 +917,7 @@ button {
   }
 
   .header-tabs {
-    padding-left: 20px;
+    padding-left: 18px;
   }
 }
 
