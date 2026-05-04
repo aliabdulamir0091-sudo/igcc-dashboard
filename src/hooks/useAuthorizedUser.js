@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth, db, firebaseProjectId, isFirebaseConfigured } from "../firebase";
+import { auth, db, firebaseApiKey, firebaseProjectId, isFirebaseConfigured } from "../firebase";
 import { getRolePermissions, normalizeRole } from "../data/accessControl";
 import { FIRESTORE_COLLECTIONS } from "../data/firestoreCollections";
 
@@ -40,13 +40,14 @@ async function readAllowedUser(email, firebaseUser) {
 
   const normalizedEmail = normalizeEmail(email);
   const token = await firebaseUser.getIdToken();
-  const documentUrl = [
+  const documentPath = [
     "https://firestore.googleapis.com/v1/projects",
     encodeURIComponent(firebaseProjectId),
     "databases/(default)/documents",
     FIRESTORE_COLLECTIONS.allowedUsers,
     encodeURIComponent(normalizedEmail),
   ].join("/");
+  const documentUrl = `${documentPath}?key=${encodeURIComponent(firebaseApiKey)}`;
 
   const response = await fetch(documentUrl, {
     headers: {
