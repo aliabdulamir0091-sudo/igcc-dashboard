@@ -32,13 +32,6 @@ export function FilterRow() {
 
       <div className="filter-row">
         <label>
-          Filter by Portfolio
-          <select>
-            <option>All portfolios</option>
-          </select>
-          <Icon name="folder" className="filter-icon" />
-        </label>
-        <label>
           Filter by Hub
           <select>
             <option>All hubs</option>
@@ -67,6 +60,10 @@ export function FilterRow() {
           </select>
           <Icon name="calendar" className="filter-icon" />
         </label>
+        <div className="filter-actions">
+          <button type="button">More Filters</button>
+          <button type="button" className="ghost-button">Clear Filters</button>
+        </div>
       </div>
     </section>
   );

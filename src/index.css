@@ -548,10 +548,17 @@ button {
 
 .filter-row {
   display: grid;
-  grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) minmax(190px, 1fr) minmax(260px, 1.25fr) minmax(170px, 1fr);
+  grid-template-columns: minmax(190px, 1fr) minmax(210px, 1.1fr) minmax(280px, 1.35fr) minmax(190px, 1fr) auto;
   gap: 22px;
   align-items: end;
   padding: 28px 34px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  justify-content: flex-end;
 }
 
 .filter-row label {
