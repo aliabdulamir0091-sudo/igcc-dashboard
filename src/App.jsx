@@ -4044,16 +4044,13 @@ function DashboardApp({ session, onLogout }) {
                   {label}
                 </button>
               ))}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsUserMenuOpen(true);
-                }}
-                aria-label="Open user menu"
-                style={{ width: 40, height: 40, cursor: "pointer", backgroundColor: "#fff", color: "#0b2a55", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 999, fontWeight: 950, fontSize: 14, lineHeight: 1, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
+              <span
+                aria-label="Current user"
+                title={session?.email || portalUserName}
+                style={{ display: "grid", placeItems: "center", width: 40, height: 40, backgroundColor: "#fff", color: "#0b2a55", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 999, fontWeight: 950, fontSize: 14, lineHeight: 1, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)", cursor: "default" }}
               >
                 {portalUserName.slice(0, 1).toUpperCase()}
-              </button>
+              </span>
               {activeHeaderTool && (
                 <div style={{ position: "absolute", right: 0, top: 44, zIndex: 60, width: 280, border: "1px solid rgba(148,163,184,0.30)", borderRadius: 14, padding: 14, background: "#ffffff", color: "#10233f", boxShadow: "0 24px 60px rgba(15,23,42,0.26)" }}>
                   {activeHeaderTool === "settings" ? (
