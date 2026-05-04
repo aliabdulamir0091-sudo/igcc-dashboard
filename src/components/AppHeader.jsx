@@ -1,3 +1,5 @@
+import { useMemo, useState } from "react";
+import { ALL_FILTER_VALUE, COST_CENTER_HIERARCHY, getUniqueFilterValues } from "../data/costCenterHierarchy";
 import { NAV_ITEMS } from "../data/navigation";
 import { PORTFOLIOS } from "../data/portfolioOptions";
 import { Icon } from "./Icons";
@@ -11,6 +13,46 @@ const HEADER_SIGNALS = [
 
 export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleTheme }) {
   const isDarkMode = theme === "dark";
+  const [selectedRegion, setSelectedRegion] = useState(ALL_FILTER_VALUE);
+  const [selectedHub, setSelectedHub] = useState(ALL_FILTER_VALUE);
+  const [selectedCostCenter, setSelectedCostCenter] = useState(ALL_FILTER_VALUE);
+
+  const regionOptions = useMemo(
+    () => getUniqueFilterValues(COST_CENTER_HIERARCHY.map((item) => item.region)),
+    [],
+  );
+
+  const hubOptions = useMemo(() => {
+    const matchingRows = COST_CENTER_HIERARCHY.filter((item) => (
+      selectedRegion === ALL_FILTER_VALUE || item.region === selectedRegion
+    ));
+    return getUniqueFilterValues(matchingRows.map((item) => item.hub));
+  }, [selectedRegion]);
+
+  const costCenterOptions = useMemo(() => {
+    const matchingRows = COST_CENTER_HIERARCHY.filter((item) => (
+      (selectedRegion === ALL_FILTER_VALUE || item.region === selectedRegion)
+      && (selectedHub === ALL_FILTER_VALUE || item.hub === selectedHub)
+    ));
+    return getUniqueFilterValues(matchingRows.flatMap((item) => item.costCenters));
+  }, [selectedHub, selectedRegion]);
+
+  const handleRegionChange = (event) => {
+    setSelectedRegion(event.target.value);
+    setSelectedHub(ALL_FILTER_VALUE);
+    setSelectedCostCenter(ALL_FILTER_VALUE);
+  };
+
+  const handleHubChange = (event) => {
+    setSelectedHub(event.target.value);
+    setSelectedCostCenter(ALL_FILTER_VALUE);
+  };
+
+  const clearFilters = () => {
+    setSelectedRegion(ALL_FILTER_VALUE);
+    setSelectedHub(ALL_FILTER_VALUE);
+    setSelectedCostCenter(ALL_FILTER_VALUE);
+  };
 
   return (
     <header className="app-header">
@@ -80,15 +122,30 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
 
         <div className="header-filter-row" aria-label="Dashboard filters">
           <label>
+            <span><Icon name="tower" /> Region</span>
+            <select value={selectedRegion} onChange={handleRegionChange}>
+              <option value={ALL_FILTER_VALUE}>All regions</option>
+              {regionOptions.map((region) => (
+                <option key={region} value={region}>{region}</option>
+              ))}
+            </select>
+          </label>
+          <label>
             <span><Icon name="hub" /> Hub</span>
-            <select>
-              <option>All hubs</option>
+            <select value={selectedHub} onChange={handleHubChange}>
+              <option value={ALL_FILTER_VALUE}>All hubs</option>
+              {hubOptions.map((hub) => (
+                <option key={hub} value={hub}>{hub}</option>
+              ))}
             </select>
           </label>
           <label>
             <span><Icon name="costCenter" /> Cost Center</span>
-            <select>
-              <option>All centers</option>
+            <select value={selectedCostCenter} onChange={(event) => setSelectedCostCenter(event.target.value)}>
+              <option value={ALL_FILTER_VALUE}>All centers</option>
+              {costCenterOptions.map((costCenter) => (
+                <option key={costCenter} value={costCenter}>{costCenter}</option>
+              ))}
             </select>
           </label>
           <fieldset>
@@ -111,7 +168,7 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
               <option>All months</option>
             </select>
           </label>
-          <button type="button" className="header-clear-button">Clear</button>
+          <button type="button" className="header-clear-button" onClick={clearFilters}>Clear</button>
         </div>
       </div>
     </header>

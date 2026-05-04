@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { AppFooter } from "../components/AppFooter";
 import { AppHeader } from "../components/AppHeader";
-import { FilterRow } from "../components/FilterRow";
 import { UserSlidePanel } from "../components/UserSlidePanel";
 
 export function AppLayout({
@@ -45,7 +44,6 @@ export function AppLayout({
           theme={theme}
           onToggleTheme={onToggleTheme}
         />
-        <FilterRow />
         <main className="page-content">{children}</main>
         <AppFooter accessProfile={accessProfile} />
       </div>
