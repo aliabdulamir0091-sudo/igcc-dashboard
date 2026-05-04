@@ -43,6 +43,14 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
                 </div>
               ))}
             </div>
+            <button
+              type="button"
+              className={`theme-toggle-button ${isDarkMode ? "is-active" : ""}`}
+              onClick={onToggleTheme}
+              aria-pressed={isDarkMode}
+            >
+              {isDarkMode ? "Light Mode" : "Dark Mode"}
+            </button>
           </div>
         </div>
 
@@ -53,6 +61,22 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
             </button>
           ))}
         </div>
+
+        <nav className="header-tabs" aria-label="Application navigation">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={activePage === item.id ? "is-active" : ""}
+              onClick={() => onNavigate(item.id)}
+            >
+              <span className="tab-icon">
+                <Icon name={item.icon} />
+              </span>
+              {item.label}
+            </button>
+          ))}
+        </nav>
 
         <div className="header-filter-row" aria-label="Dashboard filters">
           <label>
@@ -89,30 +113,6 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           </label>
           <button type="button" className="header-clear-button">Clear</button>
         </div>
-
-        <nav className="header-tabs" aria-label="Application navigation">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={activePage === item.id ? "is-active" : ""}
-              onClick={() => onNavigate(item.id)}
-            >
-              <span className="tab-icon">
-                <Icon name={item.icon} />
-              </span>
-              {item.label}
-            </button>
-          ))}
-          <button
-            type="button"
-            className={`dark-mode-button ${isDarkMode ? "is-active" : ""}`}
-            onClick={onToggleTheme}
-            aria-pressed={isDarkMode}
-          >
-            {isDarkMode ? "Light Mode" : "Dark Mode"}
-          </button>
-        </nav>
       </div>
     </header>
   );
