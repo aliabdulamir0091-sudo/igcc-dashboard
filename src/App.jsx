@@ -4036,13 +4036,16 @@ function DashboardApp({ session, onLogout }) {
           </div>
         </div>
         <nav aria-label="Dashboard pages" style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 20px", minHeight: 44, borderTop: "1px solid rgba(255,255,255,0.14)", background: "rgba(2,12,27,0.30)", overflowX: "auto" }}>
-          {visibleNavItems.filter(([value]) => value !== "home").map(([value, label]) => {
+          {visibleNavItems.map(([value, label]) => {
             const isActive = activePage === value;
             return (
               <button
                 key={value}
                 type="button"
-                onClick={() => setActivePage(value)}
+                onClick={() => {
+                  setActivePage(value);
+                  setActiveHeaderTool("");
+                }}
                 style={{
                   height: 44,
                   border: 0,
