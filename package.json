@@ -4,12 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host localhost --port 5173",
+    "dev:local": "vite --host localhost --port 5173",
     "generate:summary": "node scripts/generate-spent-summary.mjs",
     "build": "vite build",
     "deploy": "npm run build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --host localhost --port 4173",
+    "preview:local": "vite preview --host localhost --port 4173"
   },
   "dependencies": {
     "firebase": "^12.12.1",

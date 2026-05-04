@@ -95,6 +95,22 @@ svg {
   overflow-x: hidden;
 }
 
+.dashboard-shell-home {
+  position: relative;
+}
+
+.dashboard-shell-home::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.035) 1px, transparent 1px),
+    linear-gradient(180deg, #eef7f4 0%, #f8fbff 42%, #ffffff 100%);
+  background-size: 44px 44px, 44px 44px, auto;
+}
+
 .login-page h1,
 .login-page h2 {
   color: #10233f !important;
@@ -162,6 +178,54 @@ svg {
 .executive-hover-card,
 .executive-hover-button {
   will-change: transform, box-shadow;
+}
+
+.modern-site-header .mobile-nav-toggle {
+  color: #0f172a;
+  background: #f8fafc;
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.modern-site-header {
+  overflow: hidden;
+}
+
+.modern-site-header::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #0f766e, #2563eb, #a3e635);
+  opacity: 0.85;
+}
+
+.modern-site-header button {
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.modern-site-header button:hover,
+.portal-slide-hero button:hover {
+  transform: translateY(-1px);
+}
+
+.portal-slide-hero {
+  isolation: isolate;
+}
+
+.portal-slide-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(15, 118, 110, 0.08), transparent 32%),
+    linear-gradient(180deg, transparent 70%, rgba(15, 23, 42, 0.035));
+}
+
+.portal-slide-hero button {
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 
 #root {
@@ -251,6 +315,12 @@ code {
 
   .dashboard-nav-shell {
     margin-bottom: 16px !important;
+  }
+
+  .portal-slide-hero > div[style*="grid-template-columns: minmax(0, 0.95fr)"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-height: 0 !important;
+    padding: 28px !important;
   }
 
   .dashboard-nav-list {
@@ -383,6 +453,24 @@ code {
   .dashboard-shell h2 {
     font-size: 22px !important;
     line-height: 1.15 !important;
+  }
+
+  .portal-slide-hero {
+    min-height: 0 !important;
+  }
+
+  .portal-slide-hero > div[style*="padding: 28px"],
+  .portal-slide-hero > div[style*="padding: 42px 46px 30px"] {
+    padding: 16px !important;
+  }
+
+  .portal-slide-hero [style*="grid-template-columns: repeat(3"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .portal-slide-hero [style*="grid-template-columns: 1.15fr 0.85fr"],
+  .portal-slide-hero [style*="grid-template-columns: 32px 1fr auto"] {
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 
   .dashboard-shell h3 {
