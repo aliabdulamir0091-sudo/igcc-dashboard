@@ -5,6 +5,11 @@ import { auth, db, firebaseProjectId, isFirebaseConfigured } from "../firebase";
 import { getRolePermissions, normalizeRole } from "../data/accessControl";
 import { FIRESTORE_COLLECTIONS } from "../data/firestoreCollections";
 
+const BOOTSTRAP_ADMIN_EMAILS = new Set([
+  "ali.abdulamir0091@gmail.com",
+  "ali.abdulameer@igccgroup.com",
+]);
+
 function normalizeEmail(email) {
   return email?.trim().toLowerCase() || "";
 }
@@ -70,6 +75,23 @@ function buildErrorDetail(error) {
   const code = error.code ? `Code: ${error.code}` : "Code: unknown";
   const message = error.message ? `Message: ${error.message}` : "";
   return [code, message].filter(Boolean).join(" | ");
+}
+
+function getBootstrapAdminProfile(email) {
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!BOOTSTRAP_ADMIN_EMAILS.has(normalizedEmail)) {
+    return null;
+  }
+
+  return {
+    active: true,
+    email: normalizedEmail,
+    id: normalizedEmail,
+    role: "Admin",
+    source: "bootstrap-admin",
+    permissions: getRolePermissions("Admin"),
+  };
 }
 
 export function useAuthorizedUser() {
@@ -139,6 +161,15 @@ export function useAuthorizedUser() {
           permissions: getRolePermissions(role),
         });
       } catch (error) {
+        const bootstrapProfile = getBootstrapAdminProfile(nextUser.email);
+
+        if (bootstrapProfile) {
+          setAccessDenied(null);
+          setUser(nextUser);
+          setAccessProfile(bootstrapProfile);
+          return;
+        }
+
         setUser(null);
         setAccessProfile(null);
         setAccessDenied({
