@@ -3988,23 +3988,24 @@ function DashboardApp({ session, onLogout }) {
       )}
 
       {isInternalPage && (
-      <div className="dashboard-header" style={{ position: "sticky", top: 0, zIndex: 30, marginBottom: 16, overflow: "visible", background: "linear-gradient(135deg, #073b7a 0%, #0b5ca8 48%, #0ea5c8 100%)", border: "1px solid rgba(125, 211, 252, 0.38)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(14, 116, 144, 0.22)" }}>
-        <div className="dashboard-header-main" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "16px 24px" }}>
-          <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <button type="button" aria-label="Open application menu" onMouseEnter={() => setIsUserMenuOpen(true)} onFocus={() => setIsUserMenuOpen(true)} onClick={() => setIsUserMenuOpen(true)} style={{ display: "grid", placeItems: "center", width: 42, height: 42, border: "1px solid rgba(255,255,255,0.28)", borderRadius: 11, background: "rgba(255,255,255,0.13)", color: "#fff", cursor: "pointer", fontSize: 22, fontWeight: 950 }}>
+      <div className="dashboard-header" style={{ position: "sticky", top: 0, zIndex: 30, marginBottom: 18, overflow: "visible", background: "linear-gradient(135deg, #031737 0%, #063f86 58%, #087faf 100%)", border: "1px solid rgba(125, 211, 252, 0.30)", borderRadius: 14, padding: 0, boxShadow: "0 18px 44px rgba(2, 23, 55, 0.24)" }}>
+        <div className="dashboard-header-main" style={{ minHeight: 68, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "10px 20px" }}>
+          <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+            <button type="button" aria-label="Open application menu" onMouseEnter={() => setIsUserMenuOpen(true)} onFocus={() => setIsUserMenuOpen(true)} onClick={() => setIsUserMenuOpen(true)} style={{ display: "grid", placeItems: "center", width: 40, height: 40, border: "1px solid rgba(255,255,255,0.24)", borderRadius: 12, background: "rgba(255,255,255,0.12)", color: "#fff", cursor: "pointer", fontSize: 21, fontWeight: 950 }}>
               ☰
             </button>
-            <div style={{ width: 52, height: 52, borderRadius: 14, border: "1px solid rgba(255,255,255,0.28)", background: "#ffffff", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "0 12px 26px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.20)" }}>
-              <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC logo" style={{ width: 44, height: 44, objectFit: "contain" }} />
+            <div style={{ width: 46, height: 46, borderRadius: 13, border: "1px solid rgba(255,255,255,0.28)", background: "#ffffff", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "0 10px 22px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.20)" }}>
+              <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC logo" style={{ width: 38, height: 38, objectFit: "contain" }} />
             </div>
             <div style={{ minWidth: 0 }}>
-              <h1 style={{ margin: 0, fontSize: 24, letterSpacing: 0, lineHeight: 1.02, fontWeight: 950, color: "#ffffff" }}>IGCC Financial Dashboard</h1>
+              <h1 style={{ margin: 0, fontSize: 21, letterSpacing: 0, lineHeight: 1.05, fontWeight: 950, color: "#ffffff" }}>IGCC Financial Dashboard</h1>
+              <p style={{ margin: "4px 0 0", color: "rgba(226,242,255,0.82)", fontSize: 11, fontWeight: 750 }}>Executive financial performance cockpit</p>
             </div>
           </div>
           <div className="dashboard-user-actions" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
             <label style={{ display: "grid", gap: 4, color: "rgba(255,255,255,0.86)", fontSize: 10, fontWeight: 900 }}>
               Reporting Period
-              <select value={filters.month} onChange={handleFilterChange("month")} style={{ height: 40, minWidth: 160, border: "1px solid rgba(132,204,22,0.55)", borderRadius: 12, background: "#ecfccb", color: "#163314", padding: "0 12px", fontSize: 12, fontWeight: 950, boxShadow: "0 10px 24px rgba(132,204,22,0.18)" }}>
+              <select value={filters.month} onChange={handleFilterChange("month")} style={{ height: 40, minWidth: 164, border: "1px solid rgba(163,230,53,0.58)", borderRadius: 999, background: "linear-gradient(180deg, #f7fee7 0%, #ecfccb 100%)", color: "#163314", padding: "0 14px", fontSize: 12, fontWeight: 950, boxShadow: "0 10px 24px rgba(132,204,22,0.18)" }}>
                 <option value="">All periods</option>
                 {filteredMonthOptions.map((month) => <option key={month.label} value={month.label}>{month.label}</option>)}
               </select>
@@ -4024,7 +4025,7 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
         </div>
-        <nav aria-label="Dashboard pages" style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 24px", minHeight: 48, borderTop: "1px solid rgba(255,255,255,0.16)", background: "rgba(2,12,27,0.20)", overflowX: "auto" }}>
+        <nav aria-label="Dashboard pages" style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 20px", minHeight: 44, borderTop: "1px solid rgba(255,255,255,0.14)", background: "rgba(2,12,27,0.30)", overflowX: "auto" }}>
           {visibleNavItems.filter(([value]) => value !== "home").map(([value, label]) => {
             const isActive = activePage === value;
             return (
@@ -4033,13 +4034,13 @@ function DashboardApp({ session, onLogout }) {
                 type="button"
                 onClick={() => setActivePage(value)}
                 style={{
-                  height: 48,
+                  height: 44,
                   border: 0,
                   borderBottom: `3px solid ${isActive ? "#a3e635" : "transparent"}`,
-                  background: isActive ? "rgba(236,252,203,0.14)" : "transparent",
+                  background: isActive ? "rgba(236,252,203,0.12)" : "transparent",
                   color: isActive ? "#ffffff" : "rgba(255,255,255,0.78)",
                   cursor: "pointer",
-                  padding: "0 18px",
+                  padding: "0 16px",
                   fontSize: 12,
                   fontWeight: 950,
                   whiteSpace: "nowrap"
@@ -4051,19 +4052,9 @@ function DashboardApp({ session, onLogout }) {
           })}
         </nav>
         {activePage !== "home" && (
-        <div className="portfolio-filter-strip" style={{ display: "grid", gridTemplateColumns: "minmax(175px, 1fr) minmax(175px, 1fr) minmax(175px, 1fr) minmax(260px, 1.1fr) minmax(140px, 0.75fr) minmax(160px, 0.8fr) auto auto", columnGap: 12, rowGap: 12, alignItems: "end", padding: "14px 26px 0", borderTop: "1px solid rgba(255,255,255,0.12)", background: "#ffffff" }}>
-          <label style={{ display: "block", color: "#10233f", fontWeight: 900, fontSize: 10, textTransform: "uppercase" }}>
-            Portfolio
-            <select value={filters.portfolio} onChange={(event) => setFilters((current) => ({ ...current, portfolio: event.target.value, hub: "", costCenter: "" }))} style={{ width: "100%", boxSizing: "border-box", padding: "10px 11px", marginTop: 5, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, fontSize: 12, fontWeight: 850 }}>
-              <option value="">All Portfolios</option>
-              {HUB_SECTIONS.map((section) => <option key={section.label} value={section.label}>{section.label}</option>)}
-            </select>
-          </label>
-        </div>
-        )}
-        {activePage !== "home" && (
-        <div className="dashboard-filter-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", columnGap: 12, rowGap: 12, alignItems: "end", padding: "12px 26px 18px", borderTop: "1px solid rgba(148,163,184,0.18)", background: "#ffffff" }}>
+        <div className="dashboard-filter-grid" style={{ position: "relative", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", columnGap: 12, rowGap: 12, alignItems: "end", padding: "14px 20px 16px", borderTop: "1px solid rgba(148,163,184,0.16)", background: "#ffffff", boxShadow: "0 12px 28px rgba(15,23,42,0.05)" }}>
           {[
+            ["Portfolio", "PF", filters.portfolio, (event) => setFilters((current) => ({ ...current, portfolio: event.target.value, hub: "", costCenter: "" })), ["", ...HUB_SECTIONS.map((section) => section.label)], "All portfolios"],
             ["Hub", "HUB", filters.hub, (event) => setFilters((current) => ({ ...current, hub: event.target.value, costCenter: "" })), ["", ...filteredHubOptions], "All hubs"],
             ["Cost Center", "CC", filters.costCenter, handleFilterChange("costCenter"), ["", ...filteredCostCenterOptions], "All centers"],
           ].map(([label, icon, value, onChange, options, emptyLabel]) => (
@@ -4132,11 +4123,66 @@ function DashboardApp({ session, onLogout }) {
             onClick={() => {
               setFilters({ portfolio: "", hub: "", costCenter: "", month: "", year: "" });
               setPeriodView("monthly");
+              setActiveHeaderTool("");
             }}
             style={{ padding: "9px 11px", borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: "pointer", fontWeight: 900, fontSize: 12 }}
           >
             Clear Filters
           </button>
+          {activeHeaderTool === "moreFilters" && (
+            <div style={{ position: "absolute", right: 20, top: "calc(100% - 4px)", zIndex: 55, width: "min(520px, calc(100vw - 64px))", border: "1px solid rgba(203,213,225,0.88)", borderRadius: 14, padding: 16, background: "#ffffff", boxShadow: "0 24px 60px rgba(15,23,42,0.18)", display: "grid", gap: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+                <div>
+                  <strong style={{ display: "block", color: "#06143a", fontSize: 14, fontWeight: 950 }}>More Filters</strong>
+                  <span style={{ display: "block", marginTop: 3, color: "#64748b", fontSize: 11, fontWeight: 800 }}>Advanced CEO Profit &amp; Loss controls</span>
+                </div>
+                <button type="button" onClick={() => setActiveHeaderTool("")} style={{ border: 0, background: "#f8fafc", color: "#06143a", borderRadius: 8, width: 30, height: 30, cursor: "pointer", fontWeight: 950 }}>x</button>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+                {[
+                  ["Loss Making Only", "loss", "#fee2e2", "#b91c1c"],
+                  ["High Margin >20%", "highMargin", "#dcfce7", "#047857"],
+                  ["High Cost Centers", "highCost", "#ffedd5", "#c2410c"],
+                ].map(([label, mode, bg, color]) => (
+                  <button key={mode} type="button" onClick={() => applyCeoPnLQuickFilter(mode)} style={{ border: `1px solid ${color}22`, borderRadius: 10, background: bg, color, padding: "10px 8px", cursor: "pointer", fontSize: 11, fontWeight: 950 }}>{label}</button>
+                ))}
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+                <label style={{ display: "grid", gap: 6, color: "#475569", fontSize: 11, fontWeight: 950 }}>Status
+                  <select value={ceoPnLColumnFilters.status} onChange={(event) => updateCeoPnLFilter("status", event.target.value)} style={{ height: 38, border: "1px solid #dbe4ef", borderRadius: 10, padding: "0 10px", color: "#06143a", fontWeight: 850 }}>
+                    <option value="all">All status</option>
+                    <option value="Healthy">Healthy</option>
+                    <option value="Monitor">Monitor</option>
+                    <option value="At Risk">At Risk</option>
+                    <option value="Critical">Critical</option>
+                  </select>
+                </label>
+                <label style={{ display: "grid", gap: 6, color: "#475569", fontSize: 11, fontWeight: 950 }}>Cost Center
+                  <input list="ceo-pnl-cost-centers" value={ceoPnLColumnFilters.costCenter} onChange={(event) => updateCeoPnLFilter("costCenter", event.target.value)} placeholder="Search cost center" style={{ height: 38, border: "1px solid #dbe4ef", borderRadius: 10, padding: "0 10px", color: "#06143a", fontWeight: 850 }} />
+                </label>
+                {[
+                  ["Total Cost", "totalCostMin", "totalCostMax", "Min cost", "Max cost"],
+                  ["Profit Margin %", "marginMin", "marginMax", "Min %", "Max %"],
+                  ["Submitted AFP", "submittedMin", "submittedMax", "Min AFP", "Max AFP"],
+                  ["Approved AFP", "approvedMin", "approvedMax", "Min AFP", "Max AFP"],
+                ].map(([label, minField, maxField, minPlaceholder, maxPlaceholder]) => (
+                  <label key={label} style={{ display: "grid", gap: 6, color: "#475569", fontSize: 11, fontWeight: 950 }}>{label}
+                    <span style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      <input value={ceoPnLColumnFilters[minField]} onChange={(event) => updateCeoPnLFilter(minField, event.target.value)} placeholder={minPlaceholder} inputMode="decimal" style={{ minWidth: 0, height: 38, border: "1px solid #dbe4ef", borderRadius: 10, padding: "0 10px", color: "#06143a", fontWeight: 850 }} />
+                      <input value={ceoPnLColumnFilters[maxField]} onChange={(event) => updateCeoPnLFilter(maxField, event.target.value)} placeholder={maxPlaceholder} inputMode="decimal" style={{ minWidth: 0, height: 38, border: "1px solid #dbe4ef", borderRadius: 10, padding: "0 10px", color: "#06143a", fontWeight: 850 }} />
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", borderTop: "1px solid rgba(226,232,240,0.95)", paddingTop: 12 }}>
+                <span style={{ color: "#64748b", fontSize: 11, fontWeight: 800 }}>Filters update the CEO P&amp;L summary instantly.</span>
+                <button type="button" onClick={clearCeoPnLFilters} style={{ border: "1px solid #bfd7ff", borderRadius: 10, background: "#eff6ff", color: "#1d4ed8", cursor: "pointer", padding: "9px 12px", fontSize: 12, fontWeight: 950 }}>Clear advanced</button>
+              </div>
+            </div>
+          )}
         </div>
         )}
       </div>
