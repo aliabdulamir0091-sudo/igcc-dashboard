@@ -602,6 +602,42 @@ button {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.summary-section {
+  display: grid;
+  gap: 14px;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-title-row h3 {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 22px;
+}
+
+.section-title-row > span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid rgba(15, 118, 110, 0.22);
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.08);
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.spent-kpi-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .content-grid {
   grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
 }
@@ -609,6 +645,36 @@ button {
 .metric-card,
 .surface-card {
   padding: 18px;
+}
+
+.metric-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 142px;
+  border-color: rgba(203, 213, 225, 0.86);
+}
+
+.metric-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--teal);
+  opacity: 0.8;
+}
+
+.metric-card-primary {
+  background:
+    linear-gradient(135deg, rgba(15, 118, 110, 0.1), transparent 46%),
+    var(--card);
+}
+
+.metric-card-success::before {
+  background: var(--green);
+}
+
+.metric-card-warning::before {
+  background: var(--amber);
 }
 
 .metric-card span {
@@ -623,12 +689,15 @@ button {
   margin-top: 12px;
   color: var(--text);
   font-size: 24px;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 
 .metric-card p {
   margin: 10px 0 0;
   color: var(--muted);
   font-size: 13px;
+  line-height: 1.42;
 }
 
 .surface-card h3 {
