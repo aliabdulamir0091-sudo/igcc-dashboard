@@ -9,7 +9,9 @@ const HEADER_SIGNALS = [
   ["Data", "Auto refreshed"],
 ];
 
-export function AppHeader({ activePage, onNavigate, onMenuOpen }) {
+export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleTheme }) {
+  const isDarkMode = theme === "dark";
+
   return (
     <header className="app-header">
       <div className="app-header-panel">
@@ -102,7 +104,14 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen }) {
               {item.label}
             </button>
           ))}
-          <button type="button" className="dark-mode-button">Dark Mode</button>
+          <button
+            type="button"
+            className={`dark-mode-button ${isDarkMode ? "is-active" : ""}`}
+            onClick={onToggleTheme}
+            aria-pressed={isDarkMode}
+          >
+            {isDarkMode ? "Light Mode" : "Dark Mode"}
+          </button>
         </nav>
       </div>
     </header>

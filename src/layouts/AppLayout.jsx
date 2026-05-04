@@ -13,6 +13,8 @@ export function AppLayout({
   userProfile,
   accessProfile,
   onLogout,
+  theme,
+  onToggleTheme,
   children,
 }) {
   useEffect(() => {
@@ -40,6 +42,8 @@ export function AppLayout({
           activePage={activePage}
           onNavigate={onNavigate}
           onMenuOpen={() => setIsPanelOpen(true)}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
         />
         <FilterRow />
         <main className="page-content">{children}</main>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AccessDeniedPage } from "./components/AccessDeniedPage";
 import { AuthPage } from "./components/AuthPage";
 import { DATA_SCHEMAS } from "./data/firestoreCollections";
@@ -19,6 +19,7 @@ const PAGE_COMPONENTS = {
 export default function App() {
   const [activePage, setActivePage] = useState("executive");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem("igcc-theme") || "light");
   const {
     user,
     accessProfile,
@@ -32,6 +33,14 @@ export default function App() {
     setIsPanelOpen(false);
     await signOutUser();
   };
+  const toggleTheme = () => {
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+  };
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("igcc-theme", theme);
+  }, [theme]);
 
   if (accessDenied) {
     return (
@@ -61,6 +70,8 @@ export default function App() {
       userProfile={accessProfile}
       accessProfile={accessProfile}
       onLogout={handleLogout}
+      theme={theme}
+      onToggleTheme={toggleTheme}
     >
       <Page dataSchemas={DATA_SCHEMAS} accessProfile={accessProfile} onNavigate={setActivePage} />
     </AppLayout>
