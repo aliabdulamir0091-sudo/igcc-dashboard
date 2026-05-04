@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Component, Fragment, useEffect, useRef, useState } from "react";
 import Papa from "papaparse";
 import { read, utils } from "xlsx";
 import { createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
@@ -1110,7 +1110,7 @@ function DashboardApp({ session, onLogout }) {
   const isSpentGlComparisonActive = spentGroupBy === "gl" && selectedSpentGlNames.length > 0;
   const selectedSpentGroup = spentGroupedRows.find((row) => row.key === spentSelectedGroupKey);
   const spentSelectedRows = selectedSpentGroup
-    ? filteredData.filter((item) => getSpentGroupInfo(item, spentGroupBy).key === spentSelectedGroup.key)
+    ? filteredData.filter((item) => getSpentGroupInfo(item, spentGroupBy).key === selectedSpentGroup.key)
     : [];
   const getSpentSortValue = (row, field) => {
     if (field === "portfolio") return resolvePortfolio(row) || "";
@@ -7085,6 +7085,47 @@ function LoginPage({ onAuthenticated, initialError = "" }) {
   );
 }
 
+class AppErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("[IGCC Dashboard] render error", error, info);
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children;
+
+    const clearAndReload = () => {
+      window.sessionStorage.clear();
+      window.localStorage.clear();
+      window.location.reload();
+    };
+
+    return (
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, fontFamily: "Inter, system-ui, sans-serif", background: "#f4f7fb", color: "#10233f" }}>
+        <div style={{ width: "min(560px, 100%)", border: "1px solid #cbd5e1", borderRadius: 10, padding: 24, background: "#fff", boxShadow: "0 18px 45px rgba(15,23,42,0.10)" }}>
+          <div style={{ color: "#b91c1c", fontSize: 12, fontWeight: 950, textTransform: "uppercase" }}>Dashboard recovery</div>
+          <h1 style={{ margin: "8px 0 0", fontSize: 24 }}>The dashboard needs a clean refresh</h1>
+          <p style={{ margin: "10px 0 0", color: "#475569", lineHeight: 1.5 }}>
+            A saved browser session caused the page to stop rendering. Clear the saved dashboard session and reload to continue.
+          </p>
+          <button type="button" onClick={clearAndReload} style={{ marginTop: 16, border: 0, borderRadius: 8, padding: "12px 16px", background: "#0f766e", color: "#fff", cursor: "pointer", fontWeight: 950 }}>
+            Clear saved session and reload
+          </button>
+          <pre style={{ marginTop: 16, whiteSpace: "pre-wrap", color: "#64748b", fontSize: 11, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 12 }}>{String(this.state.error?.message || this.state.error || "")}</pre>
+        </div>
+      </div>
+    );
+  }
+}
+
 export default function App() {
   const [session, setSession] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
@@ -7154,5 +7195,9 @@ export default function App() {
     return <LoginPage onAuthenticated={setSession} initialError={authError} />;
   }
 
-  return <DashboardApp session={session} onLogout={handleLogout} />;
+  return (
+    <AppErrorBoundary>
+      <DashboardApp session={session} onLogout={handleLogout} />
+    </AppErrorBoundary>
+  );
 }
