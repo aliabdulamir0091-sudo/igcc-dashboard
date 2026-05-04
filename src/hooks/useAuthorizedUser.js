@@ -49,8 +49,13 @@ function isApprovedAllowedUser(allowedUser) {
 function buildDeniedReason(error) {
   const code = String(error?.code || "").toLowerCase();
   const message = String(error?.message || "");
+  const lowerMessage = message.toLowerCase();
 
-  if (code.includes("permission-denied") || message.toLowerCase().includes("permission")) {
+  if (lowerMessage.includes("permission denied on resource project")) {
+    return "firebase-api-access-denied";
+  }
+
+  if (code.includes("permission-denied") || lowerMessage.includes("permission")) {
     return "firestore-permission-denied";
   }
 
@@ -109,6 +114,7 @@ export function useAuthorizedUser() {
 
       try {
         const email = normalizeEmail(nextUser.email);
+        await nextUser.getIdToken(true);
         const allowedUser = await readAllowedUser(email);
 
         if (!isApprovedAllowedUser(allowedUser)) {

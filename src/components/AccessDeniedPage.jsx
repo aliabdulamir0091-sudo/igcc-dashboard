@@ -1,6 +1,7 @@
 const REASON_MESSAGES = {
   missing: "No matching document was found in Firestore allowedUsers for this email.",
   inactive: "The matching allowedUsers document exists, but active is not true.",
+  "firebase-api-access-denied": "Google Firebase API access rejected this request before the app could read Firestore. Check API key restrictions and enabled APIs for this Firebase web app.",
   "firestore-permission-denied": "Firestore Rules blocked the app from reading allowedUsers for this signed-in user.",
   "verification-failed": "The app could not complete the Firestore access verification.",
 };
