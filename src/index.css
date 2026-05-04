@@ -2105,6 +2105,15 @@ button {
   font-weight: 850;
 }
 
+.empty-filter-state {
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 900;
+}
+
 @keyframes slideIn {
   from { transform: translateX(-100%); opacity: 0.8; }
   to { transform: translateX(0); opacity: 1; }

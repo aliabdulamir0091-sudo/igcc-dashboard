@@ -16,6 +16,149 @@ const formatPercent = (value) => `${percentFormatter.format(value || 0)}%`;
 const getShare = (amount, total) => (total ? (amount / total) * 100 : 0);
 const getTrend = (current, previous) => (previous ? ((current - previous) / Math.abs(previous)) * 100 : 0);
 
+const matchesPortfolio = (entry, portfolio) => (
+  !portfolio
+  || portfolio === "all"
+  || (portfolio === "basra" && entry.region === "Basra")
+  || (portfolio === "kirkuk" && entry.region === "Kirkuk")
+  || (portfolio === "head-office" && entry.hub === "Head Office")
+);
+
+const getGroupedPeriod = (entry, mode) => {
+  if (mode === "yearly") return entry.year || entry.period;
+  if (mode === "quarterly") {
+    const monthNumber = Number(entry.period?.slice(5, 7));
+    const quarter = Math.max(Math.ceil((monthNumber || 1) / 3), 1);
+    return `${entry.year}-Q${quarter}`;
+  }
+  return entry.period;
+};
+
+const getPeriodLabelParts = (period) => {
+  if (/^\d{4}-Q\d$/.test(period)) return { period, month: period.slice(5), year: period.slice(0, 4) };
+  if (/^\d{4}$/.test(period)) return { period, month: "Year", year: period };
+  return { period, month: period?.slice(5) || "", year: period?.slice(0, 4) || "" };
+};
+
+const addAmount = (map, key, base, field, amount) => {
+  const current = map.get(key) || { ...base, spent: 0, submitted: 0, approved: 0, creditNotes: 0, count: 0 };
+  current[field] += amount || 0;
+  current.count += 1;
+  map.set(key, current);
+};
+
+const roundCurrency = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+const normalizeRows = (rows) => rows
+  .map((row) => ({
+    ...row,
+    spent: roundCurrency(row.spent),
+    submitted: roundCurrency(row.submitted),
+    approved: roundCurrency(row.approved),
+    creditNotes: roundCurrency(row.creditNotes),
+    netMovement: roundCurrency(row.approved - row.spent - row.creditNotes),
+    afpGap: roundCurrency(row.submitted - row.approved),
+  }));
+
+const buildFilteredInputs = (data, filters = {}) => {
+  const filteredEntries = data.entries.filter((entry) => (
+    matchesPortfolio(entry, filters.portfolio)
+    && (!filters.hub || filters.hub === "all" || entry.hub === filters.hub)
+    && (!filters.costCenter || filters.costCenter === "all" || entry.costCenter === filters.costCenter)
+    && (!filters.month || filters.month === "all" || entry.month === filters.month)
+  ));
+
+  const monthlyMap = new Map();
+  const costCenterMap = new Map();
+  const glMap = new Map();
+  const creditNoteMap = new Map();
+
+  for (const entry of filteredEntries) {
+    const amount = entry.amount || 0;
+    const period = getGroupedPeriod(entry, filters.period);
+    const field = entry.type;
+    const periodParts = getPeriodLabelParts(period);
+    addAmount(monthlyMap, period, periodParts, field, amount);
+    addAmount(costCenterMap, entry.costCenter, {
+      costCenter: entry.costCenter,
+      hub: entry.hub,
+      region: entry.region,
+    }, field, amount);
+
+    if (entry.type === "spent") {
+      addAmount(glMap, entry.glName || "Unclassified", { glName: entry.glName || "Unclassified" }, "spent", amount);
+    }
+
+    if (entry.type === "creditNotes") {
+      addAmount(creditNoteMap, entry.costCenter, {
+        costCenter: entry.costCenter,
+        hub: entry.hub,
+        region: entry.region,
+      }, "creditNotes", amount);
+    }
+  }
+
+  const monthlyFlow = normalizeRows([...monthlyMap.values()]).sort((a, b) => a.period.localeCompare(b.period));
+  const byCostCenter = normalizeRows([...costCenterMap.values()]).sort((a, b) => Math.abs(b.spent) - Math.abs(a.spent));
+  const byGlName = normalizeRows([...glMap.values()])
+    .map((row) => ({ ...row, amount: row.spent }))
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+  const creditNoteRows = normalizeRows([...creditNoteMap.values()])
+    .map((row) => ({ ...row, amount: row.creditNotes }))
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+
+  const totals = filteredEntries.reduce((acc, entry) => {
+    acc[entry.type] += entry.amount || 0;
+    return acc;
+  }, { spent: 0, submitted: 0, approved: 0, creditNotes: 0 });
+  totals.spent = roundCurrency(totals.spent);
+  totals.submitted = roundCurrency(totals.submitted);
+  totals.approved = roundCurrency(totals.approved);
+  totals.creditNotes = roundCurrency(totals.creditNotes);
+  totals.netMovement = roundCurrency(totals.approved - totals.spent - totals.creditNotes);
+  totals.afpGap = roundCurrency(totals.submitted - totals.approved);
+
+  const topCostCenter = byCostCenter[0];
+  const topGlName = byGlName[0];
+  const approvalRate = totals.submitted ? (totals.approved / totals.submitted) * 100 : 0;
+  const cnShare = getShare(totals.creditNotes, totals.spent);
+  const insights = [
+    topCostCenter ? {
+      label: "Top Cost Center",
+      value: topCostCenter.costCenter,
+      detail: `${topCostCenter.hub} contributes ${formatPercent(getShare(topCostCenter.spent, totals.spent))} of filtered spent.`,
+    } : null,
+    topGlName ? {
+      label: "Top Cost Driver",
+      value: topGlName.glName,
+      detail: `${topGlName.glName} represents ${formatPercent(getShare(topGlName.amount, totals.spent))} of filtered spent.`,
+    } : null,
+    {
+      label: "AFP Gap",
+      value: totals.afpGap,
+      detail: `Submitted vs approved gap. Approval rate is ${formatPercent(approvalRate)}.`,
+    },
+    {
+      label: "CN Impact",
+      value: totals.creditNotes,
+      detail: `Credit notes equal ${formatPercent(cnShare)} of filtered spent.`,
+    },
+  ].filter(Boolean);
+
+  return {
+    totals,
+    monthlyFlow,
+    byCostCenter,
+    byGlName,
+    creditNotes: {
+      total: totals.creditNotes,
+      shareOfSpent: cnShare,
+      byCostCenter: creditNoteRows,
+    },
+    insights,
+  };
+};
+
 function FinancialKpiCard({ icon, label, value, context, tone = "blue", trend, featured = false }) {
   const trendValue = Number.isFinite(trend) ? trend : 0;
 
@@ -35,6 +178,20 @@ function FinancialKpiCard({ icon, label, value, context, tone = "blue", trend, f
 }
 
 function MonthlyTrendChart({ rows }) {
+  if (!rows.length) {
+    return (
+      <article className="surface-card financial-chart-card">
+        <div className="chart-header">
+          <div>
+            <p className="eyebrow">Main Flow</p>
+            <h3>Financial Flow: Spent → Submitted → Approved → Adjustments</h3>
+          </div>
+        </div>
+        <div className="empty-filter-state">No financial inputs match the selected filters.</div>
+      </article>
+    );
+  }
+
   const width = 920;
   const height = 340;
   const padding = { top: 28, right: 28, bottom: 48, left: 64 };
@@ -146,8 +303,8 @@ function SummaryTable({ columns, rows }) {
   );
 }
 
-export function SpendingReportPage() {
-  const { totals, monthlyFlow, byCostCenter, byGlName, creditNotes, insights } = financialInputsData;
+export function SpendingReportPage({ filters }) {
+  const { totals, monthlyFlow, byCostCenter, byGlName, creditNotes, insights } = buildFilteredInputs(financialInputsData, filters);
   const chartRows = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved).slice(-16);
   const topCostCenter = byCostCenter[0];
   const topGlName = byGlName[0];

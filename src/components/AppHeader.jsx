@@ -1,17 +1,25 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ALL_FILTER_VALUE, COST_CENTER_HIERARCHY, getUniqueFilterValues } from "../data/costCenterHierarchy";
 import { NAV_ITEMS } from "../data/navigation";
 import { PORTFOLIOS } from "../data/portfolioOptions";
 import { Icon } from "./Icons";
 import igccLogo from "../assets/igcc-logo.svg";
 
-export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleTheme }) {
+export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleTheme, filters, onApplyFilters, onClearFilters }) {
   const isDarkMode = theme === "dark";
-  const [selectedPortfolio, setSelectedPortfolio] = useState(ALL_FILTER_VALUE);
-  const [selectedHub, setSelectedHub] = useState(ALL_FILTER_VALUE);
-  const [selectedCostCenter, setSelectedCostCenter] = useState(ALL_FILTER_VALUE);
-  const [selectedPeriod, setSelectedPeriod] = useState(ALL_FILTER_VALUE);
-  const [selectedMonth, setSelectedMonth] = useState(ALL_FILTER_VALUE);
+  const [selectedPortfolio, setSelectedPortfolio] = useState(filters?.portfolio || ALL_FILTER_VALUE);
+  const [selectedHub, setSelectedHub] = useState(filters?.hub || ALL_FILTER_VALUE);
+  const [selectedCostCenter, setSelectedCostCenter] = useState(filters?.costCenter || ALL_FILTER_VALUE);
+  const [selectedPeriod, setSelectedPeriod] = useState(filters?.period || ALL_FILTER_VALUE);
+  const [selectedMonth, setSelectedMonth] = useState(filters?.month || ALL_FILTER_VALUE);
+
+  useEffect(() => {
+    setSelectedPortfolio(filters?.portfolio || ALL_FILTER_VALUE);
+    setSelectedHub(filters?.hub || ALL_FILTER_VALUE);
+    setSelectedCostCenter(filters?.costCenter || ALL_FILTER_VALUE);
+    setSelectedPeriod(filters?.period || ALL_FILTER_VALUE);
+    setSelectedMonth(filters?.month || ALL_FILTER_VALUE);
+  }, [filters]);
 
   const hubOptions = useMemo(() => {
     const matchingRows = COST_CENTER_HIERARCHY.filter((item) => (
@@ -51,6 +59,17 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
     setSelectedCostCenter(ALL_FILTER_VALUE);
     setSelectedPeriod(ALL_FILTER_VALUE);
     setSelectedMonth(ALL_FILTER_VALUE);
+    onClearFilters?.();
+  };
+
+  const applyFilters = () => {
+    onApplyFilters?.({
+      portfolio: selectedPortfolio,
+      hub: selectedHub,
+      costCenter: selectedCostCenter,
+      period: selectedPeriod,
+      month: selectedMonth,
+    });
   };
 
   return (
@@ -146,7 +165,7 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
               ))}
             </select>
           </label>
-          <button type="button" className="header-apply-button">Apply Filters</button>
+          <button type="button" className="header-apply-button" onClick={applyFilters}>Apply Filters</button>
           <button type="button" className="header-clear-button" onClick={clearFilters}>Clear</button>
         </div>
       </div>

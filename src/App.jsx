@@ -9,6 +9,14 @@ import { ProfitabilityPage } from "./pages/ProfitabilityPage";
 import { SpendingReportPage } from "./pages/SpendingReportPage";
 import { useAuthorizedUser } from "./hooks/useAuthorizedUser";
 
+const DEFAULT_DASHBOARD_FILTERS = {
+  portfolio: "all",
+  hub: "all",
+  costCenter: "all",
+  period: "all",
+  month: "all",
+};
+
 const PAGE_COMPONENTS = {
   home: HomePage,
   executive: ExecutiveCockpitPage,
@@ -20,6 +28,7 @@ export default function App() {
   const [activePage, setActivePage] = useState("executive");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem("igcc-theme") || "light");
+  const [dashboardFilters, setDashboardFilters] = useState(DEFAULT_DASHBOARD_FILTERS);
   const {
     user,
     accessProfile,
@@ -72,8 +81,11 @@ export default function App() {
       onLogout={handleLogout}
       theme={theme}
       onToggleTheme={toggleTheme}
+      filters={dashboardFilters}
+      onApplyFilters={setDashboardFilters}
+      onClearFilters={() => setDashboardFilters(DEFAULT_DASHBOARD_FILTERS)}
     >
-      <Page dataSchemas={DATA_SCHEMAS} accessProfile={accessProfile} onNavigate={setActivePage} />
+      <Page dataSchemas={DATA_SCHEMAS} accessProfile={accessProfile} onNavigate={setActivePage} filters={dashboardFilters} />
     </AppLayout>
   );
 }

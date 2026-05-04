@@ -117,6 +117,34 @@ const addInput = (map, key, base, field, amount) => {
 
 const readSpentData = async () => JSON.parse(await fs.readFile(spentDataPath, "utf8"));
 
+const readSpentEntries = (workbookPath) => {
+  const workbook = XLSX.readFile(workbookPath, { cellDates: true });
+  const sheet = workbook.Sheets.Cost;
+  if (!sheet) throw new Error(`Could not find Cost sheet in ${workbookPath}`);
+
+  return XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false })
+    .map((row) => {
+      const mapping = resolveCostCenter(row["Level 2"]);
+      const month = clean(row.Month) || "Unknown";
+      const year = clean(row.Year) || "Unknown";
+      const period = year !== "Unknown" && MONTHS[month] ? `${year}-${MONTHS[month]}` : `${year}-${month}`;
+      const amount = parseAmount(row[" Invoice Amount USD "]);
+      return {
+        type: "spent",
+        sourceCostCenter: mapping.sourceCostCenter,
+        costCenter: mapping.costCenter,
+        region: mapping.region,
+        hub: mapping.hub,
+        period,
+        month,
+        year,
+        glName: clean(row["GL Name"]) || "Unclassified",
+        amount: roundCurrency(amount),
+      };
+    })
+    .filter((entry) => entry.sourceCostCenter && entry.amount);
+};
+
 const readAfpSheet = (workbook, sheetName) => {
   const sheet = workbook.Sheets[sheetName];
   if (!sheet) throw new Error(`Could not find ${sheetName} in ${revenueWorkbookPath}`);
@@ -202,6 +230,7 @@ const readCreditNoteFile = (filePath) => {
 };
 
 const spentData = await readSpentData();
+const spentEntries = readSpentEntries(spentData.source.workbook);
 const revenueWorkbook = XLSX.readFile(revenueWorkbookPath, { cellDates: true });
 const submittedEntries = readAfpSheet(revenueWorkbook, "Submitted AFP");
 const approvedEntries = readAfpSheet(revenueWorkbook, "Approved AFP");
@@ -214,16 +243,9 @@ const monthlyMap = new Map();
 const costCenterMap = new Map();
 const cnMap = new Map();
 
-for (const item of spentData.byMonth) {
+for (const item of spentEntries) {
   addInput(monthlyMap, item.period, { period: item.period, month: item.month, year: item.year }, "spent", item.amount);
-}
-
-for (const item of spentData.byCostCenter) {
-  addInput(costCenterMap, item.costCenter, {
-    costCenter: item.costCenter,
-    hub: item.hub,
-    region: item.region,
-  }, "spent", item.amount);
+  addInput(costCenterMap, item.costCenter, item, "spent", item.amount);
 }
 
 for (const item of submittedEntries) {
@@ -259,6 +281,43 @@ const normalizeInputRows = (rows) => rows
     afpGap: roundCurrency(item.submitted - item.approved),
   }))
   .sort((a, b) => a.period?.localeCompare(b.period) || Math.abs(b.spent) - Math.abs(a.spent));
+
+const compactEntries = (entries) => {
+  const compactMap = new Map();
+  for (const entry of entries) {
+    const key = [
+      entry.type,
+      entry.period,
+      entry.costCenter,
+      entry.glName || "",
+      entry.category || "",
+    ].join("|");
+    const current = compactMap.get(key) || {
+      type: entry.type,
+      sourceCostCenter: entry.sourceCostCenter,
+      costCenter: entry.costCenter,
+      region: entry.region,
+      hub: entry.hub,
+      period: entry.period,
+      month: entry.month,
+      year: entry.year,
+      glName: entry.glName,
+      category: entry.category,
+      amount: 0,
+    };
+    current.amount += entry.amount || 0;
+    compactMap.set(key, current);
+  }
+
+  return [...compactMap.values()]
+    .map((entry) => {
+      const cleaned = { ...entry, amount: roundCurrency(entry.amount) };
+      if (!cleaned.glName) delete cleaned.glName;
+      if (!cleaned.category) delete cleaned.category;
+      return cleaned;
+    })
+    .sort((a, b) => a.period.localeCompare(b.period) || a.costCenter.localeCompare(b.costCenter));
+};
 
 const monthlyFlow = normalizeInputRows([...monthlyMap.values()]);
 const byCostCenter = normalizeInputRows([...costCenterMap.values()])
@@ -302,6 +361,12 @@ const data = {
     byCostCenter: byCreditNoteCostCenter,
     entries: creditNoteEntries,
   },
+  entries: compactEntries([
+    ...spentEntries,
+    ...submittedEntries.map((item) => ({ ...item, type: "submitted" })),
+    ...approvedEntries.map((item) => ({ ...item, type: "approved" })),
+    ...creditNoteEntries.map((item) => ({ ...item, type: "creditNotes" })),
+  ]),
   insights: [
     topCostCenter ? {
       label: "Highest cost center",
