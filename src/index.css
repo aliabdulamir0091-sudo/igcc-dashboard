@@ -42,13 +42,13 @@ button {
 
 .app-shell,
 .home-page {
-  width: min(1400px, calc(100% - 32px));
+  width: 100%;
   margin: 0 auto;
 }
 
 .app-shell {
   min-height: 100svh;
-  padding: 16px 0 24px;
+  padding: 16px clamp(18px, 3vw, 48px) 24px;
 }
 
 .app-header {
@@ -419,7 +419,7 @@ button {
 
 .home-page {
   min-height: 100svh;
-  padding: 18px 0 28px;
+  padding: 18px clamp(18px, 3vw, 48px) 28px;
 }
 
 .auth-page {
@@ -921,7 +921,7 @@ button {
 @media (max-width: 720px) {
   .app-shell,
   .home-page {
-    width: min(100% - 20px, 1400px);
+    width: 100%;
   }
 
   .filter-row,
