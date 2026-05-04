@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db, isFirebaseConfigured } from "../firebase";
-import { getRolePermissions } from "../data/accessControl";
+import { getRolePermissions, normalizeRole } from "../data/accessControl";
 import { FIRESTORE_COLLECTIONS } from "../data/firestoreCollections";
 
 function normalizeEmail(email) {
@@ -37,8 +37,33 @@ async function readAllowedUser(email) {
   return null;
 }
 
+function readFlexibleField(record, fieldName) {
+  const matchingKey = Object.keys(record || {}).find((key) => key.trim().toLowerCase() === fieldName);
+  return matchingKey ? record[matchingKey] : undefined;
+}
+
+function isActiveValue(value) {
+  if (value === true) {
+    return true;
+  }
+
+  if (typeof value === "string") {
+    return value.trim().toLowerCase() === "true";
+  }
+
+  return false;
+}
+
 function isApprovedAllowedUser(allowedUser) {
-  return Boolean(allowedUser && allowedUser.active === true);
+  return Boolean(allowedUser && isActiveValue(readFlexibleField(allowedUser, "active")));
+}
+
+function buildDeniedReason(error) {
+  if (error?.code === "permission-denied") {
+    return "firestore-permission-denied";
+  }
+
+  return "verification-failed";
 }
 
 export function useAuthorizedUser() {
@@ -96,7 +121,7 @@ export function useAuthorizedUser() {
           return;
         }
 
-        const role = allowedUser.role || "Viewer";
+        const role = normalizeRole(readFlexibleField(allowedUser, "role"));
 
         setAccessDenied(null);
         setUser(nextUser);
@@ -111,7 +136,7 @@ export function useAuthorizedUser() {
         setAccessProfile(null);
         setAccessDenied({
           email: nextUser.email,
-          reason: "verification-failed",
+          reason: buildDeniedReason(error),
         });
         await signOut(auth);
       } finally {

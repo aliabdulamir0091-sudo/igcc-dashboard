@@ -20,6 +20,21 @@ export const ROLE_PERMISSIONS = {
 
 export const DEFAULT_ROLE = ACCESS_ROLES.viewer;
 
+export function normalizeRole(role = DEFAULT_ROLE) {
+  const value = String(role || DEFAULT_ROLE).trim().toLowerCase();
+
+  if (value === "admin") {
+    return ACCESS_ROLES.admin;
+  }
+
+  if (value === "viewer") {
+    return ACCESS_ROLES.viewer;
+  }
+
+  return DEFAULT_ROLE;
+}
+
 export function getRolePermissions(role = DEFAULT_ROLE) {
-  return ROLE_PERMISSIONS[role] ?? ROLE_PERMISSIONS[DEFAULT_ROLE];
+  const normalizedRole = normalizeRole(role);
+  return ROLE_PERMISSIONS[normalizedRole] ?? ROLE_PERMISSIONS[DEFAULT_ROLE];
 }
