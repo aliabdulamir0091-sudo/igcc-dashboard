@@ -510,7 +510,7 @@ function DashboardApp({ session, onLogout }) {
   const [detailCostCenter, setDetailCostCenter] = useState("KAZ_23");
   const [pagePeriodViews, setPagePeriodViews] = useState({});
   const [overviewPeriodView, setOverviewPeriodView] = useState("monthly");
-  const [activePage, setActivePage] = useState("home");
+  const [activePage, setActivePage] = useState("overview");
   const [transactionPage, setTransactionPage] = useState(1);
   const [spentGroupBy, setSpentGroupBy] = useState("gl");
   const [selectedSpentGlNames, setSelectedSpentGlNames] = useState([]);
