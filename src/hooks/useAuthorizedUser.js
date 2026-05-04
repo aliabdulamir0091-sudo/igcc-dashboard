@@ -10,6 +10,11 @@ const BOOTSTRAP_ADMIN_EMAILS = new Set([
   "ali.abdulameer@igccgroup.com",
 ]);
 
+const BOOTSTRAP_VIEWER_EMAILS = new Set([
+  "haider.almesaody@igccgroup.com",
+  "hussein@igccgroup.com",
+]);
+
 function normalizeEmail(email) {
   return email?.trim().toLowerCase() || "";
 }
@@ -80,17 +85,41 @@ function buildErrorDetail(error) {
 function getBootstrapAdminProfile(email) {
   const normalizedEmail = normalizeEmail(email);
 
-  if (!BOOTSTRAP_ADMIN_EMAILS.has(normalizedEmail)) {
+  if (BOOTSTRAP_ADMIN_EMAILS.has(normalizedEmail)) {
+    return {
+      active: true,
+      email: normalizedEmail,
+      id: normalizedEmail,
+      role: "Admin",
+      source: "bootstrap-admin",
+      permissions: getRolePermissions("Admin"),
+    };
+  }
+
+  if (BOOTSTRAP_VIEWER_EMAILS.has(normalizedEmail)) {
+    return {
+      active: true,
+      email: normalizedEmail,
+      id: normalizedEmail,
+      role: "Viewer",
+      source: "bootstrap-viewer",
+      permissions: getRolePermissions("Viewer"),
+    };
+  }
+
+  return null;
+}
+
+function allowBootstrapUser(firebaseUser) {
+  const bootstrapProfile = getBootstrapAdminProfile(firebaseUser.email);
+
+  if (!bootstrapProfile) {
     return null;
   }
 
   return {
-    active: true,
-    email: normalizedEmail,
-    id: normalizedEmail,
-    role: "Admin",
-    source: "bootstrap-admin",
-    permissions: getRolePermissions("Admin"),
+    profile: bootstrapProfile,
+    user: firebaseUser,
   };
 }
 
@@ -137,6 +166,15 @@ export function useAuthorizedUser() {
       try {
         const email = normalizeEmail(nextUser.email);
         await nextUser.getIdToken(true);
+        const bootstrapAccess = allowBootstrapUser(nextUser);
+
+        if (bootstrapAccess) {
+          setAccessDenied(null);
+          setUser(bootstrapAccess.user);
+          setAccessProfile(bootstrapAccess.profile);
+          return;
+        }
+
         const allowedUser = await readAllowedUser(email);
 
         if (!isApprovedAllowedUser(allowedUser)) {
@@ -161,12 +199,12 @@ export function useAuthorizedUser() {
           permissions: getRolePermissions(role),
         });
       } catch (error) {
-        const bootstrapProfile = getBootstrapAdminProfile(nextUser.email);
+        const bootstrapAccess = allowBootstrapUser(nextUser);
 
-        if (bootstrapProfile) {
+        if (bootstrapAccess) {
           setAccessDenied(null);
-          setUser(nextUser);
-          setAccessProfile(bootstrapProfile);
+          setUser(bootstrapAccess.user);
+          setAccessProfile(bootstrapAccess.profile);
           return;
         }
 
