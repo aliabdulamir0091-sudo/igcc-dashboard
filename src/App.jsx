@@ -558,6 +558,7 @@ function DashboardApp({ session, onLogout }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [activeUserModal, setActiveUserModal] = useState("");
   const filters = pageFilters[activePage] ?? DEFAULT_FILTERS;
+  const isInternalPage = activePage !== "home";
   const setFilters = (updater) => {
     setPageFilters((current) => {
       const currentFilters = current[activePage] ?? DEFAULT_FILTERS;
@@ -573,6 +574,20 @@ function DashboardApp({ session, onLogout }) {
       return { ...current, [activePage]: nextView };
     });
   };
+
+  useEffect(() => {
+    if (!isUserMenuOpen) return undefined;
+
+    const handleShellPanelKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setIsUserMenuOpen(false);
+        setActiveUserModal("");
+      }
+    };
+
+    window.addEventListener("keydown", handleShellPanelKeyDown);
+    return () => window.removeEventListener("keydown", handleShellPanelKeyDown);
+  }, [isUserMenuOpen]);
 
   const theme = {
     light: {
@@ -3811,6 +3826,10 @@ function DashboardApp({ session, onLogout }) {
           background: rgba(240, 253, 250, 0.72) !important;
           box-shadow: inset 3px 0 0 rgba(15, 118, 110, 0.55);
         }
+        @keyframes slidePanelIn {
+          from { transform: translateX(-100%); opacity: 0.84; }
+          to { transform: translateX(0); opacity: 1; }
+        }
       `}</style>
       {showWelcome && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "grid", placeItems: "center", padding: 20, background: themeMode === "light" ? "rgba(15, 23, 42, 0.42)" : "rgba(2, 6, 23, 0.68)" }}>
@@ -3835,23 +3854,27 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
-      {isUserMenuOpen && (
+      {isInternalPage && isUserMenuOpen && (
         <div
           onClick={() => {
             setIsUserMenuOpen(false);
             setActiveUserModal("");
           }}
-          style={{ position: "fixed", inset: 0, zIndex: 55, background: themeMode === "light" ? "rgba(15,23,42,0.28)" : "rgba(2,6,23,0.62)", display: "flex", justifyContent: "flex-end" }}
+          style={{ position: "fixed", inset: 0, zIndex: 80, background: themeMode === "light" ? "rgba(15,23,42,0.30)" : "rgba(2,6,23,0.66)", display: "flex", justifyContent: "flex-start" }}
         >
           <aside
             onClick={(event) => event.stopPropagation()}
-            style={{ width: "min(380px, 92vw)", height: "100%", background: theme.panelBg, borderLeft: `1px solid ${theme.border}`, boxShadow: "-28px 0 70px rgba(15,23,42,0.28)", padding: 22, boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 18 }}
+            style={{ width: "min(360px, 92vw)", height: "100%", background: "#ffffff", borderRight: `1px solid ${theme.border}`, boxShadow: "28px 0 70px rgba(15,23,42,0.24)", padding: 22, boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 18, animation: "slidePanelIn 180ms ease-out" }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", borderBottom: `1px solid ${theme.border}`, paddingBottom: 16 }}>
-              <div>
-                <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>Account</div>
-                <h3 style={{ margin: "5px 0 0", color: theme.text, fontSize: 20, fontWeight: 950 }}>{portalUserName}</h3>
-                <div style={{ marginTop: 5, color: theme.subtext, fontSize: 12 }}>{session?.role ?? "Viewer"} | Last updated: {lastUpdatedLabel}</div>
+              <div style={{ display: "flex", gap: 12, minWidth: 0 }}>
+                <span style={{ display: "grid", placeItems: "center", width: 54, height: 54, borderRadius: 999, background: "#eef6ff", color: "#0b4db3", fontSize: 18, fontWeight: 950, flex: "0 0 auto" }}>{portalUserName.slice(0, 1).toUpperCase()}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ color: theme.subtext, fontSize: 11, fontWeight: 950, textTransform: "uppercase" }}>Signed in</div>
+                  <h3 style={{ margin: "5px 0 0", color: theme.text, fontSize: 18, fontWeight: 950, overflowWrap: "anywhere" }}>{portalUserName}</h3>
+                  <div style={{ marginTop: 5, color: theme.subtext, fontSize: 12, overflowWrap: "anywhere" }}>{session?.email || "No email available"}</div>
+                  <div style={{ marginTop: 3, color: "#0f766e", fontSize: 12, fontWeight: 950 }}>{session?.role || "Viewer"}</div>
+                </div>
               </div>
               <button
                 type="button"
@@ -3867,10 +3890,13 @@ function DashboardApp({ session, onLogout }) {
 
             <div style={{ display: "grid", gap: 8 }}>
               {[
-                ["profile", "Profile / Personal Info", "User email, role, access, and approval status"],
-                ["login", "Login Info", "Last login and current access type"],
-                ["contact", "Contact Us", "System owner and support information"],
-                ["settings", "Settings", "Dashboard preferences and access settings"],
+                ["profile", "My Profile", "View and edit your profile"],
+                ["settings", "Settings", "Preferences and configurations"],
+                ["preferences", "Preferences", "Dashboard, language, and display"],
+                ["contact", "Contact Us", "Get in touch with support"],
+                ["help", "Help Center", "Guides and documentation"],
+                ["whats-new", "What's New", "Latest updates and features"],
+                ["switch", "Switch View", "Change dashboard view"],
               ].map(([key, label, note]) => (
                 <button
                   key={key}
@@ -3892,11 +3918,11 @@ function DashboardApp({ session, onLogout }) {
                 <div style={{ border: `1px solid ${theme.border}`, borderRadius: 16, background: themeMode === "light" ? "#ffffff" : theme.inputBg, boxShadow: "0 12px 28px rgba(15,23,42,0.07)", overflow: "hidden" }}>
                   <div style={{ padding: "16px 18px", background: theme.accentSoft, borderBottom: `1px solid ${theme.border}` }}>
                     <h3 style={{ margin: 0, color: theme.text, fontSize: 18, fontWeight: 950 }}>
-                      {activeUserModal === "contact" ? "Contact Us" : activeUserModal === "settings" ? "Settings" : activeUserModal === "login" ? "Login Info" : "Profile / Personal Info"}
+                      {activeUserModal === "contact" ? "Contact Us" : activeUserModal === "settings" ? "Settings" : activeUserModal === "preferences" ? "Preferences" : activeUserModal === "help" ? "Help Center" : activeUserModal === "whats-new" ? "What's New" : activeUserModal === "switch" ? "Switch View" : "My Profile"}
                     </h3>
                   </div>
                   <div style={{ padding: 18, display: "grid", gap: 12 }}>
-                    {(activeUserModal === "profile" || activeUserModal === "login") && [
+                    {activeUserModal === "profile" && [
                       ["User email", session?.email || "Not available"],
                       ["Role", session?.role || "Viewer"],
                       ["Last login", session?.lastLogin || session?.lastLoginAt || "Current session"],
@@ -3920,6 +3946,22 @@ function DashboardApp({ session, onLogout }) {
                     {activeUserModal === "settings" && (
                       <div style={{ color: theme.subtext, lineHeight: 1.5 }}>Settings are currently limited to dashboard preferences such as light and dark mode. Additional profile settings can be added when access management is expanded.</div>
                     )}
+                    {activeUserModal === "preferences" && (
+                      <div style={{ color: theme.subtext, lineHeight: 1.5 }}>Use the header controls to adjust period, filters, and dashboard view. More personalization can be added after the shared shell is stable.</div>
+                    )}
+                    {activeUserModal === "help" && (
+                      <div style={{ color: theme.subtext, lineHeight: 1.5 }}>For help, use the page tabs and filters from the shared header. Detailed help content can be connected later.</div>
+                    )}
+                    {activeUserModal === "whats-new" && (
+                      <div style={{ color: theme.subtext, lineHeight: 1.5 }}>New: standardized application shell, left slide panel, shared internal navigation, and CEO report export.</div>
+                    )}
+                    {activeUserModal === "switch" && (
+                      <div style={{ display: "grid", gap: 8 }}>
+                        {visibleNavItems.filter(([value]) => value !== "home").map(([value, label]) => (
+                          <button key={value} type="button" onClick={() => { setActivePage(value); setIsUserMenuOpen(false); }} style={{ border: `1px solid ${theme.border}`, borderRadius: 10, padding: "10px 12px", background: activePage === value ? theme.accentSoft : "#fff", color: theme.text, cursor: "pointer", textAlign: "left", fontWeight: 900 }}>{label}</button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -3930,7 +3972,7 @@ function DashboardApp({ session, onLogout }) {
             )}
 
             <div style={{ marginTop: "auto", borderTop: `1px solid ${theme.border}`, paddingTop: 16 }}>
-              <button type="button" onClick={onLogout} style={{ width: "100%", border: "none", borderRadius: 14, padding: "13px 15px", background: "rgba(220,38,38,0.10)", color: theme.danger, textAlign: "left", cursor: "pointer", fontWeight: 950 }}>Logout</button>
+              <button type="button" onClick={onLogout} style={{ width: "100%", border: "1px solid rgba(220,38,38,0.18)", borderRadius: 14, padding: "13px 15px", background: "rgba(220,38,38,0.08)", color: theme.danger, textAlign: "left", cursor: "pointer", fontWeight: 950 }}>Logout</button>
             </div>
           </aside>
         </div>
@@ -3942,34 +3984,53 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
-      <div className="dashboard-header" style={{ position: "relative", zIndex: 30, marginBottom: 12, overflow: "visible", background: "linear-gradient(135deg, #041d36 0%, #062b4f 58%, #073861 100%)", border: "1px solid rgba(148, 163, 184, 0.24)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(15, 23, 42, 0.18)" }}>
+      {isInternalPage && (
+      <div className="dashboard-header" style={{ position: "sticky", top: 0, zIndex: 30, marginBottom: 16, overflow: "visible", background: "linear-gradient(135deg, #020b22 0%, #061b35 58%, #082d50 100%)", border: "1px solid rgba(148, 163, 184, 0.24)", borderRadius: 14, padding: 0, boxShadow: "0 18px 42px rgba(15, 23, 42, 0.18)" }}>
         <div className="dashboard-header-main" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "22px 26px" }}>
           <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <button type="button" aria-label="Open application menu" onClick={() => setIsUserMenuOpen(true)} style={{ display: "grid", placeItems: "center", width: 40, height: 40, border: "1px solid rgba(255,255,255,0.20)", borderRadius: 10, background: "rgba(255,255,255,0.07)", color: "#fff", cursor: "pointer", fontSize: 20, fontWeight: 950 }}>
+              ☰
+            </button>
             <div style={{ width: 62, height: 62, borderRadius: 16, border: "1px solid rgba(255,255,255,0.16)", background: "#ffffff", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "0 12px 26px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.18)" }}>
               <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC logo" style={{ width: 54, height: 54, objectFit: "contain" }} />
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ color: "#67e8f9", fontSize: 11, fontWeight: 950, letterSpacing: 0, textTransform: "uppercase" }}>IRAQ GATE CONTRACTING COMPANY</div>
               <h1 style={{ margin: "4px 0 0", fontSize: 27, letterSpacing: 0, lineHeight: 1.02, fontWeight: 950, color: "#ffffff" }}>Financial Dashboard</h1>
-              <p style={{ margin: "7px 0 0", color: "rgba(226,232,240,0.86)", fontSize: 13, maxWidth: 720 }}>Executive view of cost, AFP approval, profitability, and portfolio performance.</p>
+              <p style={{ margin: "7px 0 0", color: "rgba(226,232,240,0.86)", fontSize: 13, maxWidth: 720 }}>Executive financial performance cockpit</p>
             </div>
           </div>
+          <nav aria-label="Dashboard pages" style={{ display: "flex", gap: 6, alignItems: "stretch", justifyContent: "center", flex: "1 1 420px", minWidth: 0, overflowX: "auto" }}>
+            {visibleNavItems.filter(([value]) => value !== "home").map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setActivePage(value)}
+                style={{ border: 0, borderBottom: activePage === value ? "3px solid #60a5fa" : "3px solid transparent", background: activePage === value ? "rgba(37,99,235,0.20)" : "transparent", color: activePage === value ? "#fff" : "rgba(226,232,240,0.84)", cursor: "pointer", padding: "12px 12px 9px", borderRadius: "10px 10px 0 0", fontSize: 12, fontWeight: 950, whiteSpace: "nowrap" }}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
           <div className="dashboard-user-actions" style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap", justifyContent: "flex-end", borderLeft: "1px solid rgba(255,255,255,0.16)", paddingLeft: 22 }}>
-            <div style={{ color: "rgba(226,232,240,0.78)", fontSize: 12, fontWeight: 850, textAlign: "left", lineHeight: 1.42 }}>
-              <div style={{ color: "rgba(226,232,240,0.78)", fontWeight: 800 }}>Welcome,</div>
-              <div style={{ color: "#fff", maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 15, fontWeight: 950 }}>{portalUserName}</div>
-              <div><span style={{ color: "#22d3ee", textTransform: "uppercase" }}>{session?.role ?? "Viewer"}</span> | Last updated: {lastUpdatedLabel}</div>
-            </div>
+            <label style={{ display: "grid", gap: 4, color: "rgba(226,232,240,0.75)", fontSize: 10, fontWeight: 900 }}>
+              Reporting Period
+              <select value={filters.month} onChange={handleFilterChange("month")} style={{ height: 36, minWidth: 138, border: "1px solid rgba(255,255,255,0.18)", borderRadius: 10, background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 10px", fontSize: 12, fontWeight: 850 }}>
+                <option value="">All periods</option>
+                {filteredMonthOptions.map((month) => <option key={month.label} value={month.label}>{month.label}</option>)}
+              </select>
+            </label>
             <div style={{ position: "relative", display: "flex", gap: 8, alignItems: "center" }}>
-              {activePage === "overview" && (
                 <button
                   type="button"
-                  onClick={handlePrintCeoPnLReport}
+                  onClick={activePage === "overview" ? handlePrintCeoPnLReport : () => window.print()}
                   style={{ height: 36, border: "1px solid rgba(94,234,212,0.36)", borderRadius: 10, background: "rgba(20,184,166,0.18)", color: "#e6fffb", cursor: "pointer", padding: "0 13px", fontSize: 12, fontWeight: 950 }}
                 >
-                  Export CEO Report
+                  Export Report
                 </button>
-              )}
+              <button type="button" aria-label="Notifications" style={{ position: "relative", display: "grid", placeItems: "center", width: 38, height: 36, border: "1px solid rgba(255,255,255,0.20)", borderRadius: 10, background: "rgba(255,255,255,0.07)", color: "#fff", cursor: "pointer", fontSize: 18 }}>
+                ♢
+                <span style={{ position: "absolute", right: 7, top: 6, width: 8, height: 8, borderRadius: 999, background: "#ef4444" }} />
+              </button>
               {[
                 ["settings", "⚙ Settings"],
                 ["info", "ℹ Info"],
@@ -3986,13 +4047,12 @@ function DashboardApp({ session, onLogout }) {
               <button
                 type="button"
                 onClick={() => {
-                  if (isUserMenuOpen) setActiveUserModal("");
-                  setIsUserMenuOpen((current) => !current);
+                  setIsUserMenuOpen(true);
                 }}
                 aria-label="Open user menu"
-                style={{ width: 40, height: 36, cursor: "pointer", backgroundColor: "rgba(255,255,255,0.07)", color: "#fff", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 10, fontWeight: 950, fontSize: 13, lineHeight: 1, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
+                style={{ width: 40, height: 40, cursor: "pointer", backgroundColor: "#fff", color: "#0b2a55", border: "1px solid rgba(255,255,255,0.22)", borderRadius: 999, fontWeight: 950, fontSize: 14, lineHeight: 1, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
               >
-                CEO
+                {portalUserName.slice(0, 1).toUpperCase()}
               </button>
               {activeHeaderTool && (
                 <div style={{ position: "absolute", right: 0, top: 44, zIndex: 60, width: 280, border: "1px solid rgba(148,163,184,0.30)", borderRadius: 14, padding: 14, background: "#ffffff", color: "#10233f", boxShadow: "0 24px 60px rgba(15,23,42,0.26)" }}>
@@ -4021,31 +4081,18 @@ function DashboardApp({ session, onLogout }) {
           </div>
         </div>
         {activePage !== "home" && (
-        <div className="portfolio-filter-strip" style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "0 26px 12px", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
-          <button
-            type="button"
-            onClick={() => setFilters((current) => ({ ...current, portfolio: "", hub: "", costCenter: "" }))}
-            style={{ color: filters.portfolio ? theme.text : "#fff", background: filters.portfolio ? theme.inputBg : theme.accentStrong, border: `1px solid ${filters.portfolio ? theme.border : theme.accentStrong}`, borderRadius: 6, padding: "7px 11px", fontSize: 12, fontWeight: 900, cursor: "pointer" }}
-          >
-            All Portfolios
-          </button>
-          {HUB_SECTIONS.map((section) => {
-            const isActive = filters.portfolio === section.label;
-            return (
-              <button
-                key={section.label}
-                type="button"
-                onClick={() => setFilters((current) => ({ ...current, portfolio: section.label, hub: "", costCenter: "" }))}
-                style={{ color: isActive ? "#fff" : section.accent, background: isActive ? section.accent : section.soft, border: `1px solid ${section.accent}55`, borderRadius: 6, padding: "7px 11px", fontSize: 12, fontWeight: 900, cursor: "pointer" }}
-              >
-                {section.label}
-              </button>
-            );
-          })}
+        <div className="portfolio-filter-strip" style={{ display: "grid", gridTemplateColumns: "minmax(175px, 1fr) minmax(175px, 1fr) minmax(175px, 1fr) minmax(260px, 1.1fr) minmax(140px, 0.75fr) minmax(160px, 0.8fr) auto auto", columnGap: 12, rowGap: 12, alignItems: "end", padding: "14px 26px 0", borderTop: "1px solid rgba(255,255,255,0.12)", background: "#ffffff" }}>
+          <label style={{ display: "block", color: "#10233f", fontWeight: 900, fontSize: 10, textTransform: "uppercase" }}>
+            Portfolio
+            <select value={filters.portfolio} onChange={(event) => setFilters((current) => ({ ...current, portfolio: event.target.value, hub: "", costCenter: "" }))} style={{ width: "100%", boxSizing: "border-box", padding: "10px 11px", marginTop: 5, borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, fontSize: 12, fontWeight: 850 }}>
+              <option value="">All Portfolios</option>
+              {HUB_SECTIONS.map((section) => <option key={section.label} value={section.label}>{section.label}</option>)}
+            </select>
+          </label>
         </div>
         )}
         {activePage !== "home" && (
-        <div className="dashboard-filter-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", columnGap: 12, rowGap: 12, alignItems: "end", padding: "16px 26px 18px", borderTop: "1px solid rgba(255,255,255,0.12)", background: "rgba(2, 12, 27, 0.18)" }}>
+        <div className="dashboard-filter-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))", columnGap: 12, rowGap: 12, alignItems: "end", padding: "12px 26px 18px", borderTop: "1px solid rgba(148,163,184,0.18)", background: "#ffffff" }}>
           {[
             ["Hub", "HUB", filters.hub, (event) => setFilters((current) => ({ ...current, hub: event.target.value, costCenter: "" })), ["", ...filteredHubOptions], "All hubs"],
             ["Cost Center", "CC", filters.costCenter, handleFilterChange("costCenter"), ["", ...filteredCostCenterOptions], "All centers"],
@@ -4105,18 +4152,27 @@ function DashboardApp({ session, onLogout }) {
 
           <button
             type="button"
+            onClick={() => setActiveHeaderTool((current) => current === "moreFilters" ? "" : "moreFilters")}
+            style={{ padding: "9px 11px", borderRadius: 10, border: `1px solid ${theme.border}`, background: "#f8fafc", color: theme.text, cursor: "pointer", fontWeight: 900, fontSize: 12 }}
+          >
+            More Filters
+          </button>
+          <button
+            type="button"
             onClick={() => {
               setFilters({ portfolio: "", hub: "", costCenter: "", month: "", year: "" });
               setPeriodView("monthly");
             }}
-            style={{ padding: "9px 11px", borderRadius: 6, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: "pointer", fontWeight: 900, fontSize: 12 }}
+            style={{ padding: "9px 11px", borderRadius: 10, border: `1px solid ${theme.border}`, background: theme.inputBg, color: theme.text, cursor: "pointer", fontWeight: 900, fontSize: 12 }}
           >
-            Clear
+            Clear Filters
           </button>
         </div>
         )}
       </div>
+      )}
 
+      {activePage === "home" && (
       <div className="dashboard-nav-shell" style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", margin: "-12px 0 24px", flexWrap: "wrap", background: "linear-gradient(135deg, #06213d, #082d50)", border: "1px solid rgba(148, 163, 184, 0.22)", borderTop: "none", borderRadius: "0 0 14px 14px", padding: "14px 26px", boxShadow: "0 14px 34px rgba(15,23,42,0.14)" }}>
         <button
           type="button"
@@ -4194,6 +4250,7 @@ function DashboardApp({ session, onLogout }) {
           </button>
         )}
       </div>
+      )}
 
       {error && (
         <div style={{ color: theme.danger, marginBottom: 16, textAlign: "center" }}>
