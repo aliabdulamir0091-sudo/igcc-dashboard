@@ -7,16 +7,64 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 });
 
 const numberFormatter = new Intl.NumberFormat("en-US");
+const percentFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 1,
+});
 
 const formatCurrency = (value) => currencyFormatter.format(value || 0);
 const formatNumber = (value) => numberFormatter.format(value || 0);
+const formatPercent = (value) => `${percentFormatter.format(value || 0)}%`;
 
-function MetricCard({ label, value, detail, tone = "default" }) {
+const getShare = (amount, total) => (total ? (amount / total) * 100 : 0);
+
+const getTrend = (current, previous) => {
+  if (!previous) return 0;
+  return ((current - previous) / Math.abs(previous)) * 100;
+};
+
+function Sparkline({ values = [] }) {
+  const width = 132;
+  const height = 42;
+  const safeValues = values.length ? values : [0];
+  const max = Math.max(...safeValues);
+  const min = Math.min(...safeValues);
+  const range = max - min || 1;
+  const points = safeValues
+    .map((value, index) => {
+      const x = safeValues.length === 1 ? width : (index / (safeValues.length - 1)) * width;
+      const y = height - ((value - min) / range) * (height - 8) - 4;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  return (
+    <svg className="metric-sparkline" viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
+      <polyline points={points} />
+    </svg>
+  );
+}
+
+function BarsFigure({ values = [] }) {
+  const max = Math.max(...values, 1);
+  return (
+    <div className="metric-bars" aria-hidden="true">
+      {values.map((value, index) => (
+        <span key={`${value}-${index}`} style={{ "--bar-height": `${Math.max((value / max) * 100, 10)}%` }} />
+      ))}
+    </div>
+  );
+}
+
+function MetricCard({ label, value, detail, percent, figure = "spark", figureValues = [], tone = "default" }) {
   return (
     <article className={`metric-card metric-card-${tone}`}>
-      <span>{label}</span>
+      <div className="metric-card-top">
+        <span>{label}</span>
+        <em>{percent}</em>
+      </div>
       <strong>{value}</strong>
       <p>{detail}</p>
+      {figure === "bars" ? <BarsFigure values={figureValues} /> : <Sparkline values={figureValues} />}
     </article>
   );
 }
@@ -52,12 +100,16 @@ export function SpendingReportPage() {
   const { totals, byCostCenter, byGlName, byHub, byMonth, unmappedCostCenters } = spentReportData;
   const latestPeriods = byMonth.slice(-6);
   const latestPeriod = byMonth.at(-1);
+  const previousPeriod = byMonth.at(-2);
   const topCostCenter = byCostCenter[0];
   const topHub = byHub[0];
   const topGlName = byGlName[0];
   const averageTransaction = totals.transactions ? totals.amount / totals.transactions : 0;
-  const mappedCostCenters = Math.max(totals.costCenters - totals.unmappedCostCenters, 0);
-  const mappingStatus = totals.unmappedCostCenters === 0 ? "All workbook cost centers mapped" : "Needs mapping review";
+  const monthlyAmounts = latestPeriods.map((period) => Math.abs(period.amount));
+  const topHubBars = byHub.slice(0, 6).map((hub) => Math.abs(hub.amount));
+  const topCostCenterBars = byCostCenter.slice(0, 6).map((costCenter) => Math.abs(costCenter.amount));
+  const topGlBars = byGlName.slice(0, 6).map((glName) => Math.abs(glName.amount));
+  const latestTrend = getTrend(latestPeriod?.amount || 0, previousPeriod?.amount || 0);
 
   return (
     <section className="page-stack">
@@ -73,51 +125,59 @@ export function SpendingReportPage() {
             <p className="eyebrow">Key Metrics</p>
             <h3 id="spent-key-metrics-title">Summary Cards</h3>
           </div>
-          <span>{mappingStatus}</span>
+          <span>Visual spend overview</span>
         </div>
 
         <div className="kpi-grid spent-kpi-grid">
           <MetricCard
             label="Total Spend"
             value={formatCurrency(totals.amount)}
-            detail={`${formatNumber(totals.transactions)} source rows`}
+            detail="Master spent report total"
+            percent={latestTrend >= 0 ? `+${formatPercent(latestTrend)}` : formatPercent(latestTrend)}
+            figureValues={monthlyAmounts}
             tone="primary"
           />
           <MetricCard
             label="Latest Period"
             value={latestPeriod?.period || "N/A"}
             detail={latestPeriod ? formatCurrency(latestPeriod.amount) : "No period data"}
+            percent={latestPeriod ? formatPercent(getShare(latestPeriod.amount, totals.amount)) : "0%"}
+            figureValues={monthlyAmounts}
           />
           <MetricCard
             label="Top Hub"
             value={topHub?.hub || "N/A"}
             detail={topHub ? formatCurrency(topHub.amount) : "No hub data"}
+            percent={topHub ? formatPercent(getShare(topHub.amount, totals.amount)) : "0%"}
+            figure="bars"
+            figureValues={topHubBars}
+            tone="teal"
           />
           <MetricCard
             label="Top Cost Center"
             value={topCostCenter?.costCenter || "N/A"}
             detail={topCostCenter ? `${topCostCenter.hub} | ${formatCurrency(topCostCenter.amount)}` : "No cost center data"}
+            percent={topCostCenter ? formatPercent(getShare(topCostCenter.amount, totals.amount)) : "0%"}
+            figure="bars"
+            figureValues={topCostCenterBars}
+            tone="blue"
           />
           <MetricCard
             label="Top GL Name"
             value={topGlName?.glName || "N/A"}
             detail={topGlName ? formatCurrency(topGlName.amount) : "No GL data"}
+            percent={topGlName ? formatPercent(getShare(topGlName.amount, totals.amount)) : "0%"}
+            figure="bars"
+            figureValues={topGlBars}
+            tone="amber"
           />
           <MetricCard
             label="Avg. Row Value"
             value={formatCurrency(averageTransaction)}
-            detail="Total spend divided by source rows"
-          />
-          <MetricCard
-            label="Mapped Scope"
-            value={`${formatNumber(mappedCostCenters)} / ${formatNumber(totals.costCenters)}`}
-            detail={`${formatNumber(totals.hubs)} hubs across ${formatNumber(totals.regions)} regions`}
-          />
-          <MetricCard
-            label="Unmapped"
-            value={formatNumber(totals.unmappedCostCenters)}
-            detail={mappingStatus}
-            tone={totals.unmappedCostCenters === 0 ? "success" : "warning"}
+            detail="Average transaction value"
+            percent={`${formatNumber(totals.costCenters)} cost centers`}
+            figureValues={monthlyAmounts.map((amount) => amount / Math.max(totals.transactions, 1))}
+            tone="slate"
           />
         </div>
       </section>

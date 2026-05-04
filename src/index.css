@@ -635,7 +635,7 @@ button {
 }
 
 .spent-kpi-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .content-grid {
@@ -650,54 +650,210 @@ button {
 .metric-card {
   position: relative;
   overflow: hidden;
-  min-height: 142px;
-  border-color: rgba(203, 213, 225, 0.86);
+  min-height: 190px;
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  border: 0;
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.86)),
+    var(--card);
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.09);
 }
 
 .metric-card::before {
   content: "";
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: var(--teal);
-  opacity: 0.8;
+  inset: auto -34px -42px auto;
+  width: 150px;
+  height: 150px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.14);
+  opacity: 1;
+}
+
+.metric-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid rgba(203, 213, 225, 0.82);
+  border-radius: inherit;
 }
 
 .metric-card-primary {
   background:
-    linear-gradient(135deg, rgba(15, 118, 110, 0.1), transparent 46%),
-    var(--card);
+    linear-gradient(135deg, rgba(7, 89, 133, 0.95), rgba(15, 118, 110, 0.9)),
+    var(--teal);
+  color: #ffffff;
 }
 
-.metric-card-success::before {
-  background: var(--green);
+.metric-card-primary::after {
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
-.metric-card-warning::before {
-  background: var(--amber);
+.metric-card-primary::before {
+  background: rgba(255, 255, 255, 0.13);
 }
 
-.metric-card span {
+.metric-card-teal::before {
+  background: rgba(20, 184, 166, 0.16);
+}
+
+.metric-card-blue::before {
+  background: rgba(37, 99, 235, 0.14);
+}
+
+.metric-card-amber::before {
+  background: rgba(217, 119, 6, 0.16);
+}
+
+.metric-card-slate::before {
+  background: rgba(71, 85, 105, 0.16);
+}
+
+.metric-card-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.metric-card span,
+.metric-card-top span {
   color: var(--muted);
   font-size: 11px;
   font-weight: 950;
   text-transform: uppercase;
 }
 
+.metric-card-primary span,
+.metric-card-primary .metric-card-top span {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.metric-card em {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.1);
+  color: var(--teal);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.metric-card-primary em {
+  background: rgba(255, 255, 255, 0.17);
+  color: #ffffff;
+}
+
 .metric-card strong {
+  position: relative;
+  z-index: 1;
   display: block;
-  margin-top: 12px;
+  margin-top: 0;
   color: var(--text);
-  font-size: 24px;
+  font-size: 25px;
   line-height: 1.12;
   overflow-wrap: anywhere;
 }
 
+.metric-card-primary strong {
+  color: #ffffff;
+}
+
 .metric-card p {
+  position: relative;
+  z-index: 1;
   margin: 10px 0 0;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.42;
+}
+
+.metric-card-primary p {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.metric-sparkline {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 46px;
+  margin-top: 2px;
+}
+
+.metric-sparkline polyline {
+  fill: none;
+  stroke: var(--teal);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.metric-card-primary .metric-sparkline polyline {
+  stroke: #ffffff;
+}
+
+.metric-card-blue .metric-sparkline polyline {
+  stroke: var(--blue);
+}
+
+.metric-card-amber .metric-sparkline polyline {
+  stroke: var(--amber);
+}
+
+.metric-bars {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  height: 48px;
+  margin-top: 2px;
+}
+
+.metric-bars span {
+  flex: 1;
+  height: var(--bar-height);
+  min-height: 8px;
+  border-radius: 999px 999px 3px 3px;
+  background: linear-gradient(180deg, rgba(15, 118, 110, 0.86), rgba(15, 118, 110, 0.26));
+}
+
+.metric-card-blue .metric-bars span {
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.86), rgba(37, 99, 235, 0.24));
+}
+
+.metric-card-amber .metric-bars span {
+  background: linear-gradient(180deg, rgba(217, 119, 6, 0.88), rgba(217, 119, 6, 0.24));
+}
+
+.metric-card-slate .metric-sparkline polyline {
+  stroke: #64748b;
+}
+
+[data-theme="dark"] .metric-card {
+  background:
+    linear-gradient(135deg, rgba(20, 38, 61, 0.98), rgba(13, 26, 43, 0.92)),
+    var(--card);
+}
+
+[data-theme="dark"] .metric-card::after {
+  border-color: rgba(148, 169, 196, 0.22);
+}
+
+[data-theme="dark"] .metric-card-primary {
+  background:
+    linear-gradient(135deg, rgba(7, 89, 133, 0.96), rgba(15, 118, 110, 0.86)),
+    var(--teal);
 }
 
 .surface-card h3 {
