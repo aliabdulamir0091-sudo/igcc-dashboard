@@ -2,27 +2,22 @@
   "source": {
     "workbook": "C:/Users/asus/OneDrive/Desktop/Spent Report/Master Spent Report.xlsx",
     "sheet": "Cost",
-    "generatedAt": "2026-05-04T08:00:43.701Z"
+    "generatedAt": "2026-05-04T08:12:50.102Z"
   },
   "totals": {
     "transactions": 10513,
     "amount": 101455996.19,
-    "regions": 3,
+    "regions": 2,
     "hubs": 8,
-    "costCenters": 54,
+    "costCenters": 43,
     "glNames": 21,
-    "unmappedCostCenters": 14
+    "unmappedCostCenters": 0
   },
   "byRegion": [
     {
-      "amount": 97006107.52,
-      "count": 9947,
+      "amount": 101422013.8,
+      "count": 10470,
       "region": "Basra"
-    },
-    {
-      "amount": 4416198.69,
-      "count": 524,
-      "region": "Unmapped"
     },
     {
       "amount": 37759.6,
@@ -32,8 +27,8 @@
   ],
   "byHub": [
     {
-      "amount": 41474503.59,
-      "count": 4823,
+      "amount": 43271717.33,
+      "count": 4997,
       "region": "Basra",
       "hub": "ROO Hub"
     },
@@ -44,8 +39,8 @@
       "hub": "Total Hub"
     },
     {
-      "amount": 15271886.14,
-      "count": 1760,
+      "amount": 17629613.75,
+      "count": 2096,
       "region": "Basra",
       "hub": "BGC Hub"
     },
@@ -56,16 +51,10 @@
       "hub": "Camp"
     },
     {
-      "amount": 9549004.9,
-      "count": 815,
+      "amount": 9808133.11,
+      "count": 825,
       "region": "Basra",
       "hub": "Head Office"
-    },
-    {
-      "amount": 4416198.69,
-      "count": 524,
-      "region": "Unmapped",
-      "hub": "Unmapped"
     },
     {
       "amount": 37759.6,
@@ -78,6 +67,12 @@
       "count": 14,
       "region": "Basra",
       "hub": "GRL_VLV"
+    },
+    {
+      "amount": 1890.92,
+      "count": 4,
+      "region": "Basra",
+      "hub": "West Qurna"
     }
   ],
   "byCostCenter": [
@@ -89,8 +84,8 @@
       "costCenter": "GRLTOT_25"
     },
     {
-      "amount": 9549004.9,
-      "count": 815,
+      "amount": 9808133.11,
+      "count": 825,
       "region": "Basra",
       "hub": "Head Office",
       "costCenter": "HO_SB_23"
@@ -131,8 +126,8 @@
       "costCenter": "PWRI_23"
     },
     {
-      "amount": 3925101.54,
-      "count": 498,
+      "amount": 3932440.24,
+      "count": 503,
       "region": "Basra",
       "hub": "ROO Hub",
       "costCenter": "GRLRO_23"
@@ -168,9 +163,9 @@
     {
       "amount": 2345836.38,
       "count": 328,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "QUR_23"
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "costCenter": "QTC_24"
     },
     {
       "amount": 2241135.42,
@@ -180,8 +175,8 @@
       "costCenter": "OHTL_25"
     },
     {
-      "amount": 2106042.64,
-      "count": 496,
+      "amount": 2106988.09,
+      "count": 497,
       "region": "Basra",
       "hub": "ROO Hub",
       "costCenter": "EIMNT_23"
@@ -194,6 +189,13 @@
       "costCenter": "KBR_23"
     },
     {
+      "amount": 1743515.97,
+      "count": 162,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "MITAS"
+    },
+    {
       "amount": 1663159.25,
       "count": 232,
       "region": "Basra",
@@ -201,8 +203,8 @@
       "costCenter": "SPAS_23"
     },
     {
-      "amount": 1490665.57,
-      "count": 187,
+      "amount": 1518507.57,
+      "count": 188,
       "region": "Basra",
       "hub": "ROO Hub",
       "costCenter": "MWP_23"
@@ -243,13 +245,6 @@
       "costCenter": "WOD_23"
     },
     {
-      "amount": 1072261.18,
-      "count": 109,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITSOHTL"
-    },
-    {
       "amount": 686151.58,
       "count": 133,
       "region": "Basra",
@@ -264,15 +259,8 @@
       "costCenter": "MPMNT_23"
     },
     {
-      "amount": 671256.26,
-      "count": 54,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITASOHTL"
-    },
-    {
-      "amount": 635321.42,
-      "count": 69,
+      "amount": 647505.06,
+      "count": 78,
       "region": "Basra",
       "hub": "BGC Hub",
       "costCenter": "GRLBG_23"
@@ -306,6 +294,13 @@
       "costCenter": "MPTAR_23"
     },
     {
+      "amount": 317317.94,
+      "count": 30,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "CVMNT_23"
+    },
+    {
       "amount": 312153.16,
       "count": 52,
       "region": "Basra",
@@ -313,25 +308,11 @@
       "costCenter": "EIESP_23"
     },
     {
-      "amount": 300377.34,
-      "count": 24,
-      "region": "Basra",
-      "hub": "ROO Hub",
-      "costCenter": "CVMNT_23"
-    },
-    {
       "amount": 284336.51,
       "count": 110,
       "region": "Basra",
       "hub": "ROO Hub",
       "costCenter": "CPSs_23"
-    },
-    {
-      "amount": 262193.41,
-      "count": 10,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "Management"
     },
     {
       "amount": 228888.65,
@@ -355,13 +336,6 @@
       "costCenter": "CMSN_23"
     },
     {
-      "amount": 55684,
-      "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "TMS_26"
-    },
-    {
       "amount": 51923.34,
       "count": 34,
       "region": "Basra",
@@ -376,25 +350,11 @@
       "costCenter": "GRL-KR-BP-25"
     },
     {
-      "amount": 18734,
-      "count": 3,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "CMNT_23"
-    },
-    {
       "amount": 17292.26,
       "count": 14,
       "region": "Basra",
       "hub": "GRL_VLV",
       "costCenter": "General Valves"
-    },
-    {
-      "amount": 11734.84,
-      "count": 8,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "BGCG_23"
     },
     {
       "amount": 9245,
@@ -404,46 +364,11 @@
       "costCenter": "Kiosk-25"
     },
     {
-      "amount": 9022.46,
-      "count": 5,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "ROOP_23"
-    },
-    {
-      "amount": 3640.52,
-      "count": 3,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "BGC_23"
-    },
-    {
-      "amount": 2604.6,
-      "count": 5,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "ROOM_23"
-    },
-    {
       "amount": 1890.92,
       "count": 4,
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "West Qurna",
       "costCenter": "WQ1SB_23"
-    },
-    {
-      "amount": 1890.9,
-      "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "EPMNT_23"
-    },
-    {
-      "amount": 809.6,
-      "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "HO_23"
     },
     {
       "amount": 709.66,
@@ -451,13 +376,6 @@
       "region": "Basra",
       "hub": "Camp",
       "costCenter": "Camp"
-    },
-    {
-      "amount": 348.84,
-      "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "ROOG_23"
     }
   ],
   "byGlName": [
@@ -740,8 +658,8 @@
       "glName": "Light & Heavy Equipment’s Rental"
     },
     {
-      "amount": 2170389.23,
-      "count": 34,
+      "amount": 2419389.23,
+      "count": 37,
       "region": "Basra",
       "hub": "Head Office",
       "costCenter": "HO_SB_23",
@@ -910,9 +828,9 @@
     {
       "amount": 909033,
       "count": 6,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "QUR_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "costCenter": "QTC_24",
       "glName": "Subcontractors"
     },
     {
@@ -922,6 +840,14 @@
       "hub": "Camp",
       "costCenter": "MWS_23",
       "glName": "Staff Salary & Compensation"
+    },
+    {
+      "amount": 894187.78,
+      "count": 94,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "MITAS",
+      "glName": "Material & Supplies"
     },
     {
       "amount": 818936.37,
@@ -956,14 +882,6 @@
       "glName": "Material & Supplies"
     },
     {
-      "amount": 730332.78,
-      "count": 63,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITSOHTL",
-      "glName": "Material & Supplies"
-    },
-    {
       "amount": 718086,
       "count": 8,
       "region": "Basra",
@@ -982,9 +900,9 @@
     {
       "amount": 709755.36,
       "count": 14,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "QUR_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "costCenter": "QTC_24",
       "glName": "Staff Salary & Compensation"
     },
     {
@@ -1014,9 +932,9 @@
     {
       "amount": 656204.63,
       "count": 66,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "QUR_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "costCenter": "QTC_24",
       "glName": "Light & Heavy Equipment’s Rental"
     },
     {
@@ -1068,20 +986,20 @@
       "glName": "Subcontractors"
     },
     {
+      "amount": 580627.12,
+      "count": 17,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "MWP_23",
+      "glName": "Staff Salary & Compensation"
+    },
+    {
       "amount": 556198.8,
       "count": 19,
       "region": "Basra",
       "hub": "ROO Hub",
       "costCenter": "KBR_23",
       "glName": "Third party manpower"
-    },
-    {
-      "amount": 552785.12,
-      "count": 16,
-      "region": "Basra",
-      "hub": "ROO Hub",
-      "costCenter": "MWP_23",
-      "glName": "Staff Salary & Compensation"
     },
     {
       "amount": 531274.6,
@@ -1260,11 +1178,11 @@
       "glName": "Accommodation"
     },
     {
-      "amount": 332000,
-      "count": 4,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "Management",
+      "amount": 329283.96,
+      "count": 9,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "MITAS",
       "glName": "Staff Salary & Compensation"
     },
     {
@@ -1372,14 +1290,6 @@
       "glName": "Third party Services"
     },
     {
-      "amount": 288575,
-      "count": 6,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITSOHTL",
-      "glName": "Staff Salary & Compensation"
-    },
-    {
       "amount": 279798.15,
       "count": 32,
       "region": "Basra",
@@ -1428,14 +1338,6 @@
       "glName": "Material & Supplies"
     },
     {
-      "amount": 258045.74,
-      "count": 32,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITASOHTL",
-      "glName": "Material & Supplies"
-    },
-    {
       "amount": 242135.54,
       "count": 39,
       "region": "Basra",
@@ -1449,6 +1351,22 @@
       "region": "Basra",
       "hub": "ROO Hub",
       "costCenter": "MPSP_23",
+      "glName": "Light & Heavy Equipment’s Rental"
+    },
+    {
+      "amount": 233602.45,
+      "count": 5,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "MITAS",
+      "glName": "Subcontractors"
+    },
+    {
+      "amount": 228037.03,
+      "count": 29,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "MITAS",
       "glName": "Light & Heavy Equipment’s Rental"
     },
     {
@@ -1524,20 +1442,20 @@
       "glName": "Material & Supplies"
     },
     {
+      "amount": 200360.41,
+      "count": 22,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "EIMNT_23",
+      "glName": "Third party manpower"
+    },
+    {
       "amount": 200299.28,
       "count": 98,
       "region": "Basra",
       "hub": "BGC Hub",
       "costCenter": "ZBR_23",
       "glName": "Material & Supplies"
-    },
-    {
-      "amount": 199414.96,
-      "count": 21,
-      "region": "Basra",
-      "hub": "ROO Hub",
-      "costCenter": "EIMNT_23",
-      "glName": "Third party manpower"
     },
     {
       "amount": 198159.76,
@@ -1590,9 +1508,9 @@
     {
       "amount": 177650.13,
       "count": 174,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "QUR_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "costCenter": "QTC_24",
       "glName": "Material & Supplies"
     },
     {
@@ -1610,14 +1528,6 @@
       "hub": "BGC Hub",
       "costCenter": "NR-NGL_2025",
       "glName": "Light & Heavy Equipment’s Rental"
-    },
-    {
-      "amount": 172727.27,
-      "count": 3,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITASOHTL",
-      "glName": "Subcontractors"
     },
     {
       "amount": 170993.61,
@@ -1724,14 +1634,6 @@
       "glName": "Light & Heavy Equipment’s Rental"
     },
     {
-      "amount": 145735.36,
-      "count": 13,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITASOHTL",
-      "glName": "Light & Heavy Equipment’s Rental"
-    },
-    {
       "amount": 141231.59,
       "count": 90,
       "region": "Basra",
@@ -1742,9 +1644,9 @@
     {
       "amount": 141203.27,
       "count": 12,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "QUR_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "costCenter": "QTC_24",
       "glName": "Third party manpower"
     },
     {
@@ -1790,9 +1692,9 @@
     {
       "amount": 121850,
       "count": 27,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "QUR_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "costCenter": "QTC_24",
       "glName": "Security"
     },
     {
@@ -1828,6 +1730,14 @@
       "glName": "Staff Salary & Compensation"
     },
     {
+      "amount": 109540.26,
+      "count": 12,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "CVMNT_23",
+      "glName": "Staff Salary & Compensation"
+    },
+    {
       "amount": 109281.97,
       "count": 83,
       "region": "Basra",
@@ -1850,14 +1760,6 @@
       "hub": "ROO Hub",
       "costCenter": "OHTL_25",
       "glName": "Third party manpower"
-    },
-    {
-      "amount": 96305.07,
-      "count": 17,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITSOHTL",
-      "glName": "Light & Heavy Equipment’s Rental"
     },
     {
       "amount": 95608.39,
@@ -1892,20 +1794,12 @@
       "glName": "Subcontractors"
     },
     {
-      "amount": 93987.26,
-      "count": 10,
+      "amount": 93525.43,
+      "count": 50,
       "region": "Basra",
-      "hub": "ROO Hub",
-      "costCenter": "CVMNT_23",
-      "glName": "Staff Salary & Compensation"
-    },
-    {
-      "amount": 93459.96,
-      "count": 4,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITASOHTL",
-      "glName": "Staff Salary & Compensation"
+      "hub": "Head Office",
+      "costCenter": "HO_SB_23",
+      "glName": "Air ticket & travel"
     },
     {
       "amount": 92765.6,
@@ -1914,14 +1808,6 @@
       "hub": "Total Hub",
       "costCenter": "GRLTOT_25",
       "glName": "Fuel & Lubricant"
-    },
-    {
-      "amount": 90245.81,
-      "count": 3,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITSOHTL",
-      "glName": "Subcontractors"
     },
     {
       "amount": 89600,
@@ -1956,19 +1842,11 @@
       "glName": "Third party manpower"
     },
     {
-      "amount": 84064.25,
-      "count": 45,
-      "region": "Basra",
-      "hub": "Head Office",
-      "costCenter": "HO_SB_23",
-      "glName": "Air ticket & travel"
-    },
-    {
       "amount": 83389.3,
       "count": 25,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "QUR_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "costCenter": "QTC_24",
       "glName": "Third party Services"
     },
     {
@@ -2044,14 +1922,6 @@
       "glName": "DHL / Courier Fees / Shipping"
     },
     {
-      "amount": 62804.48,
-      "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITASOHTL",
-      "glName": "Third party manpower"
-    },
-    {
       "amount": 62237.06,
       "count": 11,
       "region": "Basra",
@@ -2124,12 +1994,12 @@
       "glName": "Subcontractors"
     },
     {
-      "amount": 55684,
-      "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "TMS_26",
-      "glName": "Staff Salary & Compensation"
+      "amount": 56100.4,
+      "count": 43,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "GRLRO_23",
+      "glName": "Communication & internet"
     },
     {
       "amount": 54206.9,
@@ -2148,6 +2018,14 @@
       "glName": "Charitable Contributions"
     },
     {
+      "amount": 52918.63,
+      "count": 5,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "MITAS",
+      "glName": "Third party manpower"
+    },
+    {
       "amount": 51899.32,
       "count": 3,
       "region": "Basra",
@@ -2162,14 +2040,6 @@
       "hub": "BGC Hub",
       "costCenter": "KAZ_23",
       "glName": "Fuel & Lubricant"
-    },
-    {
-      "amount": 48761.7,
-      "count": 38,
-      "region": "Basra",
-      "hub": "ROO Hub",
-      "costCenter": "GRLRO_23",
-      "glName": "Communication & internet"
     },
     {
       "amount": 48570.9,
@@ -2308,6 +2178,14 @@
       "glName": "DHL / Courier Fees / Shipping"
     },
     {
+      "amount": 30351.34,
+      "count": 12,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "MITAS",
+      "glName": "Third party Services"
+    },
+    {
       "amount": 30000,
       "count": 2,
       "region": "Basra",
@@ -2340,28 +2218,20 @@
       "glName": "Light & Heavy Equipment’s Rental"
     },
     {
+      "amount": 28041.97,
+      "count": 46,
+      "region": "Basra",
+      "hub": "Head Office",
+      "costCenter": "HO_SB_23",
+      "glName": "Communication & internet"
+    },
+    {
       "amount": 28013.88,
       "count": 10,
       "region": "Basra",
       "hub": "ROO Hub",
       "costCenter": "DG02_PWD",
       "glName": "Light & Heavy Equipment’s Rental"
-    },
-    {
-      "amount": 27544.67,
-      "count": 11,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITSOHTL",
-      "glName": "Third party Services"
-    },
-    {
-      "amount": 27374.94,
-      "count": 44,
-      "region": "Basra",
-      "hub": "Head Office",
-      "costCenter": "HO_SB_23",
-      "glName": "Communication & internet"
     },
     {
       "amount": 25550.02,
@@ -2404,6 +2274,14 @@
       "glName": "Security"
     },
     {
+      "amount": 24812.23,
+      "count": 18,
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "costCenter": "GRLBG_23",
+      "glName": "Communication & internet"
+    },
+    {
       "amount": 23419.43,
       "count": 5,
       "region": "Basra",
@@ -2418,14 +2296,6 @@
       "hub": "BGC Hub",
       "costCenter": "NR-NGL_2025",
       "glName": "Material & Supplies"
-    },
-    {
-      "amount": 21516.39,
-      "count": 4,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITSOHTL",
-      "glName": "Third party manpower"
     },
     {
       "amount": 21196.79,
@@ -2450,14 +2320,6 @@
       "hub": "ROO Hub",
       "costCenter": "GRLRO_23",
       "glName": "DHL / Courier Fees / Shipping"
-    },
-    {
-      "amount": 18734,
-      "count": 3,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "CMNT_23",
-      "glName": "Staff Salary & Compensation"
     },
     {
       "amount": 18567.86,
@@ -2580,28 +2442,12 @@
       "glName": "Communication & internet"
     },
     {
-      "amount": 12931.18,
-      "count": 6,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "Management",
-      "glName": "Air ticket & travel"
-    },
-    {
       "amount": 12678.83,
       "count": 14,
       "region": "Basra",
       "hub": "ROO Hub",
       "costCenter": "EIESP_23",
       "glName": "Light & Heavy Equipment’s Rental"
-    },
-    {
-      "amount": 12628.59,
-      "count": 9,
-      "region": "Basra",
-      "hub": "BGC Hub",
-      "costCenter": "GRLBG_23",
-      "glName": "Communication & internet"
     },
     {
       "amount": 12485.92,
@@ -2618,14 +2464,6 @@
       "hub": "ROO Hub",
       "costCenter": "CPSs_23",
       "glName": "Staff Salary & Compensation"
-    },
-    {
-      "amount": 11734.84,
-      "count": 8,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "BGCG_23",
-      "glName": "Communication & internet"
     },
     {
       "amount": 11615.44,
@@ -2714,14 +2552,6 @@
       "hub": "ROO Hub",
       "costCenter": "Kiosk-25",
       "glName": "Staff Salary & Compensation"
-    },
-    {
-      "amount": 9022.46,
-      "count": 5,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "ROOP_23",
-      "glName": "Communication & internet"
     },
     {
       "amount": 8266.95,
@@ -2822,9 +2652,9 @@
     {
       "amount": 6000,
       "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "QUR_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "costCenter": "QTC_24",
       "glName": "Lease & Rent"
     },
     {
@@ -2900,14 +2730,6 @@
       "glName": "Security"
     },
     {
-      "amount": 4951.04,
-      "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITASOHTL",
-      "glName": "Third party Services"
-    },
-    {
       "amount": 4930.07,
       "count": 4,
       "region": "Basra",
@@ -2970,14 +2792,6 @@
       "hub": "ROO Hub",
       "costCenter": "MWP_23",
       "glName": "Lease & Rent"
-    },
-    {
-      "amount": 3640.52,
-      "count": 3,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "BGC_23",
-      "glName": "Communication & internet"
     },
     {
       "amount": 3637.58,
@@ -3054,9 +2868,9 @@
     {
       "amount": 2604.6,
       "count": 5,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "ROOM_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "CVMNT_23",
       "glName": "Communication & internet"
     },
     {
@@ -3078,16 +2892,16 @@
     {
       "amount": 2471.84,
       "count": 4,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITSOHTL",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "MITAS",
       "glName": "Charitable Contributions"
     },
     {
       "amount": 2265.04,
       "count": 3,
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "West Qurna",
       "costCenter": "WQ1SB_23",
       "glName": "Third party manpower"
     },
@@ -3118,9 +2932,9 @@
     {
       "amount": 2106.75,
       "count": 10,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "QUR_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "costCenter": "QTC_24",
       "glName": "Communication & internet"
     },
     {
@@ -3162,14 +2976,6 @@
       "hub": "ROO Hub",
       "costCenter": "FLWLN_23",
       "glName": "Communication & internet"
-    },
-    {
-      "amount": 1890.9,
-      "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "EPMNT_23",
-      "glName": "Third party manpower"
     },
     {
       "amount": 1726.29,
@@ -3244,6 +3050,14 @@
       "glName": "Charitable Contributions"
     },
     {
+      "amount": 1170.6,
+      "count": 11,
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "costCenter": "MITAS",
+      "glName": "Communication & internet"
+    },
+    {
       "amount": 1043.28,
       "count": 4,
       "region": "Basra",
@@ -3273,22 +3087,6 @@
       "region": "Basra",
       "hub": "ROO Hub",
       "costCenter": "EIMNT_23",
-      "glName": "Communication & internet"
-    },
-    {
-      "amount": 826.82,
-      "count": 8,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITSOHTL",
-      "glName": "Communication & internet"
-    },
-    {
-      "amount": 809.6,
-      "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "HO_23",
       "glName": "Communication & internet"
     },
     {
@@ -3348,14 +3146,6 @@
       "glName": "Communication & internet"
     },
     {
-      "amount": 524.46,
-      "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "Management",
-      "glName": "Communication & internet"
-    },
-    {
       "amount": 519.48,
       "count": 2,
       "region": "Basra",
@@ -3394,22 +3184,6 @@
       "hub": "BGC Hub",
       "costCenter": "EX_23",
       "glName": "Third party manpower"
-    },
-    {
-      "amount": 348.84,
-      "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "ROOG_23",
-      "glName": "Communication & internet"
-    },
-    {
-      "amount": 345.25,
-      "count": 4,
-      "region": "Unmapped",
-      "hub": "Unmapped",
-      "costCenter": "MITASOHTL",
-      "glName": "Communication & internet"
     },
     {
       "amount": 304.54,
@@ -3478,8 +3252,8 @@
     {
       "amount": 108.4,
       "count": 2,
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "West Qurna",
       "costCenter": "WQ1SB_23",
       "glName": "DHL / Courier Fees / Shipping"
     },
@@ -3492,78 +3266,7 @@
       "glName": "Communication & internet"
     }
   ],
-  "unmappedCostCenters": [
-    {
-      "amount": 2345836.38,
-      "count": 328,
-      "sourceCostCenter": "QUR_23"
-    },
-    {
-      "amount": 1072261.18,
-      "count": 109,
-      "sourceCostCenter": "MITSOHTL"
-    },
-    {
-      "amount": 671256.26,
-      "count": 54,
-      "sourceCostCenter": "MITASOHTL"
-    },
-    {
-      "amount": 262193.41,
-      "count": 10,
-      "sourceCostCenter": "Management"
-    },
-    {
-      "amount": 55684,
-      "count": 2,
-      "sourceCostCenter": "TMS_26"
-    },
-    {
-      "amount": 18734,
-      "count": 3,
-      "sourceCostCenter": "CMNT_23"
-    },
-    {
-      "amount": 11734.84,
-      "count": 8,
-      "sourceCostCenter": "BGCG_23"
-    },
-    {
-      "amount": 9022.46,
-      "count": 5,
-      "sourceCostCenter": "ROOP_23"
-    },
-    {
-      "amount": 3640.52,
-      "count": 3,
-      "sourceCostCenter": "BGC_23"
-    },
-    {
-      "amount": 2604.6,
-      "count": 5,
-      "sourceCostCenter": "ROOM_23"
-    },
-    {
-      "amount": 1890.92,
-      "count": 4,
-      "sourceCostCenter": "WQ1SB_23"
-    },
-    {
-      "amount": 1890.9,
-      "count": 2,
-      "sourceCostCenter": "EPMNT_23"
-    },
-    {
-      "amount": 809.6,
-      "count": 2,
-      "sourceCostCenter": "HO_23"
-    },
-    {
-      "amount": 348.84,
-      "count": 2,
-      "sourceCostCenter": "ROOG_23"
-    }
-  ],
+  "unmappedCostCenters": [],
   "transactions": [
     {
       "serial": "280",
@@ -3833,11 +3536,11 @@
     },
     {
       "serial": "25",
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "Head Office",
       "sourceCostCenter": "Management",
-      "costCenter": "Management",
-      "isMapped": false,
+      "costCenter": "HO_SB_23",
+      "isMapped": true,
       "costType": "Actual",
       "glName": "Staff Salary & Compensation",
       "vendor": "IGCC",
@@ -6379,11 +6082,11 @@
     },
     {
       "serial": "263",
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "BGC Hub",
       "sourceCostCenter": "QUR_23",
-      "costCenter": "QUR_23",
-      "isMapped": false,
+      "costCenter": "QTC_24",
+      "isMapped": true,
       "costType": "Actual",
       "glName": "Security",
       "vendor": "Derraa Al Rumaila Security",
@@ -8488,11 +8191,11 @@
     },
     {
       "serial": "171",
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "BGC Hub",
       "sourceCostCenter": "QUR_23",
-      "costCenter": "QUR_23",
-      "isMapped": false,
+      "costCenter": "QTC_24",
+      "isMapped": true,
       "costType": "Accrual",
       "glName": "Light & Heavy Equipment’s Rental",
       "vendor": "Neema Abdul Hassan",
@@ -8697,11 +8400,11 @@
     },
     {
       "serial": "277",
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "ROO Hub",
       "sourceCostCenter": "ROOP_23",
-      "costCenter": "ROOP_23",
-      "isMapped": false,
+      "costCenter": "GRLRO_23",
+      "isMapped": true,
       "costType": "Actual",
       "glName": "Communication & internet",
       "vendor": "Zain Telecom",
@@ -8830,11 +8533,11 @@
     },
     {
       "serial": "269",
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "BGC Hub",
       "sourceCostCenter": "BGC_23",
-      "costCenter": "BGC_23",
-      "isMapped": false,
+      "costCenter": "GRLBG_23",
+      "isMapped": true,
       "costType": "Actual",
       "glName": "Communication & internet",
       "vendor": "Zain Telecom",
@@ -9818,11 +9521,11 @@
     },
     {
       "serial": "268",
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "BGC Hub",
       "sourceCostCenter": "BGC_23",
-      "costCenter": "BGC_23",
-      "isMapped": false,
+      "costCenter": "GRLBG_23",
+      "isMapped": true,
       "costType": "Accrual",
       "glName": "Communication & internet",
       "vendor": "Hulum Telecom",
@@ -9951,11 +9654,11 @@
     },
     {
       "serial": "281",
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "Head Office",
       "sourceCostCenter": "Management",
-      "costCenter": "Management",
-      "isMapped": false,
+      "costCenter": "HO_SB_23",
+      "isMapped": true,
       "costType": "Actual",
       "glName": "Air ticket & travel",
       "vendor": "Jabal Qendil BRS",
@@ -9970,11 +9673,11 @@
     },
     {
       "serial": "264",
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "BGC Hub",
       "sourceCostCenter": "QUR_23",
-      "costCenter": "QUR_23",
-      "isMapped": false,
+      "costCenter": "QTC_24",
+      "isMapped": true,
       "costType": "Actual",
       "glName": "Security",
       "vendor": "Derraa Al Rumaila Security",
@@ -12079,11 +11782,11 @@
     },
     {
       "serial": "272",
-      "region": "Unmapped",
-      "hub": "Unmapped",
+      "region": "Basra",
+      "hub": "Head Office",
       "sourceCostCenter": "HO_23",
-      "costCenter": "HO_23",
-      "isMapped": false,
+      "costCenter": "HO_SB_23",
+      "isMapped": true,
       "costType": "Actual",
       "glName": "Communication & internet",
       "vendor": "Zain Telecom",

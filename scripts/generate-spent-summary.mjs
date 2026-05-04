@@ -22,6 +22,19 @@ const COST_CENTER_ALIASES = {
   "camp_23": "Camp",
   "pwri_23": "PWRI_23",
   "E&I-MAJ": "E&I-MAJ_24",
+  "QUR_23": "QTC_24",
+  "MITSOHTL": "MITAS",
+  "MITASOHTL": "MITAS",
+  "Management": "HO_SB_23",
+  "TMS_26": "MWP_23",
+  "CMNT_23": "CVMNT_23",
+  "BGCG_23": "GRLBG_23",
+  "ROOP_23": "GRLRO_23",
+  "BGC_23": "GRLBG_23",
+  "ROOM_23": "CVMNT_23",
+  "EPMNT_23": "EIMNT_23",
+  "HO_23": "HO_SB_23",
+  "ROOG_23": "GRLRO_23",
 };
 
 const GL_ALIASES = {

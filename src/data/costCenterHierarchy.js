@@ -53,6 +53,11 @@ export const COST_CENTER_HIERARCHY = [
     costCenters: ["GRLTOT_25"],
   },
   {
+    region: "Basra",
+    hub: "West Qurna",
+    costCenters: ["WQ1SB_23"],
+  },
+  {
     region: "Kirkuk",
     hub: "BP Hub",
     costCenters: ["GRL-KR-BP-25"],
