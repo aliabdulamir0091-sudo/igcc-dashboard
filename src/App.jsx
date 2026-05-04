@@ -2015,8 +2015,19 @@ function DashboardApp({ session, onLogout }) {
   const collapseAllCeoPnL = () => {
     setCollapsedCeoPnLGroups(Object.fromEntries(ceoPnLGroupedRows.filter((row) => row.type !== "center").map((row) => [row.key, true])));
   };
+  const ceoNarrativeTopCostDriver = Array.from(
+    filteredData
+      .reduce((map, item) => {
+        const glName = item.category || "Uncategorized";
+        const current = map.get(glName) ?? { glName, cost: 0 };
+        current.cost += item.amount;
+        map.set(glName, current);
+        return map;
+      }, new Map())
+      .values()
+  ).sort((a, b) => b.cost - a.cost)[0];
   const ceoNarrativeText = ceoBestPerformer && ceoWorstPortfolio
-    ? `${ceoBestPerformer.costCenter} is the strongest performer at ${formatPercent(ceoBestPerformer.margin)} margin, while ${ceoWorstPortfolio.costCenter} is underperforming at ${formatPercent(ceoWorstPortfolio.margin)}, driven by ${topCostDriver?.glName ?? "the current cost mix"}.`
+    ? `${ceoBestPerformer.costCenter} is the strongest performer at ${formatPercent(ceoBestPerformer.margin)} margin, while ${ceoWorstPortfolio.costCenter} is underperforming at ${formatPercent(ceoWorstPortfolio.margin)}, driven by ${ceoNarrativeTopCostDriver?.glName ?? "the current cost mix"}.`
     : "Profitability narrative will update as cost center data becomes available.";
   useEffect(() => {
     const handleCeoKeys = (event) => {
