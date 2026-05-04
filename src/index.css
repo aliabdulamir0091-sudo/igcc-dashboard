@@ -59,7 +59,16 @@ button {
   border: 0;
   border-radius: 0;
   background: transparent;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+  padding: 20px clamp(18px, 3vw, 48px) 0;
+}
+
+.app-header-panel {
+  overflow: hidden;
+  border: 1px solid rgba(30, 64, 120, 0.32);
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(7, 23, 47, 0.98), rgba(8, 37, 70, 0.98) 58%, rgba(10, 70, 99, 0.96));
+  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.18);
 }
 
 .header-main,
@@ -71,9 +80,11 @@ button {
 }
 
 .header-main {
-  min-height: 92px;
-  padding: 18px clamp(18px, 3vw, 48px);
-  background: linear-gradient(135deg, #07172f 0%, #102b4d 58%, #173958 100%);
+  min-height: 124px;
+  padding: 26px 34px 22px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04), transparent 34%),
+    linear-gradient(135deg, rgba(6, 21, 43, 0.24), rgba(15, 118, 110, 0.18));
 }
 
 .brand-group,
@@ -82,6 +93,10 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.brand-group {
+  gap: 18px;
 }
 
 .brand-mark {
@@ -99,21 +114,26 @@ button {
 
 .brand-logo {
   display: block;
-  width: 62px;
-  height: 62px;
+  width: 82px;
+  height: 82px;
   flex: 0 0 auto;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #ffffff;
   object-fit: contain;
-  padding: 5px;
+  padding: 7px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+}
+
+.brand-copy {
+  padding-left: 18px;
+  border-left: 1px solid rgba(226, 232, 240, 0.22);
 }
 
 .app-header h1,
 .home-nav h1 {
   margin: 0;
   color: #ffffff;
-  font-size: 22px;
+  font-size: 28px;
   line-height: 1.05;
   letter-spacing: 0;
   font-weight: 950;
@@ -121,38 +141,63 @@ button {
 
 .app-header p,
 .home-nav p {
-  margin: 4px 0 0;
+  margin: 8px 0 0;
   color: rgba(226, 232, 240, 0.82);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 750;
 }
 
 .header-tabs {
   display: flex;
-  gap: 6px;
-  padding: 10px clamp(18px, 3vw, 48px);
-  border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(12px);
+  width: min(82%, 1180px);
+  margin: 0 auto 26px;
+  gap: 0;
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  background: rgba(6, 24, 49, 0.62);
+  backdrop-filter: blur(14px);
   overflow-x: auto;
 }
 
 .header-tabs button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 1 0 190px;
   border: 0;
-  border-radius: 8px;
+  border-right: 1px solid rgba(226, 232, 240, 0.14);
+  border-radius: 0;
   margin-top: 0;
-  padding: 10px 14px;
+  padding: 22px 24px;
   background: transparent;
-  color: #40516a;
-  font-size: 13px;
-  font-weight: 900;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 17px;
+  font-weight: 950;
   white-space: nowrap;
 }
 
+.header-tabs button:last-child {
+  border-right: 0;
+}
+
 .header-tabs button.is-active {
-  background: #eef7f4;
-  color: var(--teal);
-  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.16);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.92), rgba(20, 184, 166, 0.52));
+  color: #ffffff;
+  box-shadow: inset 0 -4px 0 rgba(20, 184, 166, 0.9);
+}
+
+.tab-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 9px;
+  color: inherit;
+  font-size: 13px;
 }
 
 .icon-button,
@@ -200,6 +245,39 @@ button {
   font-weight: 850;
 }
 
+.header-actions {
+  gap: 16px;
+}
+
+.period-control {
+  display: grid;
+  min-width: 210px;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid rgba(226, 232, 240, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.period-control span {
+  color: rgba(226, 232, 240, 0.76);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.period-control select {
+  min-height: 28px;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  padding: 0;
+  font-size: 15px;
+}
+
+.period-control option {
+  color: var(--text);
+}
+
 .export-button,
 .home-nav button,
 .hero-actions button,
@@ -208,6 +286,14 @@ button {
   padding: 0 14px;
   background: var(--teal);
   color: #ffffff;
+}
+
+.header-actions .export-button {
+  min-height: 54px;
+  padding: 0 24px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #087f79, #14a896);
+  box-shadow: 0 12px 30px rgba(20, 184, 166, 0.24);
 }
 
 .export-button:disabled {
@@ -226,6 +312,34 @@ button {
   font-weight: 950;
 }
 
+.user-cluster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+}
+
+.user-cluster strong,
+.user-cluster span {
+  display: block;
+}
+
+.user-cluster strong {
+  max-width: 150px;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-cluster span {
+  margin-top: 2px;
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .role-pill {
   display: inline-flex;
   align-items: center;
@@ -240,26 +354,167 @@ button {
   white-space: nowrap;
 }
 
-.filter-row {
+.filter-area {
   display: grid;
-  grid-template-columns: repeat(5, minmax(145px, 1fr)) auto auto;
-  gap: 12px;
-  align-items: end;
-  margin: 16px clamp(18px, 3vw, 48px) 0;
+  gap: 18px;
+  margin: 22px clamp(18px, 3vw, 48px) 0;
+}
+
+.portfolio-strip,
+.filter-row {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.06);
+}
+
+.portfolio-strip {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 24px;
+  align-items: center;
+  padding: 28px 34px;
+}
+
+.portfolio-intro {
+  display: grid;
+  gap: 10px;
+}
+
+.portfolio-intro strong {
+  color: var(--navy);
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.portfolio-intro span {
+  color: #516783;
+  line-height: 1.45;
+}
+
+.portfolio-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(190px, 1fr));
+  gap: 28px;
+}
+
+.portfolio-card {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  min-height: 92px;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: var(--card);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  background: #ffffff;
+  color: var(--navy);
+  text-align: left;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.portfolio-card.is-selected {
+  border-color: rgba(15, 118, 110, 0.5);
+  box-shadow: 0 16px 34px rgba(15, 118, 110, 0.11);
+}
+
+.portfolio-symbol {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  font-size: 24px;
+  font-weight: 950;
+}
+
+.tone-green .portfolio-symbol {
+  background: #e5f5ef;
+  color: #0f766e;
+}
+
+.tone-blue .portfolio-symbol {
+  background: #e8f1ff;
+  color: #2563eb;
+}
+
+.tone-purple .portfolio-symbol {
+  background: #f1e8ff;
+  color: #7c3aed;
+}
+
+.portfolio-card strong,
+.portfolio-card small {
+  display: block;
+}
+
+.portfolio-card strong {
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.portfolio-card small {
+  margin-top: 5px;
+  color: #516783;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.chevron {
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) minmax(190px, 1fr) minmax(260px, 1.25fr) minmax(170px, 1fr);
+  gap: 22px;
+  align-items: end;
+  padding: 28px 34px;
 }
 
 .filter-row label {
   display: grid;
   gap: 6px;
-  color: var(--muted);
-  font-size: 11px;
+  color: var(--navy);
+  font-size: 14px;
   font-weight: 950;
-  text-transform: uppercase;
+}
+
+.time-toggle {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.time-toggle legend {
+  margin-bottom: 6px;
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.time-toggle div {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  min-height: 40px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.time-toggle button {
+  min-height: 40px;
+  border-radius: 0;
+  background: #ffffff;
+  color: var(--navy);
+}
+
+.time-toggle button.is-active {
+  background: var(--navy);
+  color: #ffffff;
 }
 
 .ghost-button {
@@ -893,6 +1148,14 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .portfolio-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolio-cards {
+    grid-template-columns: 1fr;
+  }
+
   .auth-shell {
     grid-template-columns: 1fr;
     gap: 28px;
@@ -917,7 +1180,9 @@ button {
   }
 
   .header-tabs {
-    padding-left: 18px;
+    width: auto;
+    margin-left: 18px;
+    margin-right: 18px;
   }
 }
 
