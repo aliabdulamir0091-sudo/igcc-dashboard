@@ -7,6 +7,7 @@ export function AuthPage({ authError = "", isCheckingUser = false }) {
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const visibleError = formError || authError;
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -28,47 +29,76 @@ export function AuthPage({ authError = "", isCheckingUser = false }) {
 
   return (
     <main className="auth-page">
-      <section className="auth-card">
-        <div className="brand-mark auth-mark">IG</div>
-        <p className="eyebrow">Restricted application</p>
-        <h1>IGCC Financial Dashboard</h1>
-        <p>
-          Sign in with an approved account. Access is checked against Firebase Auth and the
-          Firestore users collection before the dashboard opens.
-        </p>
+      <section className="auth-shell">
+        <div className="auth-brand-panel">
+          <div className="brand-group">
+            <div className="brand-mark auth-mark">IG</div>
+            <div>
+              <h1>IGCC Financial Dashboard</h1>
+              <p>Modern financial command center</p>
+            </div>
+          </div>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label>
-            Email
+          <div className="auth-hero-copy">
+            <p className="eyebrow">Restricted executive access</p>
+            <h2>Financial control starts with a secure sign in.</h2>
+            <p>
+              Access is limited to approved users created by the administrator and verified in
+              Firestore before the dashboard opens.
+            </p>
+          </div>
+        </div>
+
+        <section className="auth-card" aria-label="Sign in">
+          <form className="auth-form" onSubmit={handleSubmit}>
             <input
+              aria-label="Email address"
               autoComplete="email"
               inputMode="email"
               onChange={(event) => setEmail(event.target.value)}
+              placeholder="Email address"
               required
               type="email"
               value={email}
             />
-          </label>
 
-          <label>
-            Password
             <input
+              aria-label="Password"
               autoComplete="current-password"
               onChange={(event) => setPassword(event.target.value)}
+              placeholder="Password"
               required
               type="password"
               value={password}
             />
-          </label>
 
-          {(authError || formError) && <div className="auth-error">{authError || formError}</div>}
+            {visibleError && <div className="auth-error">{visibleError}</div>}
 
-          <button disabled={isSubmitting || isCheckingUser} type="submit">
-            {isSubmitting || isCheckingUser ? "Checking access..." : "Sign In"}
+            <button className="auth-login-button" disabled={isSubmitting || isCheckingUser} type="submit">
+              {isSubmitting || isCheckingUser ? "Checking access..." : "Log In"}
+            </button>
+          </form>
+
+          <button
+            className="auth-link-button"
+            type="button"
+            onClick={() => setFormError("New accounts are created only by the administrator.")}
+          >
+            Forgot password?
           </button>
-        </form>
 
-        <div className="auth-note">Account creation is managed only by the administrator.</div>
+          <div className="auth-divider" />
+
+          <button
+            className="auth-create-button"
+            type="button"
+            onClick={() => setFormError("Sign up is restricted. The administrator must create the account in Firebase and Firestore.")}
+          >
+            Create New Account
+          </button>
+
+          <div className="auth-note">No public signup. Only approved IGCC users can access this application.</div>
+        </section>
       </section>
     </main>
   );

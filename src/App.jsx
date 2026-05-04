@@ -15,7 +15,7 @@ const PAGE_COMPONENTS = {
 };
 
 export default function App() {
-  const [activePage, setActivePage] = useState("home");
+  const [activePage, setActivePage] = useState("executive");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const { user, profile, authError, isCheckingUser, signOutUser } = useAuthorizedUser();
   const handleLogout = async () => {
@@ -23,12 +23,12 @@ export default function App() {
     await signOutUser();
   };
 
-  if (activePage === "home") {
-    return <HomePage onNavigate={setActivePage} />;
-  }
-
   if (!user) {
     return <AuthPage authError={authError} isCheckingUser={isCheckingUser} />;
+  }
+
+  if (activePage === "home") {
+    return <HomePage onNavigate={setActivePage} />;
   }
 
   const Page = PAGE_COMPONENTS[activePage] ?? ExecutiveCockpitPage;
