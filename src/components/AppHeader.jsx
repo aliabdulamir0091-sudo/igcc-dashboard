@@ -1,9 +1,11 @@
 import { NAV_ITEMS } from "../data/navigation";
+import { PORTFOLIOS } from "../data/portfolioOptions";
 import { Icon } from "./Icons";
 import igccLogo from "../assets/igcc-logo.svg";
 
-export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, user }) {
+export function AppHeader({ accessProfile, activePage, onLogout, onNavigate, onMenuOpen, user }) {
   const userInitial = (user?.displayName || user?.email || "U").slice(0, 1).toUpperCase();
+  const userName = user?.email?.split("@")[0] || "IGCC User";
 
   return (
     <header className="app-header">
@@ -17,40 +19,70 @@ export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, u
                 <span />
               </span>
             </button>
-            <img className="brand-logo" src={igccLogo} alt="IGCC" />
+            <span className="brand-logo-wrap">
+              <img className="brand-logo" src={igccLogo} alt="IGCC" />
+            </span>
             <div className="brand-copy">
+              <span className="company-name">Iraq Gate Contracting Company</span>
               <h1>Financial Dashboard</h1>
-              <p>Executive financial performance cockpit</p>
+              <p>Executive view of cost, AFP approval, profitability, and portfolio performance.</p>
             </div>
           </div>
 
           <div className="header-actions">
-            <button className="header-bell" type="button" aria-label="Notifications">
-              <Icon name="bell" />
-              <span>3</span>
-            </button>
-            <label className="period-control">
-              <Icon name="calendar" />
-              <span>Reporting Period</span>
-              <select aria-label="Reporting period" defaultValue="may-2025">
-                <option value="may-2025">May 2025</option>
-                <option value="current">Current period</option>
-              </select>
-            </label>
-            <button type="button" className="export-button" disabled={!accessProfile?.permissions?.canExport}>
-              <Icon name="download" />
-              Export Report
-            </button>
             <div className="user-cluster">
-              <div className="user-avatar" title={user?.email || "IGCC User"}>
-                {userInitial}
-              </div>
               <div>
-                <strong>{user?.email?.split("@")[0] || "IGCC User"}</strong>
-                <span>Authorized user</span>
+                <span>Welcome,</span>
+                <strong>{userName}</strong>
+                <small>{accessProfile?.role || "Admin"} | Last updated: May 2, 2026, 07:17 AM</small>
               </div>
             </div>
+            <button className="logout-button" onClick={onLogout} type="button">Logout</button>
           </div>
+        </div>
+
+        <div className="portfolio-pills" aria-label="Portfolio shortcuts">
+          {PORTFOLIOS.map((portfolio, index) => (
+            <button key={portfolio.id} className={`portfolio-pill tone-${portfolio.tone} ${index === 0 ? "is-active" : ""}`} type="button">
+              {portfolio.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="header-filter-row" aria-label="Dashboard filters">
+          <label>
+            <span><Icon name="hub" /> Hub</span>
+            <select>
+              <option>All hubs</option>
+            </select>
+          </label>
+          <label>
+            <span><Icon name="costCenter" /> Cost Center</span>
+            <select>
+              <option>All centers</option>
+            </select>
+          </label>
+          <fieldset>
+            <legend><Icon name="calendar" /> Time Mode</legend>
+            <div>
+              <button className="is-active" type="button">Monthly</button>
+              <button type="button">Quarterly</button>
+              <button type="button">Yearly</button>
+            </div>
+          </fieldset>
+          <label>
+            <span><Icon name="calendar" /> Year</span>
+            <select>
+              <option>All years</option>
+            </select>
+          </label>
+          <label>
+            <span><Icon name="calendar" /> Month</span>
+            <select>
+              <option>All months</option>
+            </select>
+          </label>
+          <button type="button" className="header-clear-button">Clear</button>
         </div>
 
         <nav className="header-tabs" aria-label="Application navigation">
@@ -67,6 +99,7 @@ export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, u
               {item.label}
             </button>
           ))}
+          <button type="button" className="dark-mode-button">Dark Mode</button>
         </nav>
       </div>
     </header>

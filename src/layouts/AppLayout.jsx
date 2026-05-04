@@ -39,6 +39,7 @@ export function AppLayout({
         <AppHeader
           accessProfile={accessProfile}
           activePage={activePage}
+          onLogout={onLogout}
           onNavigate={onNavigate}
           onMenuOpen={() => setIsPanelOpen(true)}
           user={user}
