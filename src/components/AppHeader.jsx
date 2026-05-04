@@ -3,10 +3,13 @@ import { PORTFOLIOS } from "../data/portfolioOptions";
 import { Icon } from "./Icons";
 import igccLogo from "../assets/igcc-logo.svg";
 
-export function AppHeader({ accessProfile, activePage, onLogout, onNavigate, onMenuOpen, user }) {
-  const userInitial = (user?.displayName || user?.email || "U").slice(0, 1).toUpperCase();
-  const userName = user?.email?.split("@")[0] || "IGCC User";
+const HEADER_SIGNALS = [
+  ["Reporting", "Executive live view"],
+  ["Scope", "All portfolios"],
+  ["Data", "Auto refreshed"],
+];
 
+export function AppHeader({ activePage, onNavigate, onMenuOpen }) {
   return (
     <header className="app-header">
       <div className="app-header-panel">
@@ -30,14 +33,14 @@ export function AppHeader({ accessProfile, activePage, onLogout, onNavigate, onM
           </div>
 
           <div className="header-actions">
-            <div className="user-cluster">
-              <div>
-                <span>Welcome,</span>
-                <strong>{userName}</strong>
-                <small>{accessProfile?.role || "Admin"} | Last updated: May 2, 2026, 07:17 AM</small>
-              </div>
+            <div className="header-status-grid" aria-label="Dashboard status">
+              {HEADER_SIGNALS.map(([label, value]) => (
+                <div className="header-status-card" key={label}>
+                  <span>{label}</span>
+                  <strong>{value}</strong>
+                </div>
+              ))}
             </div>
-            <button className="logout-button" onClick={onLogout} type="button">Logout</button>
           </div>
         </div>
 

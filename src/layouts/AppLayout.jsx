@@ -37,12 +37,9 @@ export function AppLayout({
       />
       <div className="app-shell">
         <AppHeader
-          accessProfile={accessProfile}
           activePage={activePage}
-          onLogout={onLogout}
           onNavigate={onNavigate}
           onMenuOpen={() => setIsPanelOpen(true)}
-          user={user}
         />
         <FilterRow />
         <main className="page-content">{children}</main>
