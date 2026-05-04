@@ -23,19 +23,6 @@ export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, u
           </div>
         </div>
 
-        <nav className="header-tabs" aria-label="Application navigation">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={activePage === item.id ? "is-active" : ""}
-              onClick={() => onNavigate(item.id)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-
         <div className="header-actions">
           <span className="role-pill">
             {role}
@@ -55,6 +42,19 @@ export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, u
           </div>
         </div>
       </div>
+
+      <nav className="header-tabs" aria-label="Application navigation">
+        {NAV_ITEMS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={activePage === item.id ? "is-active" : ""}
+            onClick={() => onNavigate(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
     </header>
   );
 }

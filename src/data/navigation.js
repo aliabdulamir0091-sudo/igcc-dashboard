@@ -1,7 +1,7 @@
 export const NAV_ITEMS = [
   { id: "home", label: "Home" },
-  { id: "executive", label: "Executive Cockpit" },
-  { id: "profitability", label: "Cost Center Profitability" },
+  { id: "executive", label: "Executive" },
+  { id: "profitability", label: "Cost Profitability" },
   { id: "spending", label: "Spending Report" },
 ];
 
