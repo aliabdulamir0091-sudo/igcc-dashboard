@@ -3864,7 +3864,7 @@ function DashboardApp({ session, onLogout }) {
         </div>
       )}
 
-      {isInternalPage && isUserMenuOpen && (
+      {isUserMenuOpen && (
         <div
           onClick={() => {
             setIsUserMenuOpen(false);
@@ -3894,21 +3894,21 @@ function DashboardApp({ session, onLogout }) {
               </button>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "30px 0 22px", borderBottom: "1px solid rgba(226,232,240,0.95)" }}>
-              <span style={{ display: "grid", placeItems: "center", width: 58, height: 58, borderRadius: 999, background: "#eef2f7", color: "#64748b", fontSize: 24, fontWeight: 950, flex: "0 0 auto" }}>{portalUserName.slice(0, 1).toUpperCase()}</span>
+            <div style={{ display: "grid", justifyItems: "center", gap: 10, padding: "30px 0 22px", borderBottom: "1px solid rgba(226,232,240,0.95)", textAlign: "center" }}>
+              <span style={{ display: "grid", placeItems: "center", width: 74, height: 74, borderRadius: 999, background: "linear-gradient(135deg, #eef2f7, #ffffff)", color: "#0f766e", fontSize: 28, fontWeight: 950, border: "1px solid rgba(203,213,225,0.85)", boxShadow: "0 14px 28px rgba(15,23,42,0.08)" }}>{portalUserName.slice(0, 1).toUpperCase()}</span>
               <div style={{ minWidth: 0 }}>
-                <div style={{ color: "#06143a", fontSize: 15, fontWeight: 950, overflowWrap: "anywhere" }}>{portalUserName}</div>
-                <div style={{ marginTop: 6, color: "#475569", fontSize: 13, fontWeight: 700 }}>Welcome back!</div>
+                <div style={{ color: "#06143a", fontSize: 16, fontWeight: 950, overflowWrap: "anywhere" }}>{portalUserName}</div>
+                <div style={{ marginTop: 5, color: "#64748b", fontSize: 13, fontWeight: 800 }}>Welcome back</div>
               </div>
               <span style={{ marginLeft: "auto", color: "#06143a", fontSize: 20, fontWeight: 900 }}>›</span>
             </div>
 
             <div style={{ paddingTop: 22 }}>
-              <div style={{ color: "#06143a", fontSize: 12, fontWeight: 950, letterSpacing: 0, marginBottom: 4 }}>MENU</div>
+              <div style={{ color: "#06143a", fontSize: 12, fontWeight: 950, letterSpacing: 0, marginBottom: 4 }}>Menu</div>
               {[
                 ["profile", "P", "My Profile", "View and edit your profile", "#2563eb", "#eff6ff"],
-                ["settings", "S", "Settings", "Preferences and configurations", "#059669", "#ecfdf5"],
-                ["preferences", "PR", "Preferences", "Dashboard, language, and more", "#7c3aed", "#f5f3ff"],
+                ["settings", "S", "Settings", "Preferences and configuration", "#059669", "#ecfdf5"],
+                ["preferences", "PR", "Preferences", "Dashboard, language and more", "#7c3aed", "#f5f3ff"],
                 ["contact", "C", "Contact Us", "Get in touch with support", "#f97316", "#fff7ed"],
                 ["help", "H", "Help Center", "Guides and documentation", "#3b5bdb", "#eef2ff"],
                 ["whats-new", "W", "What's New", "Latest updates and features", "#2563eb", "#eff6ff"],
@@ -3931,14 +3931,14 @@ function DashboardApp({ session, onLogout }) {
               ))}
             </div>
 
-            <div style={{ marginTop: "auto", paddingTop: 18 }}>
-              <div style={{ color: "#06143a", fontSize: 12, fontWeight: 950, letterSpacing: 0, paddingBottom: 9, borderBottom: "1px solid rgba(226,232,240,0.95)" }}>OTHER</div>
+            <div style={{ marginTop: "auto", paddingTop: 28 }}>
+              <div style={{ display: "none" }}>OTHER</div>
               <button
                 type="button"
                 onMouseEnter={() => setActiveUserModal("switch")}
                 onFocus={() => setActiveUserModal("switch")}
                 onClick={() => setActiveUserModal("switch")}
-                style={{ width: "100%", display: "grid", gridTemplateColumns: "42px 1fr auto", alignItems: "center", gap: 12, border: 0, borderBottom: "1px solid rgba(226,232,240,0.95)", padding: "17px 0", background: "transparent", color: "#06143a", textAlign: "left", cursor: "pointer" }}
+                style={{ display: "none" }}
               >
                 <span style={{ display: "grid", placeItems: "center", width: 34, height: 34, borderRadius: 999, background: "#eff6ff", color: "#2563eb", fontSize: 12, fontWeight: 950 }}>SV</span>
                 <span>
@@ -3998,22 +3998,22 @@ function DashboardApp({ session, onLogout }) {
       )}
 
       {isInternalPage && (
-      <div className="dashboard-header" style={{ position: "sticky", top: 0, zIndex: 30, marginBottom: 18, overflow: "visible", background: "linear-gradient(135deg, #031737 0%, #063f86 58%, #087faf 100%)", border: "1px solid rgba(125, 211, 252, 0.30)", borderRadius: 14, padding: 0, boxShadow: "0 18px 44px rgba(2, 23, 55, 0.24)" }}>
+      <div className="dashboard-header modern-site-header" style={{ position: "sticky", top: 10, zIndex: 30, marginBottom: 18, overflow: "visible", background: "rgba(255,255,255,0.90)", backdropFilter: "blur(18px)", border: "1px solid rgba(203,213,225,0.78)", borderRadius: 12, padding: 0, boxShadow: "0 18px 44px rgba(15,23,42,0.10)" }}>
         <div className="dashboard-header-main" style={{ minHeight: 68, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", padding: "10px 20px" }}>
           <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-            <button type="button" aria-label="Open application menu" onMouseEnter={() => setIsUserMenuOpen(true)} onFocus={() => setIsUserMenuOpen(true)} onClick={() => setIsUserMenuOpen(true)} style={{ display: "grid", placeItems: "center", width: 40, height: 40, border: "1px solid rgba(255,255,255,0.24)", borderRadius: 12, background: "rgba(255,255,255,0.12)", color: "#fff", cursor: "pointer", fontSize: 21, fontWeight: 950 }}>
+            <button type="button" aria-label="Open application menu" onMouseEnter={() => setIsUserMenuOpen(true)} onFocus={() => setIsUserMenuOpen(true)} onClick={() => setIsUserMenuOpen(true)} style={{ display: "grid", placeItems: "center", width: 40, height: 40, border: "1px solid rgba(15,23,42,0.10)", borderRadius: 10, background: "#ffffff", color: "#0f172a", cursor: "pointer", fontSize: 21, fontWeight: 950, boxShadow: "0 10px 22px rgba(15,23,42,0.08)" }}>
               ☰
             </button>
             <div style={{ width: 46, height: 46, borderRadius: 13, border: "1px solid rgba(255,255,255,0.28)", background: "#ffffff", display: "grid", placeItems: "center", flex: "0 0 auto", overflow: "hidden", boxShadow: "0 10px 22px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.20)" }}>
               <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC logo" style={{ width: 38, height: 38, objectFit: "contain" }} />
             </div>
             <div style={{ minWidth: 0 }}>
-              <h1 style={{ margin: 0, fontSize: 21, letterSpacing: 0, lineHeight: 1.05, fontWeight: 950, color: "#ffffff" }}>IGCC Financial Dashboard</h1>
-              <p style={{ margin: "4px 0 0", color: "rgba(226,242,255,0.82)", fontSize: 11, fontWeight: 750 }}>Executive financial performance cockpit</p>
+              <h1 style={{ margin: 0, fontSize: 21, letterSpacing: 0, lineHeight: 1.05, fontWeight: 950, color: "#0f172a" }}>IGCC Financial Dashboard</h1>
+              <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 11, fontWeight: 750 }}>Executive financial performance cockpit</p>
             </div>
           </div>
           <div className="dashboard-user-actions" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            <label style={{ display: "grid", gap: 4, color: "rgba(255,255,255,0.86)", fontSize: 10, fontWeight: 900 }}>
+            <label style={{ display: "grid", gap: 4, color: "#64748b", fontSize: 10, fontWeight: 900 }}>
               Reporting Period
               <select value={filters.month} onChange={handleFilterChange("month")} style={{ height: 40, minWidth: 164, border: "1px solid rgba(163,230,53,0.58)", borderRadius: 999, background: "linear-gradient(180deg, #f7fee7 0%, #ecfccb 100%)", color: "#163314", padding: "0 14px", fontSize: 12, fontWeight: 950, boxShadow: "0 10px 24px rgba(132,204,22,0.18)" }}>
                 <option value="">All periods</option>
@@ -4021,8 +4021,8 @@ function DashboardApp({ session, onLogout }) {
               </select>
             </label>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <button type="button" aria-label="Notifications" style={{ position: "relative", display: "grid", placeItems: "center", width: 40, height: 40, border: "1px solid rgba(255,255,255,0.24)", borderRadius: 12, background: "rgba(255,255,255,0.12)", color: "transparent", cursor: "pointer", fontSize: 0, fontWeight: 950 }}>
-                <span style={{ color: "#fff", fontSize: 16 }}>!</span>
+              <button type="button" aria-label="Notifications" style={{ position: "relative", display: "grid", placeItems: "center", width: 40, height: 40, border: "1px solid rgba(15,23,42,0.10)", borderRadius: 10, background: "#ffffff", color: "transparent", cursor: "pointer", fontSize: 0, fontWeight: 950, boxShadow: "0 10px 22px rgba(15,23,42,0.08)" }}>
+                <span style={{ color: "#0f172a", fontSize: 16 }}>!</span>
                 <span style={{ position: "absolute", right: 7, top: 6, width: 8, height: 8, borderRadius: 999, background: "#ef4444" }} />
               </button>
               <span
@@ -4035,7 +4035,7 @@ function DashboardApp({ session, onLogout }) {
             </div>
           </div>
         </div>
-        <nav aria-label="Dashboard pages" style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 20px", minHeight: 44, borderTop: "1px solid rgba(255,255,255,0.14)", background: "rgba(2,12,27,0.30)", overflowX: "auto" }}>
+        <nav aria-label="Dashboard pages" style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 20px 10px", minHeight: 44, borderTop: "1px solid rgba(226,232,240,0.95)", background: "#f8fafc", overflowX: "auto" }}>
           {visibleNavItems.map(([value, label]) => {
             const isActive = activePage === value;
             return (
@@ -4049,9 +4049,10 @@ function DashboardApp({ session, onLogout }) {
                 style={{
                   height: 44,
                   border: 0,
-                  borderBottom: `3px solid ${isActive ? "#a3e635" : "transparent"}`,
-                  background: isActive ? "rgba(236,252,203,0.12)" : "transparent",
-                  color: isActive ? "#ffffff" : "rgba(255,255,255,0.78)",
+                  borderRadius: 8,
+                  borderBottom: `3px solid ${isActive ? "#0f766e" : "transparent"}`,
+                  background: isActive ? "#ffffff" : "transparent",
+                  color: isActive ? "#0f766e" : "#475569",
                   cursor: "pointer",
                   padding: "0 16px",
                   fontSize: 12,
@@ -4204,6 +4205,9 @@ function DashboardApp({ session, onLogout }) {
       {activePage === "home" && (
       <div className="dashboard-nav-shell modern-site-header" style={{ position: "sticky", top: 10, zIndex: 30, display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center", margin: "0 0 26px", flexWrap: "wrap", background: "rgba(255,255,255,0.90)", backdropFilter: "blur(18px)", border: "1px solid rgba(203,213,225,0.78)", borderRadius: 12, padding: "12px 16px", boxShadow: "0 18px 44px rgba(15,23,42,0.10)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+          <button type="button" aria-label="Open application menu" onClick={() => setIsUserMenuOpen(true)} style={{ display: "grid", placeItems: "center", width: 40, height: 40, border: "1px solid rgba(15,23,42,0.10)", borderRadius: 10, background: "#ffffff", color: "#0f172a", cursor: "pointer", fontSize: 18, fontWeight: 950, boxShadow: "0 10px 22px rgba(15,23,42,0.08)" }}>
+            ≡
+          </button>
           <div style={{ width: 48, height: 48, borderRadius: 10, border: "1px solid rgba(15,23,42,0.10)", background: "#ffffff", display: "grid", placeItems: "center", overflow: "hidden", boxShadow: "0 10px 24px rgba(15,23,42,0.08)" }}>
             <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC logo" style={{ width: 38, height: 38, objectFit: "contain" }} />
           </div>
@@ -4216,7 +4220,7 @@ function DashboardApp({ session, onLogout }) {
           type="button"
           className="mobile-nav-toggle"
           aria-expanded={isMobileNavOpen}
-          onClick={() => setIsMobileNavOpen((current) => !current)}
+          onClick={() => setIsUserMenuOpen(true)}
           style={{ color: "#0f172a", background: "#f8fafc", borderColor: "rgba(148,163,184,0.40)" }}
         >
           <span aria-hidden="true">☰</span>
@@ -6903,6 +6907,21 @@ function DashboardApp({ session, onLogout }) {
           </div>
         ))}
       </section>
+
+      <footer className="dashboard-footer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 18, flexWrap: "wrap", marginTop: 18, padding: "18px 20px", border: "1px solid rgba(203,213,225,0.78)", borderRadius: 12, background: "rgba(255,255,255,0.82)", boxShadow: "0 14px 32px rgba(15,23,42,0.07)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+          <img src={getPublicAssetUrl("igcc-logo.svg")} alt="IGCC logo" style={{ width: 34, height: 34, objectFit: "contain" }} />
+          <div>
+            <strong style={{ display: "block", color: "#0f172a", fontSize: 13, fontWeight: 950 }}>IGCC Financial Portal</strong>
+            <span style={{ display: "block", marginTop: 3, color: "#64748b", fontSize: 12, fontWeight: 750 }}>Executive reporting, AFP visibility, profitability and spend intelligence.</span>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", color: "#64748b", fontSize: 12, fontWeight: 850 }}>
+          <span>{lastUpdatedLabel}</span>
+          <span style={{ width: 4, height: 4, borderRadius: 999, background: "#cbd5e1" }} />
+          <span>{session?.role || "Viewer"} access</span>
+        </div>
+      </footer>
 
       <table style={{ display: "none", width: "100%", borderCollapse: "collapse", backgroundColor: theme.panelBg, borderRadius: 8, overflow: "hidden", boxShadow: theme.cardShadow }}>
         <thead>

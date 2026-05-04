@@ -422,6 +422,14 @@ code {
     gap: 8px !important;
   }
 
+  .modern-site-header .dashboard-nav-list {
+    display: inline-flex !important;
+    flex-direction: row;
+    overflow-x: auto;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .dashboard-nav-list.is-open {
     display: flex !important;
   }
