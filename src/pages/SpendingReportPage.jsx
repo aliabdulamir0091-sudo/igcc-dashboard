@@ -14,16 +14,22 @@ const formatCurrency = (value) => currencyFormatter.format(value || 0);
 const formatNumber = (value) => numberFormatter.format(value || 0);
 const formatPercent = (value) => `${percentFormatter.format(value || 0)}%`;
 const getShare = (amount, total) => (total ? (amount / total) * 100 : 0);
+const getTrend = (current, previous) => (previous ? ((current - previous) / Math.abs(previous)) * 100 : 0);
 
-function FinancialKpiCard({ icon, label, value, context, tone = "teal" }) {
+function FinancialKpiCard({ icon, label, value, context, tone = "blue", trend, featured = false }) {
+  const trendValue = Number.isFinite(trend) ? trend : 0;
+
   return (
-    <article className={`financial-kpi-card tone-${tone}`}>
+    <article className={`financial-kpi-card tone-${tone} ${featured ? "is-featured" : ""}`}>
       <div className="financial-kpi-top">
         <span className="financial-kpi-icon"><Icon name={icon} /></span>
         <span>{context}</span>
       </div>
       <p>{label}</p>
       <strong>{value}</strong>
+      <small className={trendValue >= 0 ? "is-positive" : "is-negative"}>
+        {trendValue >= 0 ? "up" : "down"} {formatPercent(Math.abs(trendValue))} vs previous period
+      </small>
     </article>
   );
 }
@@ -35,22 +41,28 @@ function MonthlyTrendChart({ rows }) {
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   const series = [
-    { key: "spent", label: "Spent", color: "#0f766e" },
-    { key: "submitted", label: "AFP Submitted", color: "#2563eb" },
-    { key: "approved", label: "AFP Approved", color: "#d97706" },
+    { key: "spent", label: "Total Spent", color: "#2563eb" },
+    { key: "submitted", label: "AFP Submitted", color: "#16a34a" },
+    { key: "approved", label: "AFP Approved", color: "#7c3aed" },
   ];
   const maxValue = Math.max(...rows.flatMap((row) => series.map((item) => row[item.key] || 0)), 1);
   const x = (index) => padding.left + (rows.length <= 1 ? 0 : (index / (rows.length - 1)) * chartWidth);
   const y = (value) => padding.top + chartHeight - ((value || 0) / maxValue) * chartHeight;
-  const buildPath = (key) => rows.map((row, index) => `${index === 0 ? "M" : "L"} ${x(index).toFixed(1)} ${y(row[key]).toFixed(1)}`).join(" ");
+  const buildPath = (key) => rows.map((row, index) => {
+    const current = [x(index), y(row[key])];
+    if (index === 0) return `M ${current[0].toFixed(1)} ${current[1].toFixed(1)}`;
+    const previous = [x(index - 1), y(rows[index - 1][key])];
+    const controlOffset = (current[0] - previous[0]) * 0.5;
+    return `C ${(previous[0] + controlOffset).toFixed(1)} ${previous[1].toFixed(1)}, ${(current[0] - controlOffset).toFixed(1)} ${current[1].toFixed(1)}, ${current[0].toFixed(1)} ${current[1].toFixed(1)}`;
+  }).join(" ");
   const gridLines = [0.25, 0.5, 0.75, 1];
 
   return (
     <article className="surface-card financial-chart-card">
       <div className="chart-header">
         <div>
-          <p className="eyebrow">Monthly Trend</p>
-          <h3>Spent vs AFP Flow</h3>
+          <p className="eyebrow">Main Flow</p>
+          <h3>Financial Flow: Spent → Submitted → Approved → Adjustments</h3>
         </div>
         <div className="chart-legend">
           {series.map((item) => (
@@ -72,6 +84,9 @@ function MonthlyTrendChart({ rows }) {
         {series.map((item) => (
           <path key={item.key} d={buildPath(item.key)} style={{ "--line-color": item.color }} />
         ))}
+        {series.map((item) => (
+          <path key={`${item.key}-fill`} className="chart-line-glow" d={`${buildPath(item.key)} L ${x(rows.length - 1).toFixed(1)} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z`} style={{ "--line-color": item.color }} />
+        ))}
         {rows.map((row, index) => (
           <text key={row.period} className="chart-period-label" x={x(index)} y={height - 16}>
             {index % 2 === 0 || rows.length < 10 ? row.period.slice(2) : ""}
@@ -85,8 +100,12 @@ function MonthlyTrendChart({ rows }) {
 function InsightList({ insights }) {
   return (
     <article className="surface-card insights-card">
-      <p className="eyebrow">Top Insights</p>
-      <h3>Executive Readout</h3>
+      <div className="chart-header">
+        <div>
+          <p className="eyebrow">Top Insights</p>
+          <h3>Financial Signals</h3>
+        </div>
+      </div>
       <div className="insight-list">
         {insights.map((insight) => (
           <div className="insight-item" key={insight.label}>
@@ -128,11 +147,14 @@ function SummaryTable({ columns, rows }) {
 }
 
 export function SpendingReportPage() {
-  const { totals, latestPeriod, monthlyFlow, byCostCenter, byGlName, creditNotes, insights } = financialInputsData;
+  const { totals, monthlyFlow, byCostCenter, byGlName, creditNotes, insights } = financialInputsData;
   const chartRows = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved).slice(-16);
   const topCostCenter = byCostCenter[0];
   const topGlName = byGlName[0];
   const cnShare = getShare(totals.creditNotes, totals.spent);
+  const activeMonths = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved || row.creditNotes);
+  const current = activeMonths.at(-1) || {};
+  const previous = activeMonths.at(-2) || {};
 
   return (
     <section className="page-stack financial-inputs-page">
@@ -151,11 +173,11 @@ export function SpendingReportPage() {
       </div>
 
       <section className="financial-kpi-grid" aria-label="Financial input summary">
-        <FinancialKpiCard icon="spending" label="Total Spent" value={formatCurrency(totals.spent)} context="YTD cost input" tone="teal" />
-        <FinancialKpiCard icon="submit" label="AFP Submitted" value={formatCurrency(totals.submitted)} context="YTD submitted" tone="blue" />
-        <FinancialKpiCard icon="approve" label="AFP Approved" value={formatCurrency(totals.approved)} context="YTD approved" tone="green" />
-        <FinancialKpiCard icon="credit" label="Credit Notes" value={formatCurrency(totals.creditNotes)} context={`${formatPercent(cnShare)} of spent`} tone="amber" />
-        <FinancialKpiCard icon="net" label="Net Movement" value={formatCurrency(totals.netMovement)} context="Approved - Spent - CN" tone="slate" />
+        <FinancialKpiCard icon="spending" label="Total Spent" value={formatCurrency(totals.spent)} context="YTD cost input" tone="blue" trend={getTrend(current.spent, previous.spent)} />
+        <FinancialKpiCard icon="submit" label="AFP Submitted" value={formatCurrency(totals.submitted)} context="YTD submitted" tone="green" trend={getTrend(current.submitted, previous.submitted)} />
+        <FinancialKpiCard icon="approve" label="AFP Approved" value={formatCurrency(totals.approved)} context="YTD approved" tone="purple" trend={getTrend(current.approved, previous.approved)} />
+        <FinancialKpiCard icon="credit" label="Credit Notes (CN)" value={formatCurrency(totals.creditNotes)} context={`${formatPercent(cnShare)} of spent`} tone="amber" trend={getTrend(current.creditNotes, previous.creditNotes)} />
+        <FinancialKpiCard icon="net" label="Net Position" value={formatCurrency(totals.netMovement)} context="Approved - Spent - CN" tone={totals.netMovement >= 0 ? "net-positive" : "net-negative"} trend={getTrend(current.netMovement, previous.netMovement)} featured />
       </section>
 
       <div className="financial-main-grid">
@@ -193,7 +215,9 @@ export function SpendingReportPage() {
             rows={byCostCenter.slice(0, 10)}
             columns={[
               { key: "costCenter", label: "Cost Center" },
-              { key: "hub", label: "Hub" },
+              { key: "spent", label: "% of Total", render: (row) => (
+                <span className="table-progress"><i style={{ "--progress": `${getShare(row.spent, totals.spent)}%` }} />{formatPercent(getShare(row.spent, totals.spent))}</span>
+              ) },
               { key: "spent", label: "Spent", align: "right", render: (row) => formatCurrency(row.spent) },
               { key: "approved", label: "Approved", align: "right", render: (row) => formatCurrency(row.approved) },
             ]}
@@ -207,25 +231,18 @@ export function SpendingReportPage() {
             rows={byGlName.slice(0, 10)}
             columns={[
               { key: "glName", label: "GL Name" },
-              { key: "count", label: "Rows", align: "right", render: (row) => formatNumber(row.count) },
+              { key: "amount", label: "% of Total", render: (row) => (
+                <span className="table-progress purple"><i style={{ "--progress": `${getShare(row.amount, totals.spent)}%` }} />{formatPercent(getShare(row.amount, totals.spent))}</span>
+              ) },
               { key: "amount", label: "Spent", align: "right", render: (row) => formatCurrency(row.amount) },
             ]}
           />
         </article>
       </div>
 
-      {latestPeriod && (
-        <section className="surface-card latest-input-card">
-          <p className="eyebrow">Latest Input Month</p>
-          <h3>{latestPeriod.period}</h3>
-          <div>
-            <span>Spent {formatCurrency(latestPeriod.spent)}</span>
-            <span>Submitted {formatCurrency(latestPeriod.submitted)}</span>
-            <span>Approved {formatCurrency(latestPeriod.approved)}</span>
-            <span>CN {formatCurrency(latestPeriod.creditNotes)}</span>
-          </div>
-        </section>
-      )}
+      <section className="financial-input-note">
+        This dashboard shows financial inputs only. Profitability analysis is available in the Profit & Loss page.
+      </section>
     </section>
   );
 }

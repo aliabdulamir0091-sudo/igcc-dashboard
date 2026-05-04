@@ -2,7 +2,6 @@ import { useState } from "react";
 
 const PANEL_ITEMS = [
   ["My Profile", "View and edit your profile", "MP"],
-  ["Settings", "Preferences and configuration", "ST"],
   ["Preferences", "Dashboard, language and more", "PR"],
   ["Contact Us", "Get in touch with support", "CU"],
   ["Help Center", "Guides and documentation", "HC"],

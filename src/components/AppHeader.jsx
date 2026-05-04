@@ -5,12 +5,6 @@ import { PORTFOLIOS } from "../data/portfolioOptions";
 import { Icon } from "./Icons";
 import igccLogo from "../assets/igcc-logo.svg";
 
-const HEADER_SIGNALS = [
-  ["Reporting", "Live view"],
-  ["Scope", "All portfolios"],
-  ["Data", "Synced"],
-];
-
 export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleTheme }) {
   const isDarkMode = theme === "dark";
   const [selectedPortfolio, setSelectedPortfolio] = useState(ALL_FILTER_VALUE);
@@ -62,34 +56,33 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
   return (
     <header className="app-header">
       <div className="app-header-panel">
-        <div className="header-main">
+        <div className="header-nav-layer">
           <div className="brand-group">
-            <button className="icon-button" type="button" onClick={onMenuOpen} aria-label="Open menu">
-              <span className="hamburger-lines" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-              </span>
-            </button>
             <span className="brand-logo-wrap">
               <img className="brand-logo" src={igccLogo} alt="IGCC" />
             </span>
             <div className="brand-copy">
-              <span className="company-name">Iraq Gate Contracting Company</span>
               <h1>Financial Dashboard</h1>
-              <p>Cost, AFP, credit notes and portfolio performance.</p>
             </div>
           </div>
 
+          <nav className="header-tabs" aria-label="Application navigation">
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={activePage === item.id ? "is-active" : ""}
+                onClick={() => onNavigate(item.id)}
+              >
+                <span className="tab-icon">
+                  <Icon name={item.icon} />
+                </span>
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
           <div className="header-actions">
-            <div className="header-status-grid" aria-label="Dashboard status">
-              {HEADER_SIGNALS.map(([label, value]) => (
-                <div className="header-status-card" key={label}>
-                  <span>{label}</span>
-                  <strong>{value}</strong>
-                </div>
-              ))}
-            </div>
             <button
               type="button"
               className={`theme-toggle-button ${isDarkMode ? "is-active" : ""}`}
@@ -98,24 +91,15 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
             >
               {isDarkMode ? "Light Mode" : "Dark Mode"}
             </button>
+            <button className="icon-button" type="button" onClick={onMenuOpen} aria-label="Open menu">
+              <span className="hamburger-lines" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </span>
+            </button>
           </div>
         </div>
-
-        <nav className="header-tabs" aria-label="Application navigation">
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={activePage === item.id ? "is-active" : ""}
-              onClick={() => onNavigate(item.id)}
-            >
-              <span className="tab-icon">
-                <Icon name={item.icon} />
-              </span>
-              {item.label}
-            </button>
-          ))}
-        </nav>
 
         <div className="header-filter-row" aria-label="Dashboard filters">
           <label>
@@ -162,6 +146,7 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
               ))}
             </select>
           </label>
+          <button type="button" className="header-apply-button">Apply Filters</button>
           <button type="button" className="header-clear-button" onClick={clearFilters}>Clear</button>
         </div>
       </div>
