@@ -1,0 +1,59 @@
+const PANEL_ITEMS = [
+  ["My Profile", "View and edit your profile", "MP"],
+  ["Settings", "Preferences and configuration", "ST"],
+  ["Preferences", "Dashboard, language and more", "PR"],
+  ["Contact Us", "Get in touch with support", "CU"],
+  ["Help Center", "Guides and documentation", "HC"],
+  ["What's New", "Latest updates and features", "WN"],
+];
+
+const getUserName = (user) => {
+  if (user?.displayName) return user.displayName;
+  if (user?.email) return user.email.split("@")[0].replace(/[._-]+/g, " ");
+  return "IGCC User";
+};
+
+export function UserSlidePanel({ isOpen, onClose, user }) {
+  if (!isOpen) return null;
+
+  const userName = getUserName(user);
+  const avatar = userName.slice(0, 1).toUpperCase();
+
+  return (
+    <div className="slide-panel-backdrop" onClick={onClose}>
+      <aside className="slide-panel" onClick={(event) => event.stopPropagation()}>
+        <button className="panel-close" type="button" onClick={onClose} aria-label="Close menu">
+          ×
+        </button>
+
+        <section className="panel-profile">
+          <div className="panel-avatar">{avatar}</div>
+          <strong>{userName}</strong>
+          <span>Welcome</span>
+        </section>
+
+        <nav className="panel-menu" aria-label="User menu">
+          {PANEL_ITEMS.map(([label, note, icon]) => (
+            <button key={label} type="button" className="panel-row">
+              <span className="panel-icon">{icon}</span>
+              <span>
+                <strong>{label}</strong>
+                <small>{note}</small>
+              </span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="panel-spacer" />
+
+        <button type="button" className="panel-row panel-logout">
+          <span className="panel-icon">LO</span>
+          <span>
+            <strong>Logout</strong>
+            <small>Sign out from your account</small>
+          </span>
+        </button>
+      </aside>
+    </div>
+  );
+}
