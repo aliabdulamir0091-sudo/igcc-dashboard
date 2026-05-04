@@ -4,9 +4,9 @@ import { Icon } from "./Icons";
 import igccLogo from "../assets/igcc-logo.svg";
 
 const HEADER_SIGNALS = [
-  ["Reporting", "Executive live view"],
+  ["Reporting", "Live view"],
   ["Scope", "All portfolios"],
-  ["Data", "Auto refreshed"],
+  ["Data", "Synced"],
 ];
 
 export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleTheme }) {
@@ -30,7 +30,7 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
             <div className="brand-copy">
               <span className="company-name">Iraq Gate Contracting Company</span>
               <h1>Financial Dashboard</h1>
-              <p>Executive view of cost, AFP approval, profitability, and portfolio performance.</p>
+              <p>Cost, AFP, margin and portfolio performance.</p>
             </div>
           </div>
 
@@ -54,14 +54,6 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           </div>
         </div>
 
-        <div className="portfolio-pills" aria-label="Portfolio shortcuts">
-          {PORTFOLIOS.map((portfolio, index) => (
-            <button key={portfolio.id} className={`portfolio-pill tone-${portfolio.tone} ${index === 0 ? "is-active" : ""}`} type="button">
-              {portfolio.label}
-            </button>
-          ))}
-        </div>
-
         <nav className="header-tabs" aria-label="Application navigation">
           {NAV_ITEMS.map((item) => (
             <button
@@ -77,6 +69,14 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
             </button>
           ))}
         </nav>
+
+        <div className="portfolio-pills" aria-label="Portfolio shortcuts">
+          {PORTFOLIOS.map((portfolio, index) => (
+            <button key={portfolio.id} className={`portfolio-pill tone-${portfolio.tone} ${index === 0 ? "is-active" : ""}`} type="button">
+              {portfolio.label}
+            </button>
+          ))}
+        </div>
 
         <div className="header-filter-row" aria-label="Dashboard filters">
           <label>
