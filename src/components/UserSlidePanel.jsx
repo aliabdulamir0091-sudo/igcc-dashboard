@@ -12,6 +12,7 @@ const PANEL_ITEMS = [
 const getUserName = (user, userProfile) => {
   if (userProfile?.displayName) return userProfile.displayName;
   if (userProfile?.name) return userProfile.name;
+  if (userProfile?.email) return userProfile.email.split("@")[0].replace(/[._-]+/g, " ");
   if (user?.displayName) return user.displayName;
   if (user?.email) return user.email.split("@")[0].replace(/[._-]+/g, " ");
   return "IGCC User";

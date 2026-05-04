@@ -1,18 +1,7 @@
 export function HomePage({ onNavigate }) {
   return (
-    <main className="home-page">
-      <nav className="home-nav">
-        <div className="brand-group">
-          <div className="brand-mark">IG</div>
-          <div>
-            <h1>IGCC Financial Dashboard</h1>
-            <p>Modern financial command center</p>
-          </div>
-        </div>
-        <button type="button" onClick={() => onNavigate("executive")}>Enter Application</button>
-      </nav>
-
-      <section className="home-hero">
+    <div className="page-stack">
+      <section className="home-hero app-home-hero">
         <div>
           <p className="eyebrow">Professional SaaS foundation</p>
           <h2>Executive finance intelligence, built for scale.</h2>
@@ -40,6 +29,6 @@ export function HomePage({ onNavigate }) {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

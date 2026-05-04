@@ -44,7 +44,7 @@ export function AuthPage({ authError = "", isCheckingUser = false }) {
             <h2>Financial control starts with a secure sign in.</h2>
             <p>
               Access is limited to approved users created by the administrator and verified in
-              Firestore before the dashboard opens.
+              Firestore allowedUsers before the dashboard opens.
             </p>
           </div>
         </div>
@@ -92,7 +92,7 @@ export function AuthPage({ authError = "", isCheckingUser = false }) {
           <button
             className="auth-create-button"
             type="button"
-            onClick={() => setFormError("Sign up is restricted. The administrator must create the account in Firebase and Firestore.")}
+            onClick={() => setFormError("Sign up is restricted. The administrator must create the account in Firebase Auth and approve the email in Firestore allowedUsers.")}
           >
             Create New Account
           </button>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AccessDeniedPage } from "./components/AccessDeniedPage";
 import { AuthPage } from "./components/AuthPage";
 import { DATA_SCHEMAS } from "./data/firestoreCollections";
 import { AppLayout } from "./layouts/AppLayout";
@@ -9,6 +10,7 @@ import { SpendingReportPage } from "./pages/SpendingReportPage";
 import { useAuthorizedUser } from "./hooks/useAuthorizedUser";
 
 const PAGE_COMPONENTS = {
+  home: HomePage,
   executive: ExecutiveCockpitPage,
   profitability: ProfitabilityPage,
   spending: SpendingReportPage,
@@ -17,18 +19,28 @@ const PAGE_COMPONENTS = {
 export default function App() {
   const [activePage, setActivePage] = useState("executive");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const { user, profile, authError, isCheckingUser, signOutUser } = useAuthorizedUser();
+  const {
+    user,
+    accessProfile,
+    accessDenied,
+    authError,
+    isCheckingUser,
+    resetAccessDenied,
+    signOutUser,
+  } = useAuthorizedUser();
   const handleLogout = async () => {
     setIsPanelOpen(false);
     await signOutUser();
   };
 
-  if (!user) {
-    return <AuthPage authError={authError} isCheckingUser={isCheckingUser} />;
+  if (accessDenied) {
+    return (
+      <AccessDeniedPage deniedEmail={accessDenied.email} onBackToLogin={resetAccessDenied} />
+    );
   }
 
-  if (activePage === "home") {
-    return <HomePage onNavigate={setActivePage} />;
+  if (!user) {
+    return <AuthPage authError={authError} isCheckingUser={isCheckingUser} />;
   }
 
   const Page = PAGE_COMPONENTS[activePage] ?? ExecutiveCockpitPage;
@@ -40,10 +52,11 @@ export default function App() {
       isPanelOpen={isPanelOpen}
       setIsPanelOpen={setIsPanelOpen}
       user={user}
-      userProfile={profile}
+      userProfile={accessProfile}
+      accessProfile={accessProfile}
       onLogout={handleLogout}
     >
-      <Page dataSchemas={DATA_SCHEMAS} />
+      <Page dataSchemas={DATA_SCHEMAS} accessProfile={accessProfile} onNavigate={setActivePage} />
     </AppLayout>
   );
 }

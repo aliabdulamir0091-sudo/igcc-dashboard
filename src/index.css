@@ -159,6 +159,19 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
+.hamburger-lines {
+  display: grid;
+  gap: 4px;
+  width: 18px;
+}
+
+.hamburger-lines span {
+  display: block;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
 .header-actions select,
 .filter-row select {
   min-height: 40px;
@@ -181,6 +194,11 @@ button {
   color: #ffffff;
 }
 
+.export-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .user-avatar {
   display: grid;
   place-items: center;
@@ -190,6 +208,20 @@ button {
   background: #ffffff;
   color: var(--navy);
   font-weight: 950;
+}
+
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 11px;
+  font-weight: 950;
+  white-space: nowrap;
 }
 
 .filter-row {
@@ -387,6 +419,63 @@ button {
     radial-gradient(circle at 18% 24%, rgba(15, 118, 110, 0.12), transparent 28%),
     radial-gradient(circle at 80% 18%, rgba(37, 99, 235, 0.1), transparent 30%),
     var(--bg);
+}
+
+.access-denied-page {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(220, 38, 38, 0.09), transparent 28%),
+    radial-gradient(circle at 82% 24%, rgba(15, 118, 110, 0.11), transparent 30%),
+    var(--bg);
+}
+
+.access-denied-card {
+  width: min(540px, 100%);
+  padding: 28px;
+  border: 1px solid rgba(254, 202, 202, 0.95);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.access-denied-card h1 {
+  margin: 8px 0 0;
+  color: var(--text);
+  font-size: 32px;
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+
+.access-denied-card p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.access-denied-card button {
+  min-height: 44px;
+  margin-top: 18px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--teal);
+  color: #ffffff;
+  font-weight: 950;
+}
+
+.denied-email {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8fafc;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 900;
+  word-break: break-word;
 }
 
 .auth-shell {

@@ -11,6 +11,7 @@ export function AppLayout({
   setIsPanelOpen,
   user,
   userProfile,
+  accessProfile,
   onLogout,
   children,
 }) {
@@ -35,10 +36,16 @@ export function AppLayout({
         userProfile={userProfile}
       />
       <div className="app-shell">
-        <AppHeader activePage={activePage} onNavigate={onNavigate} onMenuOpen={() => setIsPanelOpen(true)} user={user} />
+        <AppHeader
+          accessProfile={accessProfile}
+          activePage={activePage}
+          onNavigate={onNavigate}
+          onMenuOpen={() => setIsPanelOpen(true)}
+          user={user}
+        />
         <FilterRow />
         <main className="page-content">{children}</main>
-        <AppFooter />
+        <AppFooter accessProfile={accessProfile} />
       </div>
     </>
   );

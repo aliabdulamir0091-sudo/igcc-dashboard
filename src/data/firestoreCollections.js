@@ -4,6 +4,7 @@ export const FIRESTORE_COLLECTIONS = {
   costs: "costs",
   creditNotes: "creditNotes",
   users: "users",
+  allowedUsers: "allowedUsers",
 };
 
 export const DATA_SCHEMAS = [
@@ -26,5 +27,9 @@ export const DATA_SCHEMAS = [
   {
     collection: FIRESTORE_COLLECTIONS.users,
     purpose: "User profile, role, and preferences.",
+  },
+  {
+    collection: FIRESTORE_COLLECTIONS.allowedUsers,
+    purpose: "Approved application access list keyed by user email.",
   },
 ];
