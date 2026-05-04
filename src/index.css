@@ -692,6 +692,58 @@ button {
   margin-top: 18px;
 }
 
+.report-table-wrap {
+  max-height: 390px;
+  margin-top: 16px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  font-size: 13px;
+}
+
+.report-table th,
+.report-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.report-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #eef7f4;
+  color: var(--teal);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.report-table td {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.report-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.report-table .is-number {
+  text-align: right;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .report-table th {
+  background: #10283a;
+}
+
 .app-footer {
   display: flex;
   justify-content: space-between;
