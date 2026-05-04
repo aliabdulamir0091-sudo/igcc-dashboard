@@ -12,6 +12,7 @@ import { useAuthorizedUser } from "./hooks/useAuthorizedUser";
 const PAGE_COMPONENTS = {
   home: HomePage,
   executive: ExecutiveCockpitPage,
+  "cost-center": ProfitabilityPage,
   profitability: ProfitabilityPage,
   spending: SpendingReportPage,
 };

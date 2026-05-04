@@ -1,4 +1,5 @@
 import { NAV_ITEMS } from "../data/navigation";
+import { Icon } from "./Icons";
 import igccLogo from "../assets/igcc-logo.svg";
 
 export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, user }) {
@@ -24,7 +25,12 @@ export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, u
           </div>
 
           <div className="header-actions">
+            <button className="header-bell" type="button" aria-label="Notifications">
+              <Icon name="bell" />
+              <span>3</span>
+            </button>
             <label className="period-control">
+              <Icon name="calendar" />
               <span>Reporting Period</span>
               <select aria-label="Reporting period" defaultValue="may-2025">
                 <option value="may-2025">May 2025</option>
@@ -32,6 +38,7 @@ export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, u
               </select>
             </label>
             <button type="button" className="export-button" disabled={!accessProfile?.permissions?.canExport}>
+              <Icon name="download" />
               Export Report
             </button>
             <div className="user-cluster">
@@ -54,7 +61,9 @@ export function AppHeader({ accessProfile, activePage, onNavigate, onMenuOpen, u
               className={activePage === item.id ? "is-active" : ""}
               onClick={() => onNavigate(item.id)}
             >
-              <span className="tab-icon" aria-hidden="true">{item.label.slice(0, 1)}</span>
+              <span className="tab-icon">
+                <Icon name={item.icon} />
+              </span>
               {item.label}
             </button>
           ))}

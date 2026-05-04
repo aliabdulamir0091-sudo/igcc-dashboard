@@ -63,12 +63,38 @@ button {
 }
 
 .app-header-panel {
+  position: relative;
   overflow: hidden;
   border: 1px solid rgba(30, 64, 120, 0.32);
   border-radius: 20px;
   background:
     linear-gradient(135deg, rgba(7, 23, 47, 0.98), rgba(8, 37, 70, 0.98) 58%, rgba(10, 70, 99, 0.96));
   box-shadow: 0 22px 54px rgba(15, 23, 42, 0.18);
+}
+
+.app-header-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 0 54%, rgba(16, 185, 129, 0.1) 54% 56%, transparent 56%),
+    linear-gradient(125deg, transparent 0 62%, rgba(59, 130, 246, 0.12) 62% 64%, transparent 64%),
+    repeating-linear-gradient(90deg, transparent 0 44px, rgba(255, 255, 255, 0.026) 44px 45px),
+    radial-gradient(circle at 4% 18%, rgba(20, 184, 166, 0.22), transparent 26%),
+    radial-gradient(circle at 92% 20%, rgba(14, 165, 233, 0.16), transparent 24%);
+  opacity: 0.95;
+}
+
+.app-header-panel::after {
+  content: "$";
+  position: absolute;
+  right: 42px;
+  bottom: 28px;
+  color: rgba(255, 255, 255, 0.035);
+  font-size: 190px;
+  font-weight: 950;
+  line-height: 1;
 }
 
 .header-main,
@@ -80,6 +106,8 @@ button {
 }
 
 .header-main {
+  position: relative;
+  z-index: 1;
   min-height: 124px;
   padding: 26px 34px 22px;
   background:
@@ -148,8 +176,10 @@ button {
 }
 
 .header-tabs {
+  position: relative;
+  z-index: 1;
   display: flex;
-  width: min(82%, 1180px);
+  width: min(86%, 1280px);
   margin: 0 auto 26px;
   gap: 0;
   padding: 0;
@@ -166,7 +196,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  flex: 1 0 190px;
+  flex: 1 0 170px;
   border: 0;
   border-right: 1px solid rgba(226, 232, 240, 0.14);
   border-radius: 0;
@@ -197,7 +227,16 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 9px;
   color: inherit;
-  font-size: 13px;
+}
+
+.svg-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 .icon-button,
@@ -251,12 +290,19 @@ button {
 
 .period-control {
   display: grid;
+  grid-template-columns: 26px 1fr;
   min-width: 210px;
-  gap: 2px;
+  column-gap: 10px;
   padding: 10px 14px;
   border: 1px solid rgba(226, 232, 240, 0.18);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.06);
+}
+
+.period-control .svg-icon {
+  grid-row: span 2;
+  align-self: center;
+  color: #ffffff;
 }
 
 .period-control span {
@@ -289,11 +335,41 @@ button {
 }
 
 .header-actions .export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   min-height: 54px;
   padding: 0 24px;
   border-radius: 14px;
   background: linear-gradient(135deg, #087f79, #14a896);
   box-shadow: 0 12px 30px rgba(20, 184, 166, 0.24);
+}
+
+.header-bell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.header-bell span {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #14b8a6;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 950;
 }
 
 .export-button:disabled {
@@ -424,8 +500,12 @@ button {
   width: 58px;
   height: 58px;
   border-radius: 14px;
-  font-size: 24px;
-  font-weight: 950;
+}
+
+.portfolio-symbol .svg-icon {
+  width: 34px;
+  height: 34px;
+  stroke-width: 1.8;
 }
 
 .tone-green .portfolio-symbol {
@@ -475,11 +555,26 @@ button {
 }
 
 .filter-row label {
+  position: relative;
   display: grid;
   gap: 6px;
   color: var(--navy);
   font-size: 14px;
   font-weight: 950;
+}
+
+.filter-row label select {
+  padding-left: 42px;
+}
+
+.filter-icon {
+  position: absolute;
+  left: 14px;
+  bottom: 10px;
+  width: 20px;
+  height: 20px;
+  color: #355177;
+  pointer-events: none;
 }
 
 .time-toggle {
@@ -1183,6 +1278,14 @@ button {
     width: auto;
     margin-left: 18px;
     margin-right: 18px;
+  }
+
+  .header-main {
+    gap: 22px;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
   }
 }
 
