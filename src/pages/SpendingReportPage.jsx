@@ -585,12 +585,16 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
   const isCostCenterMode = activeGlNames.length > 0;
   const costCenterRows = getGlFilteredCostCenterRows(byGlCostCenter, activeGlNames, sortMode).map((row) => {
     const totalsForCostCenter = costCenterLookup.get(row.costCenter) || {};
-      return {
-        ...row,
-        spent: totalsForCostCenter.spent || 0,
-        sparkline: costCenterSparklineByName[row.costCenter] || [],
-      };
-    });
+    return {
+      ...row,
+      spent: totalsForCostCenter.spent || 0,
+      sparkline: costCenterSparklineByName[row.costCenter] || [],
+    };
+  }).sort((a, b) => {
+    if (sortMode === "cost-center") return a.costCenter.localeCompare(b.costCenter);
+    if (sortMode === "hub") return a.hub.localeCompare(b.hub) || getShare(b.total, b.spent) - getShare(a.total, a.spent);
+    return getShare(b.total, b.spent) - getShare(a.total, a.spent);
+  });
   const glRows = (() => {
     const rows = [...byGlName];
     if (sortMode === "cost-center") rows.sort((a, b) => a.glName.localeCompare(b.glName));
@@ -638,7 +642,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
         <label className="analysis-sort-control">
           <span>Sort</span>
           <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
-            <option value="spent-desc">Highest spent</option>
+            <option value="spent-desc">{isCostCenterMode ? "Highest %" : "Highest spent"}</option>
             <option value="cost-center">Name</option>
             <option value="hub">Hub</option>
           </select>
