@@ -934,7 +934,7 @@ export function SpendingReportPage({ filters }) {
       <div className="page-heading financial-story-heading">
         <p className="eyebrow">Financial Inputs</p>
         <h2>Financial Inputs Dashboard</h2>
-        <p>What we spent, what we submitted, what got approved, and how credit notes adjusted the position.</p>
+        <p>What we spent, what we submitted, what got approved, and how credit notes support cost-center allocation detail.</p>
       </div>
 
       <div className="financial-story-rail" aria-label="Financial input story">

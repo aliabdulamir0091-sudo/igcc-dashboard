@@ -10,7 +10,7 @@ export function ExecutiveCockpitPage() {
       </div>
 
       <div className="kpi-grid">
-        {["Net Position", "Approved AFP", "Total Cost", "CN Impact"].map((label) => (
+        {["Net Position", "Approved AFP", "Total Cost", "CN Allocation Detail"].map((label) => (
           <article key={label} className="metric-card">
             <span>{label}</span>
             <strong>Awaiting data</strong>
@@ -22,7 +22,7 @@ export function ExecutiveCockpitPage() {
       <div className="content-grid">
         <article className="surface-card">
           <h3>Executive trend canvas</h3>
-          <p>Prepared for costs, AFP, and CN movement across reporting periods.</p>
+          <p>Prepared for costs, AFP, and CN allocation review across reporting periods.</p>
           <div className="empty-visual" />
         </article>
         <article className="surface-card">

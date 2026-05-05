@@ -27,7 +27,7 @@ const PAGE_COMPONENTS = {
 };
 
 export default function App() {
-  const [activePage, setActivePage] = useState("executive");
+  const [activePage, setActivePage] = useState("home");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem("igcc-theme") || "light");
   const [dashboardFilters, setDashboardFilters] = useState(DEFAULT_DASHBOARD_FILTERS);
