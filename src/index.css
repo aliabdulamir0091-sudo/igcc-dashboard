@@ -2460,6 +2460,8 @@ button {
 }
 
 .spend-profile-bar {
+  display: flex;
+  gap: 2px;
   height: 10px;
   overflow: hidden;
   border-radius: 999px;
@@ -2472,6 +2474,55 @@ button {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, #2563eb, #7c3aed);
+}
+
+.spend-profile-bar .spend-profile-segment {
+  flex: 0 0 var(--bar-width);
+  width: auto;
+  background: var(--segment-color);
+}
+
+.spend-segment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.spend-segment-list span {
+  display: inline-grid;
+  grid-template-columns: 7px auto auto;
+  gap: 6px;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #102033;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.spend-segment-list i {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--segment-color);
+}
+
+.spend-segment-list b {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spend-segment-list em {
+  color: var(--muted);
+  font-style: normal;
+  white-space: nowrap;
 }
 
 .spending-sparkline {

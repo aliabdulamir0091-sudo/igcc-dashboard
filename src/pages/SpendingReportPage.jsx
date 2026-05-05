@@ -335,16 +335,51 @@ function getGlFilteredCostCenterRows(rows, selectedGlNames, sortMode) {
   });
 }
 
-function SpendShareBar({ percent }) {
+const segmentColors = ["#2563eb", "#7c3aed", "#0f766e", "#f97316", "#db2777", "#64748b"];
+
+const getShortLabel = (label) => {
+  if (!label) return "";
+  const cleanLabel = label.replace(/&/g, " ").replace(/\s+/g, " ").trim();
+  const words = cleanLabel.split(" ");
+  if (cleanLabel.length <= 18) return cleanLabel;
+  return words.slice(0, 3).join(" ");
+};
+
+function SpendShareBar({ percent, segments = [] }) {
   const width = Math.min(Math.max(percent || 0, 0), 100);
+  const normalizedSegments = segments.filter((segment) => segment.amount > 0);
 
   return (
     <div className="spend-profile-cell">
       <div className="spend-profile-meta">
         <strong>{formatPercent(percent)} of spent</strong>
       </div>
+      {normalizedSegments.length ? (
+        <div className="spend-segment-list">
+          {normalizedSegments.map((segment, index) => (
+            <span key={segment.label} style={{ "--segment-color": segmentColors[index % segmentColors.length] }}>
+              <i />
+              <b>{getShortLabel(segment.label)}</b>
+              <em>{formatCurrency(segment.amount)} · {formatPercent(segment.percent)}</em>
+            </span>
+          ))}
+        </div>
+      ) : null}
       <div className="spend-profile-bar" aria-hidden="true">
-        <span style={{ "--bar-width": `${width}%` }} />
+        {normalizedSegments.length ? (
+          normalizedSegments.map((segment, index) => (
+            <span
+              key={segment.label}
+              className="spend-profile-segment"
+              style={{
+                "--bar-width": `${Math.min(Math.max(segment.percent || 0, 0), 100)}%`,
+                "--segment-color": segmentColors[index % segmentColors.length],
+              }}
+            />
+          ))
+        ) : (
+          <span style={{ "--bar-width": `${width}%` }} />
+        )}
       </div>
     </div>
   );
@@ -496,6 +531,13 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
               const key = isCostCenterMode ? row.costCenter : row.glName;
               const amount = isCostCenterMode ? row.total : row.amount;
               const percent = isCostCenterMode ? getShare(amount, row.spent) : getShare(amount, totals.spent);
+              const segments = isCostCenterMode
+                ? activeGlNames.map((glName) => ({
+                  label: glName,
+                  amount: row.byGl[glName] || 0,
+                  percent: getShare(row.byGl[glName] || 0, row.spent),
+                }))
+                : [];
 
               return (
                 <tr key={key}>
@@ -506,6 +548,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
                   <td>
                     <SpendShareBar
                       percent={percent}
+                      segments={segments}
                     />
                   </td>
                   <td><SpendingSparkline values={row.sparkline} /></td>
