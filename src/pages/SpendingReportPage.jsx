@@ -403,6 +403,54 @@ function SpendingSparkline({ values = [] }) {
   );
 }
 
+function CreditNoteTable({ creditNotes, totalSpent }) {
+  const rows = creditNotes.byCostCenter;
+
+  return (
+    <article className="surface-card credit-note-analysis-card">
+      <div className="chart-header">
+        <div>
+          <p className="eyebrow">Credit Notes</p>
+          <h3>Credit Note Analysis</h3>
+          <p>Credit note impact by cost center under the active header filters.</p>
+        </div>
+        <div className="cn-impact-pill">
+          <strong>{formatCurrency(creditNotes.total)}</strong>
+          <span>{formatPercent(getShare(creditNotes.total, totalSpent))} vs spent</span>
+        </div>
+      </div>
+
+      <div className="analysis-table-wrap credit-note-table-wrap">
+        <table className="analysis-table credit-note-table">
+          <thead>
+            <tr>
+              <th>Cost Center</th>
+              <th>CN Share</th>
+              <th>Entries</th>
+              <th>CN Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.costCenter}>
+                <td>
+                  <strong>{row.costCenter}</strong>
+                  <span>{row.hub}</span>
+                </td>
+                <td>
+                  <SpendShareBar percent={getShare(row.amount, creditNotes.total)} />
+                </td>
+                <td className="is-number">{row.count}</td>
+                <td className="is-number"><strong>{formatCurrency(row.amount)}</strong></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  );
+}
+
 function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenterSparklineByName, totals }) {
   const [selectedGlNames, setSelectedGlNames] = useState([]);
   const [pendingGlNames, setPendingGlNames] = useState([]);
@@ -564,7 +612,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
 }
 
 export function SpendingReportPage({ filters }) {
-  const { totals, monthlyFlow, byCostCenter, byGlName, byGlCostCenter, costCenterSparklineByName, insights } = buildFilteredInputs(financialInputsData, filters);
+  const { totals, monthlyFlow, byCostCenter, byGlName, byGlCostCenter, costCenterSparklineByName, creditNotes, insights } = buildFilteredInputs(financialInputsData, filters);
   const chartRows = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved).slice(-16);
   const cnShare = getShare(totals.creditNotes, totals.spent);
   const activeMonths = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved || row.creditNotes);
@@ -607,6 +655,8 @@ export function SpendingReportPage({ filters }) {
         costCenterSparklineByName={costCenterSparklineByName}
         totals={totals}
       />
+
+      <CreditNoteTable creditNotes={creditNotes} totalSpent={totals.spent} />
 
       <section className="financial-input-note">
         This dashboard shows financial inputs only. Profitability analysis is available in the Profit & Loss page.

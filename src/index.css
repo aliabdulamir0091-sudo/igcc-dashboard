@@ -2545,6 +2545,27 @@ button {
   filter: drop-shadow(0 5px 8px rgba(37, 99, 235, 0.16));
 }
 
+.credit-note-analysis-card {
+  display: grid;
+  gap: 16px;
+}
+
+.credit-note-table-wrap {
+  max-height: 430px;
+}
+
+.credit-note-table {
+  min-width: 720px;
+}
+
+.credit-note-table .spend-profile-meta strong {
+  color: #ea580c;
+}
+
+.credit-note-table .spend-profile-bar span {
+  background: linear-gradient(90deg, #f97316, #f59e0b);
+}
+
 .financial-input-note {
   padding: 12px 14px;
   border: 1px solid rgba(37, 99, 235, 0.12);
