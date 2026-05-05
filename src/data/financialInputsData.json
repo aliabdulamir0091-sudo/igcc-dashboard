@@ -3,14 +3,14 @@
     "spentWorkbook": "C:/Users/asus/OneDrive/Desktop/Spent Report/Master Spent Report.xlsx",
     "revenueWorkbook": "C:/Users/asus/OneDrive/Desktop/Spent Report/Revenue .xlsx",
     "creditNoteFolder": "C:/Users/asus/OneDrive/Desktop/Spent Report/Credit Note",
-    "generatedAt": "2026-05-05T08:14:30.045Z"
+    "generatedAt": "2026-05-05T08:47:03.125Z"
   },
   "totals": {
     "spent": 101455996.19,
     "submitted": 124594940.94,
     "approved": 117194978.89,
     "creditNotes": 5720564.18,
-    "netMovement": 10018418.52,
+    "netMovement": 15738982.7,
     "afpGap": 7399962.05
   },
   "latestPeriod": {
@@ -33,7 +33,7 @@
       "submitted": 8017243.61,
       "approved": 7617447.97,
       "creditNotes": 219695,
-      "netMovement": 248294.39,
+      "netMovement": 467989.39,
       "afpGap": 399795.64
     },
     {
@@ -44,7 +44,7 @@
       "submitted": 5807509.23,
       "approved": 5828101.7,
       "creditNotes": 199640,
-      "netMovement": -1494444.39,
+      "netMovement": -1294804.39,
       "afpGap": -20592.47
     },
     {
@@ -55,7 +55,7 @@
       "submitted": 4760143.85,
       "approved": 4552250.32,
       "creditNotes": 274274,
-      "netMovement": -741327.37,
+      "netMovement": -467053.37,
       "afpGap": 207893.53
     },
     {
@@ -121,7 +121,7 @@
       "submitted": 8277033.83,
       "approved": 8272532.32,
       "creditNotes": 1122464.19,
-      "netMovement": -415107.17,
+      "netMovement": 707357.02,
       "afpGap": 4501.51
     },
     {
@@ -132,7 +132,7 @@
       "submitted": 9843155.43,
       "approved": 9693021.02,
       "creditNotes": 310869.76,
-      "netMovement": 1681306.6,
+      "netMovement": 1992176.36,
       "afpGap": 150134.41
     },
     {
@@ -143,7 +143,7 @@
       "submitted": 12234451.7,
       "approved": 12122895.39,
       "creditNotes": 591445.08,
-      "netMovement": 4817148.99,
+      "netMovement": 5408594.07,
       "afpGap": 111556.31
     },
     {
@@ -154,7 +154,7 @@
       "submitted": 9722050.45,
       "approved": 9268714.75,
       "creditNotes": 936966.69,
-      "netMovement": 434051.71,
+      "netMovement": 1371018.4,
       "afpGap": 453335.7
     },
     {
@@ -165,7 +165,7 @@
       "submitted": 9373364.93,
       "approved": 9328359.9,
       "creditNotes": 719132.57,
-      "netMovement": 1766579.33,
+      "netMovement": 2485711.9,
       "afpGap": 45005.03
     },
     {
@@ -176,7 +176,7 @@
       "submitted": 10065465.6,
       "approved": 10016916.75,
       "creditNotes": 732274.01,
-      "netMovement": 1511286.31,
+      "netMovement": 2243560.32,
       "afpGap": 48548.85
     },
     {
@@ -187,7 +187,7 @@
       "submitted": 6393061.58,
       "approved": 5938806.02,
       "creditNotes": 613802.88,
-      "netMovement": -72836.88,
+      "netMovement": 540966,
       "afpGap": 454255.56
     },
     {
@@ -218,7 +218,7 @@
       "submitted": 30830997.74,
       "approved": 27838717.11,
       "creditNotes": 1021601.74,
-      "netMovement": 7617187.16,
+      "netMovement": 8638788.9,
       "afpGap": 2992280.63
     },
     {
@@ -236,7 +236,7 @@
       "submitted": 0,
       "approved": 0,
       "creditNotes": 43637.78,
-      "netMovement": -9849672.99,
+      "netMovement": -9806035.21,
       "afpGap": 0
     },
     {
@@ -254,7 +254,7 @@
       "submitted": 15557371.51,
       "approved": 15420980.89,
       "creditNotes": 1811763.34,
-      "netMovement": 4257003.94,
+      "netMovement": 6068767.28,
       "afpGap": 136390.62
     },
     {
@@ -272,7 +272,7 @@
       "submitted": 0,
       "approved": 0,
       "creditNotes": 20712.73,
-      "netMovement": -8807329.33,
+      "netMovement": -8786616.6,
       "afpGap": 0
     },
     {
@@ -290,7 +290,7 @@
       "submitted": 7948667.51,
       "approved": 7098620.81,
       "creditNotes": 635464.57,
-      "netMovement": 1867925.45,
+      "netMovement": 2503390.02,
       "afpGap": 850046.7
     },
     {
@@ -308,7 +308,7 @@
       "submitted": 4254380.48,
       "approved": 4254380.48,
       "creditNotes": 165138.14,
-      "netMovement": -448605.78,
+      "netMovement": -283467.64,
       "afpGap": 0
     },
     {
@@ -326,7 +326,7 @@
       "submitted": 2231119.08,
       "approved": 2064751.93,
       "creditNotes": 41400.11,
-      "netMovement": -2052132.89,
+      "netMovement": -2010732.78,
       "afpGap": 166367.15
     },
     {
@@ -344,7 +344,7 @@
       "submitted": 0,
       "approved": 0,
       "creditNotes": 57008.06,
-      "netMovement": -3988413.82,
+      "netMovement": -3931405.76,
       "afpGap": 0
     },
     {
@@ -362,7 +362,7 @@
       "submitted": 5175180.15,
       "approved": 5010738.32,
       "creditNotes": 289572.13,
-      "netMovement": 1002664.6,
+      "netMovement": 1292236.73,
       "afpGap": 164441.83
     },
     {
@@ -380,7 +380,7 @@
       "submitted": 3259411.65,
       "approved": 3139391.52,
       "creditNotes": 44142.55,
-      "netMovement": -51505.17,
+      "netMovement": -7362.62,
       "afpGap": 120020.13
     },
     {
@@ -398,7 +398,7 @@
       "submitted": 2605336.91,
       "approved": 2574238.79,
       "creditNotes": 58051.19,
-      "netMovement": -214641.83,
+      "netMovement": -156590.64,
       "afpGap": 31098.12
     },
     {
@@ -416,7 +416,7 @@
       "submitted": 308483.05,
       "approved": 308483.05,
       "creditNotes": 331468.09,
-      "netMovement": -2731749.14,
+      "netMovement": -2400281.05,
       "afpGap": 0
     },
     {
@@ -434,7 +434,7 @@
       "submitted": 3260078.02,
       "approved": 2699943.39,
       "creditNotes": 627.99,
-      "netMovement": 353771.43,
+      "netMovement": 354399.42,
       "afpGap": 560134.63
     },
     {
@@ -452,7 +452,7 @@
       "submitted": 11755393.22,
       "approved": 11343546.07,
       "creditNotes": 173249.84,
-      "netMovement": 8929746.33,
+      "netMovement": 9102996.17,
       "afpGap": 411847.15
     },
     {
@@ -470,7 +470,7 @@
       "submitted": 3017163.02,
       "approved": 2697215.48,
       "creditNotes": 52544.04,
-      "netMovement": 537793.01,
+      "netMovement": 590337.05,
       "afpGap": 319947.54
     },
     {
@@ -488,7 +488,7 @@
       "submitted": 2493229.43,
       "approved": 2493229.43,
       "creditNotes": 58920.84,
-      "netMovement": 464304.84,
+      "netMovement": 523225.68,
       "afpGap": 0
     },
     {
@@ -506,7 +506,7 @@
       "submitted": 1435100.57,
       "approved": 1435100.57,
       "creditNotes": 28407.86,
-      "netMovement": -336821.82,
+      "netMovement": -308413.96,
       "afpGap": 0
     },
     {
@@ -524,7 +524,7 @@
       "submitted": 2215904.89,
       "approved": 2215904.89,
       "creditNotes": 140427.8,
-      "netMovement": 417121.5,
+      "netMovement": 557549.3,
       "afpGap": 0
     },
     {
@@ -542,7 +542,7 @@
       "submitted": 2548310.61,
       "approved": 1701796.25,
       "creditNotes": 230295.87,
-      "netMovement": -46970.64,
+      "netMovement": 183325.23,
       "afpGap": 846514.36
     },
     {
@@ -560,7 +560,7 @@
       "submitted": 2118545.58,
       "approved": 1876192.37,
       "creditNotes": 94501.68,
-      "netMovement": 294028.08,
+      "netMovement": 388529.76,
       "afpGap": 242353.21
     },
     {
@@ -578,7 +578,7 @@
       "submitted": 3102757.58,
       "approved": 2937361.66,
       "creditNotes": 93019.62,
-      "netMovement": 1513724.47,
+      "netMovement": 1606744.09,
       "afpGap": 165395.92
     },
     {
@@ -596,7 +596,7 @@
       "submitted": 1569511.15,
       "approved": 1569511.15,
       "creditNotes": 5407.03,
-      "netMovement": 416996.43,
+      "netMovement": 422403.46,
       "afpGap": 0
     },
     {
@@ -632,7 +632,7 @@
       "submitted": 1165856.11,
       "approved": 1165856.11,
       "creditNotes": 11135.45,
-      "netMovement": 76717.75,
+      "netMovement": 87853.2,
       "afpGap": 0
     },
     {
@@ -650,7 +650,7 @@
       "submitted": 1356882.58,
       "approved": 1356882.58,
       "creditNotes": 12859.68,
-      "netMovement": 657907.87,
+      "netMovement": 670767.55,
       "afpGap": 0
     },
     {
@@ -668,7 +668,7 @@
       "submitted": 1845720.17,
       "approved": 1844702.7,
       "creditNotes": 4058.3,
-      "netMovement": 1159396.03,
+      "netMovement": 1163454.33,
       "afpGap": 1017.47
     },
     {
@@ -686,7 +686,7 @@
       "submitted": 0,
       "approved": 0,
       "creditNotes": 38087.04,
-      "netMovement": -680556.89,
+      "netMovement": -642469.85,
       "afpGap": 0
     },
     {
@@ -704,7 +704,7 @@
       "submitted": 1577357.99,
       "approved": 1577357.99,
       "creditNotes": 10458.11,
-      "netMovement": 936485.39,
+      "netMovement": 946943.5,
       "afpGap": 0
     },
     {
@@ -758,7 +758,7 @@
       "submitted": 730648.61,
       "approved": 724123.51,
       "creditNotes": 9213.27,
-      "netMovement": 379583.86,
+      "netMovement": 388797.13,
       "afpGap": 6525.1
     },
     {
@@ -776,7 +776,7 @@
       "submitted": 497815,
       "approved": 490957,
       "creditNotes": 14070.56,
-      "netMovement": 160153.04,
+      "netMovement": 174223.6,
       "afpGap": 6858
     },
     {
@@ -794,7 +794,7 @@
       "submitted": 1167277.88,
       "approved": 1167277.88,
       "creditNotes": 14678.34,
-      "netMovement": 840530.35,
+      "netMovement": 855208.69,
       "afpGap": 0
     },
     {
@@ -812,7 +812,7 @@
       "submitted": 48838.2,
       "approved": 48838.2,
       "creditNotes": 73235.13,
-      "netMovement": -307709.3,
+      "netMovement": -234474.17,
       "afpGap": 0
     },
     {
@@ -830,7 +830,7 @@
       "submitted": 0,
       "approved": 0,
       "creditNotes": 24457.86,
-      "netMovement": -252348.51,
+      "netMovement": -227890.65,
       "afpGap": 0
     },
     {
@@ -848,7 +848,7 @@
       "submitted": 457940.95,
       "approved": 457940.95,
       "creditNotes": 842.12,
-      "netMovement": 357051.96,
+      "netMovement": 357894.08,
       "afpGap": 0
     },
     {
@@ -884,7 +884,7 @@
       "submitted": 0,
       "approved": 0,
       "creditNotes": 61235.68,
-      "netMovement": -112459.72,
+      "netMovement": -51224.04,
       "afpGap": 0
     },
     {
@@ -920,7 +920,7 @@
       "submitted": 0,
       "approved": 0,
       "creditNotes": 683.56,
-      "netMovement": -17663.74,
+      "netMovement": -16980.18,
       "afpGap": 0
     },
     {
@@ -1009,7 +1009,7 @@
       "submitted": 0,
       "approved": 0,
       "creditNotes": 42386.23,
-      "netMovement": -42386.23,
+      "netMovement": 0,
       "afpGap": 0
     },
     {
@@ -1028,7 +1028,7 @@
       "submitted": 0,
       "approved": 0,
       "creditNotes": 5799.85,
-      "netMovement": -5799.85,
+      "netMovement": 0,
       "afpGap": 0
     }
   ],

@@ -305,7 +305,7 @@ const normalizeInputRows = (rows) => rows
     submitted: roundCurrency(item.submitted),
     approved: roundCurrency(item.approved),
     creditNotes: roundCurrency(item.creditNotes),
-    netMovement: roundCurrency(item.approved - item.spent - item.creditNotes),
+    netMovement: roundCurrency(item.approved - item.spent),
     afpGap: roundCurrency(item.submitted - item.approved),
   }))
   .sort((a, b) => a.period?.localeCompare(b.period) || Math.abs(b.spent) - Math.abs(a.spent));
@@ -364,7 +364,7 @@ const totals = {
   approved: roundCurrency(approvedEntries.reduce((sum, item) => sum + item.amount, 0)),
   creditNotes: roundCurrency(creditNoteEntries.reduce((sum, item) => sum + item.amount, 0)),
 };
-totals.netMovement = roundCurrency(totals.approved - totals.spent - totals.creditNotes);
+totals.netMovement = roundCurrency(totals.approved - totals.spent);
 totals.afpGap = roundCurrency(totals.submitted - totals.approved);
 
 const topCostCenter = byCostCenter[0];

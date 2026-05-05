@@ -72,7 +72,7 @@ const normalizeRows = (rows) => rows
     submitted: roundCurrency(row.submitted),
     approved: roundCurrency(row.approved),
     creditNotes: roundCurrency(row.creditNotes),
-    netMovement: roundCurrency(row.approved - row.spent - row.creditNotes),
+    netMovement: roundCurrency(row.approved - row.spent),
     afpGap: roundCurrency(row.submitted - row.approved),
   }));
 
@@ -179,7 +179,7 @@ const buildFilteredInputs = (data, filters = {}) => {
   totals.submitted = roundCurrency(totals.submitted);
   totals.approved = roundCurrency(totals.approved);
   totals.creditNotes = roundCurrency(totals.creditNotes);
-  totals.netMovement = roundCurrency(totals.approved - totals.spent - totals.creditNotes);
+  totals.netMovement = roundCurrency(totals.approved - totals.spent);
   totals.afpGap = roundCurrency(totals.submitted - totals.approved);
 
   const topCostCenter = byCostCenter[0];
@@ -205,7 +205,7 @@ const buildFilteredInputs = (data, filters = {}) => {
     {
       label: "CN Share",
       value: totals.creditNotes,
-      detail: `Credit notes equal ${formatPercent(cnShare)} of filtered spent.`,
+      detail: `Allocation detail only. CN equals ${formatPercent(cnShare)} of filtered spent.`,
     },
   ].filter(Boolean);
 
@@ -568,7 +568,7 @@ function CreditNoteTable({ creditNotes, totalSpent, onSelectCostCenter }) {
         <div>
           <p className="eyebrow">Credit Notes</p>
           <h3>{isCostCenterMode ? "CN Receiver Drilldown" : "Credit Note Analysis"}</h3>
-          <p>{isCostCenterMode ? `${activeCategories.join(", ")} selected. Rows show receiving cost centers.` : "CN items by issuer under the active header filters."}</p>
+          <p>{isCostCenterMode ? `${activeCategories.join(", ")} selected. Rows show receiving cost centers.` : "CN allocation detail by issuer under the active header filters."}</p>
         </div>
         <div className="cn-impact-pill">
           <strong>{formatCurrency(creditNotes.total)}</strong>
@@ -887,7 +887,7 @@ function CostCenterProfileDrawer({ costCenterName, byCostCenter, byGlCostCenter,
             <strong>{formatCurrency(summary?.creditNotes || 0)}</strong>
           </div>
           <div>
-            <span>CN vs spent</span>
+            <span>CN allocation vs spent</span>
             <strong>{formatPercent(getShare(summary?.creditNotes || 0, summary?.spent || 0))}</strong>
           </div>
         </div>
@@ -949,8 +949,8 @@ export function SpendingReportPage({ filters }) {
         <FinancialKpiCard icon="spending" label="Total Spent" value={formatCurrency(totals.spent)} context="YTD cost input" tone="blue" trend={getTrend(current.spent, previous.spent)} />
         <FinancialKpiCard icon="submit" label="AFP Submitted" value={formatCurrency(totals.submitted)} context="YTD submitted" tone="green" trend={getTrend(current.submitted, previous.submitted)} />
         <FinancialKpiCard icon="approve" label="AFP Approved" value={formatCurrency(totals.approved)} context="YTD approved" tone="purple" trend={getTrend(current.approved, previous.approved)} />
-        <FinancialKpiCard icon="credit" label="Credit Notes (CN)" value={formatCurrency(totals.creditNotes)} context={`${formatPercent(cnShare)} of spent`} tone="amber" trend={getTrend(current.creditNotes, previous.creditNotes)} />
-        <FinancialKpiCard icon="net" label="Net Position" value={formatCurrency(totals.netMovement)} context="Approved - Spent - CN" tone={totals.netMovement >= 0 ? "net-positive" : "net-negative"} trend={getTrend(current.netMovement, previous.netMovement)} featured />
+        <FinancialKpiCard icon="credit" label="CN Allocation Detail" value={formatCurrency(totals.creditNotes)} context={`${formatPercent(cnShare)} of spent, not deducted at IGCC level`} tone="amber" trend={getTrend(current.creditNotes, previous.creditNotes)} />
+        <FinancialKpiCard icon="net" label="Net Position" value={formatCurrency(totals.netMovement)} context="Approved - Spent" tone={totals.netMovement >= 0 ? "net-positive" : "net-negative"} trend={getTrend(current.netMovement, previous.netMovement)} featured />
       </section>
 
       <div className="financial-main-grid">
