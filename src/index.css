@@ -2248,6 +2248,7 @@ button {
 }
 
 .analysis-table-wrap {
+  max-height: 780px;
   overflow: auto;
   border-radius: 14px;
 }
@@ -2262,8 +2263,11 @@ button {
 }
 
 .analysis-table th {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 4;
   padding: 0 12px 6px;
+  background: #ffffff;
   color: #334155;
   font-size: 11px;
   font-weight: 950;
@@ -2310,6 +2314,7 @@ button {
 
 .analysis-dimension-heading {
   width: 260px;
+  z-index: 8 !important;
 }
 
 .analysis-dimension-heading > button {

@@ -430,7 +430,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
     if (sortMode === "cost-center") rows.sort((a, b) => a.glName.localeCompare(b.glName));
     return rows.slice(0, 14);
   })();
-  const tableRows = isCostCenterMode ? costCenterRows.slice(0, 18) : glRows;
+  const tableRows = isCostCenterMode ? costCenterRows : glRows;
   const subtitle = isCostCenterMode
     ? `${activeGlNames.join(", ")} selected. Rows now compare cost centers for the selected GL spend.`
     : "Organized by GL names. Use the Dimension column drilldown to compare selected GLs by cost center.";
