@@ -2092,6 +2092,133 @@ button {
     linear-gradient(90deg, #7c3aed var(--progress), rgba(226, 232, 240, 0.8) var(--progress));
 }
 
+.gl-drilldown-card {
+  display: grid;
+  gap: 14px;
+}
+
+.gl-drilldown-summary {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  min-width: 180px;
+}
+
+.gl-drilldown-summary strong {
+  color: #7c3aed;
+  font-size: 22px;
+}
+
+.gl-drilldown-summary span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gl-drilldown-controls {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(150px, 0.35fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.gl-drilldown-controls label,
+.gl-drilldown-controls fieldset {
+  display: grid;
+  gap: 7px;
+}
+
+.gl-drilldown-controls fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.gl-drilldown-controls span,
+.gl-drilldown-controls legend {
+  color: #475569;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.gl-drilldown-controls select {
+  width: 100%;
+  border: 1px solid #dbe4ef;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #102033;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.gl-drilldown-controls select:not([multiple]) {
+  min-height: 42px;
+}
+
+.gl-drilldown-controls select[multiple] {
+  min-height: 112px;
+}
+
+.gl-drilldown-controls button {
+  min-height: 42px;
+  border-radius: 9px;
+  padding: 0 14px;
+  font-weight: 950;
+}
+
+.gl-checkbox-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 136px;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.gl-checkbox-grid label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #dbe4ef;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #102033;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gl-checkbox-grid label.is-selected {
+  border-color: rgba(124, 58, 237, 0.46);
+  background: rgba(124, 58, 237, 0.1);
+  color: #5b21b6;
+}
+
+.gl-checkbox-grid input {
+  width: 14px;
+  height: 14px;
+  accent-color: #7c3aed;
+}
+
+.gl-checkbox-grid span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.compact-empty-state {
+  min-height: 120px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
 .financial-input-note {
   padding: 12px 14px;
   border: 1px solid rgba(37, 99, 235, 0.12);
@@ -2307,8 +2434,14 @@ button {
 
   .header-filter-row,
   .financial-kpi-grid,
-  .financial-main-grid {
+  .financial-main-grid,
+  .gl-drilldown-controls {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gl-drilldown-controls label:first-child,
+  .gl-drilldown-controls button {
+    grid-column: 1 / -1;
   }
 
   .financial-chart-card,
@@ -2329,8 +2462,14 @@ button {
   .financial-kpi-grid,
   .financial-main-grid,
   .financial-story-rail,
+  .gl-drilldown-controls,
   .empty-table {
     grid-template-columns: 1fr;
+  }
+
+  .gl-drilldown-summary {
+    justify-items: start;
+    min-width: 0;
   }
 
   .financial-story-rail span:not(:last-child)::after {
