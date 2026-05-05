@@ -164,6 +164,7 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           </div>
         </div>
 
+        {activePage !== "home" ? (
         <div className="header-filter-row" aria-label="Dashboard filters">
           <label>
             <span><Icon name="folder" /> Portfolio</span>
@@ -237,6 +238,7 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           </label>
           <button type="button" className="header-clear-button" onClick={clearFilters}>Clear</button>
         </div>
+        ) : null}
       </div>
     </header>
   );
