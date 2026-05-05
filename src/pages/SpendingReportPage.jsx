@@ -14,6 +14,23 @@ const formatCurrency = (value) => currencyFormatter.format(value || 0);
 const formatPercent = (value) => `${percentFormatter.format(value || 0)}%`;
 const getShare = (amount, total) => (total ? (amount / total) * 100 : 0);
 const getTrend = (current, previous) => (previous ? ((current - previous) / Math.abs(previous)) * 100 : 0);
+const escapeCsv = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+const downloadCsv = (filename, rows) => {
+  if (!rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.map(escapeCsv).join(","),
+    ...rows.map((row) => headers.map((header) => escapeCsv(row[header])).join(",")),
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+};
 
 const matchesPortfolio = (entry, portfolio) => (
   !portfolio
@@ -330,6 +347,51 @@ function InsightList({ insights }) {
   );
 }
 
+function SmartSummary({ totals, byCostCenter, byGlName, creditNotes, monthlyFlow }) {
+  const topCostCenter = byCostCenter[0];
+  const topGl = byGlName[0];
+  const topCn = creditNotes.byCategory[0];
+  const activeSpentMonths = monthlyFlow.filter((row) => row.spent);
+  const latest = activeSpentMonths.at(-1);
+  const previous = activeSpentMonths.at(-2);
+  const monthlyChange = latest && previous ? getTrend(latest.spent, previous.spent) : 0;
+
+  const items = [
+    topGl ? {
+      label: "Top GL driver",
+      value: topGl.glName,
+      detail: `${formatPercent(getShare(topGl.amount, totals.spent))} of spent`,
+    } : null,
+    topCostCenter ? {
+      label: "Top cost center",
+      value: topCostCenter.costCenter,
+      detail: `${formatCurrency(topCostCenter.spent)} spent`,
+    } : null,
+    topCn ? {
+      label: "Top CN item",
+      value: topCn.category,
+      detail: `${topCn.issuedBy || "Legacy CN"} issued ${formatCurrency(topCn.amount)}`,
+    } : null,
+    latest && previous ? {
+      label: "Latest spend movement",
+      value: `${monthlyChange >= 0 ? "+" : ""}${formatPercent(monthlyChange)}`,
+      detail: `${latest.period} vs ${previous.period}`,
+    } : null,
+  ].filter(Boolean);
+
+  return (
+    <section className="smart-summary-grid" aria-label="Spend watchlist">
+      {items.map((item) => (
+        <article className="smart-summary-card" key={item.label}>
+          <span>{item.label}</span>
+          <strong>{item.value}</strong>
+          <p>{item.detail}</p>
+        </article>
+      ))}
+    </section>
+  );
+}
+
 function getGlFilteredCostCenterRows(rows, selectedGlNames, sortMode) {
   const visibleGlSet = new Set(selectedGlNames);
   const costCenterMap = new Map();
@@ -382,7 +444,7 @@ function SpendShareBar({ percent, segments = [] }) {
             <span key={segment.label} style={{ "--segment-color": segmentColors[index % segmentColors.length] }}>
               <i />
               <b>{getShortLabel(segment.label)}</b>
-              <em>{formatCurrency(segment.amount)} · {formatPercent(segment.percent)}</em>
+              <em>{formatCurrency(segment.amount)} - {formatPercent(segment.percent)}</em>
             </span>
           ))}
         </div>
@@ -425,7 +487,7 @@ function SpendingSparkline({ values = [] }) {
   );
 }
 
-function CreditNoteTable({ creditNotes, totalSpent }) {
+function CreditNoteTable({ creditNotes, totalSpent, onSelectCostCenter }) {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [pendingCategories, setPendingCategories] = useState([]);
   const [isDrilldownOpen, setIsDrilldownOpen] = useState(false);
@@ -459,6 +521,22 @@ function CreditNoteTable({ creditNotes, totalSpent }) {
   const rows = isCostCenterMode
     ? receiverRows
     : [...creditNotes.byCategory].sort((a, b) => (sortMode === "name" ? a.category.localeCompare(b.category) : Math.abs(b.amount) - Math.abs(a.amount)));
+  const exportRows = rows.map((row) => (
+    isCostCenterMode
+      ? {
+        costCenter: row.costCenter,
+        hub: row.hub,
+        cnAmount: roundCurrency(row.total),
+        cnShare: formatPercent(getShare(row.total, creditNotes.total)),
+        selectedItems: activeCategories.join("; "),
+      }
+      : {
+        cnItem: row.category,
+        issuedBy: row.issuedBy || "Legacy CN",
+        cnAmount: roundCurrency(row.amount),
+        cnShare: formatPercent(getShare(row.amount, creditNotes.total)),
+      }
+  ));
 
   const togglePending = (category) => {
     setPendingCategories((current) => (
@@ -504,6 +582,7 @@ function CreditNoteTable({ creditNotes, totalSpent }) {
             <option value="name">Name</option>
           </select>
         </label>
+        <button type="button" className="analysis-export-button" onClick={() => downloadCsv("credit-note-analysis.csv", exportRows)}>Export CSV</button>
       </div>
 
       <div className="analysis-table-wrap credit-note-table-wrap">
@@ -549,7 +628,13 @@ function CreditNoteTable({ creditNotes, totalSpent }) {
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={isCostCenterMode ? row.costCenter : row.category}>
+              <tr
+                key={isCostCenterMode ? row.costCenter : row.category}
+                className={isCostCenterMode ? "is-clickable-row" : ""}
+                onClick={() => {
+                  if (isCostCenterMode) onSelectCostCenter?.(row.costCenter);
+                }}
+              >
                 <td>
                   <strong>{isCostCenterMode ? row.costCenter : row.category}</strong>
                   <span>{isCostCenterMode ? row.hub : "CN item"}</span>
@@ -584,7 +669,7 @@ function CreditNoteTable({ creditNotes, totalSpent }) {
   );
 }
 
-function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenterSparklineByName, totals }) {
+function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenterSparklineByName, totals, onSelectCostCenter }) {
   const [selectedGlNames, setSelectedGlNames] = useState([]);
   const [pendingGlNames, setPendingGlNames] = useState([]);
   const [sortMode, setSortMode] = useState("spent-desc");
@@ -616,6 +701,22 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
     return rows.slice(0, 14);
   })();
   const tableRows = isCostCenterMode ? costCenterRows : glRows;
+  const exportRows = tableRows.map((row) => {
+    if (isCostCenterMode) {
+      return {
+        costCenter: row.costCenter,
+        hub: row.hub,
+        selectedSpent: roundCurrency(row.total),
+        selectedShareOfCostCenter: formatPercent(getShare(row.total, row.spent)),
+        selectedGlNames: activeGlNames.join("; "),
+      };
+    }
+    return {
+      glName: row.glName,
+      spent: roundCurrency(row.amount),
+      shareOfSpent: formatPercent(getShare(row.amount, totals.spent)),
+    };
+  });
   const subtitle = isCostCenterMode
     ? `${activeGlNames.join(", ")} selected. Rows now compare cost centers for the selected GL spend.`
     : "Organized by GL names. Use the Dimension column drilldown to compare selected GLs by cost center.";
@@ -662,6 +763,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
             <option value="hub">Hub</option>
           </select>
         </label>
+        <button type="button" className="analysis-export-button" onClick={() => downloadCsv("spend-analysis.csv", exportRows)}>Export CSV</button>
       </div>
 
       <div className="analysis-table-wrap">
@@ -725,7 +827,13 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
                 : [];
 
               return (
-                <tr key={key}>
+                <tr
+                  key={key}
+                  className={isCostCenterMode ? "is-clickable-row" : ""}
+                  onClick={() => {
+                    if (isCostCenterMode) onSelectCostCenter?.(row.costCenter);
+                  }}
+                >
                   <td>
                     <strong>{key}</strong>
                     <span>{isCostCenterMode ? row.hub : "GL category"}</span>
@@ -748,8 +856,73 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
   );
 }
 
+function CostCenterProfileDrawer({ costCenterName, byCostCenter, byGlCostCenter, creditNotes, onClose }) {
+  if (!costCenterName) return null;
+
+  const summary = byCostCenter.find((row) => row.costCenter === costCenterName);
+  const glRows = byGlCostCenter
+    .filter((row) => row.costCenter === costCenterName)
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+    .slice(0, 6);
+  const cnRows = creditNotes.byCostCenterCategory
+    .filter((row) => row.costCenter === costCenterName)
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
+    .slice(0, 6);
+
+  return (
+    <div className="profile-drawer-backdrop" role="presentation" onClick={onClose}>
+      <aside className="cost-center-profile-drawer" role="dialog" aria-label={`${costCenterName} profile`} onClick={(event) => event.stopPropagation()}>
+        <button type="button" className="panel-close" onClick={onClose} aria-label="Close profile">×</button>
+        <p className="eyebrow">Cost Center Profile</p>
+        <h3>{costCenterName}</h3>
+        <span className="profile-hub-label">{summary?.hub || "Unmapped"}</span>
+
+        <div className="profile-metric-grid">
+          <div>
+            <span>Total spent</span>
+            <strong>{formatCurrency(summary?.spent || 0)}</strong>
+          </div>
+          <div>
+            <span>Credit notes</span>
+            <strong>{formatCurrency(summary?.creditNotes || 0)}</strong>
+          </div>
+          <div>
+            <span>CN vs spent</span>
+            <strong>{formatPercent(getShare(summary?.creditNotes || 0, summary?.spent || 0))}</strong>
+          </div>
+        </div>
+
+        <section>
+          <h4>Top GL Names</h4>
+          <div className="profile-list">
+            {glRows.map((row) => (
+              <div key={row.glName}>
+                <span>{row.glName}</span>
+                <strong>{formatCurrency(row.amount)}</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h4>Credit Note Items Received</h4>
+          <div className="profile-list">
+            {cnRows.length ? cnRows.map((row) => (
+              <div key={`${row.category}-${row.issuedBy}`}>
+                <span>{row.category} from {row.issuedBy || "Legacy CN"}</span>
+                <strong>{formatCurrency(row.amount)}</strong>
+              </div>
+            )) : <p className="profile-empty-note">No credit notes under the current filters.</p>}
+          </div>
+        </section>
+      </aside>
+    </div>
+  );
+}
+
 export function SpendingReportPage({ filters }) {
   const { totals, monthlyFlow, byCostCenter, byGlName, byGlCostCenter, costCenterSparklineByName, creditNotes, insights } = buildFilteredInputs(financialInputsData, filters);
+  const [selectedProfileCostCenter, setSelectedProfileCostCenter] = useState("");
   const chartRows = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved).slice(-16);
   const cnShare = getShare(totals.creditNotes, totals.spent);
   const activeMonths = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved || row.creditNotes);
@@ -785,19 +958,36 @@ export function SpendingReportPage({ filters }) {
         <InsightList insights={insights} />
       </div>
 
+      <SmartSummary
+        totals={totals}
+        byCostCenter={byCostCenter}
+        byGlName={byGlName}
+        creditNotes={creditNotes}
+        monthlyFlow={monthlyFlow}
+      />
+
       <SpendAnalysisTable
         byCostCenter={byCostCenter}
         byGlCostCenter={byGlCostCenter}
         byGlName={byGlName}
         costCenterSparklineByName={costCenterSparklineByName}
         totals={totals}
+        onSelectCostCenter={setSelectedProfileCostCenter}
       />
 
-      <CreditNoteTable creditNotes={creditNotes} totalSpent={totals.spent} />
+      <CreditNoteTable creditNotes={creditNotes} totalSpent={totals.spent} onSelectCostCenter={setSelectedProfileCostCenter} />
 
       <section className="financial-input-note">
         This dashboard shows financial inputs only. Profitability analysis is available in the Profit & Loss page.
       </section>
+
+      <CostCenterProfileDrawer
+        costCenterName={selectedProfileCostCenter}
+        byCostCenter={byCostCenter}
+        byGlCostCenter={byGlCostCenter}
+        creditNotes={creditNotes}
+        onClose={() => setSelectedProfileCostCenter("")}
+      />
     </section>
   );
 }

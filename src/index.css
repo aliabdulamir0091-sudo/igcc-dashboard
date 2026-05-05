@@ -2224,6 +2224,42 @@ button {
   gap: 16px;
 }
 
+.smart-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.smart-summary-card {
+  min-height: 118px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.075);
+}
+
+.smart-summary-card span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.smart-summary-card strong {
+  display: block;
+  margin-top: 9px;
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.smart-summary-card p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
 .analysis-sort-control {
   display: grid;
   gap: 7px;
@@ -2245,6 +2281,18 @@ button {
   padding: 0 12px;
   font-size: 13px;
   font-weight: 850;
+}
+
+.analysis-export-button {
+  align-self: end;
+  min-height: 42px;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-radius: 9px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 950;
 }
 
 .analysis-table-wrap {
@@ -2289,6 +2337,14 @@ button {
 
 .analysis-table td:last-child {
   border-radius: 0 12px 12px 0;
+}
+
+.analysis-table tr.is-clickable-row {
+  cursor: pointer;
+}
+
+.analysis-table tr.is-clickable-row:hover td {
+  background: #eef6ff;
 }
 
 .analysis-table td > strong,
@@ -2576,6 +2632,95 @@ button {
   color: #c2410c;
   font-size: 12px;
   font-weight: 950;
+}
+
+.profile-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.cost-center-profile-drawer {
+  width: min(430px, 92vw);
+  height: 100%;
+  overflow: auto;
+  padding: 22px;
+  background: #ffffff;
+  box-shadow: -28px 0 70px rgba(15, 23, 42, 0.22);
+}
+
+.cost-center-profile-drawer h3 {
+  margin: 8px 0 0;
+  color: var(--text);
+  font-size: 26px;
+}
+
+.profile-hub-label {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  margin-top: 8px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.profile-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.profile-metric-grid div,
+.profile-list div {
+  padding: 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.profile-metric-grid span,
+.profile-list span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.profile-metric-grid strong,
+.profile-list strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--text);
+  font-size: 17px;
+}
+
+.cost-center-profile-drawer section {
+  margin-top: 20px;
+}
+
+.cost-center-profile-drawer h4 {
+  margin: 0 0 10px;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.profile-list {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-empty-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 850;
 }
 
 .financial-input-note {
