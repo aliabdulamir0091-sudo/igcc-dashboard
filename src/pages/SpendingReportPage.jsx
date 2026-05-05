@@ -429,6 +429,7 @@ function CreditNoteTable({ creditNotes, totalSpent }) {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [pendingCategories, setPendingCategories] = useState([]);
   const [isDrilldownOpen, setIsDrilldownOpen] = useState(false);
+  const [sortMode, setSortMode] = useState("share-desc");
   const categoryOptions = creditNotes.byCategory.map((row) => row.category);
   const selectedSet = new Set(selectedCategories);
   const pendingSet = new Set(pendingCategories);
@@ -449,9 +450,15 @@ function CreditNoteTable({ creditNotes, totalSpent }) {
       current.total += row.amount;
       receiverMap.set(row.costCenter, current);
     }
-    return [...receiverMap.values()].sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
+    return [...receiverMap.values()].sort((a, b) => {
+      if (sortMode === "name") return a.costCenter.localeCompare(b.costCenter);
+      if (sortMode === "amount-desc") return Math.abs(b.total) - Math.abs(a.total);
+      return getShare(b.total, creditNotes.total) - getShare(a.total, creditNotes.total);
+    });
   })();
-  const rows = isCostCenterMode ? receiverRows : creditNotes.byCategory;
+  const rows = isCostCenterMode
+    ? receiverRows
+    : [...creditNotes.byCategory].sort((a, b) => (sortMode === "name" ? a.category.localeCompare(b.category) : Math.abs(b.amount) - Math.abs(a.amount)));
 
   const togglePending = (category) => {
     setPendingCategories((current) => (
@@ -489,6 +496,14 @@ function CreditNoteTable({ creditNotes, totalSpent }) {
           <strong>{formatCurrency(creditNotes.total)}</strong>
           <span>{formatPercent(getShare(creditNotes.total, totalSpent))} vs spent</span>
         </div>
+        <label className="analysis-sort-control">
+          <span>Sort</span>
+          <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
+            <option value="share-desc">{isCostCenterMode ? "Highest %" : "Highest amount"}</option>
+            <option value="amount-desc">Highest amount</option>
+            <option value="name">Name</option>
+          </select>
+        </label>
       </div>
 
       <div className="analysis-table-wrap credit-note-table-wrap">
