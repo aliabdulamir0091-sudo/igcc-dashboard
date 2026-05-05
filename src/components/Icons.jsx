@@ -9,6 +9,7 @@ const ICONS = {
   credit: "M4 7h16v10H4V7ZM7 11h4M15 11h2M7 15h2",
   net: "M4 19h16M7 16V8M12 16V5M17 16v-3M6 8h2M11 5h2M16 13h2",
   calendar: "M7 3v4M17 3v4M4 9h16M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z",
+  filter: "M4 5h16l-6 7v5l-4 2v-7L4 5Z",
   download: "M12 3v12M7 10l5 5 5-5M4 21h16",
   bell: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4",
   tower: "M12 3 6 21M12 3l6 18M8 15h8M9 11h6M10 7h4",

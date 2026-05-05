@@ -30,6 +30,8 @@ export function AppLayout({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isPanelOpen, setIsPanelOpen]);
 
+  const isHomePage = activePage === "home";
+
   return (
     <>
       <UserSlidePanel
@@ -39,19 +41,21 @@ export function AppLayout({
         user={user}
         userProfile={userProfile}
       />
-      <div className="app-shell">
-        <AppHeader
-          activePage={activePage}
-          onNavigate={onNavigate}
-          onMenuOpen={() => setIsPanelOpen(true)}
-          theme={theme}
-          onToggleTheme={onToggleTheme}
-          filters={filters}
-          onApplyFilters={onApplyFilters}
-          onClearFilters={onClearFilters}
-        />
+      <div className={`app-shell ${isHomePage ? "home-shell" : ""}`}>
+        {!isHomePage ? (
+          <AppHeader
+            activePage={activePage}
+            onNavigate={onNavigate}
+            onMenuOpen={() => setIsPanelOpen(true)}
+            theme={theme}
+            onToggleTheme={onToggleTheme}
+            filters={filters}
+            onApplyFilters={onApplyFilters}
+            onClearFilters={onClearFilters}
+          />
+        ) : null}
         <main className="page-content">{children}</main>
-        <AppFooter accessProfile={accessProfile} />
+        {!isHomePage ? <AppFooter accessProfile={accessProfile} /> : null}
       </div>
     </>
   );
