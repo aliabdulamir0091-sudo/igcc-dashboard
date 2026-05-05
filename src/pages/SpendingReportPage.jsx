@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import financialInputsData from "../data/financialInputsData.json";
 import { Icon } from "../components/Icons";
 
@@ -8,11 +8,9 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-const numberFormatter = new Intl.NumberFormat("en-US");
 const percentFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
 
 const formatCurrency = (value) => currencyFormatter.format(value || 0);
-const formatNumber = (value) => numberFormatter.format(value || 0);
 const formatPercent = (value) => `${percentFormatter.format(value || 0)}%`;
 const getShare = (amount, total) => (total ? (amount / total) * 100 : 0);
 const getTrend = (current, previous) => (previous ? ((current - previous) / Math.abs(previous)) * 100 : 0);
@@ -153,7 +151,7 @@ const buildFilteredInputs = (data, filters = {}) => {
       detail: `Submitted vs approved gap. Approval rate is ${formatPercent(approvalRate)}.`,
     },
     {
-      label: "CN Impact",
+      label: "CN Share",
       value: totals.creditNotes,
       detail: `Credit notes equal ${formatPercent(cnShare)} of filtered spent.`,
     },
@@ -291,75 +289,6 @@ function InsightList({ insights }) {
   );
 }
 
-function SummaryTable({ columns, rows }) {
-  return (
-    <div className="report-table-wrap compact-table">
-      <table className="report-table">
-        <thead>
-          <tr>
-            {columns.map((column) => (
-              <th key={column.key}>{column.label}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={`${row.costCenter || row.glName}-${index}`}>
-              {columns.map((column) => (
-                <td key={column.key} className={column.align === "right" ? "is-number" : ""}>
-                  {column.render ? column.render(row) : row[column.key]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function GlFilterControls({ selectedGlNames, setSelectedGlNames, glOptions, sortMode, setSortMode }) {
-  const selectedGlSet = new Set(selectedGlNames);
-  const activeGlNames = glOptions.filter((glName) => selectedGlSet.has(glName));
-
-  const toggleGlName = (glName) => {
-    setSelectedGlNames((current) => (
-      current.includes(glName)
-        ? current.filter((item) => item !== glName)
-        : [...current, glName]
-    ));
-  };
-
-  return (
-    <div className="gl-drilldown-controls inline-gl-filter">
-      <fieldset>
-        <legend>Filter table by GL names</legend>
-        <div className="gl-checkbox-grid">
-          {glOptions.map((glName) => (
-            <label key={glName} className={activeGlNames.includes(glName) ? "is-selected" : ""}>
-              <input
-                type="checkbox"
-                checked={activeGlNames.includes(glName)}
-                onChange={() => toggleGlName(glName)}
-              />
-              <span>{glName}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <label>
-        <span>Sort</span>
-        <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
-          <option value="spent-desc">Highest total</option>
-          <option value="cost-center">Cost center</option>
-          <option value="hub">Hub</option>
-        </select>
-      </label>
-      <button type="button" className="secondary-button" onClick={() => setSelectedGlNames([])}>Clear GL selection</button>
-    </div>
-  );
-}
-
 function getGlFilteredCostCenterRows(rows, selectedGlNames, sortMode) {
   const visibleGlSet = new Set(selectedGlNames);
   const costCenterMap = new Map();
@@ -387,66 +316,188 @@ function getGlFilteredCostCenterRows(rows, selectedGlNames, sortMode) {
   });
 }
 
-function TopCostCentersTable({ byCostCenter, byGlCostCenter, byGlName, totalSpent, topCostCenter }) {
-  const [selectedGlNames, setSelectedGlNames] = useState([]);
-  const [sortMode, setSortMode] = useState("spent-desc");
-  const glOptions = byGlName.map((row) => row.glName);
-  const selectedGlSet = new Set(selectedGlNames);
-  const activeGlNames = glOptions.filter((glName) => selectedGlSet.has(glName));
-  const filteredRows = useMemo(
-    () => getGlFilteredCostCenterRows(byGlCostCenter, activeGlNames, sortMode),
-    [byGlCostCenter, activeGlNames, sortMode],
-  );
-  const tableRows = activeGlNames.length ? filteredRows : byCostCenter.slice(0, 10);
-  const titleDetail = activeGlNames.length
-    ? `${activeGlNames.join(", ")} selected. Showing cost centers by selected GL spend.`
-    : (topCostCenter ? `${topCostCenter.costCenter} is the largest spend input at ${formatPercent(getShare(topCostCenter.spent, totalSpent))}.` : "Largest mapped spend by cost center.");
+function SpendShareBar({ percent, compareItems = [] }) {
+  const width = Math.min(Math.max(percent || 0, 0), 100);
 
   return (
-    <article className="surface-card top-cost-center-card">
-      <h3>Top Cost Centers</h3>
-      <p>{titleDetail}</p>
-      <GlFilterControls
-        selectedGlNames={selectedGlNames}
-        setSelectedGlNames={setSelectedGlNames}
-        glOptions={glOptions}
-        sortMode={sortMode}
-        setSortMode={setSortMode}
-      />
-      <SummaryTable
-        rows={tableRows}
-        columns={activeGlNames.length ? [
-          { key: "costCenter", label: "Cost Center" },
-          { key: "hub", label: "Hub" },
-          ...activeGlNames.map((glName) => ({
-            key: `gl-${glName}`,
-            label: glName,
-            align: "right",
-            render: (row) => formatCurrency(row.byGl[glName] || 0),
-          })),
-          { key: "share", label: "% of Total", render: (row) => (
-            <span className="table-progress purple"><i style={{ "--progress": `${getShare(row.total, totalSpent)}%` }} />{formatPercent(getShare(row.total, totalSpent))}</span>
-          ) },
-          { key: "count", label: "Entries", align: "right", render: (row) => formatNumber(row.count) },
-          { key: "total", label: "Selected Total", align: "right", render: (row) => formatCurrency(row.total) },
-        ] : [
-          { key: "costCenter", label: "Cost Center" },
-          { key: "spent", label: "% of Total", render: (row) => (
-            <span className="table-progress"><i style={{ "--progress": `${getShare(row.spent, totalSpent)}%` }} />{formatPercent(getShare(row.spent, totalSpent))}</span>
-          ) },
-          { key: "spent", label: "Spent", align: "right", render: (row) => formatCurrency(row.spent) },
-          { key: "approved", label: "Approved", align: "right", render: (row) => formatCurrency(row.approved) },
-        ]}
-      />
+    <div className="spend-profile-cell">
+      <div className="spend-profile-meta">
+        <strong>{formatPercent(percent)} of spent</strong>
+        {compareItems.map((item) => (
+          <span key={item.label}>{formatPercent(item.value)} vs {item.label}</span>
+        ))}
+      </div>
+      <div className="spend-profile-bar" aria-hidden="true">
+        <span style={{ "--bar-width": `${width}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, totals }) {
+  const [selectedGlNames, setSelectedGlNames] = useState([]);
+  const [pendingGlNames, setPendingGlNames] = useState([]);
+  const [sortMode, setSortMode] = useState("spent-desc");
+  const [isDrilldownOpen, setIsDrilldownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const glOptions = byGlName.map((row) => row.glName);
+  const costCenterLookup = new Map(byCostCenter.map((row) => [row.costCenter, row]));
+  const activeGlSet = new Set(selectedGlNames);
+  const pendingGlSet = new Set(pendingGlNames);
+  const activeGlNames = glOptions.filter((glName) => activeGlSet.has(glName));
+  const filteredGlOptions = glOptions.filter((glName) => glName.toLowerCase().includes(searchTerm.trim().toLowerCase()));
+  const isCostCenterMode = activeGlNames.length > 0;
+  const costCenterRows = getGlFilteredCostCenterRows(byGlCostCenter, activeGlNames, sortMode).map((row) => {
+    const totalsForCostCenter = costCenterLookup.get(row.costCenter) || {};
+    return {
+      ...row,
+      spent: totalsForCostCenter.spent || 0,
+      submitted: totalsForCostCenter.submitted || 0,
+      approved: totalsForCostCenter.approved || 0,
+    };
+  });
+  const glRows = (() => {
+    const rows = [...byGlName];
+    if (sortMode === "cost-center") rows.sort((a, b) => a.glName.localeCompare(b.glName));
+    return rows.slice(0, 14);
+  })();
+  const tableRows = isCostCenterMode ? costCenterRows.slice(0, 18) : glRows;
+  const subtitle = isCostCenterMode
+    ? `${activeGlNames.join(", ")} selected. Rows now compare cost centers for the selected GL spend.`
+    : "Organized by GL names. Use the Dimension column drilldown to compare selected GLs by cost center.";
+  const firstColumnLabel = isCostCenterMode ? "Cost Center" : "GL Name";
+
+  const togglePending = (glName) => {
+    setPendingGlNames((current) => (
+      current.includes(glName)
+        ? current.filter((item) => item !== glName)
+        : [...current, glName]
+    ));
+  };
+
+  const openDrilldown = () => {
+    setPendingGlNames(selectedGlNames);
+    setIsDrilldownOpen((current) => !current);
+  };
+
+  const applyDrilldown = () => {
+    setSelectedGlNames(pendingGlNames);
+    setIsDrilldownOpen(false);
+  };
+
+  const clearDrilldown = () => {
+    setPendingGlNames([]);
+    setSelectedGlNames([]);
+    setSearchTerm("");
+    setIsDrilldownOpen(false);
+  };
+
+  return (
+    <article className="surface-card spend-analysis-card">
+      <div className="chart-header">
+        <div>
+          <p className="eyebrow">Spend Analysis</p>
+          <h3>{isCostCenterMode ? "Cost Center Drilldown" : "GL Name Cost Drivers"}</h3>
+          <p>{subtitle}</p>
+        </div>
+        <label className="analysis-sort-control">
+          <span>Sort</span>
+          <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
+            <option value="spent-desc">Highest spent</option>
+            <option value="cost-center">Name</option>
+            <option value="hub">Hub</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="analysis-table-wrap">
+        <table className="analysis-table">
+          <thead>
+            <tr>
+              <th className="analysis-dimension-heading">
+                <button type="button" onClick={openDrilldown} aria-expanded={isDrilldownOpen}>
+                  {firstColumnLabel}
+                  <span>{activeGlNames.length ? `${activeGlNames.length} selected` : "Drill down"}</span>
+                  <i aria-hidden="true">v</i>
+                </button>
+                {isDrilldownOpen ? (
+                  <div className="dimension-popover">
+                    <div className="dimension-popover-head">
+                      <strong>Drill down by GL</strong>
+                      <span>Select GL names to compare cost centers.</span>
+                    </div>
+                    <input
+                      type="search"
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder="Search GL names"
+                    />
+                    <div className="dimension-option-list">
+                      {filteredGlOptions.map((glName) => (
+                        <label key={glName}>
+                          <input
+                            type="checkbox"
+                            checked={pendingGlSet.has(glName)}
+                            onChange={() => togglePending(glName)}
+                          />
+                          <span>{glName}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="dimension-popover-actions">
+                      <span>{pendingGlNames.length} selected</span>
+                      <button type="button" className="ghost-button" onClick={clearDrilldown}>Clear</button>
+                      <button type="button" onClick={applyDrilldown}>Apply</button>
+                    </div>
+                  </div>
+                ) : null}
+              </th>
+              <th>Spend Profile</th>
+              <th>Submitted AFP</th>
+              <th>Approved AFP</th>
+              <th>{isCostCenterMode ? "Selected Spent" : "Spent"}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableRows.map((row) => {
+              const key = isCostCenterMode ? row.costCenter : row.glName;
+              const amount = isCostCenterMode ? row.total : row.amount;
+              const percent = isCostCenterMode ? getShare(amount, row.spent) : getShare(amount, totals.spent);
+              const submitted = isCostCenterMode ? row.submitted : totals.submitted;
+              const approved = isCostCenterMode ? row.approved : totals.approved;
+
+              return (
+                <tr key={key}>
+                  <td>
+                    <strong>{key}</strong>
+                    <span>{isCostCenterMode ? row.hub : "GL category"}</span>
+                  </td>
+                  <td>
+                    <SpendShareBar
+                      percent={percent}
+                      compareItems={[
+                        { label: "submitted", value: getShare(amount, submitted) },
+                        { label: "approved", value: getShare(amount, approved) },
+                      ]}
+                    />
+                  </td>
+                  <td className="is-number">{formatCurrency(submitted)}</td>
+                  <td className="is-number">{formatCurrency(approved)}</td>
+                  <td className="is-number"><strong>{formatCurrency(amount)}</strong></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </article>
   );
 }
 
 export function SpendingReportPage({ filters }) {
-  const { totals, monthlyFlow, byCostCenter, byGlName, byGlCostCenter, creditNotes, insights } = buildFilteredInputs(financialInputsData, filters);
+  const { totals, monthlyFlow, byCostCenter, byGlName, byGlCostCenter, insights } = buildFilteredInputs(financialInputsData, filters);
   const chartRows = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved).slice(-16);
-  const topCostCenter = byCostCenter[0];
-  const topGlName = byGlName[0];
   const cnShare = getShare(totals.creditNotes, totals.spent);
   const activeMonths = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved || row.creditNotes);
   const current = activeMonths.at(-1) || {};
@@ -481,52 +532,12 @@ export function SpendingReportPage({ filters }) {
         <InsightList insights={insights} />
       </div>
 
-      <section className="surface-card cn-section">
-        <div className="chart-header">
-          <div>
-            <p className="eyebrow">Credit Notes</p>
-            <h3>CN Impact</h3>
-          </div>
-          <div className="cn-impact-pill">
-            <strong>{formatCurrency(creditNotes.total)}</strong>
-            <span>{formatPercent(creditNotes.shareOfSpent)} vs spent</span>
-          </div>
-        </div>
-        <SummaryTable
-          rows={creditNotes.byCostCenter.slice(0, 8)}
-          columns={[
-            { key: "costCenter", label: "Cost Center" },
-            { key: "hub", label: "Hub" },
-            { key: "count", label: "Entries", align: "right", render: (row) => formatNumber(row.count) },
-            { key: "amount", label: "CN Amount", align: "right", render: (row) => formatCurrency(row.amount) },
-          ]}
-        />
-      </section>
-
-      <div className="content-grid">
-        <TopCostCentersTable
-          byCostCenter={byCostCenter}
-          byGlCostCenter={byGlCostCenter}
-          byGlName={byGlName}
-          totalSpent={totals.spent}
-          topCostCenter={topCostCenter}
-        />
-
-        <article className="surface-card">
-          <h3>Top GL Names</h3>
-          <p>{topGlName ? `${topGlName.glName} is the major cost driver at ${formatPercent(getShare(topGlName.amount, totals.spent))}.` : "Largest GL categories charged across cost centers."}</p>
-          <SummaryTable
-            rows={byGlName.slice(0, 10)}
-            columns={[
-              { key: "glName", label: "GL Name" },
-              { key: "amount", label: "% of Total", render: (row) => (
-                <span className="table-progress purple"><i style={{ "--progress": `${getShare(row.amount, totals.spent)}%` }} />{formatPercent(getShare(row.amount, totals.spent))}</span>
-              ) },
-              { key: "amount", label: "Spent", align: "right", render: (row) => formatCurrency(row.amount) },
-            ]}
-          />
-        </article>
-      </div>
+      <SpendAnalysisTable
+        byCostCenter={byCostCenter}
+        byGlCostCenter={byGlCostCenter}
+        byGlName={byGlName}
+        totals={totals}
+      />
 
       <section className="financial-input-note">
         This dashboard shows financial inputs only. Profitability analysis is available in the Profit & Loss page.
