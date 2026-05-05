@@ -74,6 +74,8 @@ const buildFilteredInputs = (data, filters = {}) => {
   const glMap = new Map();
   const glCostCenterMap = new Map();
   const creditNoteMap = new Map();
+  const creditNoteCategoryMap = new Map();
+  const creditNoteCostCenterCategoryMap = new Map();
 
   for (const entry of filteredEntries) {
     const amount = entry.amount || 0;
@@ -99,7 +101,19 @@ const buildFilteredInputs = (data, filters = {}) => {
     }
 
     if (entry.type === "creditNotes") {
+      const category = entry.category || "Credit Note";
       addAmount(creditNoteMap, entry.costCenter, {
+        costCenter: entry.costCenter,
+        hub: entry.hub,
+        region: entry.region,
+      }, "creditNotes", amount);
+      addAmount(creditNoteCategoryMap, category, {
+        category,
+        issuedBy: entry.issuedBy || "",
+      }, "creditNotes", amount);
+      addAmount(creditNoteCostCenterCategoryMap, `${category}__${entry.costCenter}`, {
+        category,
+        issuedBy: entry.issuedBy || "",
         costCenter: entry.costCenter,
         hub: entry.hub,
         region: entry.region,
@@ -131,6 +145,12 @@ const buildFilteredInputs = (data, filters = {}) => {
     .map((row) => ({ ...row, amount: row.spent }))
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
   const creditNoteRows = normalizeRows([...creditNoteMap.values()])
+    .map((row) => ({ ...row, amount: row.creditNotes }))
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+  const creditNoteCategoryRows = normalizeRows([...creditNoteCategoryMap.values()])
+    .map((row) => ({ ...row, amount: row.creditNotes }))
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+  const creditNoteCostCenterCategoryRows = normalizeRows([...creditNoteCostCenterCategoryMap.values()])
     .map((row) => ({ ...row, amount: row.creditNotes }))
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
 
@@ -186,6 +206,8 @@ const buildFilteredInputs = (data, filters = {}) => {
       total: totals.creditNotes,
       shareOfSpent: cnShare,
       byCostCenter: creditNoteRows,
+      byCategory: creditNoteCategoryRows,
+      byCostCenterCategory: creditNoteCostCenterCategoryRows,
     },
     insights,
   };
@@ -404,15 +426,64 @@ function SpendingSparkline({ values = [] }) {
 }
 
 function CreditNoteTable({ creditNotes, totalSpent }) {
-  const rows = creditNotes.byCostCenter;
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [pendingCategories, setPendingCategories] = useState([]);
+  const [isDrilldownOpen, setIsDrilldownOpen] = useState(false);
+  const categoryOptions = creditNotes.byCategory.map((row) => row.category);
+  const selectedSet = new Set(selectedCategories);
+  const pendingSet = new Set(pendingCategories);
+  const activeCategories = categoryOptions.filter((category) => selectedSet.has(category));
+  const isCostCenterMode = activeCategories.length > 0;
+  const receiverRows = (() => {
+    const categorySet = new Set(activeCategories);
+    const receiverMap = new Map();
+    for (const row of creditNotes.byCostCenterCategory) {
+      if (!categorySet.has(row.category)) continue;
+      const current = receiverMap.get(row.costCenter) || {
+        costCenter: row.costCenter,
+        hub: row.hub,
+        total: 0,
+        byCategory: {},
+      };
+      current.byCategory[row.category] = (current.byCategory[row.category] || 0) + row.amount;
+      current.total += row.amount;
+      receiverMap.set(row.costCenter, current);
+    }
+    return [...receiverMap.values()].sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
+  })();
+  const rows = isCostCenterMode ? receiverRows : creditNotes.byCategory;
+
+  const togglePending = (category) => {
+    setPendingCategories((current) => (
+      current.includes(category)
+        ? current.filter((item) => item !== category)
+        : [...current, category]
+    ));
+  };
+
+  const openDrilldown = () => {
+    setPendingCategories(selectedCategories);
+    setIsDrilldownOpen((current) => !current);
+  };
+
+  const applyDrilldown = () => {
+    setSelectedCategories(pendingCategories);
+    setIsDrilldownOpen(false);
+  };
+
+  const clearDrilldown = () => {
+    setPendingCategories([]);
+    setSelectedCategories([]);
+    setIsDrilldownOpen(false);
+  };
 
   return (
     <article className="surface-card credit-note-analysis-card">
       <div className="chart-header">
         <div>
           <p className="eyebrow">Credit Notes</p>
-          <h3>Credit Note Analysis</h3>
-          <p>Credit note impact by cost center under the active header filters.</p>
+          <h3>{isCostCenterMode ? "CN Receiver Drilldown" : "Credit Note Analysis"}</h3>
+          <p>{isCostCenterMode ? `${activeCategories.join(", ")} selected. Rows show receiving cost centers.` : "CN items by issuer under the active header filters."}</p>
         </div>
         <div className="cn-impact-pill">
           <strong>{formatCurrency(creditNotes.total)}</strong>
@@ -424,24 +495,71 @@ function CreditNoteTable({ creditNotes, totalSpent }) {
         <table className="analysis-table credit-note-table">
           <thead>
             <tr>
-              <th>Cost Center</th>
+              <th className="analysis-dimension-heading">
+                <button type="button" onClick={openDrilldown} aria-expanded={isDrilldownOpen}>
+                  {isCostCenterMode ? "Cost Center" : "CN Item"}
+                  <span>{activeCategories.length ? `${activeCategories.length} selected` : "Drill down"}</span>
+                  <i aria-hidden="true">v</i>
+                </button>
+                {isDrilldownOpen ? (
+                  <div className="dimension-popover">
+                    <div className="dimension-popover-head">
+                      <strong>Drill down by CN item</strong>
+                      <span>Select CN items to see receiving cost centers.</span>
+                    </div>
+                    <div className="dimension-option-list">
+                      {categoryOptions.map((category) => (
+                        <label key={category}>
+                          <input
+                            type="checkbox"
+                            checked={pendingSet.has(category)}
+                            onChange={() => togglePending(category)}
+                          />
+                          <span>{category}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="dimension-popover-actions">
+                      <span>{pendingCategories.length} selected</span>
+                      <button type="button" className="ghost-button" onClick={clearDrilldown}>Clear</button>
+                      <button type="button" onClick={applyDrilldown}>Apply</button>
+                    </div>
+                  </div>
+                ) : null}
+              </th>
+              <th>{isCostCenterMode ? "CN Item Mix" : "Issued By"}</th>
               <th>CN Share</th>
-              <th>Entries</th>
               <th>CN Amount</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.costCenter}>
+              <tr key={isCostCenterMode ? row.costCenter : row.category}>
                 <td>
-                  <strong>{row.costCenter}</strong>
-                  <span>{row.hub}</span>
+                  <strong>{isCostCenterMode ? row.costCenter : row.category}</strong>
+                  <span>{isCostCenterMode ? row.hub : "CN item"}</span>
                 </td>
                 <td>
-                  <SpendShareBar percent={getShare(row.amount, creditNotes.total)} />
+                  {isCostCenterMode ? (
+                    <div className="spend-segment-list">
+                      {activeCategories.map((category, index) => (
+                        row.byCategory[category] ? (
+                          <span key={category} style={{ "--segment-color": segmentColors[index % segmentColors.length] }}>
+                            <i />
+                            <b>{category}</b>
+                            <em>{formatCurrency(row.byCategory[category])}</em>
+                          </span>
+                        ) : null
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="cn-issued-by">{row.issuedBy || "Legacy CN"}</span>
+                  )}
                 </td>
-                <td className="is-number">{row.count}</td>
-                <td className="is-number"><strong>{formatCurrency(row.amount)}</strong></td>
+                <td>
+                  <SpendShareBar percent={getShare(isCostCenterMode ? row.total : row.amount, creditNotes.total)} />
+                </td>
+                <td className="is-number"><strong>{formatCurrency(isCostCenterMode ? row.total : row.amount)}</strong></td>
               </tr>
             ))}
           </tbody>

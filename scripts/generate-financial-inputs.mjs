@@ -175,6 +175,27 @@ const getCreditNotePeriodFromFile = (filename) => {
 
 const getHeaderIndex = (headers, names) => headers.findIndex((header) => names.includes(clean(header).toLowerCase()));
 
+const isSummaryCostCode = (value) => {
+  const text = clean(value).toLowerCase();
+  return !text || text === "total" || text === "grand total";
+};
+
+const normalizeCreditNoteCategory = (header) => {
+  const normalized = clean(header).toLowerCase();
+  if (normalized === "no." || normalized === "no") return "";
+  if (normalized === "fixed assets") return "FA";
+  if (normalized === "fa") return "FA";
+  if (normalized === "store") return "Store";
+  if (normalized === "scaffolding") return "Scaffolding";
+  if (normalized === "materials") return "Materials";
+  if (normalized === "workshop") return "Workshop";
+  return clean(header);
+};
+
+const getCreditNoteIssuer = (category) => (
+  category === "Workshop" ? "MWS_23" : "CmpSB_23"
+);
+
 const readCreditNoteFile = (filePath) => {
   const workbook = XLSX.readFile(filePath, { cellDates: true });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -190,6 +211,7 @@ const readCreditNoteFile = (filePath) => {
       .filter((item) => item.period);
 
     for (const row of rows.slice(1)) {
+      if (isSummaryCostCode(row[costCenterIndex])) continue;
       const mapping = resolveCostCenter(row[costCenterIndex]);
       if (!mapping.sourceCostCenter) continue;
       for (const column of periodColumns) {
@@ -205,24 +227,30 @@ const readCreditNoteFile = (filePath) => {
   const totalIndex = getHeaderIndex(headers, ["grand total", "total revenue"]);
   const categoryIndexes = headers
     .map((header, index) => ({ header, index }))
-    .filter((item) => item.index !== costCenterIndex && item.index !== totalIndex && item.header);
+    .filter((item) => (
+      item.index !== costCenterIndex
+      && item.index !== totalIndex
+      && normalizeCreditNoteCategory(item.header)
+    ));
 
   if (!filePeriod || costCenterIndex < 0) return entries;
 
   for (const row of rows.slice(1)) {
+    if (isSummaryCostCode(row[costCenterIndex])) continue;
     const mapping = resolveCostCenter(row[costCenterIndex]);
     if (!mapping.sourceCostCenter) continue;
-
-    if (totalIndex >= 0) {
-      const amount = parseAmount(row[totalIndex]);
-      if (amount) entries.push({ ...mapping, ...filePeriod, amount: roundCurrency(amount), category: "Credit Note" });
-      continue;
-    }
 
     for (const category of categoryIndexes) {
       const amount = parseAmount(row[category.index]);
       if (!amount) continue;
-      entries.push({ ...mapping, ...filePeriod, amount: roundCurrency(amount), category: category.header });
+      const categoryName = normalizeCreditNoteCategory(category.header);
+      entries.push({
+        ...mapping,
+        ...filePeriod,
+        amount: roundCurrency(amount),
+        category: categoryName,
+        issuedBy: getCreditNoteIssuer(categoryName),
+      });
     }
   }
 
@@ -291,6 +319,7 @@ const compactEntries = (entries) => {
       entry.costCenter,
       entry.glName || "",
       entry.category || "",
+      entry.issuedBy || "",
     ].join("|");
     const current = compactMap.get(key) || {
       type: entry.type,
@@ -303,6 +332,7 @@ const compactEntries = (entries) => {
       year: entry.year,
       glName: entry.glName,
       category: entry.category,
+      issuedBy: entry.issuedBy,
       amount: 0,
     };
     current.amount += entry.amount || 0;
@@ -314,6 +344,7 @@ const compactEntries = (entries) => {
       const cleaned = { ...entry, amount: roundCurrency(entry.amount) };
       if (!cleaned.glName) delete cleaned.glName;
       if (!cleaned.category) delete cleaned.category;
+      if (!cleaned.issuedBy) delete cleaned.issuedBy;
       return cleaned;
     })
     .sort((a, b) => a.period.localeCompare(b.period) || a.costCenter.localeCompare(b.costCenter));

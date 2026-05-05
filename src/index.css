@@ -2566,6 +2566,18 @@ button {
   background: linear-gradient(90deg, #f97316, #f59e0b);
 }
 
+.cn-issued-by {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 12px;
+  font-weight: 950;
+}
+
 .financial-input-note {
   padding: 12px 14px;
   border: 1px solid rgba(37, 99, 235, 0.12);
