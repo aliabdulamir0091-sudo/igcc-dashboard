@@ -112,6 +112,21 @@ const buildFilteredInputs = (data, filters = {}) => {
   const byGlName = normalizeRows([...glMap.values()])
     .map((row) => ({ ...row, amount: row.spent }))
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+  const glMonthlyMap = new Map();
+  const costCenterMonthlyMap = new Map();
+  for (const entry of filteredEntries) {
+    if (entry.type !== "spent") continue;
+    const glName = entry.glName || "Unclassified";
+    const glPeriodKey = `${glName}__${entry.period}`;
+    const costCenterPeriodKey = `${entry.costCenter}__${entry.period}`;
+    glMonthlyMap.set(glPeriodKey, (glMonthlyMap.get(glPeriodKey) || 0) + (entry.amount || 0));
+    costCenterMonthlyMap.set(costCenterPeriodKey, (costCenterMonthlyMap.get(costCenterPeriodKey) || 0) + (entry.amount || 0));
+  }
+  const addSparkline = (row, keyName) => ({
+    ...row,
+    sparkline: monthlyFlow.map((periodRow) => roundCurrency((keyName === "glName" ? glMonthlyMap : costCenterMonthlyMap).get(`${row[keyName]}__${periodRow.period}`) || 0)),
+  });
+  const byGlNameWithTrend = byGlName.map((row) => addSparkline(row, "glName"));
   const byGlCostCenter = normalizeRows([...glCostCenterMap.values()])
     .map((row) => ({ ...row, amount: row.spent }))
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
@@ -161,8 +176,12 @@ const buildFilteredInputs = (data, filters = {}) => {
     totals,
     monthlyFlow,
     byCostCenter,
-    byGlName,
+    byGlName: byGlNameWithTrend,
     byGlCostCenter,
+    costCenterSparklineByName: Object.fromEntries(byCostCenter.map((row) => {
+      const trendedRow = addSparkline(row, "costCenter");
+      return [row.costCenter, trendedRow.sparkline];
+    })),
     creditNotes: {
       total: totals.creditNotes,
       shareOfSpent: cnShare,
@@ -316,16 +335,13 @@ function getGlFilteredCostCenterRows(rows, selectedGlNames, sortMode) {
   });
 }
 
-function SpendShareBar({ percent, compareItems = [] }) {
+function SpendShareBar({ percent }) {
   const width = Math.min(Math.max(percent || 0, 0), 100);
 
   return (
     <div className="spend-profile-cell">
       <div className="spend-profile-meta">
         <strong>{formatPercent(percent)} of spent</strong>
-        {compareItems.map((item) => (
-          <span key={item.label}>{formatPercent(item.value)} vs {item.label}</span>
-        ))}
       </div>
       <div className="spend-profile-bar" aria-hidden="true">
         <span style={{ "--bar-width": `${width}%` }} />
@@ -334,7 +350,25 @@ function SpendShareBar({ percent, compareItems = [] }) {
   );
 }
 
-function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, totals }) {
+function SpendingSparkline({ values = [] }) {
+  const width = 132;
+  const height = 34;
+  const positiveValues = values.filter((value) => value > 0);
+  const maxValue = Math.max(...positiveValues, 1);
+  const points = values.map((value, index) => {
+    const x = values.length <= 1 ? width / 2 : (index / (values.length - 1)) * width;
+    const y = height - ((value || 0) / maxValue) * (height - 4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+
+  return (
+    <svg className="spending-sparkline" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Spending trend">
+      <polyline points={points} />
+    </svg>
+  );
+}
+
+function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenterSparklineByName, totals }) {
   const [selectedGlNames, setSelectedGlNames] = useState([]);
   const [pendingGlNames, setPendingGlNames] = useState([]);
   const [sortMode, setSortMode] = useState("spent-desc");
@@ -350,13 +384,12 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, totals }) 
   const isCostCenterMode = activeGlNames.length > 0;
   const costCenterRows = getGlFilteredCostCenterRows(byGlCostCenter, activeGlNames, sortMode).map((row) => {
     const totalsForCostCenter = costCenterLookup.get(row.costCenter) || {};
-    return {
-      ...row,
-      spent: totalsForCostCenter.spent || 0,
-      submitted: totalsForCostCenter.submitted || 0,
-      approved: totalsForCostCenter.approved || 0,
-    };
-  });
+      return {
+        ...row,
+        spent: totalsForCostCenter.spent || 0,
+        sparkline: costCenterSparklineByName[row.costCenter] || [],
+      };
+    });
   const glRows = (() => {
     const rows = [...byGlName];
     if (sortMode === "cost-center") rows.sort((a, b) => a.glName.localeCompare(b.glName));
@@ -454,8 +487,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, totals }) 
                 ) : null}
               </th>
               <th>Spend Profile</th>
-              <th>Submitted AFP</th>
-              <th>Approved AFP</th>
+              <th>Trend</th>
               <th>{isCostCenterMode ? "Selected Spent" : "Spent"}</th>
             </tr>
           </thead>
@@ -464,8 +496,6 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, totals }) 
               const key = isCostCenterMode ? row.costCenter : row.glName;
               const amount = isCostCenterMode ? row.total : row.amount;
               const percent = isCostCenterMode ? getShare(amount, row.spent) : getShare(amount, totals.spent);
-              const submitted = isCostCenterMode ? row.submitted : totals.submitted;
-              const approved = isCostCenterMode ? row.approved : totals.approved;
 
               return (
                 <tr key={key}>
@@ -476,14 +506,9 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, totals }) 
                   <td>
                     <SpendShareBar
                       percent={percent}
-                      compareItems={[
-                        { label: "submitted", value: getShare(amount, submitted) },
-                        { label: "approved", value: getShare(amount, approved) },
-                      ]}
                     />
                   </td>
-                  <td className="is-number">{formatCurrency(submitted)}</td>
-                  <td className="is-number">{formatCurrency(approved)}</td>
+                  <td><SpendingSparkline values={row.sparkline} /></td>
                   <td className="is-number"><strong>{formatCurrency(amount)}</strong></td>
                 </tr>
               );
@@ -496,7 +521,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, totals }) 
 }
 
 export function SpendingReportPage({ filters }) {
-  const { totals, monthlyFlow, byCostCenter, byGlName, byGlCostCenter, insights } = buildFilteredInputs(financialInputsData, filters);
+  const { totals, monthlyFlow, byCostCenter, byGlName, byGlCostCenter, costCenterSparklineByName, insights } = buildFilteredInputs(financialInputsData, filters);
   const chartRows = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved).slice(-16);
   const cnShare = getShare(totals.creditNotes, totals.spent);
   const activeMonths = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved || row.creditNotes);
@@ -536,6 +561,7 @@ export function SpendingReportPage({ filters }) {
         byCostCenter={byCostCenter}
         byGlCostCenter={byGlCostCenter}
         byGlName={byGlName}
+        costCenterSparklineByName={costCenterSparklineByName}
         totals={totals}
       />
 

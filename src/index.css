@@ -2474,6 +2474,21 @@ button {
   background: linear-gradient(90deg, #2563eb, #7c3aed);
 }
 
+.spending-sparkline {
+  display: block;
+  width: 132px;
+  height: 34px;
+}
+
+.spending-sparkline polyline {
+  fill: none;
+  stroke: #2563eb;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+  filter: drop-shadow(0 5px 8px rgba(37, 99, 235, 0.16));
+}
+
 .financial-input-note {
   padding: 12px 14px;
   border: 1px solid rgba(37, 99, 235, 0.12);
