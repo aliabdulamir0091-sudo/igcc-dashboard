@@ -608,42 +608,19 @@ function PrintMetricCard({ label, value, trend, values, tone = "green" }) {
   );
 }
 
-function PrintAnalysisCard({ title, rows, formula, tone = "green" }) {
+function PrintGlBreakdown({ rows, totalCost }) {
   return (
-    <article className="print-report-card print-analysis-card">
-      <h3>{title} <small>USD in Millions</small></h3>
-      <div>
-        {rows.map((row) => (
-          <p key={row.label} className={row.total ? "is-total" : ""}>
-            <span>{row.label}</span>
-            <strong className={row.tone ? `is-${row.tone}` : ""}>{formatMillions(row.value)}</strong>
-          </p>
-        ))}
-      </div>
-      <footer className={`tone-${tone}`}>{formula}</footer>
-    </article>
-  );
-}
-
-function PrintWaterfall({ pnl }) {
-  const steps = [
-    { label: "Approved AFP", value: pnl.revenue, tone: "green" },
-    { label: "Issued CN", value: pnl.issuedCreditNotes, tone: "green" },
-    { label: "Adjusted Revenue", value: pnl.updatedRevenue, tone: "green" },
-    { label: "Total Cost", value: -pnl.updatedCost, tone: "red" },
-    { label: "Net Profit", value: pnl.netProfit, tone: "blue" },
-  ];
-  const max = Math.max(...steps.map((step) => Math.abs(step.value)), 1);
-
-  return (
-    <article className="print-report-card print-waterfall-card">
-      <h3>P&L Waterfall <small>Approved Basis</small></h3>
-      <div className="print-waterfall">
-        {steps.map((step) => (
-          <div key={step.label} className={`tone-${step.tone}`}>
-            <span style={{ "--bar-height": `${Math.max((Math.abs(step.value) / max) * 100, 8)}%` }} />
-            <strong>{formatMillions(step.value)}</strong>
-            <small>{step.label}</small>
+    <article className="print-report-card print-gl-card">
+      <h3>Cost Breakdown by GL <small>Total Cost {formatMillions(totalCost)}</small></h3>
+      <div className="print-gl-bars">
+        {rows.slice(0, 5).map((row) => (
+          <div key={row.glName}>
+            <p>
+              <span>{row.glName}</span>
+              <strong>{formatMillions(row.amount)}</strong>
+              <em>{formatPercent(row.share)}</em>
+            </p>
+            <i style={{ "--bar-width": `${Math.min(row.share, 100)}%` }} />
           </div>
         ))}
       </div>
@@ -651,37 +628,15 @@ function PrintWaterfall({ pnl }) {
   );
 }
 
-function PrintGlBreakdown({ rows, totalCost }) {
-  return (
-    <article className="print-report-card print-gl-card">
-      <h3>Cost Breakdown by GL <small>USD in Millions</small></h3>
-      <div className="print-gl-layout">
-        <div className="print-donut">
-          <strong>{formatMillions(totalCost)}</strong>
-          <span>Total Cost</span>
-        </div>
-        <div className="print-gl-table">
-          {rows.map((row) => (
-            <p key={row.glName}>
-              <span>{row.glName}</span>
-              <strong>{formatMillions(row.amount)}</strong>
-              <em>{formatPercent(row.share)}</em>
-              <FilledSparkline values={row.monthlyValues} tone={row.movement >= 0 ? "green" : "red"} />
-            </p>
-          ))}
-        </div>
-      </div>
-    </article>
-  );
-}
-
 function ProfitabilityPrintReport({ analysis, selectedCostCenter, isScreen = false }) {
   const approved = analysis.print.approvedPnl;
-  const submitted = analysis.print.submittedPnl;
   const reportRows = analysis.print.monthlyRows.slice(-4);
   const latest = reportRows.at(-1);
   const previous = reportRows.at(-2);
   const isProfitable = approved.netProfit >= 0;
+  const topDriver = analysis.print.glRows[0];
+  const costTrend = getTrend(latest?.totalCost || 0, previous?.totalCost || 0);
+  const profitTrend = getTrend(latest?.netProfitApproved || 0, previous?.netProfitApproved || 0);
 
   return (
     <section className={`pnl-print-report ${isScreen ? "is-report-screen" : ""}`} aria-label="Printable Profit and Loss report">
@@ -689,8 +644,8 @@ function ProfitabilityPrintReport({ analysis, selectedCostCenter, isScreen = fal
         <div className="print-brand">
           <img src={igccLogo} alt="IGCC" />
           <div>
-            <h1>Profit & Loss Analysis Report</h1>
-            <p>Cost Center Detailed Report</p>
+            <h1>Profit & Loss Cost Center Report</h1>
+            <p>Operations / Construction Review Pack</p>
           </div>
         </div>
         <div className="print-meta">
@@ -700,78 +655,69 @@ function ProfitabilityPrintReport({ analysis, selectedCostCenter, isScreen = fal
         </div>
       </header>
 
-      <section className="print-context">
-        <p><span>Portfolio</span><strong>{analysis.print.meta.portfolio}</strong></p>
-        <p><span>Hub</span><strong>{analysis.print.meta.hub}</strong></p>
-        <p><span>Cost Center</span><strong>{selectedCostCenter || "All selected cost centers"}</strong></p>
-        <p><span>Region</span><strong>{analysis.print.meta.region}</strong></p>
+      <section className="print-status-band">
+        <div>
+          <span>Cost Center</span>
+          <strong>{selectedCostCenter || "All selected cost centers"}</strong>
+          <em>{analysis.print.meta.hub} | {analysis.print.meta.portfolio} | {analysis.print.meta.region}</em>
+        </div>
         <div className={isProfitable ? "is-good" : "is-loss"}>
-          <span><Icon name={isProfitable ? "approve" : "spending"} /></span>
+          <span>Status</span>
           <strong>{isProfitable ? "Profitable" : "Loss-Making"}</strong>
-          <em>Net Margin {formatPercent(approved.netMargin)}</em>
+          <em>{formatPercent(approved.netMargin)} net margin</em>
+        </div>
+        <div>
+          <span>Discussion Focus</span>
+          <strong>{topDriver?.glName || "Cost discipline"}</strong>
+          <em>{formatPercent(topDriver?.share || 0)} of total cost</em>
         </div>
       </section>
 
       <section className="print-kpi-grid">
-        <PrintMetricCard label="Adjusted Revenue (Approved Basis)" value={formatMillions(approved.updatedRevenue)} trend={getTrend(latest?.approvedRevenue || 0, previous?.approvedRevenue || 0)} values={reportRows.map((row) => row.approvedRevenue)} tone="green" />
-        <PrintMetricCard label="Adjusted Revenue (Submitted Basis)" value={formatMillions(submitted.updatedRevenue)} trend={getTrend(latest?.submittedRevenue || 0, previous?.submittedRevenue || 0)} values={reportRows.map((row) => row.submittedRevenue)} tone="green" />
+        <PrintMetricCard label="Adjusted Revenue" value={formatMillions(approved.updatedRevenue)} trend={getTrend(latest?.approvedRevenue || 0, previous?.approvedRevenue || 0)} values={reportRows.map((row) => row.approvedRevenue)} tone="green" />
         <PrintMetricCard label="Total Cost" value={formatMillions(approved.updatedCost)} trend={getTrend(latest?.totalCost || 0, previous?.totalCost || 0)} values={reportRows.map((row) => row.totalCost)} tone="red" />
-        <PrintMetricCard label="Net Profit (Approved Basis)" value={formatMillions(approved.netProfit)} trend={getTrend(latest?.netProfitApproved || 0, previous?.netProfitApproved || 0)} values={reportRows.map((row) => row.netProfitApproved)} tone="blue" />
-        <PrintMetricCard label="Net Profit (Submitted Basis)" value={formatMillions(submitted.netProfit)} trend={getTrend(latest?.netProfitSubmitted || 0, previous?.netProfitSubmitted || 0)} values={reportRows.map((row) => row.netProfitSubmitted)} tone="green" />
-        <PrintMetricCard label="Margin % (Approved Basis)" value={formatPercent(approved.netMargin)} trend={(latest?.netMarginApproved || 0) - (previous?.netMarginApproved || 0)} values={reportRows.map((row) => row.netMarginApproved)} tone="blue" />
-        <PrintMetricCard label="Margin % (Submitted Basis)" value={formatPercent(submitted.netMargin)} trend={(latest?.netMarginSubmitted || 0) - (previous?.netMarginSubmitted || 0)} values={reportRows.map((row) => row.netMarginSubmitted)} tone="blue" />
+        <PrintMetricCard label="Net Profit" value={formatMillions(approved.netProfit)} trend={profitTrend} values={reportRows.map((row) => row.netProfitApproved)} tone="blue" />
+        <PrintMetricCard label="Net Margin" value={formatPercent(approved.netMargin)} trend={(latest?.netMarginApproved || 0) - (previous?.netMarginApproved || 0)} values={reportRows.map((row) => row.netMarginApproved)} tone="blue" />
       </section>
 
       <section className="print-analysis-grid">
-        <PrintAnalysisCard
-          title="Revenue Analysis"
-          rows={[
-            { label: "Approved AFP", value: approved.revenue },
-            { label: "Submitted AFP", value: submitted.revenue },
-            { label: "Issued Credit Notes (CN)", value: approved.issuedCreditNotes },
-            { label: "Adjusted Revenue (Approved Basis)", value: approved.updatedRevenue, total: true, tone: "green" },
-            { label: "Adjusted Revenue (Submitted Basis)", value: submitted.updatedRevenue, total: true, tone: "green" },
-          ]}
-          formula="Adjusted Revenue = AFP + Issued CN"
-        />
-        <PrintAnalysisCard
-          title="Cost Analysis"
-          tone="red"
-          rows={[
-            { label: "Cost from Spent Report", value: approved.totalCost },
-            { label: "Received Credit Notes (CN)", value: approved.receivedCreditNotes },
-            { label: "Total Cost", value: approved.updatedCost, total: true, tone: "red" },
-          ]}
-          formula="Total Cost = Cost from Spent Report + Received CN"
-        />
-        <article className="print-report-card print-profit-card">
-          <h3>Profitability Analysis <small>USD in Millions</small></h3>
+        <article className="print-report-card print-bridge-card">
+          <h3>Revenue & Cost Bridge <small>Approved Basis | USD in Millions</small></h3>
           <div>
-            <p><span>Adjusted Revenue</span><strong>{formatMillions(approved.updatedRevenue)}</strong><strong>{formatMillions(submitted.updatedRevenue)}</strong></p>
-            <p><span>Total Cost</span><strong className="is-red">{formatMillions(-approved.updatedCost)}</strong><strong className="is-red">{formatMillions(-submitted.updatedCost)}</strong></p>
-            <p><span>Net Profit</span><strong className="is-green">{formatMillions(approved.netProfit)}</strong><strong className="is-green">{formatMillions(submitted.netProfit)}</strong></p>
-            <p><span>Margin %</span><strong>{formatPercent(approved.netMargin)}</strong><strong>{formatPercent(submitted.netMargin)}</strong></p>
+            <p><span>Approved AFP</span><strong>{formatMillions(approved.revenue)}</strong></p>
+            <p><span>Issued Credit Notes</span><strong>{formatMillions(approved.issuedCreditNotes)}</strong></p>
+            <p className="is-total"><span>Adjusted Revenue</span><strong>{formatMillions(approved.updatedRevenue)}</strong></p>
+            <p><span>Spent Report Cost</span><strong className="is-red">{formatMillions(-approved.totalCost)}</strong></p>
+            <p><span>Received Credit Notes</span><strong className="is-red">{formatMillions(-approved.receivedCreditNotes)}</strong></p>
+            <p className="is-final"><span>Net Profit</span><strong>{formatMillions(approved.netProfit)}</strong></p>
           </div>
+        </article>
+        <article className="print-report-card print-discussion-card">
+          <h3>Operational Discussion Summary <small>For Operations / Construction Review</small></h3>
+          <p>The cost center is <strong>{isProfitable ? "profitable" : "loss-making"}</strong> with {formatPercent(approved.netMargin)} approved-basis net margin.</p>
+          <p>Main cost pressure is <strong>{topDriver?.glName || "not identified"}</strong>, representing {formatPercent(topDriver?.share || 0)} of total cost.</p>
+          <p>Latest cost movement is <strong className={costTrend <= 0 ? "is-green" : "is-red"}>{costTrend >= 0 ? "up" : "down"} {formatPercent(Math.abs(costTrend))}</strong>; net profit movement is <strong>{profitTrend >= 0 ? "up" : "down"} {formatPercent(Math.abs(profitTrend))}</strong>.</p>
         </article>
       </section>
 
-      <section className="print-visual-grid">
+      <section className="print-trend-section">
         <MonthlyTrendChart rows={reportRows.map((row) => ({ ...row, revenue: row.approvedRevenue, netProfit: row.netProfitApproved }))} />
-        <PrintWaterfall pnl={approved} />
-        <PrintGlBreakdown rows={analysis.print.glRows} totalCost={approved.updatedCost} />
       </section>
 
-      <section className="print-movement-table">
-        <h3>Monthly Movement Table</h3>
-        {reportRows.map((row) => (
-          <p key={row.period}>
-            <strong>{row.label}</strong>
-            <span>Revenue {formatMillions(row.approvedRevenue)}</span>
-            <span>Cost {formatMillions(row.totalCost)}</span>
-            <span>Net Profit {formatMillions(row.netProfitApproved)}</span>
-            <span>Margin {formatPercent(row.netMarginApproved)}</span>
-          </p>
-        ))}
+      <section className="print-visual-grid">
+        <PrintGlBreakdown rows={analysis.print.glRows} totalCost={approved.updatedCost} />
+        <section className="print-movement-table">
+          <h3>Monthly Movement</h3>
+          {reportRows.map((row) => (
+            <p key={row.period}>
+              <strong>{row.label}</strong>
+              <span>{formatMillions(row.approvedRevenue)}</span>
+              <span>{formatMillions(row.totalCost)}</span>
+              <span>{formatMillions(row.netProfitApproved)}</span>
+              <span>{formatPercent(row.netMarginApproved)}</span>
+            </p>
+          ))}
+        </section>
       </section>
     </section>
   );

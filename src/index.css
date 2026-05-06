@@ -2784,7 +2784,8 @@ button {
     color: #ffffff;
   }
 
-  .print-context {
+  .print-context,
+  .print-status-band {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 7px;
@@ -2795,6 +2796,51 @@ button {
     border-radius: 14px;
     background: linear-gradient(135deg, #f8fbff, #eff6ff);
     font-size: 9px;
+  }
+
+  .print-status-band {
+    grid-template-columns: 1.2fr 0.8fr 1fr;
+    background:
+      linear-gradient(135deg, rgba(236, 253, 245, 0.95), rgba(239, 246, 255, 0.96));
+  }
+
+  .print-status-band > div {
+    display: grid;
+    gap: 2px;
+    min-height: 56px;
+    padding: 9px 10px;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16);
+  }
+
+  .print-status-band span {
+    color: #64748b;
+    font-size: 8px;
+    font-weight: 950;
+    text-transform: uppercase;
+  }
+
+  .print-status-band strong {
+    color: #061334;
+    font-size: 14px;
+    line-height: 1.05;
+  }
+
+  .print-status-band em {
+    color: #334155;
+    font-size: 8px;
+    font-style: normal;
+    font-weight: 850;
+  }
+
+  .print-status-band .is-good {
+    background: linear-gradient(135deg, #dcfce7, #f0fdf4);
+  }
+
+  .print-status-band .is-good strong,
+  .print-status-band .is-good em {
+    color: #166534;
   }
 
   .print-context p {
@@ -2950,6 +2996,7 @@ button {
 
   .print-analysis-card p,
   .print-profit-card p,
+  .print-bridge-card p,
   .print-gl-table p,
   .print-movement-table p {
     display: grid;
@@ -2961,6 +3008,7 @@ button {
   }
 
   .print-analysis-card p,
+  .print-bridge-card p,
   .print-gl-table p {
     grid-template-columns: 1fr 72px;
   }
@@ -2969,8 +3017,37 @@ button {
     grid-template-columns: 1fr 86px 86px;
   }
 
-  .print-profit-card {
-    grid-column: 1 / -1;
+  .print-bridge-card p strong {
+    text-align: right;
+  }
+
+  .print-bridge-card .is-total {
+    margin-top: 3px;
+    background: linear-gradient(90deg, #ecfdf5, #f8fafc);
+    border-top: 1px dashed #94a3b8;
+    font-weight: 950;
+  }
+
+  .print-bridge-card .is-final {
+    margin-top: 3px;
+    min-height: 22px;
+    border: 1px solid #bbf7d0;
+    border-radius: 7px;
+    background: #ecfdf5;
+    font-weight: 950;
+  }
+
+  .print-discussion-card {
+    background:
+      linear-gradient(135deg, rgba(239, 246, 255, 0.94), rgba(255, 255, 255, 0.98));
+  }
+
+  .print-discussion-card p {
+    margin: 0 0 6px;
+    color: #334155;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1.45;
   }
 
   .print-analysis-card strong,
@@ -3005,8 +3082,37 @@ button {
   .is-green { color: #15803d !important; }
   .is-red { color: #dc2626 !important; }
 
+  .print-trend-section {
+    margin-bottom: 8px;
+  }
+
+  .print-trend-section .pnl-trend-card {
+    min-height: auto;
+    border: 1px solid #dbe4ef;
+    border-radius: 12px;
+    box-shadow: none;
+    padding: 7px;
+  }
+
+  .print-trend-section .pnl-card-heading {
+    margin-bottom: 0;
+  }
+
+  .print-trend-section .pnl-card-heading h3 {
+    font-size: 11px;
+  }
+
+  .print-trend-section .pnl-latest-chip {
+    display: none;
+  }
+
+  .print-trend-section .pnl-trend-svg {
+    min-height: 118px;
+    height: 118px;
+  }
+
   .print-visual-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   }
 
   .print-visual-grid .pnl-trend-card {
@@ -3101,6 +3207,43 @@ button {
   .print-gl-table .pnl-sparkline {
     width: 50px;
     height: 16px;
+  }
+
+  .print-gl-bars {
+    display: grid;
+    gap: 7px;
+  }
+
+  .print-gl-bars > div {
+    display: grid;
+    gap: 3px;
+  }
+
+  .print-gl-bars p {
+    display: grid;
+    grid-template-columns: 1fr 54px 36px;
+    gap: 7px;
+    align-items: center;
+    margin: 0;
+    color: #334155;
+    font-size: 8px;
+    font-weight: 850;
+  }
+
+  .print-gl-bars strong,
+  .print-gl-bars em {
+    color: #061334;
+    font-style: normal;
+    text-align: right;
+  }
+
+  .print-gl-bars i {
+    display: block;
+    width: var(--bar-width);
+    max-width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #2563eb, #14b8a6);
   }
 
   .print-movement-table {
