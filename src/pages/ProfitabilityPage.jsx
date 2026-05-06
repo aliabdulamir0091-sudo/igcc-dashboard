@@ -38,9 +38,14 @@ const CURRENCY_FORMAT = new Intl.NumberFormat("en-US", {
 });
 
 const NUMBER_FORMAT = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+const COMPACT_NUMBER_FORMAT = new Intl.NumberFormat("en-US", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 
 const roundCurrency = (value) => Math.round(((value || 0) + Number.EPSILON) * 100) / 100;
 const formatCurrency = (value) => CURRENCY_FORMAT.format(value || 0);
+const formatCompactCurrency = (value) => `$${COMPACT_NUMBER_FORMAT.format(value || 0)}`;
 const formatPercent = (value) => `${NUMBER_FORMAT.format(value || 0)}%`;
 const getShare = (value, total) => (total ? ((value || 0) / total) * 100 : 0);
 
@@ -224,6 +229,33 @@ function PnlKpiCard({ icon, label, value, context, tone = "blue" }) {
       </div>
       <p>{label}</p>
       <strong>{value}</strong>
+    </article>
+  );
+}
+
+function PnlNarrative({ pnl, topRow, weakRow, selectedCostCenter, revenueBasisLabel }) {
+  const scope = selectedCostCenter || "the selected portfolio";
+  const revenue = pnl.isCostCenterLevel ? pnl.updatedRevenue : pnl.revenue;
+  const cost = pnl.isCostCenterLevel ? pnl.updatedCost : pnl.totalCost;
+  const profitTone = pnl.netProfit >= 0 ? "profitable" : "loss-making";
+  const topText = topRow
+    ? `${topRow.costCenter} is the strongest contributor at ${formatPercent(topRow.netMargin)} net margin.`
+    : "No profitable cost center contribution is available under the current filters.";
+  const weakText = weakRow
+    ? `${weakRow.costCenter} needs review with ${formatCurrency(weakRow.netProfit)} net profit.`
+    : "No loss-making cost center is visible under the current filters.";
+
+  return (
+    <article className="pnl-narrative-card">
+      <div>
+        <span>AI narrative</span>
+        <strong>{scope} is {profitTone} on a {revenueBasisLabel.toLowerCase()} basis.</strong>
+      </div>
+      <p>
+        Revenue is {formatCurrency(revenue)} against {formatCurrency(cost)} cost, producing {formatCurrency(pnl.netProfit)} net profit and {formatPercent(pnl.netMargin)} net margin.
+        <br />
+        {topText} {weakText}
+      </p>
     </article>
   );
 }
@@ -590,14 +622,26 @@ export function ProfitabilityPage({ filters = {} }) {
   }, [filters, revenueBasis, selectedCostCenter]);
 
   const kpiCards = [
-    { icon: "approve", label: "Revenue", value: formatCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedRevenue : analysis.pnl.revenue), context: revenueBasisLabel, tone: "green" },
-    { icon: "spending", label: "Total Cost", value: formatCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedCost : analysis.pnl.totalCost), context: analysis.pnl.isCostCenterLevel ? "Spent + received CN" : "Spent report only", tone: "red" },
-    { icon: "pnl", label: "Gross Profit", value: formatCurrency(analysis.pnl.grossProfit), context: "AFP less spent cost", tone: analysis.pnl.grossProfit >= 0 ? "blue" : "red" },
-    ...(analysis.pnl.isCostCenterLevel ? [{ icon: "credit", label: "Credit Notes Adjustment", value: formatCurrency(analysis.pnl.creditNotesAdjustment), context: "Issued less received CN", tone: "amber" }] : []),
-    { icon: "net", label: "Net Profit", value: formatCurrency(analysis.pnl.netProfit), context: analysis.pnl.isCostCenterLevel ? "CN-adjusted result" : "Clean high-level total", tone: analysis.pnl.netProfit >= 0 ? "teal" : "red" },
+    { icon: "approve", label: "Revenue", value: formatCompactCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedRevenue : analysis.pnl.revenue), context: revenueBasisLabel, tone: "green" },
+    { icon: "spending", label: "Total Cost", value: formatCompactCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedCost : analysis.pnl.totalCost), context: analysis.pnl.isCostCenterLevel ? "Spent + received CN" : "Spent report only", tone: "red" },
+    { icon: "pnl", label: "Gross Profit", value: formatCompactCurrency(analysis.pnl.grossProfit), context: "AFP less spent cost", tone: analysis.pnl.grossProfit >= 0 ? "blue" : "red" },
+    ...(analysis.pnl.isCostCenterLevel ? [{ icon: "credit", label: "Credit Notes Adjustment", value: formatCompactCurrency(analysis.pnl.creditNotesAdjustment), context: "Issued less received CN", tone: "amber" }] : []),
+    { icon: "net", label: "Net Profit", value: formatCompactCurrency(analysis.pnl.netProfit), context: analysis.pnl.isCostCenterLevel ? "CN-adjusted result" : "Clean high-level total", tone: analysis.pnl.netProfit >= 0 ? "teal" : "red" },
     { icon: "executive", label: "Net Margin %", value: formatPercent(analysis.pnl.netMargin), context: "Net profit / revenue", tone: analysis.pnl.netMargin >= 10 ? "green" : "amber" },
     { icon: "costCenter", label: "Cost-to-Revenue %", value: formatPercent(analysis.pnl.costToRevenue), context: "Cost discipline ratio", tone: analysis.pnl.costToRevenue <= 90 ? "blue" : "red" },
   ];
+
+  const topProfitabilityRow = useMemo(() => (
+    analysis.costCenterRows
+      .filter((row) => row.netProfit > 0)
+      .sort((a, b) => b.netProfit - a.netProfit)[0]
+  ), [analysis.costCenterRows]);
+
+  const weakestProfitabilityRow = useMemo(() => (
+    analysis.costCenterRows
+      .filter((row) => row.netProfit < 0)
+      .sort((a, b) => a.netProfit - b.netProfit)[0]
+  ), [analysis.costCenterRows]);
 
   const displayedCostCenterRows = useMemo(() => {
     const filtered = analysis.costCenterRows.filter((row) => PROFITABILITY_COLUMNS.every((column) => {
@@ -683,10 +727,18 @@ export function ProfitabilityPage({ filters = {} }) {
         <div>
           <p className="eyebrow">Detailed Financial Analysis</p>
           <h2>Profit & Loss Analysis</h2>
-          <p>Revenue, cost, margin, Credit Note impact, GL cost drivers, and cost-center profitability drilldown.</p>
+          <p>Revenue, cost, margin, Credit Note impact, and cost-center profitability drilldown.</p>
         </div>
         <RevenueBasisToggle revenueBasis={revenueBasis} onChange={setRevenueBasis} />
       </div>
+
+      <PnlNarrative
+        pnl={analysis.pnl}
+        topRow={topProfitabilityRow}
+        weakRow={weakestProfitabilityRow}
+        selectedCostCenter={selectedCostCenter}
+        revenueBasisLabel={revenueBasisLabel}
+      />
 
       <section className="pnl-kpi-grid" aria-label="P&L KPI summary">
         {kpiCards.map((card) => <PnlKpiCard key={card.label} {...card} />)}
