@@ -2635,15 +2635,35 @@ button {
 @media print {
   @page {
     size: A4 landscape;
-    margin: 7mm;
+    margin: 5mm;
   }
 
+  html,
   body {
     background: #ffffff !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
   }
 
-  body * {
-    visibility: hidden !important;
+  .app-shell,
+  .page-content,
+  .pnl-page {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .app-header,
+  .app-footer,
+  .pnl-page > :not(.pnl-print-report) {
+    display: none !important;
   }
 
   .pnl-print-report,
@@ -2652,13 +2672,24 @@ button {
   }
 
   .pnl-print-report {
-    position: absolute;
-    inset: 0 auto auto 0;
+    position: static !important;
     display: block;
     width: 100%;
+    height: auto !important;
+    max-height: 185mm;
+    overflow: hidden !important;
     color: #061334;
     font-family: Inter, Arial, sans-serif;
-    zoom: 0.86;
+    zoom: 0.78;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .pnl-print-report.is-report-screen {
+    display: block !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
   }
 
   .print-report-header,
@@ -2779,8 +2810,8 @@ button {
   }
 
   .print-metric-card {
-    padding: 9px;
-    min-height: 96px;
+    padding: 7px;
+    min-height: 84px;
   }
 
   .print-metric-card > div {
@@ -2814,8 +2845,8 @@ button {
 
   .print-metric-card strong {
     display: block;
-    margin: 8px 0 2px;
-    font-size: 16px;
+    margin: 6px 0 1px;
+    font-size: 14px;
     line-height: 1;
   }
 
@@ -2832,8 +2863,8 @@ button {
 
   .print-metric-card .pnl-sparkline {
     width: 100%;
-    height: 28px;
-    margin-top: 3px;
+    height: 24px;
+    margin-top: 2px;
   }
 
   .print-analysis-grid,
@@ -2849,7 +2880,7 @@ button {
   }
 
   .print-report-card h3 {
-    margin: 0 0 8px;
+    margin: 0 0 6px;
     color: #071b6f;
     font-size: 11px;
     text-transform: uppercase;
@@ -2868,7 +2899,7 @@ button {
     display: grid;
     align-items: center;
     margin: 0;
-    min-height: 19px;
+    min-height: 16px;
     border-bottom: 1px solid #e7edf5;
     font-size: 8px;
   }
@@ -2897,8 +2928,8 @@ button {
   .print-analysis-card footer {
     display: grid;
     place-items: center;
-    min-height: 20px;
-    margin-top: 6px;
+    min-height: 17px;
+    margin-top: 4px;
     border-radius: 5px;
     background: #ecfdf5;
     color: #166534;
@@ -2939,8 +2970,8 @@ button {
   }
 
   .print-visual-grid .pnl-trend-svg {
-    min-height: 132px;
-    height: 132px;
+    min-height: 112px;
+    height: 112px;
   }
 
   .print-waterfall {
@@ -2948,7 +2979,7 @@ button {
     grid-template-columns: repeat(5, 1fr);
     gap: 6px;
     align-items: end;
-    min-height: 132px;
+    min-height: 112px;
   }
 
   .print-waterfall div {
@@ -2986,9 +3017,9 @@ button {
   .print-donut {
     display: grid;
     place-items: center;
-    width: 82px;
-    height: 82px;
-    border: 14px solid #2f69c8;
+    width: 70px;
+    height: 70px;
+    border: 12px solid #2f69c8;
     border-right-color: #ef4444;
     border-bottom-color: #16a34a;
     border-radius: 50%;
@@ -3014,7 +3045,7 @@ button {
   .print-movement-table {
     border: 1px solid #dbe4ef;
     border-radius: 8px;
-    padding: 8px;
+    padding: 6px;
   }
 
   .print-movement-table h3 {
