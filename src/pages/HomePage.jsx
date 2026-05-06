@@ -4,24 +4,24 @@ import igccLogo from "../assets/igcc-logo.svg";
 
 const pageCards = [
   {
-    id: "spending",
-    icon: "spending",
-    title: "Financial Inputs",
-    detail: "Spend, AFP, GL drilldown, CN allocation detail",
+    id: "executive",
+    icon: "executive",
+    title: "Executive Cockpit",
+    detail: "Leadership summary and review signals",
     action: "Open",
   },
   {
     id: "profitability",
     icon: "pnl",
-    title: "Profit & Loss",
+    title: "Profit and Lose",
     detail: "Cost-center profitability and allocation treatment",
     action: "Open",
   },
   {
-    id: "executive",
-    icon: "executive",
-    title: "Executive Cockpit",
-    detail: "Leadership summary and review signals",
+    id: "spending",
+    icon: "spending",
+    title: "Financial Input",
+    detail: "Spend, AFP, GL drilldown, CN allocation detail",
     action: "Open",
   },
 ];
@@ -49,9 +49,9 @@ const readinessItems = [
 
 const sideItems = [
   { id: "home", icon: "home", label: "Home" },
-  { id: "spending", icon: "spending", label: "Financial Inputs" },
-  { id: "profitability", icon: "pnl", label: "Profit & Loss" },
   { id: "executive", icon: "executive", label: "Executive Cockpit" },
+  { id: "profitability", icon: "pnl", label: "Profit and Lose" },
+  { id: "spending", icon: "spending", label: "Financial Input" },
   { id: "data", icon: "download", label: "Data & Sync" },
   { id: "settings", icon: "folder", label: "Settings" },
 ];
