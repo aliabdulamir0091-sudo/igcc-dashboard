@@ -675,7 +675,7 @@ function PrintGlBreakdown({ rows, totalCost }) {
   );
 }
 
-function ProfitabilityPrintReport({ analysis, selectedCostCenter }) {
+function ProfitabilityPrintReport({ analysis, selectedCostCenter, isScreen = false }) {
   const approved = analysis.print.approvedPnl;
   const submitted = analysis.print.submittedPnl;
   const latest = analysis.print.monthlyRows.at(-1);
@@ -683,7 +683,7 @@ function ProfitabilityPrintReport({ analysis, selectedCostCenter }) {
   const isProfitable = approved.netProfit >= 0;
 
   return (
-    <section className="pnl-print-report" aria-label="Printable Profit and Loss report">
+    <section className={`pnl-print-report ${isScreen ? "is-report-screen" : ""}`} aria-label="Printable Profit and Loss report">
       <header className="print-report-header">
         <div className="print-brand">
           <img src={igccLogo} alt="IGCC" />
@@ -779,6 +779,7 @@ function ProfitabilityPrintReport({ analysis, selectedCostCenter }) {
 export function ProfitabilityPage({ filters = {} }) {
   const [revenueBasis, setRevenueBasis] = useState("approved");
   const [drilldownCostCenter, setDrilldownCostCenter] = useState("");
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const [tableFilters, setTableFilters] = useState(DEFAULT_TABLE_FILTERS);
   const [sortConfig, setSortConfig] = useState({ key: "costCenter", direction: "asc" });
   const [activeFilterColumn, setActiveFilterColumn] = useState("");
@@ -1094,6 +1095,30 @@ export function ProfitabilityPage({ filters = {} }) {
     setActiveFilterColumn("");
   };
 
+  if (isReportOpen) {
+    return (
+      <section className="page-stack pnl-report-view">
+        <div className="pnl-report-toolbar">
+          <div>
+            <p className="eyebrow">Cost Center Report</p>
+            <h2>{selectedCostCenter}</h2>
+            <p>Printable Profit & Loss report for operational review and discussion.</p>
+          </div>
+          <div>
+            <button type="button" className="pnl-report-secondary-button" onClick={() => setIsReportOpen(false)}>
+              Back to analysis
+            </button>
+            <button type="button" className="pnl-print-button" onClick={() => window.print()}>
+              <Icon name="spending" />
+              Print report
+            </button>
+          </div>
+        </div>
+        <ProfitabilityPrintReport analysis={analysis} selectedCostCenter={selectedCostCenter} isScreen />
+      </section>
+    );
+  }
+
   return (
     <section className="page-stack pnl-page">
       <div className="page-heading pnl-heading">
@@ -1104,9 +1129,17 @@ export function ProfitabilityPage({ filters = {} }) {
         </div>
         <div className="pnl-heading-actions">
           <RevenueBasisToggle revenueBasis={revenueBasis} onChange={setRevenueBasis} />
-          <button type="button" className="pnl-print-button" onClick={() => window.print()}>
+          <button
+            type="button"
+            className="pnl-print-button"
+            disabled={!selectedCostCenter}
+            title={selectedCostCenter ? "Open the cost center report" : "Select one cost center from the table first"}
+            onClick={() => {
+              if (selectedCostCenter) setIsReportOpen(true);
+            }}
+          >
             <Icon name="spending" />
-            Print report
+            Open cost center report
           </button>
         </div>
       </div>
