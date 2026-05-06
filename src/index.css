@@ -1694,10 +1694,23 @@ button {
   color: var(--teal);
 }
 
-.pnl-column-head button em {
+.pnl-header-state-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
   color: var(--teal);
-  font-style: normal;
-  font-size: 9px;
+}
+
+.pnl-header-state-icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+}
+
+.pnl-header-state-icon.is-filtered {
+  color: var(--teal);
 }
 
 .pnl-filter-popover {

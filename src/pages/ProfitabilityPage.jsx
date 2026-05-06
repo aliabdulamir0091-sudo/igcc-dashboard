@@ -84,6 +84,22 @@ const passesNumberFilter = (value, min, max) => {
 const getSortValue = (row, key) => (key === "status" ? row.status.label : row[key]);
 const getFilterValue = (row, key) => (key === "status" ? row.status.label : row[key]);
 
+function ColumnStateIcon({ isSorted, direction, isFiltered }) {
+  if (isSorted) {
+    return (
+      <svg className="pnl-header-state-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d={direction === "asc" ? "M12 5l-5 6h10l-5-6Zm0 14V8" : "M12 19l5-6H7l5 6Zm0-14v11"} />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className={`pnl-header-state-icon ${isFiltered ? "is-filtered" : ""}`} viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" />
+    </svg>
+  );
+}
+
 function ProfitabilityColumnHeader({
   column,
   filters,
@@ -111,7 +127,7 @@ function ProfitabilityColumnHeader({
       <div className="pnl-column-head">
         <button type="button" className={isOpen || isFiltered ? "is-active" : ""} onClick={() => onToggleColumn(column.key)}>
           <span>{column.label}</span>
-          <em>{isSorted ? (sortConfig.direction === "asc" ? "Asc" : "Desc") : "Filter"}</em>
+          <ColumnStateIcon isSorted={isSorted} direction={sortConfig.direction} isFiltered={isFiltered} />
         </button>
         {isOpen ? (
           <div className="pnl-filter-popover">
