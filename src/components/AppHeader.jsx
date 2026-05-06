@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ALL_FILTER_VALUE, COST_CENTER_HIERARCHY, getUniqueFilterValues } from "../data/costCenterHierarchy";
 import { NAV_ITEMS } from "../data/navigation";
 import { PORTFOLIOS } from "../data/portfolioOptions";
@@ -20,27 +20,36 @@ const MONTH_OPTIONS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "
 const QUARTER_OPTIONS = ["Q1", "Q2", "Q3", "Q4"];
 const YEAR_OPTIONS = getUniqueFilterValues(financialInputsData.entries.map((entry) => entry.year).filter(Boolean));
 
+const getPortfolioIdForHierarchyRow = (row) => {
+  if (!row) return ALL_FILTER_VALUE;
+  if (row.hub === "Head Office") return "head-office";
+  if (row.region === "Basra") return "basra";
+  if (row.region === "Kirkuk") return "kirkuk";
+  return ALL_FILTER_VALUE;
+};
+
+const getHierarchyRowByHub = (hub) => (
+  hub && hub !== ALL_FILTER_VALUE
+    ? COST_CENTER_HIERARCHY.find((row) => row.hub === hub)
+    : null
+);
+
+const getHierarchyRowByCostCenter = (costCenter) => (
+  costCenter && costCenter !== ALL_FILTER_VALUE
+    ? COST_CENTER_HIERARCHY.find((row) => row.costCenters.includes(costCenter))
+    : null
+);
+
 export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleTheme, filters, onApplyFilters, onClearFilters }) {
   const isDarkMode = theme === "dark";
   const normalizedFilters = { ...DEFAULT_FILTERS, ...filters };
-  const [selectedPortfolio, setSelectedPortfolio] = useState(normalizedFilters.portfolio);
-  const [selectedHub, setSelectedHub] = useState(normalizedFilters.hub);
-  const [selectedCostCenter, setSelectedCostCenter] = useState(normalizedFilters.costCenter);
-  const [selectedPeriod, setSelectedPeriod] = useState(normalizedFilters.period);
-  const [selectedYear, setSelectedYear] = useState(normalizedFilters.year);
-  const [selectedMonth, setSelectedMonth] = useState(normalizedFilters.month);
-  const [selectedQuarter, setSelectedQuarter] = useState(normalizedFilters.quarter);
-
-  useEffect(() => {
-    const nextFilters = { ...DEFAULT_FILTERS, ...filters };
-    setSelectedPortfolio(nextFilters.portfolio);
-    setSelectedHub(nextFilters.hub);
-    setSelectedCostCenter(nextFilters.costCenter);
-    setSelectedPeriod(nextFilters.period);
-    setSelectedYear(nextFilters.year);
-    setSelectedMonth(nextFilters.month);
-    setSelectedQuarter(nextFilters.quarter);
-  }, [filters]);
+  const selectedPortfolio = normalizedFilters.portfolio;
+  const selectedHub = normalizedFilters.hub;
+  const selectedCostCenter = normalizedFilters.costCenter;
+  const selectedPeriod = normalizedFilters.period;
+  const selectedYear = normalizedFilters.year;
+  const selectedMonth = normalizedFilters.month;
+  const selectedQuarter = normalizedFilters.quarter;
 
   const commitFilters = (updates) => {
     const nextFilters = {
@@ -79,35 +88,30 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
 
   const handlePortfolioChange = (event) => {
     const portfolio = event.target.value;
-    setSelectedPortfolio(portfolio);
-    setSelectedHub(ALL_FILTER_VALUE);
-    setSelectedCostCenter(ALL_FILTER_VALUE);
     commitFilters({ portfolio, hub: ALL_FILTER_VALUE, costCenter: ALL_FILTER_VALUE });
   };
 
   const handleHubChange = (event) => {
     const hub = event.target.value;
-    setSelectedHub(hub);
-    setSelectedCostCenter(ALL_FILTER_VALUE);
-    commitFilters({ hub, costCenter: ALL_FILTER_VALUE });
+    const hierarchyRow = getHierarchyRowByHub(hub);
+    const portfolio = hierarchyRow ? getPortfolioIdForHierarchyRow(hierarchyRow) : selectedPortfolio;
+    commitFilters({ portfolio, hub, costCenter: ALL_FILTER_VALUE });
+  };
+
+  const handleCostCenterChange = (event) => {
+    const costCenter = event.target.value;
+    const hierarchyRow = getHierarchyRowByCostCenter(costCenter);
+    const portfolio = hierarchyRow ? getPortfolioIdForHierarchyRow(hierarchyRow) : selectedPortfolio;
+    const hub = hierarchyRow ? hierarchyRow.hub : selectedHub;
+    commitFilters({ portfolio, hub, costCenter });
   };
 
   const clearFilters = () => {
-    setSelectedPortfolio(DEFAULT_FILTERS.portfolio);
-    setSelectedHub(DEFAULT_FILTERS.hub);
-    setSelectedCostCenter(DEFAULT_FILTERS.costCenter);
-    setSelectedPeriod(DEFAULT_FILTERS.period);
-    setSelectedYear(DEFAULT_FILTERS.year);
-    setSelectedMonth(DEFAULT_FILTERS.month);
-    setSelectedQuarter(DEFAULT_FILTERS.quarter);
     onClearFilters?.();
   };
 
   const handlePeriodChange = (event) => {
     const period = event.target.value;
-    setSelectedPeriod(period);
-    setSelectedMonth(ALL_FILTER_VALUE);
-    setSelectedQuarter(ALL_FILTER_VALUE);
     commitFilters({ period, month: ALL_FILTER_VALUE, quarter: ALL_FILTER_VALUE });
   };
 
@@ -185,10 +189,7 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           </label>
           <label>
             <span><Icon name="costCenter" /> Cost Center</span>
-            <select value={selectedCostCenter} onChange={(event) => {
-              setSelectedCostCenter(event.target.value);
-              commitFilters({ costCenter: event.target.value });
-            }}>
+            <select value={selectedCostCenter} onChange={handleCostCenterChange}>
               <option value={ALL_FILTER_VALUE}>All centers</option>
               {costCenterOptions.map((costCenter) => (
                 <option key={costCenter} value={costCenter}>{costCenter}</option>
@@ -206,7 +207,6 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           <label>
             <span><Icon name="calendar" /> Year</span>
             <select value={selectedYear} onChange={(event) => {
-              setSelectedYear(event.target.value);
               commitFilters({ year: event.target.value });
             }}>
               <option value={ALL_FILTER_VALUE}>All years</option>
@@ -222,10 +222,8 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
               disabled={isYearly}
               onChange={(event) => {
                 if (selectedPeriod === "quarterly") {
-                  setSelectedQuarter(event.target.value);
                   commitFilters({ quarter: event.target.value, month: ALL_FILTER_VALUE });
                 } else {
-                  setSelectedMonth(event.target.value);
                   commitFilters({ month: event.target.value, quarter: ALL_FILTER_VALUE });
                 }
               }}
