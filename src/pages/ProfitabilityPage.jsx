@@ -21,14 +21,12 @@ const PROFITABILITY_COLUMNS = [
   { key: "status", label: "Status", type: "status" },
 ];
 
-const STATUS_OPTIONS = ["Good Margin", "Low Margin", "Loss-Making"];
-
 const DEFAULT_TABLE_FILTERS = PROFITABILITY_COLUMNS.reduce((filters, column) => {
   if (column.type === "number") {
     filters[`${column.key}Min`] = "";
     filters[`${column.key}Max`] = "";
   } else {
-    filters[column.key] = "";
+    filters[column.key] = [];
   }
   return filters;
 }, {});
@@ -45,7 +43,6 @@ const roundCurrency = (value) => Math.round(((value || 0) + Number.EPSILON) * 10
 const formatCurrency = (value) => CURRENCY_FORMAT.format(value || 0);
 const formatPercent = (value) => `${NUMBER_FORMAT.format(value || 0)}%`;
 const getShare = (value, total) => (total ? ((value || 0) / total) * 100 : 0);
-const normalizeText = (value) => String(value ?? "").toLowerCase();
 
 const getQuarter = (period) => `Q${Math.ceil(Number(period?.slice(5, 7) || 1) / 3)}`;
 
@@ -85,46 +82,85 @@ const passesNumberFilter = (value, min, max) => {
 };
 
 const getSortValue = (row, key) => (key === "status" ? row.status.label : row[key]);
+const getFilterValue = (row, key) => (key === "status" ? row.status.label : row[key]);
 
-function ProfitabilityColumnHeader({ column, filters, sortConfig, onFilterChange, onSort }) {
+function ProfitabilityColumnHeader({
+  column,
+  filters,
+  sortConfig,
+  activeColumn,
+  options,
+  onFilterChange,
+  onSort,
+  onToggleColumn,
+  onToggleValue,
+  onSelectAll,
+  onClearColumn,
+}) {
   const isSorted = sortConfig.key === column.key;
-  const sortLabel = isSorted ? (sortConfig.direction === "asc" ? "Asc" : "Desc") : "Sort";
+  const selectedValues = filters[column.key] || [];
+  const isOpen = activeColumn === column.key;
+  const isFiltered = column.type === "number"
+    ? Boolean(filters[`${column.key}Min`] || filters[`${column.key}Max`])
+    : selectedValues.length > 0;
+  const ascendingLabel = column.type === "number" ? "Small to large" : "A to Z";
+  const descendingLabel = column.type === "number" ? "Large to small" : "Z to A";
 
   return (
     <th className={column.align === "right" ? "is-number" : ""}>
       <div className="pnl-column-head">
-        <button type="button" onClick={() => onSort(column.key)}>
+        <button type="button" className={isOpen || isFiltered ? "is-active" : ""} onClick={() => onToggleColumn(column.key)}>
           <span>{column.label}</span>
-          <em>{sortLabel}</em>
+          <em>{isSorted ? (sortConfig.direction === "asc" ? "Asc" : "Desc") : "Filter"}</em>
         </button>
-        {column.type === "number" ? (
-          <div className="pnl-number-filter">
-            <input
-              type="number"
-              value={filters[`${column.key}Min`]}
-              placeholder="Min"
-              onChange={(event) => onFilterChange(`${column.key}Min`, event.target.value)}
-            />
-            <input
-              type="number"
-              value={filters[`${column.key}Max`]}
-              placeholder="Max"
-              onChange={(event) => onFilterChange(`${column.key}Max`, event.target.value)}
-            />
+        {isOpen ? (
+          <div className="pnl-filter-popover">
+            <div className="pnl-sort-options">
+              <button type="button" onClick={() => onSort(column.key, "asc")}>{ascendingLabel}</button>
+              <button type="button" onClick={() => onSort(column.key, "desc")}>{descendingLabel}</button>
+            </div>
+
+            {column.type === "number" ? (
+              <div className="pnl-number-filter-panel">
+                <label>
+                  <span>Minimum</span>
+                  <input
+                    type="number"
+                    value={filters[`${column.key}Min`]}
+                    onChange={(event) => onFilterChange(`${column.key}Min`, event.target.value)}
+                  />
+                </label>
+                <label>
+                  <span>Maximum</span>
+                  <input
+                    type="number"
+                    value={filters[`${column.key}Max`]}
+                    onChange={(event) => onFilterChange(`${column.key}Max`, event.target.value)}
+                  />
+                </label>
+              </div>
+            ) : (
+              <>
+                <div className="pnl-filter-actions">
+                  <button type="button" onClick={() => onSelectAll(column.key, options)}>Select all</button>
+                  <button type="button" onClick={() => onClearColumn(column)}>Clear</button>
+                </div>
+                <div className="pnl-filter-values">
+                  {options.map((option) => (
+                    <label key={option}>
+                      <input
+                        type="checkbox"
+                        checked={selectedValues.includes(option)}
+                        onChange={() => onToggleValue(column.key, option)}
+                      />
+                      <span>{option}</span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
-        ) : column.type === "status" ? (
-          <select value={filters[column.key]} onChange={(event) => onFilterChange(column.key, event.target.value)}>
-            <option value="">All</option>
-            {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
-          </select>
-        ) : (
-          <input
-            type="search"
-            value={filters[column.key]}
-            placeholder="Filter"
-            onChange={(event) => onFilterChange(column.key, event.target.value)}
-          />
-        )}
+        ) : null}
       </div>
     </th>
   );
@@ -411,6 +447,7 @@ export function ProfitabilityPage({ filters = {} }) {
   const [drilldownCostCenter, setDrilldownCostCenter] = useState("");
   const [tableFilters, setTableFilters] = useState(DEFAULT_TABLE_FILTERS);
   const [sortConfig, setSortConfig] = useState({ key: "costCenter", direction: "asc" });
+  const [activeFilterColumn, setActiveFilterColumn] = useState("");
   const filterCostCenter = filters.costCenter && filters.costCenter !== ALL_FILTER_VALUE ? filters.costCenter : "";
   const selectedCostCenter = filterCostCenter || drilldownCostCenter;
   const revenueBasisLabel = REVENUE_BASIS_OPTIONS.find((option) => option.id === revenueBasis)?.label || "Approved AFP";
@@ -551,10 +588,8 @@ export function ProfitabilityPage({ filters = {} }) {
       if (column.type === "number") {
         return passesNumberFilter(row[column.key], tableFilters[`${column.key}Min`], tableFilters[`${column.key}Max`]);
       }
-      if (column.type === "status") {
-        return !tableFilters.status || row.status.label === tableFilters.status;
-      }
-      return normalizeText(row[column.key]).includes(normalizeText(tableFilters[column.key]));
+      const selectedValues = tableFilters[column.key] || [];
+      return !selectedValues.length || selectedValues.includes(getFilterValue(row, column.key));
     }));
 
     return [...filtered].sort((a, b) => {
@@ -568,21 +603,57 @@ export function ProfitabilityPage({ filters = {} }) {
     });
   }, [analysis.costCenterRows, sortConfig, tableFilters]);
 
+  const tableFilterOptions = useMemo(() => Object.fromEntries(
+    PROFITABILITY_COLUMNS
+      .filter((column) => column.type !== "number")
+      .map((column) => [
+        column.key,
+        [...new Set(analysis.costCenterRows.map((row) => getFilterValue(row, column.key)).filter(Boolean))]
+          .sort((a, b) => String(a).localeCompare(String(b))),
+      ]),
+  ), [analysis.costCenterRows]);
+
   const updateTableFilter = (key, value) => {
     setTableFilters((current) => ({ ...current, [key]: value }));
   };
 
-  const toggleSort = (key) => {
-    setSortConfig((current) => (
-      current.key === key
-        ? { key, direction: current.direction === "asc" ? "desc" : "asc" }
-        : { key, direction: "asc" }
-    ));
+  const setColumnSort = (key, direction) => {
+    setSortConfig({ key, direction });
+  };
+
+  const toggleFilterColumn = (key) => {
+    setActiveFilterColumn((current) => (current === key ? "" : key));
+  };
+
+  const toggleFilterValue = (key, value) => {
+    setTableFilters((current) => {
+      const selected = current[key] || [];
+      return {
+        ...current,
+        [key]: selected.includes(value)
+          ? selected.filter((item) => item !== value)
+          : [...selected, value],
+      };
+    });
+  };
+
+  const selectAllFilterValues = (key, values) => {
+    setTableFilters((current) => ({ ...current, [key]: [...values] }));
+  };
+
+  const clearColumnFilter = (column) => {
+    setTableFilters((current) => {
+      if (column.type === "number") {
+        return { ...current, [`${column.key}Min`]: "", [`${column.key}Max`]: "" };
+      }
+      return { ...current, [column.key]: [] };
+    });
   };
 
   const clearTableFilters = () => {
     setTableFilters(DEFAULT_TABLE_FILTERS);
     setSortConfig({ key: "costCenter", direction: "asc" });
+    setActiveFilterColumn("");
   };
 
   return (
@@ -629,8 +700,14 @@ export function ProfitabilityPage({ filters = {} }) {
                       column={column}
                       filters={tableFilters}
                       sortConfig={sortConfig}
+                      activeColumn={activeFilterColumn}
+                      options={tableFilterOptions[column.key] || []}
                       onFilterChange={updateTableFilter}
-                      onSort={toggleSort}
+                      onSort={setColumnSort}
+                      onToggleColumn={toggleFilterColumn}
+                      onToggleValue={toggleFilterValue}
+                      onSelectAll={selectAllFilterValues}
+                      onClearColumn={clearColumnFilter}
                     />
                   ))}
                 </tr>
