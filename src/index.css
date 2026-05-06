@@ -1585,8 +1585,8 @@ button {
 }
 
 .pnl-profitability-table-wrap {
-  height: 170px;
-  max-height: 170px;
+  height: 250px;
+  max-height: 250px;
   overflow-x: hidden;
   overflow-y: auto;
   border-radius: 12px;
