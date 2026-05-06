@@ -8,6 +8,31 @@ const REVENUE_BASIS_OPTIONS = [
   { id: "submitted", label: "Submitted AFP" },
 ];
 
+const PROFITABILITY_COLUMNS = [
+  { key: "region", label: "Region", type: "text" },
+  { key: "hub", label: "Hub", type: "text" },
+  { key: "costCenter", label: "Cost Center", type: "text" },
+  { key: "revenue", label: "Revenue", type: "number", align: "right" },
+  { key: "totalCost", label: "Total Cost", type: "number", align: "right" },
+  { key: "grossProfit", label: "Gross Profit", type: "number", align: "right" },
+  { key: "netProfit", label: "Net Profit", type: "number", align: "right" },
+  { key: "netMargin", label: "Net Margin %", type: "number", align: "right" },
+  { key: "costToRevenue", label: "Cost-to-Revenue %", type: "number", align: "right" },
+  { key: "status", label: "Status", type: "status" },
+];
+
+const STATUS_OPTIONS = ["Good Margin", "Low Margin", "Loss-Making"];
+
+const DEFAULT_TABLE_FILTERS = PROFITABILITY_COLUMNS.reduce((filters, column) => {
+  if (column.type === "number") {
+    filters[`${column.key}Min`] = "";
+    filters[`${column.key}Max`] = "";
+  } else {
+    filters[column.key] = "";
+  }
+  return filters;
+}, {});
+
 const CURRENCY_FORMAT = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -20,6 +45,7 @@ const roundCurrency = (value) => Math.round(((value || 0) + Number.EPSILON) * 10
 const formatCurrency = (value) => CURRENCY_FORMAT.format(value || 0);
 const formatPercent = (value) => `${NUMBER_FORMAT.format(value || 0)}%`;
 const getShare = (value, total) => (total ? ((value || 0) / total) * 100 : 0);
+const normalizeText = (value) => String(value ?? "").toLowerCase();
 
 const getQuarter = (period) => `Q${Math.ceil(Number(period?.slice(5, 7) || 1) / 3)}`;
 
@@ -49,6 +75,60 @@ const getStatus = (netMargin, netProfit) => {
 const sumRows = (rows, predicate) => rows.reduce((sum, entry) => (
   predicate(entry) ? sum + (entry.amount || 0) : sum
 ), 0);
+
+const passesNumberFilter = (value, min, max) => {
+  const numericValue = Number(value || 0);
+  const minValue = min === "" ? null : Number(min);
+  const maxValue = max === "" ? null : Number(max);
+  return (!Number.isFinite(minValue) || numericValue >= minValue)
+    && (!Number.isFinite(maxValue) || numericValue <= maxValue);
+};
+
+const getSortValue = (row, key) => (key === "status" ? row.status.label : row[key]);
+
+function ProfitabilityColumnHeader({ column, filters, sortConfig, onFilterChange, onSort }) {
+  const isSorted = sortConfig.key === column.key;
+  const sortLabel = isSorted ? (sortConfig.direction === "asc" ? "Asc" : "Desc") : "Sort";
+
+  return (
+    <th className={column.align === "right" ? "is-number" : ""}>
+      <div className="pnl-column-head">
+        <button type="button" onClick={() => onSort(column.key)}>
+          <span>{column.label}</span>
+          <em>{sortLabel}</em>
+        </button>
+        {column.type === "number" ? (
+          <div className="pnl-number-filter">
+            <input
+              type="number"
+              value={filters[`${column.key}Min`]}
+              placeholder="Min"
+              onChange={(event) => onFilterChange(`${column.key}Min`, event.target.value)}
+            />
+            <input
+              type="number"
+              value={filters[`${column.key}Max`]}
+              placeholder="Max"
+              onChange={(event) => onFilterChange(`${column.key}Max`, event.target.value)}
+            />
+          </div>
+        ) : column.type === "status" ? (
+          <select value={filters[column.key]} onChange={(event) => onFilterChange(column.key, event.target.value)}>
+            <option value="">All</option>
+            {STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}
+          </select>
+        ) : (
+          <input
+            type="search"
+            value={filters[column.key]}
+            placeholder="Filter"
+            onChange={(event) => onFilterChange(column.key, event.target.value)}
+          />
+        )}
+      </div>
+    </th>
+  );
+}
 
 const calculatePnl = ({ rows, creditRows, selectedCostCenter, revenueBasis }) => {
   const revenue = sumRows(rows, (entry) => entry.type === revenueBasis);
@@ -329,6 +409,8 @@ function CostCenterDetail({ selectedCostCenter, pnl, cnBreakdown, transactions, 
 export function ProfitabilityPage({ filters = {} }) {
   const [revenueBasis, setRevenueBasis] = useState("approved");
   const [drilldownCostCenter, setDrilldownCostCenter] = useState("");
+  const [tableFilters, setTableFilters] = useState(DEFAULT_TABLE_FILTERS);
+  const [sortConfig, setSortConfig] = useState({ key: "costCenter", direction: "asc" });
   const filterCostCenter = filters.costCenter && filters.costCenter !== ALL_FILTER_VALUE ? filters.costCenter : "";
   const selectedCostCenter = filterCostCenter || drilldownCostCenter;
   const revenueBasisLabel = REVENUE_BASIS_OPTIONS.find((option) => option.id === revenueBasis)?.label || "Approved AFP";
@@ -464,6 +546,45 @@ export function ProfitabilityPage({ filters = {} }) {
     { icon: "costCenter", label: "Cost-to-Revenue %", value: formatPercent(analysis.pnl.costToRevenue), context: "Cost discipline ratio", tone: analysis.pnl.costToRevenue <= 90 ? "blue" : "red" },
   ];
 
+  const displayedCostCenterRows = useMemo(() => {
+    const filtered = analysis.costCenterRows.filter((row) => PROFITABILITY_COLUMNS.every((column) => {
+      if (column.type === "number") {
+        return passesNumberFilter(row[column.key], tableFilters[`${column.key}Min`], tableFilters[`${column.key}Max`]);
+      }
+      if (column.type === "status") {
+        return !tableFilters.status || row.status.label === tableFilters.status;
+      }
+      return normalizeText(row[column.key]).includes(normalizeText(tableFilters[column.key]));
+    }));
+
+    return [...filtered].sort((a, b) => {
+      const first = getSortValue(a, sortConfig.key);
+      const second = getSortValue(b, sortConfig.key);
+      const direction = sortConfig.direction === "asc" ? 1 : -1;
+      if (typeof first === "number" || typeof second === "number") {
+        return ((Number(first) || 0) - (Number(second) || 0)) * direction;
+      }
+      return String(first ?? "").localeCompare(String(second ?? "")) * direction;
+    });
+  }, [analysis.costCenterRows, sortConfig, tableFilters]);
+
+  const updateTableFilter = (key, value) => {
+    setTableFilters((current) => ({ ...current, [key]: value }));
+  };
+
+  const toggleSort = (key) => {
+    setSortConfig((current) => (
+      current.key === key
+        ? { key, direction: current.direction === "asc" ? "desc" : "asc" }
+        : { key, direction: "asc" }
+    ));
+  };
+
+  const clearTableFilters = () => {
+    setTableFilters(DEFAULT_TABLE_FILTERS);
+    setSortConfig({ key: "costCenter", direction: "asc" });
+  };
+
   return (
     <section className="page-stack pnl-page">
       <div className="page-heading pnl-heading">
@@ -493,26 +614,29 @@ export function ProfitabilityPage({ filters = {} }) {
               <p className="eyebrow">Cost Center Profitability</p>
               <h3>Detailed profitability table</h3>
             </div>
-            <span>Click a row for drilldown</span>
+            <div className="pnl-table-actions">
+              <span>{displayedCostCenterRows.length} of {analysis.costCenterRows.length} cost centers</span>
+              <button type="button" onClick={clearTableFilters}>Clear filters</button>
+            </div>
           </div>
           <div className="analysis-table-wrap pnl-profitability-table-wrap">
             <table className="analysis-table pnl-table pnl-cost-center-table">
               <thead>
                 <tr>
-                  <th>Region</th>
-                  <th>Hub</th>
-                  <th>Cost Center</th>
-                  <th className="is-number">Revenue</th>
-                  <th className="is-number">Total Cost</th>
-                  <th className="is-number">Gross Profit</th>
-                  <th className="is-number">Net Profit</th>
-                  <th className="is-number">Net Margin %</th>
-                  <th className="is-number">Cost-to-Revenue %</th>
-                  <th>Status</th>
+                  {PROFITABILITY_COLUMNS.map((column) => (
+                    <ProfitabilityColumnHeader
+                      key={column.key}
+                      column={column}
+                      filters={tableFilters}
+                      sortConfig={sortConfig}
+                      onFilterChange={updateTableFilter}
+                      onSort={toggleSort}
+                    />
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {analysis.costCenterRows.map((row) => (
+                {displayedCostCenterRows.map((row) => (
                   <tr
                     key={row.costCenter}
                     className={`is-clickable-row ${selectedCostCenter === row.costCenter ? "is-selected" : ""}`}
@@ -530,6 +654,13 @@ export function ProfitabilityPage({ filters = {} }) {
                     <td><span className={`pnl-status tone-${row.status.tone}`}>{row.status.label}</span></td>
                   </tr>
                 ))}
+                {!displayedCostCenterRows.length ? (
+                  <tr>
+                    <td colSpan={PROFITABILITY_COLUMNS.length} className="pnl-empty-table-cell">
+                      No cost centers match the selected column filters.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
