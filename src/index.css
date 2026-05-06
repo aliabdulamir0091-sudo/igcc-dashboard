@@ -1580,16 +1580,56 @@ button {
 }
 
 .pnl-table {
-  min-width: 940px;
+  width: 100%;
+  min-width: 0;
 }
 
 .pnl-profitability-table-wrap {
   max-height: 430px;
+  overflow-x: visible;
   border-radius: 12px;
 }
 
 .pnl-cost-center-table {
-  min-width: 1380px;
+  min-width: 0;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+.pnl-cost-center-table th,
+.pnl-cost-center-table td {
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
+.pnl-cost-center-table th:nth-child(1),
+.pnl-cost-center-table th:nth-child(2),
+.pnl-cost-center-table th:nth-child(10) {
+  width: 9%;
+}
+
+.pnl-cost-center-table th:nth-child(3) {
+  width: 11%;
+}
+
+.pnl-cost-center-table th:nth-child(n + 4):nth-child(-n + 9) {
+  width: 10.33%;
+}
+
+.pnl-cost-center-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pnl-cost-center-table td:first-child,
+.pnl-cost-center-table td:nth-child(2),
+.pnl-cost-center-table td:nth-child(3) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.pnl-cost-center-table .is-number {
+  font-size: 12px;
 }
 
 .pnl-table-actions {
@@ -1627,23 +1667,23 @@ button {
 .pnl-column-head {
   position: relative;
   display: grid;
-  gap: 7px;
-  min-width: 116px;
+  gap: 6px;
+  min-width: 0;
 }
 
 .pnl-column-head button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
   min-height: 28px;
   border: 0;
   border-radius: 8px;
   background: #f1f5f9;
   color: #334155;
-  padding: 0 8px;
-  font-size: 11px;
+  padding: 0 6px;
+  font-size: 10px;
   font-weight: 950;
   text-align: left;
   text-transform: uppercase;
@@ -1657,7 +1697,7 @@ button {
 .pnl-column-head button em {
   color: var(--teal);
   font-style: normal;
-  font-size: 10px;
+  font-size: 9px;
 }
 
 .pnl-filter-popover {
