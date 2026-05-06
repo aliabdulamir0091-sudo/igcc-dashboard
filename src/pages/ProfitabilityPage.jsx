@@ -46,11 +46,6 @@ const getStatus = (netMargin, netProfit) => {
   return { label: "Good Margin", tone: "good" };
 };
 
-const getTrend = (current, previous) => {
-  if (!previous) return 0;
-  return ((current - previous) / Math.abs(previous)) * 100;
-};
-
 const sumRows = (rows, predicate) => rows.reduce((sum, entry) => (
   predicate(entry) ? sum + (entry.amount || 0) : sum
 ), 0);
@@ -389,29 +384,6 @@ export function ProfitabilityPage({ filters = {} }) {
       .filter((row) => row.revenue || row.totalCost || row.netProfit)
       .sort((a, b) => a.period.localeCompare(b.period));
 
-    const glMap = new Map();
-    for (const entry of contextRows) {
-      if (entry.type !== "spent") continue;
-      const current = glMap.get(entry.glName) || { glName: entry.glName || "Unclassified", amount: 0, monthly: new Map() };
-      current.amount += entry.amount || 0;
-      current.monthly.set(entry.period, (current.monthly.get(entry.period) || 0) + (entry.amount || 0));
-      glMap.set(current.glName, current);
-    }
-    const glRows = [...glMap.values()]
-      .map((row) => {
-        const periods = [...row.monthly.keys()].sort();
-        const current = row.monthly.get(periods.at(-1)) || 0;
-        const previous = row.monthly.get(periods.at(-2)) || 0;
-        return {
-          glName: row.glName,
-          amount: roundCurrency(row.amount),
-          totalCostShare: getShare(row.amount, pnl.isCostCenterLevel ? pnl.updatedCost : pnl.totalCost),
-          monthMovement: getTrend(current, previous),
-          costToRevenueImpact: getShare(row.amount, pnl.isCostCenterLevel ? pnl.updatedRevenue : pnl.revenue),
-        };
-      })
-      .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
-
     const costCenterMap = new Map();
     const costCenterCreditRows = entries.filter((entry) => entry.type === "creditNotes" && matchesFilters(entry, filters, { ignoreCostCenter: true }));
     for (const entry of filteredRows) {
@@ -476,7 +448,6 @@ export function ProfitabilityPage({ filters = {} }) {
     return {
       pnl,
       monthlyTrend,
-      glRows,
       costCenterRows,
       cnBreakdown: [...cnCategoryMap.values()].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)),
       transactions,
@@ -516,40 +487,7 @@ export function ProfitabilityPage({ filters = {} }) {
       <MonthlyTrendChart rows={analysis.monthlyTrend} />
 
       <section className="pnl-table-grid">
-        <article className="surface-card">
-          <div className="pnl-card-heading">
-            <div>
-              <p className="eyebrow">Cost Drivers</p>
-              <h3>Cost breakdown by GL</h3>
-            </div>
-          </div>
-          <div className="analysis-table-wrap">
-            <table className="analysis-table pnl-table">
-              <thead>
-                <tr>
-                  <th>GL Name</th>
-                  <th className="is-number">Amount</th>
-                  <th className="is-number">% of Total Cost</th>
-                  <th className="is-number">Month Movement</th>
-                  <th className="is-number">Cost-to-Revenue Impact</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analysis.glRows.slice(0, 18).map((row) => (
-                  <tr key={row.glName}>
-                    <td><strong>{row.glName}</strong></td>
-                    <td className="is-number">{formatCurrency(row.amount)}</td>
-                    <td className="is-number">{formatPercent(row.totalCostShare)}</td>
-                    <td className={`is-number ${row.monthMovement > 0 ? "is-bad" : "is-good"}`}>{formatPercent(row.monthMovement)}</td>
-                    <td className="is-number">{formatPercent(row.costToRevenueImpact)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
-
-        <article className="surface-card">
+        <article className="surface-card pnl-profitability-table-card">
           <div className="pnl-card-heading">
             <div>
               <p className="eyebrow">Cost Center Profitability</p>

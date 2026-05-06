@@ -1572,7 +1572,11 @@ button {
 }
 
 .pnl-table-grid {
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pnl-profitability-table-card {
+  min-height: 520px;
 }
 
 .pnl-table {
