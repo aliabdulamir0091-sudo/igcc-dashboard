@@ -1467,8 +1467,7 @@ button {
   box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
 }
 
-.pnl-movement-card span,
-.pnl-gl-row span {
+.pnl-movement-card span {
   color: var(--muted);
   font-size: 11px;
   font-weight: 950;
@@ -1491,77 +1490,12 @@ button {
   font-weight: 950;
 }
 
-.pnl-movement-card .is-up,
-.pnl-gl-row .is-good {
+.pnl-movement-card .is-up {
   color: #16a34a;
 }
 
-.pnl-movement-card .is-down,
-.pnl-gl-row .is-bad {
+.pnl-movement-card .is-down {
   color: #dc2626;
-}
-
-.pnl-gl-card {
-  border: 0;
-  border-radius: 16px;
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
-}
-
-.pnl-gl-list {
-  display: grid;
-  gap: 8px;
-}
-
-.pnl-gl-row {
-  display: grid;
-  grid-template-columns: minmax(180px, 1.25fr) minmax(120px, 0.7fr) minmax(100px, 0.7fr) minmax(92px, 0.55fr) minmax(64px, 0.38fr) minmax(82px, 0.42fr);
-  gap: 12px;
-  align-items: center;
-  min-height: 62px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: #f8fafc;
-  transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
-}
-
-.pnl-gl-row:hover {
-  transform: translateY(-1px);
-  background: #eef6ff;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-}
-
-.pnl-gl-row strong {
-  display: block;
-  color: var(--text);
-  font-size: 13px;
-}
-
-.pnl-gl-row .pnl-sparkline {
-  height: 34px;
-}
-
-.pnl-gl-progress {
-  height: 9px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #e2e8f0;
-}
-
-.pnl-gl-progress i {
-  display: block;
-  width: var(--bar-width);
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #ef4444, #f59e0b);
-}
-
-.pnl-gl-row em,
-.pnl-gl-row small {
-  color: var(--text);
-  font-style: normal;
-  font-size: 12px;
-  font-weight: 950;
-  text-align: right;
 }
 
 .pnl-main-grid,
@@ -2275,8 +2209,7 @@ button {
 [data-theme="dark"] .pnl-toggle button.is-active,
 [data-theme="dark"] .pnl-kpi-card,
 [data-theme="dark"] .pnl-narrative-card,
-[data-theme="dark"] .pnl-movement-card,
-[data-theme="dark"] .pnl-gl-card {
+[data-theme="dark"] .pnl-movement-card {
   background: var(--card);
 }
 
@@ -2304,9 +2237,6 @@ button {
   stroke: #223750;
 }
 
-[data-theme="dark"] .pnl-gl-row {
-  background: #101f33;
-}
 
 .report-table-wrap {
   max-height: 390px;
@@ -4781,8 +4711,7 @@ button {
   .pnl-table-grid,
   .pnl-detail-grid,
   .pnl-audit-grid,
-  .pnl-movement-grid,
-  .pnl-gl-row {
+  .pnl-movement-grid {
     grid-template-columns: 1fr;
   }
 
