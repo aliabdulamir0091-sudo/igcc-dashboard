@@ -1696,9 +1696,9 @@ button {
 }
 
 .pnl-trend-svg .trend-area {
-  fill: url(#netProfitArea);
   stroke: none;
   filter: none;
+  opacity: 0.92;
 }
 
 .pnl-trend-svg .trend-endpoint {

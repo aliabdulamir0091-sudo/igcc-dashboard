@@ -352,10 +352,10 @@ function MonthlyTrendChart({ rows }) {
   const innerWidth = width - padding.left - padding.right;
   const innerHeight = height - padding.top - padding.bottom;
   const series = [
-    { key: "revenue", label: "Revenue", color: "#16a34a" },
-    { key: "totalCost", label: "Total Cost", color: "#ef4444" },
-    { key: "grossProfit", label: "Gross Profit", color: "#2563eb" },
-    { key: "netProfit", label: "Net Profit", color: "#0f766e" },
+    { key: "revenue", label: "Revenue", color: "#16a34a", areaId: "revenueArea" },
+    { key: "totalCost", label: "Total Cost", color: "#ef4444", areaId: "totalCostArea" },
+    { key: "grossProfit", label: "Gross Profit", color: "#2563eb", areaId: "grossProfitArea" },
+    { key: "netProfit", label: "Net Profit", color: "#0f766e", areaId: "netProfitArea" },
   ];
   const values = rows.flatMap((row) => series.map((item) => row[item.key] || 0));
   const min = Math.min(...values, 0);
@@ -394,10 +394,13 @@ function MonthlyTrendChart({ rows }) {
       {rows.length ? (
         <svg className="pnl-trend-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Monthly profitability trend">
           <defs>
-            <linearGradient id="netProfitArea" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#0f766e" stopOpacity="0.24" />
-              <stop offset="100%" stopColor="#0f766e" stopOpacity="0.02" />
-            </linearGradient>
+            {series.map((item) => (
+              <linearGradient key={item.areaId} id={item.areaId} x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor={item.color} stopOpacity="0.18" />
+                <stop offset="70%" stopColor={item.color} stopOpacity="0.05" />
+                <stop offset="100%" stopColor={item.color} stopOpacity="0" />
+              </linearGradient>
+            ))}
             <filter id="trendGlow" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="4" result="blur" />
               <feMerge>
@@ -416,7 +419,9 @@ function MonthlyTrendChart({ rows }) {
               </g>
             );
           })}
-          <path className="trend-area" d={areaFor("netProfit")} />
+          {series.map((item) => (
+            <path key={`${item.key}-area`} className="trend-area" d={areaFor(item.key)} fill={`url(#${item.areaId})`} />
+          ))}
           {series.map((item) => (
             <path key={item.key} d={pathFor(item.key)} style={{ "--line-color": item.color }} />
           ))}
