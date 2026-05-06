@@ -615,10 +615,12 @@ export function ProfitabilityPage({ filters = {} }) {
 
   const updateTableFilter = (key, value) => {
     setTableFilters((current) => ({ ...current, [key]: value }));
+    setActiveFilterColumn("");
   };
 
   const setColumnSort = (key, direction) => {
     setSortConfig({ key, direction });
+    setActiveFilterColumn("");
   };
 
   const toggleFilterColumn = (key) => {
@@ -635,10 +637,12 @@ export function ProfitabilityPage({ filters = {} }) {
           : [...selected, value],
       };
     });
+    setActiveFilterColumn("");
   };
 
   const selectAllFilterValues = (key, values) => {
     setTableFilters((current) => ({ ...current, [key]: [...values] }));
+    setActiveFilterColumn("");
   };
 
   const clearColumnFilter = (column) => {
@@ -648,6 +652,7 @@ export function ProfitabilityPage({ filters = {} }) {
       }
       return { ...current, [column.key]: [] };
     });
+    setActiveFilterColumn("");
   };
 
   const clearTableFilters = () => {
