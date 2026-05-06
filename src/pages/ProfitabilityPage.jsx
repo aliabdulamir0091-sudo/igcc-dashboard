@@ -74,6 +74,11 @@ const getStatus = (netMargin, netProfit) => {
   return { label: "Good Margin", tone: "good" };
 };
 
+const getTrend = (current, previous) => {
+  if (!previous) return 0;
+  return ((current - previous) / Math.abs(previous)) * 100;
+};
+
 const sumRows = (rows, predicate) => rows.reduce((sum, entry) => (
   predicate(entry) ? sum + (entry.amount || 0) : sum
 ), 0);
@@ -220,7 +225,30 @@ const calculatePnl = ({ rows, creditRows, selectedCostCenter, revenueBasis }) =>
   };
 };
 
-function PnlKpiCard({ icon, label, value, context, tone = "blue" }) {
+function FilledSparkline({ values = [], tone = "blue" }) {
+  const cleanValues = values.map((value) => Number(value || 0));
+  const min = Math.min(...cleanValues, 0);
+  const max = Math.max(...cleanValues, 1);
+  const range = max - min || 1;
+  const width = 150;
+  const height = 44;
+  const points = cleanValues.map((value, index) => {
+    const x = cleanValues.length <= 1 ? width / 2 : (index / (cleanValues.length - 1)) * width;
+    const y = height - (((value - min) / range) * (height - 8)) - 4;
+    return [x, y];
+  });
+  const line = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point[0].toFixed(1)} ${point[1].toFixed(1)}`).join(" ");
+  const area = `${line} L ${width} ${height} L 0 ${height} Z`;
+
+  return (
+    <svg className={`pnl-sparkline tone-${tone}`} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
+      <path className="spark-area" d={area} />
+      <path className="spark-line" d={line} />
+    </svg>
+  );
+}
+
+function PnlKpiCard({ icon, label, value, context, tone = "blue", sparkline = [] }) {
   return (
     <article className={`pnl-kpi-card tone-${tone}`}>
       <div className="pnl-kpi-top">
@@ -229,32 +257,30 @@ function PnlKpiCard({ icon, label, value, context, tone = "blue" }) {
       </div>
       <p>{label}</p>
       <strong>{value}</strong>
+      <FilledSparkline values={sparkline} tone={tone} />
     </article>
   );
 }
 
-function PnlNarrative({ pnl, topRow, weakRow, selectedCostCenter, revenueBasisLabel }) {
+function ProfitabilitySummary({ pnl, topCostDriver, selectedCostCenter, revenueBasisLabel }) {
   const scope = selectedCostCenter || "the selected portfolio";
   const revenue = pnl.isCostCenterLevel ? pnl.updatedRevenue : pnl.revenue;
   const cost = pnl.isCostCenterLevel ? pnl.updatedCost : pnl.totalCost;
   const profitTone = pnl.netProfit >= 0 ? "profitable" : "loss-making";
-  const topText = topRow
-    ? `${topRow.costCenter} is the strongest contributor at ${formatPercent(topRow.netMargin)} net margin.`
-    : "No profitable cost center contribution is available under the current filters.";
-  const weakText = weakRow
-    ? `${weakRow.costCenter} needs review with ${formatCurrency(weakRow.netProfit)} net profit.`
-    : "No loss-making cost center is visible under the current filters.";
+  const costPressure = topCostDriver
+    ? `${topCostDriver.glName} is the main cost pressure at ${formatPercent(topCostDriver.totalCostShare)} of total cost.`
+    : "No material GL cost pressure is visible under the current filters.";
 
   return (
     <article className="pnl-narrative-card">
       <div>
-        <span>AI narrative</span>
+        <span>Profitability Summary</span>
         <strong>{scope} is {profitTone} on a {revenueBasisLabel.toLowerCase()} basis.</strong>
       </div>
       <p>
         Revenue is {formatCurrency(revenue)} against {formatCurrency(cost)} cost, producing {formatCurrency(pnl.netProfit)} net profit and {formatPercent(pnl.netMargin)} net margin.
         <br />
-        {topText} {weakText}
+        {costPressure} {pnl.netMargin < 10 ? "Margin requires attention." : "Margin remains within a healthy range."}
       </p>
     </article>
   );
@@ -354,6 +380,8 @@ function MonthlyTrendChart({ rows }) {
   const series = [
     { key: "revenue", label: "Revenue", color: "#16a34a", areaId: "revenueArea" },
     { key: "totalCost", label: "Total Cost", color: "#ef4444", areaId: "totalCostArea" },
+    { key: "grossProfit", label: "Gross Profit", color: "#2563eb", areaId: "grossProfitArea" },
+    { key: "netProfit", label: "Net Profit", color: "#0f766e", areaId: "netProfitArea" },
   ];
   const values = rows.flatMap((row) => series.map((item) => row[item.key] || 0));
   const min = Math.min(...values, 0);
@@ -436,6 +464,68 @@ function MonthlyTrendChart({ rows }) {
           ))}
         </svg>
       ) : <div className="pnl-empty-state">No monthly P&L activity for the selected filters.</div>}
+    </article>
+  );
+}
+
+function MonthlyMovementCards({ rows }) {
+  const latest = rows.at(-1);
+  const previous = rows.at(-2);
+  const metrics = [
+    { key: "revenue", label: "Revenue", tone: "green" },
+    { key: "totalCost", label: "Total Cost", tone: "red" },
+    { key: "grossProfit", label: "Gross Profit", tone: "blue" },
+    { key: "netProfit", label: "Net Profit", tone: "teal" },
+  ];
+
+  return (
+    <section className="pnl-movement-grid" aria-label="Monthly movement">
+      {metrics.map((metric) => {
+        const movement = getTrend(latest?.[metric.key] || 0, previous?.[metric.key] || 0);
+        return (
+          <article key={metric.key} className={`pnl-movement-card tone-${metric.tone}`}>
+            <div>
+              <span>{metric.label}</span>
+              <strong>{formatCompactCurrency(latest?.[metric.key] || 0)}</strong>
+              <em className={movement >= 0 ? "is-up" : "is-down"}>{movement >= 0 ? "Up" : "Down"} {formatPercent(Math.abs(movement))}</em>
+            </div>
+            <FilledSparkline values={rows.map((row) => row[metric.key])} tone={metric.tone} />
+          </article>
+        );
+      })}
+    </section>
+  );
+}
+
+function GlCostDriverSection({ rows }) {
+  return (
+    <article className="surface-card pnl-gl-card">
+      <div className="pnl-card-heading">
+        <div>
+          <p className="eyebrow">Cost Drivers</p>
+          <h3>Cost breakdown by GL</h3>
+        </div>
+        <span>Top GL pressure</span>
+      </div>
+      <div className="pnl-gl-list">
+        {rows.slice(0, 12).map((row) => (
+          <div key={row.glName} className="pnl-gl-row">
+            <div>
+              <strong>{row.glName}</strong>
+              <span>{formatPercent(row.totalCostShare)} of total cost</span>
+            </div>
+            <FilledSparkline values={row.sparkline} tone="red" />
+            <div className="pnl-gl-progress">
+              <i style={{ "--bar-width": `${Math.min(Math.abs(row.totalCostShare), 100)}%` }} />
+            </div>
+            <em>{formatCurrency(row.amount)}</em>
+            <small className={row.monthMovement >= 0 ? "is-bad" : "is-good"}>
+              {row.monthMovement >= 0 ? "+" : ""}{formatPercent(row.monthMovement)}
+            </small>
+            <small>{formatPercent(row.costToRevenueImpact)} rev impact</small>
+          </div>
+        ))}
+      </div>
     </article>
   );
 }
@@ -589,6 +679,31 @@ export function ProfitabilityPage({ filters = {} }) {
       .filter((row) => row.revenue || row.totalCost || row.netProfit)
       .sort((a, b) => a.period.localeCompare(b.period));
 
+    const glMap = new Map();
+    for (const entry of contextRows) {
+      if (entry.type !== "spent") continue;
+      const current = glMap.get(entry.glName) || { glName: entry.glName || "Unclassified", amount: 0, monthly: new Map() };
+      current.amount += entry.amount || 0;
+      current.monthly.set(entry.period, (current.monthly.get(entry.period) || 0) + (entry.amount || 0));
+      glMap.set(current.glName, current);
+    }
+    const glRows = [...glMap.values()]
+      .map((row) => {
+        const periods = monthlyTrend.map((item) => item.period);
+        const sparkline = periods.map((period) => row.monthly.get(period) || 0);
+        const current = sparkline.at(-1) || 0;
+        const previous = sparkline.at(-2) || 0;
+        return {
+          glName: row.glName,
+          amount: roundCurrency(row.amount),
+          totalCostShare: getShare(row.amount, pnl.isCostCenterLevel ? pnl.updatedCost : pnl.totalCost),
+          monthMovement: getTrend(current, previous),
+          costToRevenueImpact: getShare(row.amount, pnl.isCostCenterLevel ? pnl.updatedRevenue : pnl.revenue),
+          sparkline,
+        };
+      })
+      .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+
     const costCenterMap = new Map();
     const costCenterCreditRows = entries.filter((entry) => entry.type === "creditNotes" && matchesFilters(entry, filters, { ignoreCostCenter: true }));
     for (const entry of filteredRows) {
@@ -653,6 +768,7 @@ export function ProfitabilityPage({ filters = {} }) {
     return {
       pnl,
       monthlyTrend,
+      glRows,
       costCenterRows,
       cnBreakdown: [...cnCategoryMap.values()].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)),
       transactions,
@@ -660,26 +776,16 @@ export function ProfitabilityPage({ filters = {} }) {
   }, [filters, revenueBasis, selectedCostCenter]);
 
   const kpiCards = [
-    { icon: "approve", label: "Revenue", value: formatCompactCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedRevenue : analysis.pnl.revenue), context: revenueBasisLabel, tone: "green" },
-    { icon: "spending", label: "Total Cost", value: formatCompactCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedCost : analysis.pnl.totalCost), context: analysis.pnl.isCostCenterLevel ? "Spent + received CN" : "Spent report only", tone: "red" },
-    { icon: "pnl", label: "Gross Profit", value: formatCompactCurrency(analysis.pnl.grossProfit), context: "AFP less spent cost", tone: analysis.pnl.grossProfit >= 0 ? "blue" : "red" },
-    ...(analysis.pnl.isCostCenterLevel ? [{ icon: "credit", label: "Credit Notes Adjustment", value: formatCompactCurrency(analysis.pnl.creditNotesAdjustment), context: "Issued less received CN", tone: "amber" }] : []),
-    { icon: "net", label: "Net Profit", value: formatCompactCurrency(analysis.pnl.netProfit), context: analysis.pnl.isCostCenterLevel ? "CN-adjusted result" : "Clean high-level total", tone: analysis.pnl.netProfit >= 0 ? "teal" : "red" },
-    { icon: "executive", label: "Net Margin %", value: formatPercent(analysis.pnl.netMargin), context: "Net profit / revenue", tone: analysis.pnl.netMargin >= 10 ? "green" : "amber" },
-    { icon: "costCenter", label: "Cost-to-Revenue %", value: formatPercent(analysis.pnl.costToRevenue), context: "Cost discipline ratio", tone: analysis.pnl.costToRevenue <= 90 ? "blue" : "red" },
+    { icon: "approve", label: "Revenue", value: formatCompactCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedRevenue : analysis.pnl.revenue), context: revenueBasisLabel, tone: "green", sparkline: analysis.monthlyTrend.map((row) => row.revenue) },
+    { icon: "spending", label: "Total Cost", value: formatCompactCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedCost : analysis.pnl.totalCost), context: analysis.pnl.isCostCenterLevel ? "Spent + received CN" : "Spent report only", tone: "red", sparkline: analysis.monthlyTrend.map((row) => row.totalCost) },
+    { icon: "pnl", label: "Gross Profit", value: formatCompactCurrency(analysis.pnl.grossProfit), context: "AFP less spent cost", tone: analysis.pnl.grossProfit >= 0 ? "blue" : "red", sparkline: analysis.monthlyTrend.map((row) => row.grossProfit) },
+    ...(analysis.pnl.isCostCenterLevel ? [{ icon: "credit", label: "Credit Notes Adjustment", value: formatCompactCurrency(analysis.pnl.creditNotesAdjustment), context: "Issued less received CN", tone: "amber", sparkline: analysis.monthlyTrend.map((row) => row.netProfit) }] : []),
+    { icon: "net", label: "Net Profit", value: formatCompactCurrency(analysis.pnl.netProfit), context: analysis.pnl.isCostCenterLevel ? "CN-adjusted result" : "Clean high-level total", tone: analysis.pnl.netProfit >= 0 ? "teal" : "red", sparkline: analysis.monthlyTrend.map((row) => row.netProfit) },
+    { icon: "executive", label: "Net Margin %", value: formatPercent(analysis.pnl.netMargin), context: "Net profit / revenue", tone: analysis.pnl.netMargin >= 10 ? "green" : "amber", sparkline: analysis.monthlyTrend.map((row) => row.netMargin) },
+    ...(analysis.pnl.isCostCenterLevel ? [{ icon: "costCenter", label: "Cost-to-Revenue %", value: formatPercent(analysis.pnl.costToRevenue), context: "Cost discipline ratio", tone: analysis.pnl.costToRevenue <= 90 ? "blue" : "red", sparkline: analysis.monthlyTrend.map((row) => row.costToRevenue || 0) }] : []),
   ];
 
-  const topProfitabilityRow = useMemo(() => (
-    analysis.costCenterRows
-      .filter((row) => row.netProfit > 0)
-      .sort((a, b) => b.netProfit - a.netProfit)[0]
-  ), [analysis.costCenterRows]);
-
-  const weakestProfitabilityRow = useMemo(() => (
-    analysis.costCenterRows
-      .filter((row) => row.netProfit < 0)
-      .sort((a, b) => a.netProfit - b.netProfit)[0]
-  ), [analysis.costCenterRows]);
+  const topCostDriver = analysis.glRows[0];
 
   const displayedCostCenterRows = useMemo(() => {
     const filtered = analysis.costCenterRows.filter((row) => PROFITABILITY_COLUMNS.every((column) => {
@@ -770,10 +876,9 @@ export function ProfitabilityPage({ filters = {} }) {
         <RevenueBasisToggle revenueBasis={revenueBasis} onChange={setRevenueBasis} />
       </div>
 
-      <PnlNarrative
+      <ProfitabilitySummary
         pnl={analysis.pnl}
-        topRow={topProfitabilityRow}
-        weakRow={weakestProfitabilityRow}
+        topCostDriver={topCostDriver}
         selectedCostCenter={selectedCostCenter}
         revenueBasisLabel={revenueBasisLabel}
       />
@@ -788,6 +893,10 @@ export function ProfitabilityPage({ filters = {} }) {
       </section>
 
       <MonthlyTrendChart rows={analysis.monthlyTrend} />
+
+      <MonthlyMovementCards rows={analysis.monthlyTrend} />
+
+      <GlCostDriverSection rows={analysis.glRows} />
 
       <section className="pnl-table-grid">
         <article className="surface-card pnl-profitability-table-card">
