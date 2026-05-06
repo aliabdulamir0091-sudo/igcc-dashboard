@@ -354,8 +354,6 @@ function MonthlyTrendChart({ rows }) {
   const series = [
     { key: "revenue", label: "Revenue", color: "#16a34a", areaId: "revenueArea" },
     { key: "totalCost", label: "Total Cost", color: "#ef4444", areaId: "totalCostArea" },
-    { key: "grossProfit", label: "Gross Profit", color: "#2563eb", areaId: "grossProfitArea" },
-    { key: "netProfit", label: "Net Profit", color: "#0f766e", areaId: "netProfitArea" },
   ];
   const values = rows.flatMap((row) => series.map((item) => row[item.key] || 0));
   const min = Math.min(...values, 0);
