@@ -2635,10 +2635,11 @@ button {
 @media print {
   @page {
     size: A4 landscape;
-    margin: 5mm;
+    margin: 4mm;
   }
 
   html,
+  #root,
   body {
     background: #ffffff !important;
     width: 100% !important;
@@ -2649,12 +2650,18 @@ button {
     overflow: visible !important;
   }
 
+  #root > * {
+    min-height: 0 !important;
+  }
+
   .app-shell,
   .page-content,
   .pnl-page {
     display: block !important;
     width: 100% !important;
+    max-width: none !important;
     min-height: 0 !important;
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
@@ -2674,15 +2681,17 @@ button {
   .pnl-print-report {
     position: static !important;
     display: block;
-    width: 100%;
+    width: 100% !important;
     height: auto !important;
-    max-height: 185mm;
+    max-height: none !important;
     overflow: hidden !important;
     color: #061334;
     font-family: Inter, Arial, sans-serif;
-    zoom: 0.78;
-    page-break-after: avoid;
-    break-after: avoid;
+    zoom: 0.58;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    break-before: avoid !important;
+    break-after: avoid !important;
   }
 
   .pnl-print-report.is-report-screen {
@@ -2698,7 +2707,8 @@ button {
   .print-analysis-grid,
   .print-visual-grid,
   .print-movement-table {
-    break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   .print-report-header {
