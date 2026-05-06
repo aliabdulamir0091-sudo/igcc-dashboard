@@ -313,10 +313,10 @@ function PnlStatement({ pnl }) {
 
 function WaterfallChart({ pnl }) {
   const steps = [
-    { label: "Revenue", value: pnl.isCostCenterLevel ? pnl.updatedRevenue : pnl.revenue, color: "green" },
-    { label: "Total Cost", value: -(pnl.isCostCenterLevel ? pnl.updatedCost : pnl.totalCost), color: "red" },
-    { label: "Gross Profit", value: pnl.grossProfit, color: pnl.grossProfit >= 0 ? "blue" : "red" },
-    { label: "Net Profit", value: pnl.netProfit, color: pnl.netProfit >= 0 ? "teal" : "red" },
+    { label: "Revenue", value: pnl.isCostCenterLevel ? pnl.updatedRevenue : pnl.revenue, tone: "green", caption: "AFP basis" },
+    { label: "Total Cost", value: -(pnl.isCostCenterLevel ? pnl.updatedCost : pnl.totalCost), tone: "red", caption: "Cost drawdown" },
+    { label: "Gross Profit", value: pnl.grossProfit, tone: pnl.grossProfit >= 0 ? "blue" : "red", caption: "Operating result" },
+    { label: "Net Profit", value: pnl.netProfit, tone: pnl.netProfit >= 0 ? "teal" : "red", caption: "Final position" },
   ];
   const max = Math.max(...steps.map((step) => Math.abs(step.value)), 1);
 
@@ -329,13 +329,15 @@ function WaterfallChart({ pnl }) {
         </div>
       </div>
       <div className="waterfall-chart" role="img" aria-label="P&L waterfall chart">
-        {steps.map((step) => (
-          <div key={step.label} className={`waterfall-step tone-${step.color}`}>
+        {steps.map((step, index) => (
+          <div key={step.label} className={`waterfall-step tone-${step.tone}`}>
             <div className="waterfall-bar-wrap">
               <span style={{ "--bar-height": `${Math.max((Math.abs(step.value) / max) * 100, 6)}%` }} />
             </div>
-            <strong>{formatCurrency(step.value)}</strong>
+            {index < steps.length - 1 ? <i aria-hidden="true" /> : null}
+            <strong>{formatCompactCurrency(step.value)}</strong>
             <small>{step.label}</small>
+            <em>{step.caption}</em>
           </div>
         ))}
       </div>
@@ -361,7 +363,15 @@ function MonthlyTrendChart({ rows }) {
   const range = max - min || 1;
   const x = (index) => padding.left + (rows.length <= 1 ? innerWidth / 2 : (index / (rows.length - 1)) * innerWidth);
   const y = (value) => padding.top + innerHeight - (((value - min) / range) * innerHeight);
-  const pathFor = (key) => rows.map((row, index) => `${index === 0 ? "M" : "L"} ${x(index).toFixed(1)} ${y(row[key] || 0).toFixed(1)}`).join(" ");
+  const pathFor = (key) => rows.map((row, index) => {
+    const point = [x(index), y(row[key] || 0)];
+    if (index === 0) return `M ${point[0].toFixed(1)} ${point[1].toFixed(1)}`;
+    const previous = [x(index - 1), y(rows[index - 1][key] || 0)];
+    const control = (point[0] - previous[0]) * 0.46;
+    return `C ${(previous[0] + control).toFixed(1)} ${previous[1].toFixed(1)}, ${(point[0] - control).toFixed(1)} ${point[1].toFixed(1)}, ${point[0].toFixed(1)} ${point[1].toFixed(1)}`;
+  }).join(" ");
+  const areaFor = (key) => `${pathFor(key)} L ${x(rows.length - 1).toFixed(1)} ${padding.top + innerHeight} L ${padding.left} ${padding.top + innerHeight} Z`;
+  const latest = rows.at(-1);
 
   return (
     <article className="surface-card pnl-trend-card">
@@ -370,6 +380,12 @@ function MonthlyTrendChart({ rows }) {
           <p className="eyebrow">Monthly Trend</p>
           <h3>Profitability movement over time</h3>
         </div>
+        {latest ? (
+          <div className="pnl-latest-chip">
+            <span>Latest net margin</span>
+            <strong>{formatPercent(latest.netMargin)}</strong>
+          </div>
+        ) : null}
         <div className="pnl-chart-legend">
           {series.map((item) => <span key={item.key} style={{ "--legend-color": item.color }}>{item.label}</span>)}
           <span style={{ "--legend-color": "#d97706" }}>Net Margin %</span>
@@ -377,6 +393,19 @@ function MonthlyTrendChart({ rows }) {
       </div>
       {rows.length ? (
         <svg className="pnl-trend-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Monthly profitability trend">
+          <defs>
+            <linearGradient id="netProfitArea" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#0f766e" stopOpacity="0.24" />
+              <stop offset="100%" stopColor="#0f766e" stopOpacity="0.02" />
+            </linearGradient>
+            <filter id="trendGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
           {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
             const value = min + range * tick;
             const tickY = y(value);
@@ -387,9 +416,15 @@ function MonthlyTrendChart({ rows }) {
               </g>
             );
           })}
+          <path className="trend-area" d={areaFor("netProfit")} />
           {series.map((item) => (
             <path key={item.key} d={pathFor(item.key)} style={{ "--line-color": item.color }} />
           ))}
+          {series.map((item) => rows.map((row, index) => (
+            index === rows.length - 1 ? (
+              <circle key={`${item.key}-${row.period}`} className="trend-endpoint" cx={x(index)} cy={y(row[item.key] || 0)} r="5" style={{ "--line-color": item.color }} />
+            ) : null
+          )))}
           {rows.map((row, index) => (
             <g key={row.period}>
               <text className="period-label" x={x(index)} y={height - 16}>{row.period.slice(2)}</text>
