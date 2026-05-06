@@ -29,6 +29,8 @@ const MONTHS = {
 const COST_CENTER_ALIASES = {
   BNGL_25: "BNGL-25",
   GRLBG: "GRLBG_23",
+  "GRL_VLV": "GRL-VLV",
+  "GRL-VLV": "GRL-VLV",
   GRLTOT: "GRLTOT_25",
   TOTAL_25: "GRLTOT_25",
   KAZ: "KAZ_23",

@@ -2,7 +2,7 @@
   "source": {
     "workbook": "C:/Users/asus/OneDrive/Desktop/Spent Report/Master Spent Report.xlsx",
     "sheet": "Cost",
-    "generatedAt": "2026-05-04T08:12:50.102Z"
+    "generatedAt": "2026-05-06T10:23:18.515Z"
   },
   "totals": {
     "transactions": 10513,
@@ -66,7 +66,7 @@
       "amount": 17292.26,
       "count": 14,
       "region": "Basra",
-      "hub": "GRL_VLV"
+      "hub": "Valves Hub"
     },
     {
       "amount": 1890.92,
@@ -353,8 +353,8 @@
       "amount": 17292.26,
       "count": 14,
       "region": "Basra",
-      "hub": "GRL_VLV",
-      "costCenter": "General Valves"
+      "hub": "Valves Hub",
+      "costCenter": "GRL-VLV"
     },
     {
       "amount": 9245,
@@ -2453,8 +2453,8 @@
       "amount": 12485.92,
       "count": 6,
       "region": "Basra",
-      "hub": "GRL_VLV",
-      "costCenter": "General Valves",
+      "hub": "Valves Hub",
+      "costCenter": "GRL-VLV",
       "glName": "Material & Supplies"
     },
     {
@@ -2637,8 +2637,8 @@
       "amount": 6460.52,
       "count": 4,
       "region": "Basra",
-      "hub": "GRL_VLV",
-      "costCenter": "General Valves",
+      "hub": "Valves Hub",
+      "costCenter": "GRL-VLV",
       "glName": "Third party Services"
     },
     {
@@ -2701,8 +2701,8 @@
       "amount": 5064.94,
       "count": 2,
       "region": "Basra",
-      "hub": "GRL_VLV",
-      "costCenter": "General Valves",
+      "hub": "Valves Hub",
+      "costCenter": "GRL-VLV",
       "glName": "Visa & Traveling Expense"
     },
     {
@@ -3077,8 +3077,8 @@
       "amount": 902.16,
       "count": 3,
       "region": "Basra",
-      "hub": "GRL_VLV",
-      "costCenter": "General Valves",
+      "hub": "Valves Hub",
+      "costCenter": "GRL-VLV",
       "glName": "Air ticket & travel"
     },
     {
@@ -3149,8 +3149,8 @@
       "amount": 519.48,
       "count": 2,
       "region": "Basra",
-      "hub": "GRL_VLV",
-      "costCenter": "General Valves",
+      "hub": "Valves Hub",
+      "costCenter": "GRL-VLV",
       "glName": "Lease & Rent"
     },
     {
@@ -3165,8 +3165,8 @@
       "amount": 489.94,
       "count": 2,
       "region": "Basra",
-      "hub": "GRL_VLV",
-      "costCenter": "General Valves",
+      "hub": "Valves Hub",
+      "costCenter": "GRL-VLV",
       "glName": "Communication & internet"
     },
     {
@@ -6330,9 +6330,9 @@
     {
       "serial": "333",
       "region": "Basra",
-      "hub": "GRL_VLV",
+      "hub": "Valves Hub",
       "sourceCostCenter": "GRL_VLV",
-      "costCenter": "General Valves",
+      "costCenter": "GRL-VLV",
       "isMapped": true,
       "costType": "Actual",
       "glName": "Material & Supplies",
@@ -6691,9 +6691,9 @@
     {
       "serial": "90",
       "region": "Basra",
-      "hub": "GRL_VLV",
+      "hub": "Valves Hub",
       "sourceCostCenter": "GRL_VLV",
-      "costCenter": "General Valves",
+      "costCenter": "GRL-VLV",
       "isMapped": true,
       "costType": "Actual",
       "glName": "Third party Services",
@@ -7052,9 +7052,9 @@
     {
       "serial": "142",
       "region": "Basra",
-      "hub": "GRL_VLV",
+      "hub": "Valves Hub",
       "sourceCostCenter": "GRL_VLV",
-      "costCenter": "General Valves",
+      "costCenter": "GRL-VLV",
       "isMapped": true,
       "costType": "Actual",
       "glName": "Visa & Traveling Expense",
@@ -7603,9 +7603,9 @@
     {
       "serial": "445",
       "region": "Basra",
-      "hub": "GRL_VLV",
+      "hub": "Valves Hub",
       "sourceCostCenter": "GRL_VLV",
-      "costCenter": "General Valves",
+      "costCenter": "GRL-VLV",
       "isMapped": true,
       "costType": "Actual",
       "glName": "Material & Supplies",
@@ -8249,9 +8249,9 @@
     {
       "serial": "455",
       "region": "Basra",
-      "hub": "GRL_VLV",
+      "hub": "Valves Hub",
       "sourceCostCenter": "GRL_VLV",
-      "costCenter": "General Valves",
+      "costCenter": "GRL-VLV",
       "isMapped": true,
       "costType": "Actual",
       "glName": "Material & Supplies",
@@ -12011,9 +12011,9 @@
     {
       "serial": "561",
       "region": "Basra",
-      "hub": "GRL_VLV",
+      "hub": "Valves Hub",
       "sourceCostCenter": "GRL_VLV",
-      "costCenter": "General Valves",
+      "costCenter": "GRL-VLV",
       "isMapped": true,
       "costType": "Actual",
       "glName": "Third party Services",

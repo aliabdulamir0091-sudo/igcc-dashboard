@@ -64,8 +64,8 @@ export const COST_CENTER_HIERARCHY = [
   },
   {
     region: "Basra",
-    hub: "GRL_VLV",
-    costCenters: ["General Valves", "ROO_VLV", "BGC_VLV", "TTL_VLV"],
+    hub: "Valves Hub",
+    costCenters: ["GRL-VLV", "General Valves", "ROO_VLV", "BGC_VLV", "TTL_VLV"],
   },
 ];
 
