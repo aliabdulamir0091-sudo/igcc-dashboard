@@ -1576,11 +1576,16 @@ button {
 }
 
 .pnl-profitability-table-card {
-  min-height: 520px;
+  min-height: 0;
 }
 
 .pnl-table {
   min-width: 940px;
+}
+
+.pnl-profitability-table-wrap {
+  max-height: 430px;
+  border-radius: 12px;
 }
 
 .pnl-cost-center-table {

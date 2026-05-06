@@ -495,7 +495,7 @@ export function ProfitabilityPage({ filters = {} }) {
             </div>
             <span>Click a row for drilldown</span>
           </div>
-          <div className="analysis-table-wrap">
+          <div className="analysis-table-wrap pnl-profitability-table-wrap">
             <table className="analysis-table pnl-table pnl-cost-center-table">
               <thead>
                 <tr>
