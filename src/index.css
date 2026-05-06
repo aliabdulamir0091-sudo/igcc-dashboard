@@ -1243,6 +1243,8 @@ button {
   align-items: end;
   justify-content: space-between;
   gap: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.07);
 }
 
 .pnl-toggle {
@@ -1276,34 +1278,42 @@ button {
 
 .pnl-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
+  gap: 14px;
 }
 
 .pnl-kpi-card {
   position: relative;
   overflow: hidden;
-  min-height: 142px;
+  min-height: 164px;
   display: grid;
   align-content: space-between;
-  gap: 12px;
-  padding: 16px;
-  border: 0;
-  border-radius: 14px;
+  gap: 10px;
+  padding: 17px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 18px;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.9)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(248, 250, 252, 0.94)),
     var(--card);
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.075);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.pnl-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(15, 118, 110, 0.22);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.1);
 }
 
 .pnl-kpi-card::before {
   content: "";
   position: absolute;
-  inset: auto -42px -54px auto;
-  width: 140px;
-  height: 140px;
+  inset: auto -48px -58px auto;
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(37, 99, 235, 0.09);
+  filter: blur(1px);
 }
 
 .pnl-kpi-card.tone-green::before { background: rgba(22, 163, 74, 0.14); }
@@ -1323,11 +1333,12 @@ button {
 .pnl-kpi-top > span {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
   background: #eff6ff;
   color: var(--blue);
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.08);
 }
 
 .tone-green .pnl-kpi-top > span { background: #ecfdf5; color: #16a34a; }
@@ -1344,23 +1355,47 @@ button {
   line-height: 1.2;
 }
 
+.pnl-kpi-value-block {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 4px;
+}
+
 .pnl-kpi-card p {
   position: relative;
   z-index: 1;
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
 }
 
 .pnl-kpi-card strong {
   position: relative;
   z-index: 1;
   color: var(--text);
-  font-size: clamp(28px, 3.2vw, 42px);
+  font-size: clamp(27px, 2.65vw, 36px);
   line-height: 0.98;
   letter-spacing: 0;
   white-space: nowrap;
+}
+
+.pnl-kpi-card em {
+  width: fit-content;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.09);
+  color: #15803d;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.pnl-kpi-card em.is-down {
+  background: rgba(220, 38, 38, 0.09);
+  color: #dc2626;
 }
 
 .pnl-sparkline {
@@ -1383,8 +1418,8 @@ button {
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 4;
-  filter: drop-shadow(0 5px 10px rgba(15, 23, 42, 0.12));
+  stroke-width: 3.2;
+  filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.1));
 }
 
 .pnl-sparkline.tone-green { color: #16a34a; }
@@ -1394,16 +1429,16 @@ button {
 
 .pnl-narrative-card {
   display: grid;
-  grid-template-columns: minmax(220px, 0.32fr) minmax(0, 1fr);
+  grid-template-columns: minmax(240px, 0.34fr) minmax(0, 1fr) auto;
   gap: 18px;
   align-items: center;
-  padding: 18px 20px;
-  border: 1px solid rgba(15, 118, 110, 0.14);
-  border-radius: 16px;
+  padding: 18px 22px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 18px;
   background:
     linear-gradient(135deg, rgba(236, 253, 245, 0.86), rgba(239, 246, 255, 0.78)),
     var(--card);
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.07);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.07);
 }
 
 .pnl-narrative-card span {
@@ -1422,7 +1457,7 @@ button {
 .pnl-narrative-card strong {
   display: block;
   color: var(--text);
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1.2;
 }
 
@@ -1434,10 +1469,38 @@ button {
   line-height: 1.55;
 }
 
+.pnl-narrative-card aside {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 132px;
+  padding: 13px 16px;
+  border-radius: 16px;
+  background: rgba(22, 163, 74, 0.1);
+  color: #15803d;
+}
+
+.pnl-narrative-card aside.is-loss {
+  background: rgba(220, 38, 38, 0.09);
+  color: #dc2626;
+}
+
+.pnl-narrative-card aside small {
+  color: currentColor;
+  font-size: 10px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.pnl-narrative-card aside strong {
+  color: currentColor;
+  font-size: 24px;
+}
+
 .pnl-movement-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .pnl-section-heading {
@@ -1458,13 +1521,20 @@ button {
   grid-template-columns: minmax(0, 0.72fr) minmax(110px, 0.28fr);
   gap: 10px;
   align-items: center;
-  min-height: 118px;
-  padding: 16px;
-  border-radius: 16px;
+  min-height: 112px;
+  padding: 16px 17px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 18px;
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.9)),
     var(--card);
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.07);
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.pnl-movement-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.2);
 }
 
 .pnl-movement-card span {
@@ -1517,7 +1587,7 @@ button {
 .pnl-card-heading h3 {
   margin: 4px 0 0;
   color: var(--text);
-  font-size: 21px;
+  font-size: 20px;
   line-height: 1.16;
 }
 
@@ -1545,10 +1615,11 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 48px;
+  min-height: 46px;
   padding: 11px 13px;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #f8fafc;
+  border: 1px solid transparent;
 }
 
 .statement-row span {
@@ -1590,11 +1661,12 @@ button {
 .pnl-trend-card {
   position: relative;
   overflow: hidden;
-  border: 0;
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  border-radius: 18px;
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.88)),
     var(--card);
-  box-shadow: 0 22px 58px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 22px 58px rgba(15, 23, 42, 0.085);
 }
 
 .pnl-chart-card::before,
@@ -1617,10 +1689,10 @@ button {
 .waterfall-chart {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
+  gap: 16px;
   align-items: end;
-  min-height: 318px;
-  padding: 18px 8px 0;
+  min-height: 288px;
+  padding: 12px 4px 0;
 }
 
 .waterfall-step {
@@ -1632,11 +1704,11 @@ button {
 
 .waterfall-step i {
   position: absolute;
-  top: 78px;
-  right: -18px;
-  width: 26px;
+  top: 76px;
+  right: -16px;
+  width: 24px;
   height: 2px;
-  background: linear-gradient(90deg, rgba(100, 116, 139, 0.16), rgba(100, 116, 139, 0.5));
+  background: linear-gradient(90deg, rgba(100, 116, 139, 0.08), rgba(100, 116, 139, 0.38));
 }
 
 .waterfall-step i::after {
@@ -1655,10 +1727,10 @@ button {
   position: relative;
   display: flex;
   align-items: end;
-  height: 218px;
-  padding: 12px 10px;
-  border: 1px solid rgba(226, 232, 240, 0.76);
-  border-radius: 18px;
+  height: 196px;
+  padding: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.82);
+  border-radius: 20px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(248, 250, 252, 0.44)),
     repeating-linear-gradient(0deg, transparent 0 42px, rgba(148, 163, 184, 0.15) 42px 43px);
@@ -1670,7 +1742,7 @@ button {
   width: 100%;
   height: var(--bar-height);
   min-height: 10px;
-  border-radius: 14px 14px 7px 7px;
+  border-radius: 16px 16px 8px 8px;
   background: linear-gradient(180deg, #3b82f6, rgba(37, 99, 235, 0.58));
   box-shadow: 0 18px 32px rgba(37, 99, 235, 0.2);
 }
@@ -1690,7 +1762,7 @@ button {
 
 .waterfall-step strong {
   color: var(--text);
-  font-size: 19px;
+  font-size: 17px;
   line-height: 1.05;
 }
 
@@ -1784,8 +1856,8 @@ button {
   stroke: var(--line-color);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 4.5;
-  filter: url(#trendGlow);
+  stroke-width: 3.6;
+  filter: drop-shadow(0 8px 16px rgba(15, 23, 42, 0.08));
 }
 
 .pnl-trend-svg .trend-area {
@@ -1804,8 +1876,8 @@ button {
 .pnl-trend-svg .margin-dot {
   fill: #ffffff;
   stroke: #f59e0b;
-  stroke-width: 3;
-  filter: drop-shadow(0 3px 7px rgba(217, 119, 6, 0.22));
+  stroke-width: 2.6;
+  filter: drop-shadow(0 3px 7px rgba(217, 119, 6, 0.18));
 }
 
 .pnl-empty-state {
@@ -1824,6 +1896,9 @@ button {
 
 .pnl-profitability-table-card {
   min-height: 0;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 18px;
+  box-shadow: 0 22px 58px rgba(15, 23, 42, 0.075);
 }
 
 .pnl-table {
@@ -1836,7 +1911,9 @@ button {
   max-height: 250px;
   overflow-x: hidden;
   overflow-y: auto;
-  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.75);
+  border-radius: 14px;
+  background: #ffffff;
 }
 
 .pnl-cost-center-table {
@@ -1847,8 +1924,16 @@ button {
 
 .pnl-cost-center-table th,
 .pnl-cost-center-table td {
-  padding-left: 7px;
-  padding-right: 7px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.pnl-cost-center-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgba(226, 232, 240, 0.9);
 }
 
 .pnl-cost-center-table th:nth-child(1),
@@ -1879,6 +1964,14 @@ button {
 
 .pnl-cost-center-table .is-number {
   font-size: 12px;
+}
+
+.pnl-cost-center-table tbody tr {
+  transition: background 140ms ease, box-shadow 140ms ease;
+}
+
+.pnl-cost-center-table tbody tr:hover td {
+  background: #f8fafc;
 }
 
 .pnl-table-actions {
@@ -1926,12 +2019,12 @@ button {
   justify-content: space-between;
   gap: 4px;
   width: 100%;
-  min-height: 28px;
+  min-height: 30px;
   border: 0;
-  border-radius: 8px;
-  background: #f1f5f9;
+  border-radius: 10px;
+  background: #f6f8fb;
   color: #334155;
-  padding: 0 6px;
+  padding: 0 7px;
   font-size: 10px;
   font-weight: 950;
   text-align: left;
@@ -2090,11 +2183,12 @@ button {
   align-items: center;
   justify-content: center;
   min-height: 28px;
-  padding: 0 9px;
+  padding: 0 10px;
   border-radius: 999px;
   font-size: 11px !important;
   font-weight: 950 !important;
   white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.54);
 }
 
 .pnl-status.tone-good {

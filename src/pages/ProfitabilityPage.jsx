@@ -250,15 +250,20 @@ function FilledSparkline({ values = [], tone = "blue" }) {
   );
 }
 
-function PnlKpiCard({ icon, label, value, context, tone = "blue", sparkline = [] }) {
+function PnlKpiCard({ icon, label, value, context, tone = "blue", sparkline = [], movement = 0 }) {
   return (
     <article className={`pnl-kpi-card tone-${tone}`}>
       <div className="pnl-kpi-top">
         <span><Icon name={icon} /></span>
         <small>{context}</small>
       </div>
-      <p>{label}</p>
-      <strong>{value}</strong>
+      <div className="pnl-kpi-value-block">
+        <p>{label}</p>
+        <strong>{value}</strong>
+        <em className={movement >= 0 ? "is-up" : "is-down"}>
+          {movement >= 0 ? "+" : "-"}{formatPercent(Math.abs(movement))} vs prior period
+        </em>
+      </div>
       <FilledSparkline values={sparkline} tone={tone} />
     </article>
   );
@@ -270,6 +275,7 @@ function ProfitabilitySummary({ pnl, selectedCostCenter, revenueBasisLabel }) {
   const cost = pnl.isCostCenterLevel ? pnl.updatedCost : pnl.totalCost;
   const profitTone = pnl.netProfit >= 0 ? "profitable" : "loss-making";
   const costPressure = `Cost-to-revenue is ${formatPercent(pnl.costToRevenue)}, showing how much revenue is consumed by cost.`;
+  const statusLabel = pnl.netProfit >= 0 ? "Healthy margin" : "Needs review";
 
   return (
     <article className="pnl-narrative-card">
@@ -282,6 +288,10 @@ function ProfitabilitySummary({ pnl, selectedCostCenter, revenueBasisLabel }) {
         <br />
         {costPressure} {pnl.netMargin < 10 ? "Margin requires attention." : "Margin remains within a healthy range."}
       </p>
+      <aside className={pnl.netProfit >= 0 ? "is-good" : "is-loss"}>
+        <small>{statusLabel}</small>
+        <strong>{formatPercent(pnl.netMargin)}</strong>
+      </aside>
     </article>
   );
 }
@@ -380,7 +390,6 @@ function MonthlyTrendChart({ rows }) {
   const series = [
     { key: "revenue", label: "Revenue", color: "#16a34a", areaId: "revenueArea" },
     { key: "totalCost", label: "Total Cost", color: "#ef4444", areaId: "totalCostArea" },
-    { key: "grossProfit", label: "Gross Profit", color: "#2563eb", areaId: "grossProfitArea" },
     { key: "netProfit", label: "Net Profit", color: "#0f766e", areaId: "netProfitArea" },
   ];
   const values = rows.flatMap((row) => series.map((item) => row[item.key] || 0));
@@ -414,7 +423,7 @@ function MonthlyTrendChart({ rows }) {
         ) : null}
         <div className="pnl-chart-legend">
           {series.map((item) => <span key={item.key} style={{ "--legend-color": item.color }}>{item.label}</span>)}
-          <span style={{ "--legend-color": "#d97706" }}>Net Margin %</span>
+          <span style={{ "--legend-color": "#d97706" }}>Net Margin Points</span>
         </div>
       </div>
       {rows.length ? (
@@ -998,13 +1007,13 @@ export function ProfitabilityPage({ filters = {} }) {
   }, [filters, revenueBasis, selectedCostCenter]);
 
   const kpiCards = [
-    { icon: "approve", label: "Revenue", value: formatCompactCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedRevenue : analysis.pnl.revenue), context: revenueBasisLabel, tone: "green", sparkline: analysis.monthlyTrend.map((row) => row.revenue) },
-    { icon: "spending", label: "Total Cost", value: formatCompactCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedCost : analysis.pnl.totalCost), context: analysis.pnl.isCostCenterLevel ? "Spent + received CN" : "Spent report only", tone: "red", sparkline: analysis.monthlyTrend.map((row) => row.totalCost) },
-    { icon: "pnl", label: "Gross Profit", value: formatCompactCurrency(analysis.pnl.grossProfit), context: "AFP less spent cost", tone: analysis.pnl.grossProfit >= 0 ? "blue" : "red", sparkline: analysis.monthlyTrend.map((row) => row.grossProfit) },
-    ...(analysis.pnl.isCostCenterLevel ? [{ icon: "credit", label: "Credit Notes Adjustment", value: formatCompactCurrency(analysis.pnl.creditNotesAdjustment), context: "Issued less received CN", tone: "amber", sparkline: analysis.monthlyTrend.map((row) => row.netProfit) }] : []),
-    { icon: "net", label: "Net Profit", value: formatCompactCurrency(analysis.pnl.netProfit), context: analysis.pnl.isCostCenterLevel ? "CN-adjusted result" : "Clean high-level total", tone: analysis.pnl.netProfit >= 0 ? "teal" : "red", sparkline: analysis.monthlyTrend.map((row) => row.netProfit) },
-    { icon: "executive", label: "Net Margin %", value: formatPercent(analysis.pnl.netMargin), context: "Net profit / revenue", tone: analysis.pnl.netMargin >= 10 ? "green" : "amber", sparkline: analysis.monthlyTrend.map((row) => row.netMargin) },
-    ...(analysis.pnl.isCostCenterLevel ? [{ icon: "costCenter", label: "Cost-to-Revenue %", value: formatPercent(analysis.pnl.costToRevenue), context: "Cost discipline ratio", tone: analysis.pnl.costToRevenue <= 90 ? "blue" : "red", sparkline: analysis.monthlyTrend.map((row) => row.costToRevenue || 0) }] : []),
+    { icon: "approve", label: "Revenue", value: formatCompactCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedRevenue : analysis.pnl.revenue), context: revenueBasisLabel, tone: "green", sparkline: analysis.monthlyTrend.map((row) => row.revenue), movement: getTrend(analysis.monthlyTrend.at(-1)?.revenue || 0, analysis.monthlyTrend.at(-2)?.revenue || 0) },
+    { icon: "spending", label: "Total Cost", value: formatCompactCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedCost : analysis.pnl.totalCost), context: analysis.pnl.isCostCenterLevel ? "Spent + received CN" : "Spent report only", tone: "red", sparkline: analysis.monthlyTrend.map((row) => row.totalCost), movement: getTrend(analysis.monthlyTrend.at(-1)?.totalCost || 0, analysis.monthlyTrend.at(-2)?.totalCost || 0) },
+    { icon: "pnl", label: "Gross Profit", value: formatCompactCurrency(analysis.pnl.grossProfit), context: "AFP less spent cost", tone: analysis.pnl.grossProfit >= 0 ? "blue" : "red", sparkline: analysis.monthlyTrend.map((row) => row.grossProfit), movement: getTrend(analysis.monthlyTrend.at(-1)?.grossProfit || 0, analysis.monthlyTrend.at(-2)?.grossProfit || 0) },
+    ...(analysis.pnl.isCostCenterLevel ? [{ icon: "credit", label: "Credit Notes Adjustment", value: formatCompactCurrency(analysis.pnl.creditNotesAdjustment), context: "Issued less received CN", tone: "amber", sparkline: analysis.monthlyTrend.map((row) => row.netProfit), movement: getTrend(analysis.monthlyTrend.at(-1)?.netProfit || 0, analysis.monthlyTrend.at(-2)?.netProfit || 0) }] : []),
+    { icon: "net", label: "Net Profit", value: formatCompactCurrency(analysis.pnl.netProfit), context: analysis.pnl.isCostCenterLevel ? "CN-adjusted result" : "Clean high-level total", tone: analysis.pnl.netProfit >= 0 ? "teal" : "red", sparkline: analysis.monthlyTrend.map((row) => row.netProfit), movement: getTrend(analysis.monthlyTrend.at(-1)?.netProfit || 0, analysis.monthlyTrend.at(-2)?.netProfit || 0) },
+    { icon: "executive", label: "Net Margin %", value: formatPercent(analysis.pnl.netMargin), context: "Net profit / revenue", tone: analysis.pnl.netMargin >= 10 ? "green" : "amber", sparkline: analysis.monthlyTrend.map((row) => row.netMargin), movement: (analysis.monthlyTrend.at(-1)?.netMargin || 0) - (analysis.monthlyTrend.at(-2)?.netMargin || 0) },
+    ...(analysis.pnl.isCostCenterLevel ? [{ icon: "costCenter", label: "Cost-to-Revenue %", value: formatPercent(analysis.pnl.costToRevenue), context: "Cost discipline ratio", tone: analysis.pnl.costToRevenue <= 90 ? "blue" : "red", sparkline: analysis.monthlyTrend.map((row) => row.costToRevenue || 0), movement: 0 }] : []),
   ];
 
   const displayedCostCenterRows = useMemo(() => {
