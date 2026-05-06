@@ -2687,7 +2687,7 @@ button {
     overflow: hidden !important;
     color: #061334;
     font-family: Inter, Arial, sans-serif;
-    zoom: 0.66;
+    zoom: 0.9;
     page-break-before: avoid !important;
     page-break-after: avoid !important;
     break-before: avoid !important;
@@ -2713,53 +2713,72 @@ button {
 
   .print-report-header {
     display: grid;
-    grid-template-columns: 1.25fr 0.75fr;
-    gap: 12px;
+    grid-template-columns: 1.35fr 0.65fr;
+    gap: 14px;
     align-items: stretch;
-    margin-bottom: 8px;
-    padding: 14px;
-    border-radius: 18px;
+    margin-bottom: 12px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .print-brand {
+    display: grid;
+    grid-template-columns: 92px 1fr;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .print-brand > div {
+    display: grid;
+    align-content: center;
+    min-height: 86px;
+    padding: 14px 18px;
+    border-radius: 0;
     background:
       linear-gradient(135deg, #061334 0%, #0b2b52 58%, #0f766e 100%);
     box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
   }
 
-  .print-brand {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-
   .print-brand img {
-    width: 100px;
-    height: 54px;
+    width: 92px;
+    height: 86px;
     object-fit: contain;
-    padding: 7px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.96);
+    padding: 10px;
+    border-radius: 0;
+    background: #ffffff;
   }
 
   .print-brand h1 {
     margin: 0;
     color: #ffffff;
-    font-size: 22px;
+    font-size: 23px;
     line-height: 1.05;
     text-transform: uppercase;
   }
 
+  .print-brand h1 span {
+    display: block;
+    font-size: 29px;
+  }
+
   .print-brand p {
-    margin: 5px 0 0;
+    margin: 8px 0 0;
     color: #9ff5df;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 900;
   }
 
   .print-meta {
     display: grid;
-    gap: 6px;
+    gap: 5px;
     align-content: center;
     font-size: 9px;
     font-weight: 800;
+    padding: 10px;
+    border-radius: 0;
+    background: linear-gradient(135deg, #08213f, #0f766e);
   }
 
   .print-meta p {
@@ -2767,7 +2786,7 @@ button {
     grid-template-columns: 82px 1fr;
     gap: 8px;
     margin: 0;
-    min-height: 24px;
+    min-height: 22px;
     align-items: center;
     padding: 4px 7px;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -2802,34 +2821,37 @@ button {
     grid-template-columns: 1.2fr 0.8fr 1fr;
     background:
       linear-gradient(135deg, rgba(236, 253, 245, 0.95), rgba(239, 246, 255, 0.96));
+    margin-bottom: 12px;
+    padding: 12px;
+    border-radius: 12px;
   }
 
   .print-status-band > div {
     display: grid;
     gap: 2px;
-    min-height: 56px;
-    padding: 9px 10px;
-    border-radius: 11px;
+    min-height: 66px;
+    padding: 12px 14px;
+    border-radius: 12px;
     background: rgba(255, 255, 255, 0.82);
     box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16);
   }
 
   .print-status-band span {
     color: #64748b;
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 950;
     text-transform: uppercase;
   }
 
   .print-status-band strong {
     color: #061334;
-    font-size: 14px;
+    font-size: 18px;
     line-height: 1.05;
   }
 
   .print-status-band em {
     color: #334155;
-    font-size: 8px;
+    font-size: 10px;
     font-style: normal;
     font-weight: 850;
   }
@@ -2888,14 +2910,14 @@ button {
   .print-kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 7px;
-    margin-bottom: 8px;
+    gap: 10px;
+    margin-bottom: 12px;
   }
 
   .print-metric-card,
   .print-report-card {
     border: 1px solid #dbe4ef;
-    border-radius: 12px;
+    border-radius: 10px;
     background: #ffffff;
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
   }
@@ -2903,8 +2925,8 @@ button {
   .print-metric-card {
     position: relative;
     overflow: hidden;
-    padding: 8px;
-    min-height: 88px;
+    padding: 12px;
+    min-height: 124px;
     border-top: 4px solid #16a34a;
   }
 
@@ -2920,8 +2942,8 @@ button {
   .print-metric-card span {
     display: grid;
     place-items: center;
-    width: 22px;
-    height: 22px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     background: #eaf8ef;
     color: #15803d;
@@ -2931,28 +2953,28 @@ button {
   .print-metric-card.tone-blue span { background: #eff6ff; color: #2563eb; }
 
   .print-metric-card svg {
-    width: 13px;
-    height: 13px;
+    width: 18px;
+    height: 18px;
   }
 
   .print-metric-card p {
     margin: 0;
     color: #071936;
-    font-size: 8px;
+    font-size: 10px;
     font-weight: 950;
     line-height: 1.35;
   }
 
   .print-metric-card strong {
     display: block;
-    margin: 6px 0 1px;
-    font-size: 14px;
+    margin: 11px 0 4px;
+    font-size: 22px;
     line-height: 1;
   }
 
   .print-metric-card em {
     color: #15803d;
-    font-size: 7px;
+    font-size: 9px;
     font-style: normal;
     font-weight: 900;
   }
@@ -2963,26 +2985,26 @@ button {
 
   .print-metric-card .pnl-sparkline {
     width: 100%;
-    height: 24px;
-    margin-top: 2px;
+    height: 34px;
+    margin-top: 5px;
   }
 
   .print-analysis-grid,
   .print-visual-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 7px;
-    margin-bottom: 8px;
+    gap: 10px;
+    margin-bottom: 12px;
   }
 
   .print-report-card {
-    padding: 8px;
+    padding: 12px;
   }
 
   .print-report-card h3 {
-    margin: 0 0 6px;
+    margin: 0 0 10px;
     color: #071b6f;
-    font-size: 11px;
+    font-size: 13px;
     text-transform: uppercase;
     padding-bottom: 5px;
     border-bottom: 2px solid #e0f2fe;
@@ -2990,7 +3012,7 @@ button {
 
   .print-report-card h3 small {
     color: #334155;
-    font-size: 7px;
+    font-size: 9px;
     text-transform: none;
   }
 
@@ -3002,9 +3024,9 @@ button {
     display: grid;
     align-items: center;
     margin: 0;
-    min-height: 16px;
+    min-height: 28px;
     border-bottom: 1px solid #e7edf5;
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .print-analysis-card p,
@@ -3030,7 +3052,7 @@ button {
 
   .print-bridge-card .is-final {
     margin-top: 3px;
-    min-height: 22px;
+    min-height: 32px;
     border: 1px solid #bbf7d0;
     border-radius: 7px;
     background: #ecfdf5;
@@ -3043,9 +3065,9 @@ button {
   }
 
   .print-discussion-card p {
-    margin: 0 0 6px;
+    margin: 0 0 10px;
     color: #334155;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 800;
     line-height: 1.45;
   }
@@ -3083,7 +3105,7 @@ button {
   .is-red { color: #dc2626 !important; }
 
   .print-trend-section {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
   }
 
   .print-trend-section .pnl-trend-card {
@@ -3091,7 +3113,7 @@ button {
     border: 1px solid #dbe4ef;
     border-radius: 12px;
     box-shadow: none;
-    padding: 7px;
+    padding: 12px;
   }
 
   .print-trend-section .pnl-card-heading {
@@ -3099,7 +3121,7 @@ button {
   }
 
   .print-trend-section .pnl-card-heading h3 {
-    font-size: 11px;
+    font-size: 14px;
   }
 
   .print-trend-section .pnl-latest-chip {
@@ -3107,8 +3129,8 @@ button {
   }
 
   .print-trend-section .pnl-trend-svg {
-    min-height: 118px;
-    height: 118px;
+    min-height: 185px;
+    height: 185px;
   }
 
   .print-visual-grid {
@@ -3211,7 +3233,7 @@ button {
 
   .print-gl-bars {
     display: grid;
-    gap: 7px;
+    gap: 10px;
   }
 
   .print-gl-bars > div {
@@ -3226,7 +3248,7 @@ button {
     align-items: center;
     margin: 0;
     color: #334155;
-    font-size: 8px;
+    font-size: 10px;
     font-weight: 850;
   }
 
@@ -3241,7 +3263,7 @@ button {
     display: block;
     width: var(--bar-width);
     max-width: 100%;
-    height: 6px;
+    height: 9px;
     border-radius: 999px;
     background: linear-gradient(90deg, #2563eb, #14b8a6);
   }
@@ -3249,21 +3271,21 @@ button {
   .print-movement-table {
     border: 1px solid #dbe4ef;
     border-radius: 12px;
-    padding: 6px;
+    padding: 12px;
     background: #ffffff;
   }
 
   .print-movement-table h3 {
-    margin: 0 0 6px;
+    margin: 0 0 10px;
     color: #071b6f;
-    font-size: 11px;
+    font-size: 13px;
     text-transform: uppercase;
   }
 
   .print-movement-table p {
-    grid-template-columns: 70px repeat(4, 1fr);
+    grid-template-columns: 76px repeat(4, 1fr);
     gap: 8px;
-    min-height: 16px;
+    min-height: 30px;
   }
 }
 

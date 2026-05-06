@@ -644,8 +644,8 @@ function ProfitabilityPrintReport({ analysis, selectedCostCenter, isScreen = fal
         <div className="print-brand">
           <img src={igccLogo} alt="IGCC" />
           <div>
-            <h1>Profit & Loss Cost Center Report</h1>
-            <p>Operations / Construction Review Pack</p>
+            <h1><span>Profit & Loss</span> Cost Center Report</h1>
+            <p>{selectedCostCenter || "Cost Center"} | {analysis.print.meta.hub} | {analysis.print.meta.portfolio} | USD</p>
           </div>
         </div>
         <div className="print-meta">
