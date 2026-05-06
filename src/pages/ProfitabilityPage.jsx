@@ -894,6 +894,10 @@ export function ProfitabilityPage({ filters = {} }) {
 
       <MonthlyTrendChart rows={analysis.monthlyTrend} />
 
+      <div className="pnl-section-heading">
+        <p className="eyebrow">Monthly Movement</p>
+        <h3>How profitability is evolving</h3>
+      </div>
       <MonthlyMovementCards rows={analysis.monthlyTrend} />
 
       <GlCostDriverSection rows={analysis.glRows} />
