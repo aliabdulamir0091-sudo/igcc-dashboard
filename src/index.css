@@ -2658,6 +2658,7 @@ button {
     width: 100%;
     color: #061334;
     font-family: Inter, Arial, sans-serif;
+    zoom: 0.86;
   }
 
   .print-report-header,
@@ -2674,7 +2675,7 @@ button {
     grid-template-columns: 1.3fr 0.7fr;
     gap: 12px;
     align-items: start;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .print-brand {
@@ -2766,7 +2767,7 @@ button {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 6px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .print-metric-card,
@@ -2779,7 +2780,7 @@ button {
 
   .print-metric-card {
     padding: 9px;
-    min-height: 104px;
+    min-height: 96px;
   }
 
   .print-metric-card > div {
@@ -2840,11 +2841,11 @@ button {
     display: grid;
     grid-template-columns: 1fr 1fr 1.1fr;
     gap: 7px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .print-report-card {
-    padding: 9px;
+    padding: 8px;
   }
 
   .print-report-card h3 {
@@ -2938,8 +2939,8 @@ button {
   }
 
   .print-visual-grid .pnl-trend-svg {
-    min-height: 150px;
-    height: 150px;
+    min-height: 132px;
+    height: 132px;
   }
 
   .print-waterfall {
@@ -2947,7 +2948,7 @@ button {
     grid-template-columns: repeat(5, 1fr);
     gap: 6px;
     align-items: end;
-    min-height: 150px;
+    min-height: 132px;
   }
 
   .print-waterfall div {
@@ -3026,7 +3027,7 @@ button {
   .print-movement-table p {
     grid-template-columns: 95px repeat(4, 1fr);
     gap: 8px;
-    min-height: 18px;
+    min-height: 16px;
   }
 }
 

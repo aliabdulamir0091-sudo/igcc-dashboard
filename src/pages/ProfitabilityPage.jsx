@@ -678,8 +678,9 @@ function PrintGlBreakdown({ rows, totalCost }) {
 function ProfitabilityPrintReport({ analysis, selectedCostCenter, isScreen = false }) {
   const approved = analysis.print.approvedPnl;
   const submitted = analysis.print.submittedPnl;
-  const latest = analysis.print.monthlyRows.at(-1);
-  const previous = analysis.print.monthlyRows.at(-2);
+  const reportRows = analysis.print.monthlyRows.slice(-4);
+  const latest = reportRows.at(-1);
+  const previous = reportRows.at(-2);
   const isProfitable = approved.netProfit >= 0;
 
   return (
@@ -712,13 +713,13 @@ function ProfitabilityPrintReport({ analysis, selectedCostCenter, isScreen = fal
       </section>
 
       <section className="print-kpi-grid">
-        <PrintMetricCard label="Adjusted Revenue (Approved Basis)" value={formatMillions(approved.updatedRevenue)} trend={getTrend(latest?.approvedRevenue || 0, previous?.approvedRevenue || 0)} values={analysis.print.monthlyRows.map((row) => row.approvedRevenue)} tone="green" />
-        <PrintMetricCard label="Adjusted Revenue (Submitted Basis)" value={formatMillions(submitted.updatedRevenue)} trend={getTrend(latest?.submittedRevenue || 0, previous?.submittedRevenue || 0)} values={analysis.print.monthlyRows.map((row) => row.submittedRevenue)} tone="green" />
-        <PrintMetricCard label="Total Cost" value={formatMillions(approved.updatedCost)} trend={getTrend(latest?.totalCost || 0, previous?.totalCost || 0)} values={analysis.print.monthlyRows.map((row) => row.totalCost)} tone="red" />
-        <PrintMetricCard label="Net Profit (Approved Basis)" value={formatMillions(approved.netProfit)} trend={getTrend(latest?.netProfitApproved || 0, previous?.netProfitApproved || 0)} values={analysis.print.monthlyRows.map((row) => row.netProfitApproved)} tone="blue" />
-        <PrintMetricCard label="Net Profit (Submitted Basis)" value={formatMillions(submitted.netProfit)} trend={getTrend(latest?.netProfitSubmitted || 0, previous?.netProfitSubmitted || 0)} values={analysis.print.monthlyRows.map((row) => row.netProfitSubmitted)} tone="green" />
-        <PrintMetricCard label="Margin % (Approved Basis)" value={formatPercent(approved.netMargin)} trend={(latest?.netMarginApproved || 0) - (previous?.netMarginApproved || 0)} values={analysis.print.monthlyRows.map((row) => row.netMarginApproved)} tone="blue" />
-        <PrintMetricCard label="Margin % (Submitted Basis)" value={formatPercent(submitted.netMargin)} trend={(latest?.netMarginSubmitted || 0) - (previous?.netMarginSubmitted || 0)} values={analysis.print.monthlyRows.map((row) => row.netMarginSubmitted)} tone="blue" />
+        <PrintMetricCard label="Adjusted Revenue (Approved Basis)" value={formatMillions(approved.updatedRevenue)} trend={getTrend(latest?.approvedRevenue || 0, previous?.approvedRevenue || 0)} values={reportRows.map((row) => row.approvedRevenue)} tone="green" />
+        <PrintMetricCard label="Adjusted Revenue (Submitted Basis)" value={formatMillions(submitted.updatedRevenue)} trend={getTrend(latest?.submittedRevenue || 0, previous?.submittedRevenue || 0)} values={reportRows.map((row) => row.submittedRevenue)} tone="green" />
+        <PrintMetricCard label="Total Cost" value={formatMillions(approved.updatedCost)} trend={getTrend(latest?.totalCost || 0, previous?.totalCost || 0)} values={reportRows.map((row) => row.totalCost)} tone="red" />
+        <PrintMetricCard label="Net Profit (Approved Basis)" value={formatMillions(approved.netProfit)} trend={getTrend(latest?.netProfitApproved || 0, previous?.netProfitApproved || 0)} values={reportRows.map((row) => row.netProfitApproved)} tone="blue" />
+        <PrintMetricCard label="Net Profit (Submitted Basis)" value={formatMillions(submitted.netProfit)} trend={getTrend(latest?.netProfitSubmitted || 0, previous?.netProfitSubmitted || 0)} values={reportRows.map((row) => row.netProfitSubmitted)} tone="green" />
+        <PrintMetricCard label="Margin % (Approved Basis)" value={formatPercent(approved.netMargin)} trend={(latest?.netMarginApproved || 0) - (previous?.netMarginApproved || 0)} values={reportRows.map((row) => row.netMarginApproved)} tone="blue" />
+        <PrintMetricCard label="Margin % (Submitted Basis)" value={formatPercent(submitted.netMargin)} trend={(latest?.netMarginSubmitted || 0) - (previous?.netMarginSubmitted || 0)} values={reportRows.map((row) => row.netMarginSubmitted)} tone="blue" />
       </section>
 
       <section className="print-analysis-grid">
@@ -755,14 +756,14 @@ function ProfitabilityPrintReport({ analysis, selectedCostCenter, isScreen = fal
       </section>
 
       <section className="print-visual-grid">
-        <MonthlyTrendChart rows={analysis.print.monthlyRows.map((row) => ({ ...row, revenue: row.approvedRevenue, netProfit: row.netProfitApproved }))} />
+        <MonthlyTrendChart rows={reportRows.map((row) => ({ ...row, revenue: row.approvedRevenue, netProfit: row.netProfitApproved }))} />
         <PrintWaterfall pnl={approved} />
         <PrintGlBreakdown rows={analysis.print.glRows} totalCost={approved.updatedCost} />
       </section>
 
       <section className="print-movement-table">
         <h3>Monthly Movement Table</h3>
-        {analysis.print.monthlyRows.map((row) => (
+        {reportRows.map((row) => (
           <p key={row.period}>
             <strong>{row.label}</strong>
             <span>Revenue {formatMillions(row.approvedRevenue)}</span>
@@ -779,7 +780,6 @@ function ProfitabilityPrintReport({ analysis, selectedCostCenter, isScreen = fal
 export function ProfitabilityPage({ filters = {} }) {
   const [revenueBasis, setRevenueBasis] = useState("approved");
   const [drilldownCostCenter, setDrilldownCostCenter] = useState("");
-  const [isReportOpen, setIsReportOpen] = useState(false);
   const [tableFilters, setTableFilters] = useState(DEFAULT_TABLE_FILTERS);
   const [sortConfig, setSortConfig] = useState({ key: "costCenter", direction: "asc" });
   const [activeFilterColumn, setActiveFilterColumn] = useState("");
@@ -1095,30 +1095,6 @@ export function ProfitabilityPage({ filters = {} }) {
     setActiveFilterColumn("");
   };
 
-  if (isReportOpen) {
-    return (
-      <section className="page-stack pnl-report-view">
-        <div className="pnl-report-toolbar">
-          <div>
-            <p className="eyebrow">Cost Center Report</p>
-            <h2>{selectedCostCenter}</h2>
-            <p>Printable Profit & Loss report for operational review and discussion.</p>
-          </div>
-          <div>
-            <button type="button" className="pnl-report-secondary-button" onClick={() => setIsReportOpen(false)}>
-              Back to analysis
-            </button>
-            <button type="button" className="pnl-print-button" onClick={() => window.print()}>
-              <Icon name="spending" />
-              Print report
-            </button>
-          </div>
-        </div>
-        <ProfitabilityPrintReport analysis={analysis} selectedCostCenter={selectedCostCenter} isScreen />
-      </section>
-    );
-  }
-
   return (
     <section className="page-stack pnl-page">
       <div className="page-heading pnl-heading">
@@ -1135,11 +1111,11 @@ export function ProfitabilityPage({ filters = {} }) {
             disabled={!selectedCostCenter}
             title={selectedCostCenter ? "Open the cost center report" : "Select one cost center from the table first"}
             onClick={() => {
-              if (selectedCostCenter) setIsReportOpen(true);
+              if (selectedCostCenter) window.print();
             }}
           >
             <Icon name="spending" />
-            Open cost center report
+            Download cost center report
           </button>
         </div>
       </div>
