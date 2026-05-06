@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Icon } from "../components/Icons";
 import { ALL_FILTER_VALUE } from "../data/costCenterHierarchy";
 import financialInputsData from "../data/financialInputsData.json";
+import igccLogo from "../assets/igcc-logo.svg";
 
 const REVENUE_BASIS_OPTIONS = [
   { id: "approved", label: "Approved AFP" },
@@ -47,6 +48,7 @@ const roundCurrency = (value) => Math.round(((value || 0) + Number.EPSILON) * 10
 const formatCurrency = (value) => CURRENCY_FORMAT.format(value || 0);
 const formatCompactCurrency = (value) => `$${COMPACT_NUMBER_FORMAT.format(value || 0)}`;
 const formatPercent = (value) => `${NUMBER_FORMAT.format(value || 0)}%`;
+const formatMillions = (value) => `${value < 0 ? "-" : ""}$${NUMBER_FORMAT.format(Math.abs(value || 0) / 1000000)}M`;
 const getShare = (value, total) => (total ? ((value || 0) / total) * 100 : 0);
 
 const getQuarter = (period) => `Q${Math.ceil(Number(period?.slice(5, 7) || 1) / 3)}`;
@@ -583,6 +585,188 @@ function CostCenterDetail({ selectedCostCenter, pnl, cnBreakdown, transactions, 
   );
 }
 
+function PrintMetricCard({ label, value, trend, values, tone = "green" }) {
+  return (
+    <article className={`print-metric-card tone-${tone}`}>
+      <div>
+        <span><Icon name={tone === "red" ? "spending" : "net"} /></span>
+        <p>{label}</p>
+      </div>
+      <strong>{value}</strong>
+      <em className={trend >= 0 ? "is-up" : "is-down"}>{trend >= 0 ? "Up" : "Down"} {formatPercent(Math.abs(trend))} vs previous period</em>
+      <FilledSparkline values={values} tone={tone} />
+    </article>
+  );
+}
+
+function PrintAnalysisCard({ title, rows, formula, tone = "green" }) {
+  return (
+    <article className="print-report-card print-analysis-card">
+      <h3>{title} <small>USD in Millions</small></h3>
+      <div>
+        {rows.map((row) => (
+          <p key={row.label} className={row.total ? "is-total" : ""}>
+            <span>{row.label}</span>
+            <strong className={row.tone ? `is-${row.tone}` : ""}>{formatMillions(row.value)}</strong>
+          </p>
+        ))}
+      </div>
+      <footer className={`tone-${tone}`}>{formula}</footer>
+    </article>
+  );
+}
+
+function PrintWaterfall({ pnl }) {
+  const steps = [
+    { label: "Approved AFP", value: pnl.revenue, tone: "green" },
+    { label: "Issued CN", value: pnl.issuedCreditNotes, tone: "green" },
+    { label: "Adjusted Revenue", value: pnl.updatedRevenue, tone: "green" },
+    { label: "Total Cost", value: -pnl.updatedCost, tone: "red" },
+    { label: "Net Profit", value: pnl.netProfit, tone: "blue" },
+  ];
+  const max = Math.max(...steps.map((step) => Math.abs(step.value)), 1);
+
+  return (
+    <article className="print-report-card print-waterfall-card">
+      <h3>P&L Waterfall <small>Approved Basis</small></h3>
+      <div className="print-waterfall">
+        {steps.map((step) => (
+          <div key={step.label} className={`tone-${step.tone}`}>
+            <span style={{ "--bar-height": `${Math.max((Math.abs(step.value) / max) * 100, 8)}%` }} />
+            <strong>{formatMillions(step.value)}</strong>
+            <small>{step.label}</small>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function PrintGlBreakdown({ rows, totalCost }) {
+  return (
+    <article className="print-report-card print-gl-card">
+      <h3>Cost Breakdown by GL <small>USD in Millions</small></h3>
+      <div className="print-gl-layout">
+        <div className="print-donut">
+          <strong>{formatMillions(totalCost)}</strong>
+          <span>Total Cost</span>
+        </div>
+        <div className="print-gl-table">
+          {rows.map((row) => (
+            <p key={row.glName}>
+              <span>{row.glName}</span>
+              <strong>{formatMillions(row.amount)}</strong>
+              <em>{formatPercent(row.share)}</em>
+              <FilledSparkline values={row.monthlyValues} tone={row.movement >= 0 ? "green" : "red"} />
+            </p>
+          ))}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ProfitabilityPrintReport({ analysis, selectedCostCenter }) {
+  const approved = analysis.print.approvedPnl;
+  const submitted = analysis.print.submittedPnl;
+  const latest = analysis.print.monthlyRows.at(-1);
+  const previous = analysis.print.monthlyRows.at(-2);
+  const isProfitable = approved.netProfit >= 0;
+
+  return (
+    <section className="pnl-print-report" aria-label="Printable Profit and Loss report">
+      <header className="print-report-header">
+        <div className="print-brand">
+          <img src={igccLogo} alt="IGCC" />
+          <div>
+            <h1>Profit & Loss Analysis Report</h1>
+            <p>Cost Center Detailed Report</p>
+          </div>
+        </div>
+        <div className="print-meta">
+          <p><span>Report Date</span><strong>{analysis.print.meta.reportDate}</strong></p>
+          <p><span>Reporting Period</span><strong>{analysis.print.meta.periodLabel}</strong></p>
+          <p><span>Currency</span><strong>USD</strong></p>
+        </div>
+      </header>
+
+      <section className="print-context">
+        <p><span>Portfolio</span><strong>{analysis.print.meta.portfolio}</strong></p>
+        <p><span>Hub</span><strong>{analysis.print.meta.hub}</strong></p>
+        <p><span>Cost Center</span><strong>{selectedCostCenter || "All selected cost centers"}</strong></p>
+        <p><span>Region</span><strong>{analysis.print.meta.region}</strong></p>
+        <div className={isProfitable ? "is-good" : "is-loss"}>
+          <span><Icon name={isProfitable ? "approve" : "spending"} /></span>
+          <strong>{isProfitable ? "Profitable" : "Loss-Making"}</strong>
+          <em>Net Margin {formatPercent(approved.netMargin)}</em>
+        </div>
+      </section>
+
+      <section className="print-kpi-grid">
+        <PrintMetricCard label="Adjusted Revenue (Approved Basis)" value={formatMillions(approved.updatedRevenue)} trend={getTrend(latest?.approvedRevenue || 0, previous?.approvedRevenue || 0)} values={analysis.print.monthlyRows.map((row) => row.approvedRevenue)} tone="green" />
+        <PrintMetricCard label="Adjusted Revenue (Submitted Basis)" value={formatMillions(submitted.updatedRevenue)} trend={getTrend(latest?.submittedRevenue || 0, previous?.submittedRevenue || 0)} values={analysis.print.monthlyRows.map((row) => row.submittedRevenue)} tone="green" />
+        <PrintMetricCard label="Total Cost" value={formatMillions(approved.updatedCost)} trend={getTrend(latest?.totalCost || 0, previous?.totalCost || 0)} values={analysis.print.monthlyRows.map((row) => row.totalCost)} tone="red" />
+        <PrintMetricCard label="Net Profit (Approved Basis)" value={formatMillions(approved.netProfit)} trend={getTrend(latest?.netProfitApproved || 0, previous?.netProfitApproved || 0)} values={analysis.print.monthlyRows.map((row) => row.netProfitApproved)} tone="blue" />
+        <PrintMetricCard label="Net Profit (Submitted Basis)" value={formatMillions(submitted.netProfit)} trend={getTrend(latest?.netProfitSubmitted || 0, previous?.netProfitSubmitted || 0)} values={analysis.print.monthlyRows.map((row) => row.netProfitSubmitted)} tone="green" />
+        <PrintMetricCard label="Margin % (Approved Basis)" value={formatPercent(approved.netMargin)} trend={(latest?.netMarginApproved || 0) - (previous?.netMarginApproved || 0)} values={analysis.print.monthlyRows.map((row) => row.netMarginApproved)} tone="blue" />
+        <PrintMetricCard label="Margin % (Submitted Basis)" value={formatPercent(submitted.netMargin)} trend={(latest?.netMarginSubmitted || 0) - (previous?.netMarginSubmitted || 0)} values={analysis.print.monthlyRows.map((row) => row.netMarginSubmitted)} tone="blue" />
+      </section>
+
+      <section className="print-analysis-grid">
+        <PrintAnalysisCard
+          title="Revenue Analysis"
+          rows={[
+            { label: "Approved AFP", value: approved.revenue },
+            { label: "Submitted AFP", value: submitted.revenue },
+            { label: "Issued Credit Notes (CN)", value: approved.issuedCreditNotes },
+            { label: "Adjusted Revenue (Approved Basis)", value: approved.updatedRevenue, total: true, tone: "green" },
+            { label: "Adjusted Revenue (Submitted Basis)", value: submitted.updatedRevenue, total: true, tone: "green" },
+          ]}
+          formula="Adjusted Revenue = AFP + Issued CN"
+        />
+        <PrintAnalysisCard
+          title="Cost Analysis"
+          tone="red"
+          rows={[
+            { label: "Cost from Spent Report", value: approved.totalCost },
+            { label: "Received Credit Notes (CN)", value: approved.receivedCreditNotes },
+            { label: "Total Cost", value: approved.updatedCost, total: true, tone: "red" },
+          ]}
+          formula="Total Cost = Cost from Spent Report + Received CN"
+        />
+        <article className="print-report-card print-profit-card">
+          <h3>Profitability Analysis <small>USD in Millions</small></h3>
+          <div>
+            <p><span>Adjusted Revenue</span><strong>{formatMillions(approved.updatedRevenue)}</strong><strong>{formatMillions(submitted.updatedRevenue)}</strong></p>
+            <p><span>Total Cost</span><strong className="is-red">{formatMillions(-approved.updatedCost)}</strong><strong className="is-red">{formatMillions(-submitted.updatedCost)}</strong></p>
+            <p><span>Net Profit</span><strong className="is-green">{formatMillions(approved.netProfit)}</strong><strong className="is-green">{formatMillions(submitted.netProfit)}</strong></p>
+            <p><span>Margin %</span><strong>{formatPercent(approved.netMargin)}</strong><strong>{formatPercent(submitted.netMargin)}</strong></p>
+          </div>
+        </article>
+      </section>
+
+      <section className="print-visual-grid">
+        <MonthlyTrendChart rows={analysis.print.monthlyRows.map((row) => ({ ...row, revenue: row.approvedRevenue, netProfit: row.netProfitApproved }))} />
+        <PrintWaterfall pnl={approved} />
+        <PrintGlBreakdown rows={analysis.print.glRows} totalCost={approved.updatedCost} />
+      </section>
+
+      <section className="print-movement-table">
+        <h3>Monthly Movement Table</h3>
+        {analysis.print.monthlyRows.map((row) => (
+          <p key={row.period}>
+            <strong>{row.label}</strong>
+            <span>Revenue {formatMillions(row.approvedRevenue)}</span>
+            <span>Cost {formatMillions(row.totalCost)}</span>
+            <span>Net Profit {formatMillions(row.netProfitApproved)}</span>
+            <span>Margin {formatPercent(row.netMarginApproved)}</span>
+          </p>
+        ))}
+      </section>
+    </section>
+  );
+}
+
 export function ProfitabilityPage({ filters = {} }) {
   const [revenueBasis, setRevenueBasis] = useState("approved");
   const [drilldownCostCenter, setDrilldownCostCenter] = useState("");
@@ -607,6 +791,18 @@ export function ProfitabilityPage({ filters = {} }) {
       creditRows: creditContextRows,
       selectedCostCenter,
       revenueBasis,
+    });
+    const approvedPnl = calculatePnl({
+      rows: contextRows,
+      creditRows: creditContextRows,
+      selectedCostCenter,
+      revenueBasis: "approved",
+    });
+    const submittedPnl = calculatePnl({
+      rows: contextRows,
+      creditRows: creditContextRows,
+      selectedCostCenter,
+      revenueBasis: "submitted",
     });
 
     const periodMap = new Map();
@@ -705,12 +901,99 @@ export function ProfitabilityPage({ filters = {} }) {
         .slice(0, 18)
       : [];
 
+    const printPeriodMap = new Map();
+    for (const entry of contextRows) {
+      if (entry.type === "creditNotes") continue;
+      const current = printPeriodMap.get(entry.period) || {
+        period: entry.period,
+        label: `${entry.month || entry.period.slice(5)} ${entry.year || entry.period.slice(0, 4)}`,
+        approvedRevenue: 0,
+        submittedRevenue: 0,
+        totalCost: 0,
+      };
+      if (entry.type === "approved") current.approvedRevenue += entry.amount || 0;
+      if (entry.type === "submitted") current.submittedRevenue += entry.amount || 0;
+      if (entry.type === "spent") current.totalCost += entry.amount || 0;
+      printPeriodMap.set(entry.period, current);
+    }
+    const monthlyRows = [...printPeriodMap.values()]
+      .sort((a, b) => a.period.localeCompare(b.period))
+      .map((row) => {
+        const issued = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && entry.issuedBy === selectedCostCenter) : 0;
+        const received = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && entry.costCenter === selectedCostCenter) : 0;
+        const approvedRevenue = selectedCostCenter ? row.approvedRevenue + issued : row.approvedRevenue;
+        const submittedRevenue = selectedCostCenter ? row.submittedRevenue + issued : row.submittedRevenue;
+        const totalCost = selectedCostCenter ? row.totalCost + received : row.totalCost;
+        const netProfitApproved = approvedRevenue - totalCost;
+        const netProfitSubmitted = submittedRevenue - totalCost;
+        return {
+          ...row,
+          approvedRevenue: roundCurrency(approvedRevenue),
+          submittedRevenue: roundCurrency(submittedRevenue),
+          totalCost: roundCurrency(totalCost),
+          netProfitApproved: roundCurrency(netProfitApproved),
+          netProfitSubmitted: roundCurrency(netProfitSubmitted),
+          netMarginApproved: getShare(netProfitApproved, approvedRevenue),
+          netMarginSubmitted: getShare(netProfitSubmitted, submittedRevenue),
+          netMargin: getShare(netProfitApproved, approvedRevenue),
+        };
+      });
+
+    const glMap = new Map();
+    for (const entry of contextRows) {
+      if (entry.type !== "spent") continue;
+      const glName = entry.glName || "Unclassified Cost";
+      const current = glMap.get(glName) || { glName, amount: 0, periodValues: new Map() };
+      current.amount += entry.amount || 0;
+      current.periodValues.set(entry.period, (current.periodValues.get(entry.period) || 0) + (entry.amount || 0));
+      glMap.set(glName, current);
+    }
+    const printPeriods = monthlyRows.map((row) => row.period);
+    const glRows = [...glMap.values()]
+      .map((row) => {
+        const monthlyValues = printPeriods.map((period) => roundCurrency(row.periodValues.get(period) || 0));
+        return {
+          ...row,
+          amount: roundCurrency(row.amount),
+          share: getShare(row.amount, approvedPnl.updatedCost),
+          movement: getTrend(monthlyValues.at(-1) || 0, monthlyValues.at(-2) || 0),
+          monthlyValues,
+        };
+      })
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 7);
+
+    const scopeEntry = contextRows.find((entry) => entry.costCenter === selectedCostCenter) || contextRows.find((entry) => entry.costCenter);
+    const portfolioLabel = filters.portfolio === "basra" ? "Basra"
+      : filters.portfolio === "kirkuk" ? "Kirkuk"
+        : filters.portfolio === "head-office" ? "Head Office"
+          : "IGCC";
+
     return {
       pnl,
       monthlyTrend,
       costCenterRows,
       cnBreakdown: [...cnCategoryMap.values()].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)),
       transactions,
+      print: {
+        approvedPnl,
+        submittedPnl,
+        monthlyRows,
+        glRows,
+        meta: {
+          portfolio: portfolioLabel,
+          hub: filters.hub && filters.hub !== ALL_FILTER_VALUE ? filters.hub : scopeEntry?.hub || "All hubs",
+          region: scopeEntry?.region || portfolioLabel,
+          periodLabel: monthlyRows.length ? `${monthlyRows[0].label} - ${monthlyRows.at(-1).label}` : "No selected period",
+          reportDate: new Intl.DateTimeFormat("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }).format(new Date()),
+        },
+      },
     };
   }, [filters, revenueBasis, selectedCostCenter]);
 
@@ -810,7 +1093,13 @@ export function ProfitabilityPage({ filters = {} }) {
           <h2>Profit & Loss Analysis</h2>
           <p>Revenue, cost, margin, Credit Note impact, and cost-center profitability drilldown.</p>
         </div>
-        <RevenueBasisToggle revenueBasis={revenueBasis} onChange={setRevenueBasis} />
+        <div className="pnl-heading-actions">
+          <RevenueBasisToggle revenueBasis={revenueBasis} onChange={setRevenueBasis} />
+          <button type="button" className="pnl-print-button" onClick={() => window.print()}>
+            <Icon name="spending" />
+            Print report
+          </button>
+        </div>
       </div>
 
       <ProfitabilitySummary
@@ -909,6 +1198,8 @@ export function ProfitabilityPage({ filters = {} }) {
         transactions={analysis.transactions}
         revenueBasisLabel={revenueBasisLabel}
       />
+
+      <ProfitabilityPrintReport analysis={analysis} selectedCostCenter={selectedCostCenter} />
     </section>
   );
 }
