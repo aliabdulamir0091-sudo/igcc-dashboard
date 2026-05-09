@@ -4873,6 +4873,93 @@ button {
   font-weight: 850;
 }
 
+.executive-cockpit-page {
+  gap: 16px;
+}
+
+.executive-heading h2 {
+  font-size: clamp(28px, 3vw, 40px);
+}
+
+.executive-summary-card {
+  padding: 16px;
+}
+
+.executive-table-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.executive-table-title h3 {
+  margin: 0;
+  color: #071936;
+  font-size: 18px;
+}
+
+.executive-table-title span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.executive-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.executive-summary-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  background: #ffffff;
+  color: #020617;
+  font-size: 13px;
+}
+
+.executive-summary-table th,
+.executive-summary-table td {
+  border: 1px solid #111827;
+  padding: 6px 8px;
+  line-height: 1.15;
+}
+
+.executive-summary-table th {
+  background: #f8fafc;
+  font-weight: 950;
+  text-align: center;
+}
+
+.executive-summary-table td:first-child {
+  min-width: 260px;
+  font-weight: 850;
+}
+
+.executive-summary-table .is-highlight td:first-child,
+.executive-summary-table .is-highlight .is-number {
+  font-weight: 950;
+}
+
+.executive-summary-table .is-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.executive-summary-table .is-negative {
+  color: #dc2626;
+  font-weight: 950;
+}
+
+.executive-table-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
 .home-command-page {
   display: grid;
   gap: 18px;
