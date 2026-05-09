@@ -1,12 +1,25 @@
+import { ALL_FILTER_VALUE, COST_CENTER_HIERARCHY } from "../data/costCenterHierarchy";
 import financialInputsData from "../data/financialInputsData.json";
 
-const YEAR = "2025";
-const QUARTERS = [
-  { key: "q1", label: "Q-1", periods: ["2025-01", "2025-02", "2025-03"] },
-  { key: "q2", label: "Q-2", periods: ["2025-04", "2025-05", "2025-06"] },
-  { key: "q3", label: "Q-3", periods: ["2025-07", "2025-08", "2025-09"] },
-  { key: "q4", label: "Q-4", periods: ["2025-10", "2025-11", "2025-12"] },
+const DEFAULT_YEAR = "2025";
+const GENERAL_COST_ALLOCATIONS = [
+  { poolCostCenter: "GRLBG_23", hub: "BGC Hub" },
+  { poolCostCenter: "GRLRO_23", hub: "ROO Hub" },
 ];
+const GENERAL_POOL_COST_CENTERS = new Set(GENERAL_COST_ALLOCATIONS.map((rule) => rule.poolCostCenter));
+
+const getSelectedYear = (filters = {}) => (
+  filters.year && filters.year !== ALL_FILTER_VALUE ? filters.year : DEFAULT_YEAR
+);
+
+const buildQuarters = (year) => [
+  { key: "q1", label: "Q-1", periods: [`${year}-01`, `${year}-02`, `${year}-03`] },
+  { key: "q2", label: "Q-2", periods: [`${year}-04`, `${year}-05`, `${year}-06`] },
+  { key: "q3", label: "Q-3", periods: [`${year}-07`, `${year}-08`, `${year}-09`] },
+  { key: "q4", label: "Q-4", periods: [`${year}-10`, `${year}-11`, `${year}-12`] },
+];
+
+const getQuarter = (period) => `Q${Math.ceil(Number(period?.slice(5, 7) || 1) / 3)}`;
 
 const isHeadOffice = (entry) => entry.hub === "Head Office" || entry.costCenter === "HO_SB_23";
 
@@ -15,6 +28,10 @@ const formatWholeNumber = (value) => Math.round(value || 0).toLocaleString("en-U
 const formatPercent = (value) => `${Math.round(value || 0)}%`;
 
 const getShare = (value, revenue) => (revenue ? (value / revenue) * 100 : 0);
+
+const sumRows = (rows, predicate) => rows.reduce((total, row) => (
+  predicate(row) ? total + (Number(row.amount) || 0) : total
+), 0);
 
 const createEmptySummary = () => ({
   revenue: 0,
@@ -25,16 +42,113 @@ const createEmptySummary = () => ({
   netProfit: 0,
 });
 
-const sumRows = (rows, predicate) => rows.reduce((total, row) => (
-  predicate(row) ? total + (Number(row.amount) || 0) : total
-), 0);
+const matchesPortfolio = (entry, portfolio) => (
+  !portfolio
+  || portfolio === ALL_FILTER_VALUE
+  || (portfolio === "basra" && entry.region === "Basra")
+  || (portfolio === "kirkuk" && entry.region === "Kirkuk")
+  || (portfolio === "head-office" && entry.hub === "Head Office")
+);
 
-const buildIgccSummary = () => {
-  const entries = financialInputsData.entries || [];
-  const yearRows = entries.filter((entry) => entry.year === YEAR);
+const matchesFilters = (entry, filters = {}, { ignoreCostCenter = false } = {}) => (
+  matchesPortfolio(entry, filters.portfolio)
+  && (!filters.hub || filters.hub === ALL_FILTER_VALUE || entry.hub === filters.hub)
+  && (ignoreCostCenter || !filters.costCenter || filters.costCenter === ALL_FILTER_VALUE || entry.costCenter === filters.costCenter)
+  && (!filters.year || filters.year === ALL_FILTER_VALUE || entry.year === filters.year)
+  && (filters.period !== "monthly" || !filters.month || filters.month === ALL_FILTER_VALUE || entry.month === filters.month)
+  && (filters.period !== "quarterly" || !filters.quarter || filters.quarter === ALL_FILTER_VALUE || getQuarter(entry.period) === filters.quarter)
+);
+
+const getHubCostCenters = (hub, poolCostCenter) => (
+  COST_CENTER_HIERARCHY.find((group) => group.hub === hub)?.costCenters || []
+).filter((costCenter) => costCenter !== poolCostCenter);
+
+const createAllocatedSpentRow = (entry, costCenter, amount, hub) => ({
+  ...entry,
+  costCenter,
+  sourceCostCenter: entry.costCenter,
+  hub,
+  amount,
+  allocationSourceCostCenter: entry.costCenter,
+  isAllocatedGeneralCost: true,
+});
+
+const allocateGeneralSpentCosts = (entries, filters = {}) => {
+  const periodFilters = {
+    ...filters,
+    costCenter: ALL_FILTER_VALUE,
+    hub: ALL_FILTER_VALUE,
+  };
+  const periodRows = entries.filter((entry) => matchesFilters(entry, periodFilters));
+  const allocatedRows = [];
+  const allocatedEntryIds = new Set();
+
+  for (const rule of GENERAL_COST_ALLOCATIONS) {
+    const recipients = getHubCostCenters(rule.hub, rule.poolCostCenter);
+    if (!recipients.length) continue;
+
+    const poolRows = periodRows.filter((entry) => entry.type === "spent" && entry.costCenter === rule.poolCostCenter);
+    const recipientRows = periodRows.filter((entry) => (
+      entry.type === "spent"
+      && recipients.includes(entry.costCenter)
+      && !entry.isAllocatedGeneralCost
+    ));
+    const fallbackTotals = recipients.map((costCenter) => ({
+      costCenter,
+      amount: sumRows(recipientRows, (entry) => entry.costCenter === costCenter),
+    })).filter((row) => row.amount > 0);
+    const fallbackTotal = fallbackTotals.reduce((total, row) => total + row.amount, 0);
+
+    for (const poolRow of poolRows) {
+      const periodRecipientTotals = recipients.map((costCenter) => ({
+        costCenter,
+        amount: sumRows(recipientRows, (entry) => entry.period === poolRow.period && entry.costCenter === costCenter),
+      })).filter((row) => row.amount > 0);
+      const periodTotal = periodRecipientTotals.reduce((total, row) => total + row.amount, 0);
+      const basisRows = periodTotal > 0 ? periodRecipientTotals : fallbackTotals;
+      const basisTotal = periodTotal > 0 ? periodTotal : fallbackTotal;
+      if (!basisTotal) continue;
+
+      allocatedEntryIds.add(poolRow);
+      for (const basis of basisRows) {
+        allocatedRows.push(createAllocatedSpentRow(
+          poolRow,
+          basis.costCenter,
+          (poolRow.amount || 0) * (basis.amount / basisTotal),
+          rule.hub,
+        ));
+      }
+    }
+  }
+
+  return [
+    ...entries.filter((entry) => !(entry.type === "spent" && allocatedEntryIds.has(entry))),
+    ...allocatedRows,
+  ];
+};
+
+const getCostCenterRow = (rowsByCostCenter, costCenter) => {
+  if (!rowsByCostCenter.has(costCenter)) {
+    rowsByCostCenter.set(costCenter, {
+      costCenter,
+      spentCost: 0,
+      allocatedGeneralCost: 0,
+      receivedCn: 0,
+      totalCost: 0,
+      approvedAfp: 0,
+      profit: 0,
+      margin: 0,
+    });
+  }
+  return rowsByCostCenter.get(costCenter);
+};
+
+const buildIgccSummary = (entries, filters, year, quarters) => {
+  const yearFilters = { ...filters, year };
+  const yearRows = entries.filter((entry) => matchesFilters(entry, yearFilters));
   const byQuarter = {};
 
-  for (const quarter of QUARTERS) {
+  for (const quarter of quarters) {
     const rows = yearRows.filter((entry) => quarter.periods.includes(entry.period));
     const revenue = sumRows(rows, (entry) => entry.type === "approved");
     const directCost = sumRows(rows, (entry) => entry.type === "spent" && !isHeadOffice(entry));
@@ -50,7 +164,7 @@ const buildIgccSummary = () => {
     };
   }
 
-  const yearTotal = QUARTERS.reduce((total, quarter) => {
+  const yearTotal = quarters.reduce((total, quarter) => {
     const summary = byQuarter[quarter.key] || createEmptySummary();
     return {
       revenue: total.revenue + summary.revenue,
@@ -65,6 +179,43 @@ const buildIgccSummary = () => {
   return { byQuarter, yearTotal };
 };
 
+const buildCostCenterSummary = (allocatedEntries, rawEntries, filters, year) => {
+  const yearFilters = { ...filters, year };
+  const rowsByCostCenter = new Map();
+  const rawRows = rawEntries.filter((entry) => matchesFilters(entry, yearFilters));
+  const rows = allocatedEntries.filter((entry) => matchesFilters(entry, yearFilters));
+
+  for (const entry of rawRows) {
+    if (entry.type !== "spent" || GENERAL_POOL_COST_CENTERS.has(entry.costCenter)) continue;
+    getCostCenterRow(rowsByCostCenter, entry.costCenter).spentCost += Number(entry.amount) || 0;
+  }
+
+  for (const entry of rows) {
+    const row = getCostCenterRow(rowsByCostCenter, entry.costCenter);
+    if (entry.type === "spent" && entry.isAllocatedGeneralCost) {
+      row.allocatedGeneralCost += Number(entry.amount) || 0;
+    } else if (entry.type === "credit-note-received") {
+      row.receivedCn += Number(entry.amount) || 0;
+    } else if (entry.type === "approved") {
+      row.approvedAfp += Number(entry.amount) || 0;
+    }
+  }
+
+  return [...rowsByCostCenter.values()]
+    .map((row) => {
+      const totalCost = row.spentCost + row.allocatedGeneralCost + row.receivedCn;
+      const profit = row.approvedAfp - totalCost;
+      return {
+        ...row,
+        totalCost,
+        profit,
+        margin: getShare(profit, row.approvedAfp),
+      };
+    })
+    .filter((row) => row.spentCost || row.allocatedGeneralCost || row.receivedCn || row.approvedAfp)
+    .sort((a, b) => a.costCenter.localeCompare(b.costCenter));
+};
+
 function SummaryValue({ value, isPercent = false, tone }) {
   const className = tone || (value < 0 ? "is-negative" : "");
   return (
@@ -74,13 +225,18 @@ function SummaryValue({ value, isPercent = false, tone }) {
   );
 }
 
-export function ExecutiveCockpitPage() {
-  const { byQuarter, yearTotal } = buildIgccSummary();
+export function ExecutiveCockpitPage({ filters = {} }) {
+  const year = getSelectedYear(filters);
+  const quarters = buildQuarters(year);
+  const rawEntries = financialInputsData.entries || [];
+  const allocatedEntries = allocateGeneralSpentCosts(rawEntries, { ...filters, year });
+  const { byQuarter, yearTotal } = buildIgccSummary(allocatedEntries, filters, year, quarters);
+  const costCenterRows = buildCostCenterSummary(allocatedEntries, rawEntries, filters, year);
   const rows = [
     { label: "Total Revenue (Approved AFP)", key: "revenue", highlight: true },
     { label: "Direct Cost", key: "directCost" },
     { label: "Gross Profit", key: "grossProfit", highlight: true },
-    { label: "Overhead (Head Office)", key: "overhead" },
+    { label: "Indirect Cost (Head Office)", key: "overhead" },
     { label: "Total Cost", key: "totalCost" },
     { label: "Net Profit", key: "netProfit", highlight: true },
   ];
@@ -96,15 +252,15 @@ export function ExecutiveCockpitPage() {
       <article className="surface-card executive-summary-card">
         <div className="executive-table-title">
           <h3>1- IGCC-Level Summary</h3>
-          <span>Year {YEAR}</span>
+          <span>Year {year}</span>
         </div>
         <div className="executive-table-wrap">
           <table className="executive-summary-table">
             <thead>
               <tr>
                 <th>Item</th>
-                {QUARTERS.map((quarter) => <th key={quarter.key}>{quarter.label}</th>)}
-                <th>Year {YEAR}</th>
+                {quarters.map((quarter) => <th key={quarter.key}>{quarter.label}</th>)}
+                <th>Year {year}</th>
                 <th>% of Revenue</th>
               </tr>
             </thead>
@@ -112,7 +268,7 @@ export function ExecutiveCockpitPage() {
               {rows.map((row) => (
                 <tr key={row.key} className={row.highlight ? "is-highlight" : ""}>
                   <td>{row.label}</td>
-                  {QUARTERS.map((quarter) => (
+                  {quarters.map((quarter) => (
                     <SummaryValue key={quarter.key} value={byQuarter[quarter.key]?.[row.key] || 0} />
                   ))}
                   <SummaryValue value={yearTotal[row.key]} />
@@ -122,7 +278,48 @@ export function ExecutiveCockpitPage() {
             </tbody>
           </table>
         </div>
-        <p className="executive-table-note">Overhead is calculated from Head Office only; all other hubs, including Camp, are treated as direct cost.</p>
+        <p className="executive-table-note">Indirect cost is calculated from Head Office only; general BGC and ROO costs are reallocated to their operational cost centers.</p>
+      </article>
+
+      <article className="surface-card executive-summary-card">
+        <div className="executive-table-title">
+          <h3>2- Cost Center Profitability Summary</h3>
+          <span>{costCenterRows.length} cost centers</span>
+        </div>
+        <div className="executive-table-wrap">
+          <table className="executive-summary-table executive-cost-center-table">
+            <thead>
+              <tr>
+                <th>Cost Center</th>
+                <th>Cost from Spent Report</th>
+                <th>General Cost Reallocate</th>
+                <th>Received CN</th>
+                <th>Total Cost</th>
+                <th>Approved AFP</th>
+                <th>Profit</th>
+                <th>Margin %</th>
+              </tr>
+            </thead>
+            <tbody>
+              {costCenterRows.length ? costCenterRows.map((row) => (
+                <tr key={row.costCenter} className={row.profit < 0 ? "has-loss" : ""}>
+                  <td>{row.costCenter}</td>
+                  <SummaryValue value={row.spentCost} />
+                  <SummaryValue value={row.allocatedGeneralCost} />
+                  <SummaryValue value={row.receivedCn} />
+                  <SummaryValue value={row.totalCost} />
+                  <SummaryValue value={row.approvedAfp} />
+                  <SummaryValue value={row.profit} />
+                  <SummaryValue value={row.margin} isPercent />
+                </tr>
+              )) : (
+                <tr>
+                  <td className="executive-empty-row" colSpan={8}>No cost center data for the selected filters.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </article>
     </section>
   );

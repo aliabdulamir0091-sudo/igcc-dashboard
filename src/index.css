@@ -4953,11 +4953,34 @@ button {
   font-weight: 950;
 }
 
+.executive-cost-center-table {
+  min-width: 1120px;
+}
+
+.executive-cost-center-table td:first-child {
+  min-width: 150px;
+}
+
+.executive-cost-center-table .has-loss td:first-child {
+  color: #dc2626;
+}
+
+.executive-empty-row {
+  height: 54px;
+  color: #64748b;
+  text-align: center;
+  font-weight: 900;
+}
+
 .executive-table-note {
   margin: 10px 0 0;
   color: var(--muted);
   font-size: 12px;
   font-weight: 850;
+}
+
+[data-theme="dark"] .executive-table-title h3 {
+  color: var(--text);
 }
 
 .home-command-page {
