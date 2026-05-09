@@ -22,7 +22,7 @@ const DEFAULT_DASHBOARD_FILTERS = {
 const PAGE_COMPONENTS = {
   home: HomePage,
   executive: ExecutiveCockpitPage,
-  profitability: ProfitabilityPage,
+  detail: ProfitabilityPage,
   spending: SpendingReportPage,
 };
 
@@ -87,7 +87,14 @@ export default function App() {
       onApplyFilters={setDashboardFilters}
       onClearFilters={() => setDashboardFilters(DEFAULT_DASHBOARD_FILTERS)}
     >
-      <Page dataSchemas={DATA_SCHEMAS} accessProfile={accessProfile} onNavigate={setActivePage} filters={dashboardFilters} />
+      <Page
+        activePage={activePage}
+        dataSchemas={DATA_SCHEMAS}
+        accessProfile={accessProfile}
+        onNavigate={setActivePage}
+        filters={dashboardFilters}
+        onApplyFilters={setDashboardFilters}
+      />
     </AppLayout>
   );
 }

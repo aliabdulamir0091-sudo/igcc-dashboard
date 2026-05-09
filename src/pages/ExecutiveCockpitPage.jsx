@@ -2,6 +2,7 @@ import {
   ALL_FILTER_VALUE,
   COST_CENTER_HIERARCHY,
   ROO_SUB_HUBS,
+  getCostCenterGroupValue,
   matchesCostCenterFilter,
 } from "../data/costCenterHierarchy";
 import financialInputsData from "../data/financialInputsData.json";
@@ -360,7 +361,10 @@ const buildRooRows = (rows) => {
     const listedRows = group.costCenters.map((costCenter) => rowsByCostCenter.get(costCenter)).filter(Boolean);
     const groupRows = group.label === "Other Project" ? [...listedRows, ...unassignedRows] : listedRows;
     if (!groupRows.length) continue;
-    orderedRows.push(sumCostCenterRows(groupRows, "ROO Hub", "subgroup", group.label), ...groupRows);
+    orderedRows.push({
+      ...sumCostCenterRows(groupRows, "ROO Hub", "subgroup", group.label),
+      filterCostCenter: getCostCenterGroupValue(group.id),
+    }, ...groupRows);
   }
 
   return orderedRows;
@@ -396,7 +400,7 @@ function SummaryValue({ value, isPercent = false, tone }) {
   );
 }
 
-export function ExecutiveCockpitPage({ filters = {} }) {
+export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters }) {
   const isYearFiltered = hasSelectedYear(filters);
   const year = getSelectedYear(filters);
   const quarters = buildQuarters(year);
@@ -416,13 +420,32 @@ export function ExecutiveCockpitPage({ filters = {} }) {
     { label: "Total Cost", key: "totalCost" },
     { label: "Net Profit", key: "netProfit", highlight: true },
   ];
+  const openDetailRow = (row) => {
+    if (!onNavigate || !onApplyFilters) return;
+    const nextFilters = {
+      ...filters,
+      hub: ALL_FILTER_VALUE,
+      costCenter: ALL_FILTER_VALUE,
+    };
+    if (row.type === "hub") {
+      nextFilters.hub = row.hub;
+    } else if (row.type === "subgroup") {
+      nextFilters.hub = "ROO Hub";
+      nextFilters.costCenter = row.filterCostCenter || ALL_FILTER_VALUE;
+    } else if (row.type === "costCenter") {
+      nextFilters.hub = row.hub;
+      nextFilters.costCenter = row.costCenter;
+    }
+    onApplyFilters(nextFilters);
+    onNavigate("detail");
+  };
 
   return (
     <section className="page-stack executive-cockpit-page">
       <div className="page-heading executive-heading">
-        <p className="eyebrow">CEO-level dashboard</p>
-        <h2>Executive Cockpit</h2>
-        <p>IGCC-level financial summary by quarter, based on approved Application for Payment revenue and actual cost.</p>
+        <p className="eyebrow">Operations control view</p>
+        <h2>IGCC Operations Performance</h2>
+        <p>Hub, cost center, AFP, cost, CN, and profit view.</p>
       </div>
 
       <article className="surface-card executive-summary-card">
@@ -481,12 +504,22 @@ export function ExecutiveCockpitPage({ filters = {} }) {
               {hubCostCenterRows.length ? hubCostCenterRows.map((row) => (
                 <tr
                   key={`${row.type}-${row.hub}-${row.costCenter}`}
+                  role="button"
+                  tabIndex={0}
                   className={[
+                    "is-clickable-row",
                     row.type === "igcc" ? "is-igcc-total" : "",
                     row.type === "hub" ? "is-hub-total" : "",
                     row.type === "subgroup" ? "is-subgroup-total" : "",
                     row.profit < 0 ? "has-loss" : "",
                   ].filter(Boolean).join(" ")}
+                  onClick={() => openDetailRow(row)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openDetailRow(row);
+                    }
+                  }}
                 >
                   <td>{row.type === "costCenter" ? <span>{row.costCenter}</span> : row.costCenter}</td>
                   <SummaryValue value={row.spentCost} />

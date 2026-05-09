@@ -1170,7 +1170,7 @@ function ProfitabilityPrintReport({ analysis, selectedCostCenter, isScreen = fal
   );
 }
 
-export function ProfitabilityPage({ filters = {} }) {
+export function ProfitabilityPage({ filters = {}, activePage }) {
   const [revenueBasis, setRevenueBasis] = useState("approved");
   const [drilldownCostCenter, setDrilldownCostCenter] = useState("");
   const [tableFilters, setTableFilters] = useState(DEFAULT_TABLE_FILTERS);
@@ -1178,6 +1178,7 @@ export function ProfitabilityPage({ filters = {} }) {
   const [activeFilterColumn, setActiveFilterColumn] = useState("");
   const filterCostCenter = filters.costCenter && filters.costCenter !== ALL_FILTER_VALUE ? filters.costCenter : "";
   const selectedCostCenter = filterCostCenter || drilldownCostCenter;
+  const isDetailPage = activePage === "detail";
   const selectedCostCenters = getReportCostCenterMembers(selectedCostCenter);
   const revenueBasisLabel = REVENUE_BASIS_OPTIONS.find((option) => option.id === revenueBasis)?.label || "Approved AFP";
 
@@ -1552,9 +1553,9 @@ export function ProfitabilityPage({ filters = {} }) {
       <div className="pnl-hero-card">
         <div className="pnl-heading">
           <div>
-            <p className="eyebrow">Detailed Financial Analysis</p>
-            <h2>Profit & Loss Analysis</h2>
-            <p>Revenue, cost, margin, Credit Note impact, and cost-center profitability drilldown.</p>
+            <p className="eyebrow">{isDetailPage ? "Operations drilldown" : "Detailed Financial Analysis"}</p>
+            <h2>{isDetailPage ? "Operations Detail" : "Profit & Loss Analysis"}</h2>
+            <p>{isDetailPage ? "Detailed AFP, cost, CN, and site profit view for the selected operation scope." : "Revenue, cost, margin, Credit Note impact, and cost-center profitability drilldown."}</p>
           </div>
           <div className="pnl-heading-actions">
             <RevenueBasisToggle revenueBasis={revenueBasis} onChange={setRevenueBasis} />

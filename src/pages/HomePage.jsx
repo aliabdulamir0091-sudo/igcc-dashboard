@@ -6,15 +6,8 @@ const pageCards = [
   {
     id: "executive",
     icon: "executive",
-    title: "Executive Cockpit",
-    detail: "Leadership summary and review signals",
-    action: "Open",
-  },
-  {
-    id: "profitability",
-    icon: "pnl",
-    title: "Profit and Lose",
-    detail: "Cost-center profitability and allocation treatment",
+    title: "IGCC Operations Performance",
+    detail: "Hub, cost center, AFP, cost, CN, and profit view",
     action: "Open",
   },
   {
@@ -30,14 +23,14 @@ const workflowSteps = [
   { icon: "spending", title: "Inputs", detail: "Collect & validate financial data" },
   { icon: "executive", title: "Analysis", detail: "Analyze spend and performance" },
   { icon: "hub", title: "Allocation", detail: "Allocate costs and credit notes" },
-  { icon: "pnl", title: "Profit & Loss", detail: "Calculate cost-center profitability" },
-  { icon: "credit", title: "Executive Review", detail: "Review insights and make decisions" },
+  { icon: "pnl", title: "Operations Detail", detail: "Click a hub or cost center for details" },
+  { icon: "credit", title: "Operations Review", detail: "Review insights and make decisions" },
 ];
 
 const focusItems = [
   { icon: "executive", title: "Review GL cost drivers", detail: "Identify top cost centers and GL items driving spend" },
   { icon: "credit", title: "Validate CN allocation treatment", detail: "Review credit note allocations by receiving cost centers" },
-  { icon: "pnl", title: "Prepare P&L cost-center model", detail: "Continue building cost-center profitability model" },
+  { icon: "pnl", title: "Review operation detail", detail: "Open details from the performance table" },
 ];
 
 const readinessItems = [
@@ -49,8 +42,7 @@ const readinessItems = [
 
 const sideItems = [
   { id: "home", icon: "home", label: "Home" },
-  { id: "executive", icon: "executive", label: "Executive Cockpit" },
-  { id: "profitability", icon: "pnl", label: "Profit and Lose" },
+  { id: "executive", icon: "executive", label: "Operations Performance" },
   { id: "spending", icon: "spending", label: "Financial Input" },
   { id: "data", icon: "download", label: "Data & Sync" },
   { id: "settings", icon: "folder", label: "Settings" },
@@ -98,7 +90,7 @@ export function HomePage({ onNavigate, accessProfile }) {
           <span className="home-hero-icon"><Icon name="executive" /></span>
           <div>
             <h1>IGCC Financial Dashboard</h1>
-            <p>Executive landing view for financial control and analysis</p>
+            <p>Operations landing view for financial control and analysis</p>
           </div>
           <div className="home-hero-actions">
             <span><Icon name="calendar" /> {today}</span>
