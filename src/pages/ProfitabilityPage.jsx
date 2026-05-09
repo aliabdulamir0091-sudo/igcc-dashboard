@@ -1180,11 +1180,13 @@ export function ProfitabilityPage({ filters = {} }) {
     const cnCategoryMap = new Map();
     if (selectedCostCenter) {
       for (const entry of creditContextRows) {
-        const isIssued = entry.issuedBy === selectedCostCenter;
-        const isReceived = entry.costCenter === selectedCostCenter;
+        const isIssued = selectedCostCenters.includes(entry.issuedBy);
+        const isReceived = selectedCostCenters.includes(entry.costCenter);
         if (!isIssued && !isReceived) continue;
-        const mode = isIssued ? "Issued" : "Received";
-        const label = entry.category || entry.issuedBy || "Credit Note";
+        const mode = isReceived ? "Received" : "Issued";
+        const label = isReceived
+          ? normalizeReportCostCenter(entry.costCenter)
+          : normalizeReportCostCenter(entry.issuedBy || entry.category || "Credit Note");
         const key = `${mode}-${label}`;
         const current = cnCategoryMap.get(key) || { mode, label, amount: 0 };
         current.amount += entry.amount || 0;
@@ -1195,7 +1197,7 @@ export function ProfitabilityPage({ filters = {} }) {
     const transactions = selectedCostCenter
       ? [
         ...contextRows.filter((entry) => ["spent", revenueBasis].includes(entry.type)),
-        ...creditContextRows.filter((entry) => entry.issuedBy === selectedCostCenter || entry.costCenter === selectedCostCenter),
+        ...creditContextRows.filter((entry) => selectedCostCenters.includes(entry.issuedBy) || selectedCostCenters.includes(entry.costCenter)),
       ]
         .sort((a, b) => b.period.localeCompare(a.period) || Math.abs(b.amount || 0) - Math.abs(a.amount || 0))
         .slice(0, 18)
@@ -1219,8 +1221,8 @@ export function ProfitabilityPage({ filters = {} }) {
     const monthlyRows = [...printPeriodMap.values()]
       .sort((a, b) => a.period.localeCompare(b.period))
       .map((row) => {
-        const issued = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && entry.issuedBy === selectedCostCenter) : 0;
-        const received = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && entry.costCenter === selectedCostCenter) : 0;
+        const issued = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && selectedCostCenters.includes(entry.issuedBy)) : 0;
+        const received = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && selectedCostCenters.includes(entry.costCenter)) : 0;
         const approvedRevenue = selectedCostCenter ? row.approvedRevenue + issued : row.approvedRevenue;
         const submittedRevenue = selectedCostCenter ? row.submittedRevenue + issued : row.submittedRevenue;
         const totalCost = selectedCostCenter ? row.totalCost + received : row.totalCost;
