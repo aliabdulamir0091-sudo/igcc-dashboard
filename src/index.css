@@ -4968,8 +4968,8 @@ button {
 }
 
 .executive-cost-center-table .is-hub-total td {
-  background: #eef7f4;
-  color: #06342f;
+  background: #d8f3dc;
+  color: #063b24;
   font-weight: 950;
 }
 
@@ -4978,8 +4978,8 @@ button {
 }
 
 .executive-cost-center-table .is-subgroup-total td {
-  background: #f8fafc;
-  color: #0f2f57;
+  background: #fef3c7;
+  color: #5c3b00;
   font-weight: 950;
 }
 
@@ -5018,13 +5018,13 @@ button {
 }
 
 [data-theme="dark"] .executive-cost-center-table .is-hub-total td {
-  background: rgba(20, 184, 166, 0.14);
-  color: #d7fff7;
+  background: rgba(34, 197, 94, 0.24);
+  color: #dcfce7;
 }
 
 [data-theme="dark"] .executive-cost-center-table .is-subgroup-total td {
-  background: rgba(148, 163, 184, 0.12);
-  color: #dbeafe;
+  background: rgba(245, 158, 11, 0.24);
+  color: #fef3c7;
 }
 
 .home-command-page {
