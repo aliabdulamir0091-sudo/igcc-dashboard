@@ -4968,23 +4968,27 @@ button {
 }
 
 .executive-cost-center-table .is-hub-total td {
-  background: #d8f3dc;
-  color: #063b24;
+  background: #16a34a !important;
+  color: #ffffff !important;
   font-weight: 950;
+  border-color: #0f7a35;
 }
 
 .executive-cost-center-table .is-hub-total td:first-child {
   text-transform: uppercase;
+  border-left: 8px solid #064e3b;
 }
 
 .executive-cost-center-table .is-subgroup-total td {
-  background: #fef3c7;
-  color: #5c3b00;
+  background: #facc15 !important;
+  color: #1f2937 !important;
   font-weight: 950;
+  border-color: #b77905;
 }
 
 .executive-cost-center-table .is-subgroup-total td:first-child {
   padding-left: 18px;
+  border-left: 8px solid #92400e;
 }
 
 .executive-cost-center-table .has-loss td:first-child {
@@ -5018,13 +5022,13 @@ button {
 }
 
 [data-theme="dark"] .executive-cost-center-table .is-hub-total td {
-  background: rgba(34, 197, 94, 0.24);
-  color: #dcfce7;
+  background: #15803d !important;
+  color: #ffffff !important;
 }
 
 [data-theme="dark"] .executive-cost-center-table .is-subgroup-total td {
-  background: rgba(245, 158, 11, 0.24);
-  color: #fef3c7;
+  background: #eab308 !important;
+  color: #111827 !important;
 }
 
 .home-command-page {
