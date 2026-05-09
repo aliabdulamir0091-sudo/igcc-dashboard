@@ -1403,7 +1403,11 @@ export function ProfitabilityPage({ filters = {} }) {
           portfolio: portfolioLabel,
           hub: filters.hub && filters.hub !== ALL_FILTER_VALUE ? filters.hub : scopeEntry?.hub || "All hubs",
           region: scopeEntry?.region || portfolioLabel,
-          periodLabel: monthlyRows.length ? `${monthlyRows[0].label} - ${monthlyRows.at(-1).label}` : "No selected period",
+          periodLabel: monthlyRows.length
+            ? monthlyRows[0].label === monthlyRows.at(-1).label
+              ? monthlyRows[0].label
+              : `${monthlyRows[0].label} - ${monthlyRows.at(-1).label}`
+            : "No selected period",
           reportDate: new Intl.DateTimeFormat("en-GB", {
             day: "2-digit",
             month: "short",
