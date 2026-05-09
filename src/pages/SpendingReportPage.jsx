@@ -1,5 +1,6 @@
 import { useState } from "react";
 import financialInputsData from "../data/financialInputsData.json";
+import { matchesCostCenterFilter } from "../data/costCenterHierarchy";
 import { Icon } from "../components/Icons";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
@@ -80,7 +81,7 @@ const buildFilteredInputs = (data, filters = {}) => {
   const filteredEntries = data.entries.filter((entry) => (
     matchesPortfolio(entry, filters.portfolio)
     && (!filters.hub || filters.hub === "all" || entry.hub === filters.hub)
-    && (!filters.costCenter || filters.costCenter === "all" || entry.costCenter === filters.costCenter)
+    && matchesCostCenterFilter(entry.costCenter, filters.costCenter)
     && (!filters.year || filters.year === "all" || entry.year === filters.year)
     && (filters.period !== "monthly" || !filters.month || filters.month === "all" || entry.month === filters.month)
     && (filters.period !== "quarterly" || !filters.quarter || filters.quarter === "all" || `Q${Math.ceil(Number(entry.period?.slice(5, 7) || 1) / 3)}` === filters.quarter)

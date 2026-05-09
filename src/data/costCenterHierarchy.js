@@ -71,4 +71,72 @@ export const COST_CENTER_HIERARCHY = [
 
 export const ALL_FILTER_VALUE = "all";
 
+export const COST_CENTER_GROUP_PREFIX = "group:";
+
+export const ROO_SUB_HUBS = [
+  {
+    id: "roo-maint",
+    label: "ROO MAINT",
+    hub: "ROO Hub",
+    costCenters: ["EITAR_23", "MPTAR_23", "MPMNT_23", "CVMNT_23", "EIMNT_23"],
+  },
+  {
+    id: "roo-small-project",
+    label: "ROO- Small Project",
+    hub: "ROO Hub",
+    costCenters: ["EISP_23", "MPSP_23", "DS-01SP_24", "DG02_PWD", "QAWPT_23", "WOD_23", "KBR_23"],
+  },
+  {
+    id: "roo-maj-project",
+    label: "ROO MAJ Project",
+    hub: "ROO Hub",
+    costCenters: ["E&I-MAJ_24"],
+  },
+  {
+    id: "roo-pwri",
+    label: "ROO- PWRI_23",
+    hub: "ROO Hub",
+    costCenters: ["PWRI-PWT", "PWRI_23"],
+    filterCostCenters: ["PWRI-PWT", "PWT PWRI1_23", "PWRI_23"],
+  },
+  {
+    id: "roo-flwln",
+    label: "ROO- FLWLN",
+    hub: "ROO Hub",
+    costCenters: ["FLWLN_23", "RTPFL_23"],
+  },
+  {
+    id: "roo-pwri2-ohtl",
+    label: "ROO PWRI-2 and OHTL",
+    hub: "ROO Hub",
+    costCenters: ["PWRI2_23", "OHTL_25"],
+  },
+  {
+    id: "roo-other-project",
+    label: "Other Project",
+    hub: "ROO Hub",
+    costCenters: ["Kiosk-25", "MWP_23", "FFF_23", "MITAS", "CMSN_23", "EIESP_23"],
+  },
+];
+
+export const getCostCenterGroupValue = (id) => `${COST_CENTER_GROUP_PREFIX}${id}`;
+
+export const getCostCenterGroupByValue = (value) => {
+  if (!value?.startsWith(COST_CENTER_GROUP_PREFIX)) return null;
+  const id = value.slice(COST_CENTER_GROUP_PREFIX.length);
+  return ROO_SUB_HUBS.find((group) => group.id === id) || null;
+};
+
+export const getCostCenterFilterMembers = (filterValue) => {
+  const group = getCostCenterGroupByValue(filterValue);
+  if (group) return group.filterCostCenters || group.costCenters;
+  if (!filterValue || filterValue === ALL_FILTER_VALUE) return [];
+  return [filterValue];
+};
+
+export const matchesCostCenterFilter = (costCenter, filterValue) => {
+  if (!filterValue || filterValue === ALL_FILTER_VALUE) return true;
+  return getCostCenterFilterMembers(filterValue).includes(costCenter);
+};
+
 export const getUniqueFilterValues = (values) => [...new Set(values)].sort((a, b) => a.localeCompare(b));

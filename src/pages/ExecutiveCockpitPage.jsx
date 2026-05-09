@@ -1,4 +1,9 @@
-import { ALL_FILTER_VALUE, COST_CENTER_HIERARCHY } from "../data/costCenterHierarchy";
+import {
+  ALL_FILTER_VALUE,
+  COST_CENTER_HIERARCHY,
+  ROO_SUB_HUBS,
+  matchesCostCenterFilter,
+} from "../data/costCenterHierarchy";
 import financialInputsData from "../data/financialInputsData.json";
 
 const DEFAULT_YEAR = "2025";
@@ -16,37 +21,7 @@ const EXECUTIVE_HUB_ORDER = [
   "Head Office",
   "West Qurna",
 ];
-const ROO_SUBGROUPS = [
-  {
-    label: "ROO MAINT",
-    costCenters: ["EITAR_23", "MPTAR_23", "MPMNT_23", "CVMNT_23", "EIMNT_23"],
-  },
-  {
-    label: "ROO- Small Project",
-    costCenters: ["EISP_23", "MPSP_23", "DS-01SP_24", "DG02_PWD", "QAWPT_23", "WOD_23", "KBR_23"],
-  },
-  {
-    label: "ROO MAJ Project",
-    costCenters: ["E&I-MAJ_24"],
-  },
-  {
-    label: "ROO- PWRI_23",
-    costCenters: ["PWRI-PWT", "PWRI_23"],
-  },
-  {
-    label: "ROO- FLWLN",
-    costCenters: ["FLWLN_23", "RTPFL_23"],
-  },
-  {
-    label: "ROO PWRI-2 and OHTL",
-    costCenters: ["PWRI2_23", "OHTL_25"],
-  },
-  {
-    label: "Other Project",
-    costCenters: ["Kiosk-25", "MWP_23", "FFF_23", "MITAS", "CMSN_23", "EIESP_23"],
-  },
-];
-const ROO_ASSIGNED_COST_CENTERS = new Set(ROO_SUBGROUPS.flatMap((group) => group.costCenters));
+const ROO_ASSIGNED_COST_CENTERS = new Set(ROO_SUB_HUBS.flatMap((group) => group.costCenters));
 const COST_CENTER_ALIASES = {
   "PWT PWRI1_23": "PWRI-PWT",
 };
@@ -101,7 +76,7 @@ const matchesPortfolio = (entry, portfolio) => (
 const matchesFilters = (entry, filters = {}, { ignoreCostCenter = false } = {}) => (
   matchesPortfolio(entry, filters.portfolio)
   && (!filters.hub || filters.hub === ALL_FILTER_VALUE || entry.hub === filters.hub)
-  && (ignoreCostCenter || !filters.costCenter || filters.costCenter === ALL_FILTER_VALUE || entry.costCenter === filters.costCenter)
+  && (ignoreCostCenter || matchesCostCenterFilter(entry.costCenter, filters.costCenter))
   && (!filters.year || filters.year === ALL_FILTER_VALUE || entry.year === filters.year)
   && (filters.period !== "monthly" || !filters.month || filters.month === ALL_FILTER_VALUE || entry.month === filters.month)
   && (filters.period !== "quarterly" || !filters.quarter || filters.quarter === ALL_FILTER_VALUE || getQuarter(entry.period) === filters.quarter)
@@ -312,7 +287,7 @@ const buildRooRows = (rows) => {
     .filter((row) => !ROO_ASSIGNED_COST_CENTERS.has(row.costCenter))
     .sort((a, b) => a.costCenter.localeCompare(b.costCenter));
 
-  for (const group of ROO_SUBGROUPS) {
+  for (const group of ROO_SUB_HUBS) {
     const listedRows = group.costCenters.map((costCenter) => rowsByCostCenter.get(costCenter)).filter(Boolean);
     const groupRows = group.label === "Other Project" ? [...listedRows, ...unassignedRows] : listedRows;
     if (!groupRows.length) continue;

@@ -1,5 +1,12 @@
 import { useMemo } from "react";
-import { ALL_FILTER_VALUE, COST_CENTER_HIERARCHY, getUniqueFilterValues } from "../data/costCenterHierarchy";
+import {
+  ALL_FILTER_VALUE,
+  COST_CENTER_HIERARCHY,
+  ROO_SUB_HUBS,
+  getCostCenterGroupByValue,
+  getCostCenterGroupValue,
+  getUniqueFilterValues,
+} from "../data/costCenterHierarchy";
 import { NAV_ITEMS } from "../data/navigation";
 import { PORTFOLIOS } from "../data/portfolioOptions";
 import financialInputsData from "../data/financialInputsData.json";
@@ -39,6 +46,12 @@ const getHierarchyRowByCostCenter = (costCenter) => (
     ? COST_CENTER_HIERARCHY.find((row) => row.costCenters.includes(costCenter))
     : null
 );
+
+const getHierarchyRowByCostCenterFilter = (costCenter) => {
+  const group = getCostCenterGroupByValue(costCenter);
+  if (group) return getHierarchyRowByHub(group.hub);
+  return getHierarchyRowByCostCenter(costCenter);
+};
 
 export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleTheme, filters, onApplyFilters, onClearFilters }) {
   const isDarkMode = theme === "dark";
@@ -83,7 +96,17 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
         || (selectedPortfolio === "head-office" && item.hub === "Head Office"))
       && (selectedHub === ALL_FILTER_VALUE || item.hub === selectedHub)
     ));
-    return getUniqueFilterValues(matchingRows.flatMap((item) => item.costCenters));
+    const centerOptions = getUniqueFilterValues(matchingRows.flatMap((item) => item.costCenters))
+      .map((costCenter) => ({ value: costCenter, label: costCenter, type: "costCenter" }));
+    if (selectedHub !== "ROO Hub") return centerOptions;
+    return [
+      ...ROO_SUB_HUBS.map((group) => ({
+        value: getCostCenterGroupValue(group.id),
+        label: group.label,
+        type: "subHub",
+      })),
+      ...centerOptions,
+    ];
   }, [selectedHub, selectedPortfolio]);
 
   const handlePortfolioChange = (event) => {
@@ -100,7 +123,7 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
 
   const handleCostCenterChange = (event) => {
     const costCenter = event.target.value;
-    const hierarchyRow = getHierarchyRowByCostCenter(costCenter);
+    const hierarchyRow = getHierarchyRowByCostCenterFilter(costCenter);
     const portfolio = hierarchyRow ? getPortfolioIdForHierarchyRow(hierarchyRow) : selectedPortfolio;
     const hub = hierarchyRow ? hierarchyRow.hub : selectedHub;
     commitFilters({ portfolio, hub, costCenter });
@@ -190,9 +213,11 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           <label>
             <span><Icon name="costCenter" /> Cost Center</span>
             <select value={selectedCostCenter} onChange={handleCostCenterChange}>
-              <option value={ALL_FILTER_VALUE}>All centers</option>
-              {costCenterOptions.map((costCenter) => (
-                <option key={costCenter} value={costCenter}>{costCenter}</option>
+              <option value={ALL_FILTER_VALUE}>{selectedHub === "ROO Hub" ? "All ROO Hub" : "All centers"}</option>
+              {costCenterOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.type === "subHub" ? `Sub hub - ${option.label}` : option.label}
+                </option>
               ))}
             </select>
           </label>

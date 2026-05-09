@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react";
 import { Icon } from "../components/Icons";
-import { ALL_FILTER_VALUE, COST_CENTER_HIERARCHY } from "../data/costCenterHierarchy";
+import {
+  ALL_FILTER_VALUE,
+  COST_CENTER_HIERARCHY,
+  getCostCenterFilterMembers,
+  matchesCostCenterFilter,
+} from "../data/costCenterHierarchy";
 import financialInputsData from "../data/financialInputsData.json";
 import igccLogo from "../assets/igcc-logo.svg";
 
@@ -96,7 +101,7 @@ const matchesPortfolio = (entry, portfolio) => (
 const matchesFilters = (entry, filters = {}, { ignoreCostCenter = false } = {}) => (
   matchesPortfolio(entry, filters.portfolio)
   && (!filters.hub || filters.hub === ALL_FILTER_VALUE || entry.hub === filters.hub)
-  && (ignoreCostCenter || !filters.costCenter || filters.costCenter === ALL_FILTER_VALUE || entry.costCenter === filters.costCenter)
+  && (ignoreCostCenter || matchesCostCenterFilter(entry.costCenter, filters.costCenter))
   && (!filters.year || filters.year === ALL_FILTER_VALUE || entry.year === filters.year)
   && (filters.period !== "monthly" || !filters.month || filters.month === ALL_FILTER_VALUE || entry.month === filters.month)
   && (filters.period !== "quarterly" || !filters.quarter || filters.quarter === ALL_FILTER_VALUE || getQuarter(entry.period) === filters.quarter)
@@ -287,11 +292,12 @@ const calculatePnl = ({ rows, creditRows, selectedCostCenter, revenueBasis }) =>
   const baseSpentCost = totalCost - allocatedGeneralCost;
   const grossProfit = revenue - totalCost;
   const isCostCenterLevel = Boolean(selectedCostCenter && selectedCostCenter !== ALL_FILTER_VALUE);
+  const selectedCostCenters = getCostCenterFilterMembers(selectedCostCenter);
   const issuedCreditNotes = isCostCenterLevel
-    ? sumRows(creditRows, (entry) => entry.issuedBy === selectedCostCenter)
+    ? sumRows(creditRows, (entry) => selectedCostCenters.includes(entry.issuedBy))
     : 0;
   const receivedCreditNotes = isCostCenterLevel
-    ? sumRows(creditRows, (entry) => entry.costCenter === selectedCostCenter)
+    ? sumRows(creditRows, (entry) => selectedCostCenters.includes(entry.costCenter))
     : 0;
   const updatedRevenue = revenue + issuedCreditNotes;
   const updatedCost = totalCost + receivedCreditNotes;
@@ -998,6 +1004,7 @@ export function ProfitabilityPage({ filters = {} }) {
   const [activeFilterColumn, setActiveFilterColumn] = useState("");
   const filterCostCenter = filters.costCenter && filters.costCenter !== ALL_FILTER_VALUE ? filters.costCenter : "";
   const selectedCostCenter = filterCostCenter || drilldownCostCenter;
+  const selectedCostCenters = getCostCenterFilterMembers(selectedCostCenter);
   const revenueBasisLabel = REVENUE_BASIS_OPTIONS.find((option) => option.id === revenueBasis)?.label || "Approved AFP";
 
   const analysis = useMemo(() => {
@@ -1045,8 +1052,8 @@ export function ProfitabilityPage({ filters = {} }) {
     }
     const monthlyTrend = [...periodMap.values()]
       .map((row) => {
-        const issued = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && entry.issuedBy === selectedCostCenter) : 0;
-        const received = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && entry.costCenter === selectedCostCenter) : 0;
+        const issued = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && selectedCostCenters.includes(entry.issuedBy)) : 0;
+        const received = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && selectedCostCenters.includes(entry.costCenter)) : 0;
         const grossProfit = row.revenue - row.totalCost;
         const updatedRevenue = row.revenue + issued;
         const updatedCost = row.totalCost + received;
