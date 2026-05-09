@@ -1399,7 +1399,8 @@ export function ProfitabilityPage({ filters = {} }) {
       })
       .filter((row) => row.revenue || row.updatedCost || row.receivedCreditNotes)
       .sort((a, b) => b.revenue - a.revenue);
-    const glRows = [...glMap.values()]
+    const specialDistributionLabels = new Set(["Reallocated General Cost", "Management Cost"]);
+    const allGlRows = [...glMap.values()]
       .map((row) => {
         const monthlyValues = printPeriods.map((period) => roundCurrency(row.periodValues.get(period) || 0));
         return {
@@ -1410,8 +1411,13 @@ export function ProfitabilityPage({ filters = {} }) {
           monthlyValues,
         };
       })
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 7);
+      .sort((a, b) => b.amount - a.amount);
+    const specialGlRows = allGlRows.filter((row) => specialDistributionLabels.has(row.glName));
+    const regularGlRows = allGlRows.filter((row) => !specialDistributionLabels.has(row.glName));
+    const glRows = [
+      ...regularGlRows.slice(0, Math.max(0, 7 - specialGlRows.length)),
+      ...specialGlRows,
+    ].sort((a, b) => b.amount - a.amount);
 
     const scopeEntry = contextRows.find((entry) => entry.costCenter === selectedCostCenter) || contextRows.find((entry) => entry.costCenter);
     const portfolioLabel = filters.portfolio === "basra" ? "Basra"
