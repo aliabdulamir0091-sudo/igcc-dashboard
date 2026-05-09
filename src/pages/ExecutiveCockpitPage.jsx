@@ -24,6 +24,8 @@ const getSelectedYear = (filters = {}) => (
   filters.year && filters.year !== ALL_FILTER_VALUE ? filters.year : DEFAULT_YEAR
 );
 
+const hasSelectedYear = (filters = {}) => filters.year && filters.year !== ALL_FILTER_VALUE;
+
 const buildQuarters = (year) => [
   { key: "q1", label: "Q-1", periods: [`${year}-01`, `${year}-02`, `${year}-03`] },
   { key: "q2", label: "Q-2", periods: [`${year}-04`, `${year}-05`, `${year}-06`] },
@@ -199,8 +201,8 @@ const buildIgccSummary = (entries, filters, year, quarters) => {
   return { byQuarter, yearTotal };
 };
 
-const buildCostCenterSummary = (allocatedEntries, rawEntries, filters, year) => {
-  const yearFilters = { ...filters, year };
+const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
+  const yearFilters = { ...filters };
   const rowsByCostCenter = new Map();
   const rawRows = rawEntries.filter((entry) => matchesFilters(entry, yearFilters));
   const rows = allocatedEntries.filter((entry) => matchesFilters(entry, yearFilters));
@@ -293,13 +295,17 @@ function SummaryValue({ value, isPercent = false, tone }) {
 }
 
 export function ExecutiveCockpitPage({ filters = {} }) {
+  const isYearFiltered = hasSelectedYear(filters);
   const year = getSelectedYear(filters);
   const quarters = buildQuarters(year);
   const rawEntries = financialInputsData.entries || [];
-  const allocatedEntries = allocateGeneralSpentCosts(rawEntries, { ...filters, year });
-  const { byQuarter, yearTotal } = buildIgccSummary(allocatedEntries, filters, year, quarters);
-  const costCenterRows = buildCostCenterSummary(allocatedEntries, rawEntries, filters, year);
+  const summaryEntries = allocateGeneralSpentCosts(rawEntries, { ...filters, year });
+  const costCenterFilters = isYearFiltered ? { ...filters, year } : { ...filters, year: ALL_FILTER_VALUE };
+  const costCenterEntries = allocateGeneralSpentCosts(rawEntries, costCenterFilters);
+  const { byQuarter, yearTotal } = buildIgccSummary(summaryEntries, filters, year, quarters);
+  const costCenterRows = buildCostCenterSummary(costCenterEntries, rawEntries, costCenterFilters);
   const hubCostCenterRows = buildHubCostCenterRows(costCenterRows);
+  const costCenterYearLabel = isYearFiltered ? `Year ${year}` : "Years 2025 & 2026";
   const rows = [
     { label: "Total Revenue (Approved AFP)", key: "revenue", highlight: true },
     { label: "Direct Cost", key: "directCost" },
@@ -352,7 +358,7 @@ export function ExecutiveCockpitPage({ filters = {} }) {
       <article className="surface-card executive-summary-card">
         <div className="executive-table-title">
           <h3>2- Cost Center Profitability Summary</h3>
-          <span>{costCenterRows.length} cost centers</span>
+          <span>{costCenterYearLabel} - {costCenterRows.length} cost centers</span>
         </div>
         <div className="executive-table-wrap">
           <table className="executive-summary-table executive-cost-center-table">
