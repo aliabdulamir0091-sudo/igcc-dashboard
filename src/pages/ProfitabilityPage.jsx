@@ -745,11 +745,17 @@ const buildPnlReportSvg = ({ analysis, selectedCostCenter }) => {
     ? `${analysis.print.meta.periodLabel.slice(0, 18)}...`
     : analysis.print.meta.periodLabel;
   const glColors = ["#1d66b8", "#16a34a", "#f59e0b", "#7c3aed", "#14b8a6", "#0ea5e9", "#f97316", "#64748b", "#84cc16", "#db2777"];
-  const distributionRows = analysis.print.glRows.map((row, index) => ({
+  const glDistributionRows = analysis.print.glRows.map((row, index) => ({
     label: row.glName,
     share: row.share,
     color: glColors[index % glColors.length],
   }));
+  const glShareTotal = glDistributionRows.reduce((total, row) => total + row.share, 0);
+  const unallocatedShare = Math.max(0, 100 - glShareTotal);
+  const distributionRows = [
+    ...glDistributionRows,
+    ...(unallocatedShare > 0.1 ? [{ label: "Received CN Adj.", share: unallocatedShare, color: "#e8edf5" }] : []),
+  ];
   let donutOffset = 0;
   const donutSegments = distributionRows.map((row) => {
     const segment = svgDonutSegment({ cx: 122, cy: 526, radius: 39, color: row.color, percent: row.share, offset: donutOffset });
