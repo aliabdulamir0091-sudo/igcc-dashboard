@@ -4,6 +4,7 @@ import {
   ALL_FILTER_VALUE,
   COST_CENTER_HIERARCHY,
   getCostCenterFilterMembers,
+  getCostCenterFilterLabel,
   matchesCostCenterFilter,
 } from "../data/costCenterHierarchy";
 import financialInputsData from "../data/financialInputsData.json";
@@ -70,6 +71,10 @@ const escapeXml = (value) => String(value ?? "")
   .replaceAll('"', "&quot;");
 
 const getQuarter = (period) => `Q${Math.ceil(Number(period?.slice(5, 7) || 1) / 3)}`;
+const REPORT_COST_CENTER_ALIASES = {
+  "PWT PWRI1_23": "PWRI-PWT",
+};
+const normalizeReportCostCenter = (costCenter) => REPORT_COST_CENTER_ALIASES[costCenter] || costCenter;
 
 const GENERAL_COST_ALLOCATIONS = [
   { poolCostCenter: "GRLBG_23", hub: "BGC Hub" },
@@ -812,6 +817,40 @@ const svgWrappedText = (text, x, y, maxChars, lineHeight, attrs = "") => {
   return lines.slice(0, 2).map((part, index) => `<text x="${x}" y="${y + index * lineHeight}" ${attrs}>${escapeXml(part)}</text>`).join("");
 };
 
+const svgCostCenterDetailTable = (rows) => {
+  const visibleRows = rows.slice(0, 7);
+  const headers = [
+    ["Cost Center", 62, "start"],
+    ["AFP", 180, "end"],
+    ["Spent", 260, "end"],
+    ["Gen Cost", 340, "end"],
+    ["Rec. CN", 420, "end"],
+    ["Total Cost", 510, "end"],
+    ["Profit", 600, "end"],
+    ["Margin", 710, "end"],
+  ];
+  const header = headers.map(([label, x, anchor]) => (
+    `<text x="${x}" y="970" text-anchor="${anchor}" font-size="6.8" font-weight="900" fill="#64748b">${escapeXml(label)}</text>`
+  )).join("");
+  const body = visibleRows.map((row, index) => {
+    const y = 986 + index * 11;
+    const profitColor = row.netProfit >= 0 ? "#15803d" : "#dc2626";
+    return `<rect x="54" y="${y - 8}" width="686" height="11" fill="${index % 2 ? "#fff" : "#f8fafc"}"/>
+      <text x="62" y="${y}" font-size="6.8" font-weight="850" fill="#102033">${escapeXml(row.costCenter)}</text>
+      <text x="180" y="${y}" text-anchor="end" font-size="6.8" font-weight="800" fill="#102033">${escapeXml(formatReportCurrency(row.revenue))}</text>
+      <text x="260" y="${y}" text-anchor="end" font-size="6.8" font-weight="800" fill="#102033">${escapeXml(formatReportCurrency(row.baseSpentCost))}</text>
+      <text x="340" y="${y}" text-anchor="end" font-size="6.8" font-weight="800" fill="#ea580c">${escapeXml(formatReportCurrency(row.allocatedGeneralCost))}</text>
+      <text x="420" y="${y}" text-anchor="end" font-size="6.8" font-weight="800" fill="#7c3aed">${escapeXml(formatReportCurrency(row.receivedCreditNotes))}</text>
+      <text x="510" y="${y}" text-anchor="end" font-size="6.8" font-weight="900" fill="#102033">${escapeXml(formatReportCurrency(row.updatedCost))}</text>
+      <text x="600" y="${y}" text-anchor="end" font-size="6.8" font-weight="900" fill="${profitColor}">${escapeXml(formatReportCurrency(row.netProfit))}</text>
+      <text x="710" y="${y}" text-anchor="end" font-size="6.8" font-weight="900" fill="${profitColor}">${escapeXml(formatPercent(row.netMargin))}</text>`;
+  }).join("");
+  const moreNote = rows.length > visibleRows.length
+    ? `<text x="54" y="1066" font-size="7" font-weight="800" fill="#64748b">Showing ${visibleRows.length} of ${rows.length} cost centers. Use Executive table for full detail.</text>`
+    : "";
+  return `<text x="54" y="948" font-size="13" font-weight="900" fill="#071b6f">7. Cost Center Allocation Detail</text><rect x="54" y="956" width="686" height="${Math.max(42, 24 + visibleRows.length * 11)}" rx="7" fill="#fff" stroke="#dbe4ef"/><line x1="54" y1="976" x2="740" y2="976" stroke="#dbe4ef"/>${header}${body}${moreNote}`;
+};
+
 const buildPnlReportSvg = ({ analysis, selectedCostCenter }) => {
   const approved = analysis.print.approvedPnl;
   const rows = analysis.print.monthlyRows.slice(-4);
@@ -889,8 +928,11 @@ const buildPnlReportSvg = ({ analysis, selectedCostCenter }) => {
     const x = 54 + index * 174;
     return `<rect x="${x}" y="956" width="160" height="82" rx="8" fill="#fff" stroke="#dbe4ef"/><circle cx="${x + 18}" cy="981" r="10" fill="#fff" stroke="${item[3]}" stroke-width="2"/><text x="${x + 18}" y="984" text-anchor="middle" font-size="6.5" font-weight="900" fill="${item[3]}">${item[0]}</text><text x="${x + 34}" y="978" font-size="8.5" font-weight="900" fill="#102033">${escapeXml(item[1])}</text>${svgWrappedText(item[2], x + 14, 1010, 32, 10, 'font-size="8" font-weight="700" fill="#334155"')}`;
   }).join("");
+  const detailSection = analysis.print.costCenterDetailRows?.length > 1
+    ? svgCostCenterDetailTable(analysis.print.costCenterDetailRows)
+    : `<text x="54" y="944" font-size="13" font-weight="900" fill="#071b6f">7. Strategic Actions</text>${actions}`;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="794" height="1123" viewBox="0 0 794 1123"><rect width="794" height="1123" fill="#fff"/><rect x="28" y="28" width="738" height="1067" rx="16" fill="#fff" stroke="#dbe4ef"/><image href="${igccLogo}" x="58" y="58" width="58" height="58"/><rect x="132" y="52" width="392" height="78" rx="0" fill="#071936"/><path d="M472 52h52v78h-68c20-24 25-50 16-78Z" fill="#99f6e4"/><text x="160" y="79" font-size="17" font-weight="900" fill="#fff">PROFIT &amp; LOSS</text><text x="160" y="104" font-size="13.5" font-weight="900" fill="#8ee6d2">COST CENTER REPORT</text><text x="160" y="122" font-size="6.8" font-weight="850" fill="#fff">${escapeXml(selectedCostCenter || "Cost Center")} | ${escapeXml(analysis.print.meta.hub)} | ${escapeXml(analysis.print.meta.region)} | USD</text><rect x="538" y="52" width="202" height="78" fill="#0b2b52"/><text x="554" y="77" font-size="7.8" font-weight="800" fill="#cbd5e1">Report Date</text><text x="636" y="77" font-size="7.8" font-weight="900" fill="#fff">${escapeXml(reportDateLabel)}</text><text x="554" y="100" font-size="7.8" font-weight="800" fill="#cbd5e1">Period</text><text x="636" y="100" font-size="7.8" font-weight="900" fill="#fff">${escapeXml(reportPeriodLabel)}</text><text x="554" y="121" font-size="7.8" font-weight="800" fill="#cbd5e1">Currency</text><text x="636" y="121" font-size="7.8" font-weight="900" fill="#fff">USD</text>${svgReportKpi({ x: 54, y: 160, width: 160, label: "Status", value: isProfitable ? "Profitable" : "Loss", caption: `${formatPercent(approved.netMargin)} margin`, color: isProfitable ? "#16a34a" : "#dc2626", type: "status" })}${svgReportKpi({ x: 224, y: 160, width: 160, label: "Adjusted Revenue", value: formatReportCurrency(approved.updatedRevenue), caption: `${revenueTrend >= 0 ? "Up" : "Down"} ${formatPercent(Math.abs(revenueTrend))}`, color: "#16a34a", type: "revenue" })}${svgReportKpi({ x: 394, y: 160, width: 160, label: "Total Cost", value: formatReportCurrency(approved.updatedCost), caption: `${costTrend >= 0 ? "Up" : "Down"} ${formatPercent(Math.abs(costTrend))}`, color: "#ef4444", type: "cost" })}${svgReportKpi({ x: 564, y: 160, width: 176, label: "Net Profit", value: formatReportCurrency(approved.netProfit), caption: `Margin ${formatPercent(approved.netMargin)}`, color: "#2563eb", type: "profit" })}${svgCard(54, 274, 336, 150, "1. Revenue & Cost Bridge", [["Approved AFP", approved.revenue, "#102033"], ["Issued Credit Notes", approved.issuedCreditNotes, "#16a34a"], ["Adjusted Revenue", approved.updatedRevenue, "#15803d"], ["Spent Report Cost", -approved.baseSpentCost, "#dc2626"], ["Reallocated General Cost", -approved.allocatedGeneralCost, "#ea580c"], ["Received Credit Notes", -approved.receivedCreditNotes, "#7c3aed"], ["Net Profit", approved.netProfit, approved.netProfit >= 0 ? "#15803d" : "#dc2626"]].map((row, index) => `<text x="74" y="${311 + index * 15}" font-size="8.8" font-weight="${index === 2 || index === 6 ? 900 : 750}" fill="#102033">${escapeXml(row[0])}</text><text x="354" y="${311 + index * 15}" text-anchor="end" font-size="8.8" font-weight="900" fill="${row[2]}">${escapeXml(formatReportCurrency(row[1]))}</text><line x1="74" y1="${316 + index * 15}" x2="354" y2="${316 + index * 15}" stroke="#e7edf5"/>`).join(""))}${svgCard(404, 274, 336, 134, "2. Executive Summary", `<text x="424" y="318" font-size="10" font-weight="900" fill="#102033">Performance</text><text x="424" y="335" font-size="9.5" fill="#334155">The cost center is ${isProfitable ? "profitable" : "loss-making"} with ${escapeXml(formatPercent(approved.netMargin))} net margin.</text><text x="424" y="362" font-size="10" font-weight="900" fill="#102033">Key Cost Driver</text><text x="424" y="379" font-size="9.5" fill="#334155">${escapeXml(topDriver?.glName || "Not identified")} contributes ${escapeXml(formatPercent(topDriver?.share || 0))} of total cost.</text><text x="424" y="399" font-size="10" font-weight="900" fill="#102033">Action Required</text><text x="520" y="399" font-size="9.5" fill="#334155">Review high-value GL and CN drivers.</text>`)}${svgCard(54, 430, 336, 150, "3. Cost Distribution", `<circle cx="120" cy="526" r="39" fill="none" stroke="#e8edf5" stroke-width="24"/>${donutSegments}<circle cx="120" cy="526" r="22" fill="#fff"/>${distributionTable}`)}${svgCard(404, 430, 336, 150, "4. Received CN Breakdown", cnBars, `Impact ${formatReportCurrency(cnImpact)}`)}${svgCard(54, 604, 686, 150, "5. Profitability Movement", `<line x1="122" y1="710" x2="608" y2="710" stroke="#dbe4ef"/><line x1="166" y1="676" x2="320" y2="676" stroke="#94a3b8" stroke-dasharray="4 4"/><line x1="388" y1="676" x2="542" y2="676" stroke="#94a3b8" stroke-dasharray="4 4"/>${bridgeBars}`)}${svgCard(54, 774, 686, 150, "6. Executive Insights", insights)}<text x="54" y="944" font-size="13" font-weight="900" fill="#071b6f">7. Strategic Actions</text>${actions}<text x="54" y="1072" font-size="9" font-weight="800" fill="#0f766e">Notes:</text><text x="92" y="1072" font-size="9" fill="#334155">AFP: Application for Payment | CN: Credit Notes | pp: Percentage Points</text></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="794" height="1123" viewBox="0 0 794 1123"><rect width="794" height="1123" fill="#fff"/><rect x="28" y="28" width="738" height="1067" rx="16" fill="#fff" stroke="#dbe4ef"/><image href="${igccLogo}" x="58" y="58" width="58" height="58"/><rect x="132" y="52" width="392" height="78" rx="0" fill="#071936"/><path d="M472 52h52v78h-68c20-24 25-50 16-78Z" fill="#99f6e4"/><text x="160" y="79" font-size="17" font-weight="900" fill="#fff">PROFIT &amp; LOSS</text><text x="160" y="104" font-size="13.5" font-weight="900" fill="#8ee6d2">COST CENTER REPORT</text><text x="160" y="122" font-size="6.8" font-weight="850" fill="#fff">${escapeXml(analysis.print.meta.scopeLabel || selectedCostCenter || "Cost Center")} | ${escapeXml(analysis.print.meta.hub)} | ${escapeXml(analysis.print.meta.region)} | USD</text><rect x="538" y="52" width="202" height="78" fill="#0b2b52"/><text x="554" y="77" font-size="7.8" font-weight="800" fill="#cbd5e1">Report Date</text><text x="636" y="77" font-size="7.8" font-weight="900" fill="#fff">${escapeXml(reportDateLabel)}</text><text x="554" y="100" font-size="7.8" font-weight="800" fill="#cbd5e1">Period</text><text x="636" y="100" font-size="7.8" font-weight="900" fill="#fff">${escapeXml(reportPeriodLabel)}</text><text x="554" y="121" font-size="7.8" font-weight="800" fill="#cbd5e1">Currency</text><text x="636" y="121" font-size="7.8" font-weight="900" fill="#fff">USD</text>${svgReportKpi({ x: 54, y: 160, width: 160, label: "Status", value: isProfitable ? "Profitable" : "Loss", caption: `${formatPercent(approved.netMargin)} margin`, color: isProfitable ? "#16a34a" : "#dc2626", type: "status" })}${svgReportKpi({ x: 224, y: 160, width: 160, label: "Adjusted Revenue", value: formatReportCurrency(approved.updatedRevenue), caption: `${revenueTrend >= 0 ? "Up" : "Down"} ${formatPercent(Math.abs(revenueTrend))}`, color: "#16a34a", type: "revenue" })}${svgReportKpi({ x: 394, y: 160, width: 160, label: "Total Cost", value: formatReportCurrency(approved.updatedCost), caption: `${costTrend >= 0 ? "Up" : "Down"} ${formatPercent(Math.abs(costTrend))}`, color: "#ef4444", type: "cost" })}${svgReportKpi({ x: 564, y: 160, width: 176, label: "Net Profit", value: formatReportCurrency(approved.netProfit), caption: `Margin ${formatPercent(approved.netMargin)}`, color: "#2563eb", type: "profit" })}${svgCard(54, 274, 336, 150, "1. Revenue & Cost Bridge", [["Approved AFP", approved.revenue, "#102033"], ["Issued Credit Notes", approved.issuedCreditNotes, "#16a34a"], ["Adjusted Revenue", approved.updatedRevenue, "#15803d"], ["Spent Report Cost", -approved.baseSpentCost, "#dc2626"], ["Reallocated General Cost", -approved.allocatedGeneralCost, "#ea580c"], ["Received Credit Notes", -approved.receivedCreditNotes, "#7c3aed"], ["Net Profit", approved.netProfit, approved.netProfit >= 0 ? "#15803d" : "#dc2626"]].map((row, index) => `<text x="74" y="${311 + index * 15}" font-size="8.8" font-weight="${index === 2 || index === 6 ? 900 : 750}" fill="#102033">${escapeXml(row[0])}</text><text x="354" y="${311 + index * 15}" text-anchor="end" font-size="8.8" font-weight="900" fill="${row[2]}">${escapeXml(formatReportCurrency(row[1]))}</text><line x1="74" y1="${316 + index * 15}" x2="354" y2="${316 + index * 15}" stroke="#e7edf5"/>`).join(""))}${svgCard(404, 274, 336, 134, "2. Executive Summary", `<text x="424" y="318" font-size="10" font-weight="900" fill="#102033">Performance</text><text x="424" y="335" font-size="9.5" fill="#334155">The scope is ${isProfitable ? "profitable" : "loss-making"} with ${escapeXml(formatPercent(approved.netMargin))} net margin.</text><text x="424" y="362" font-size="10" font-weight="900" fill="#102033">Key Cost Driver</text><text x="424" y="379" font-size="9.5" fill="#334155">${escapeXml(topDriver?.glName || "Not identified")} contributes ${escapeXml(formatPercent(topDriver?.share || 0))} of total cost.</text><text x="424" y="399" font-size="10" font-weight="900" fill="#102033">Action Required</text><text x="520" y="399" font-size="9.5" fill="#334155">Review high-value GL and CN drivers.</text>`)}${svgCard(54, 430, 336, 150, "3. Cost Distribution", `<circle cx="120" cy="526" r="39" fill="none" stroke="#e8edf5" stroke-width="24"/>${donutSegments}<circle cx="120" cy="526" r="22" fill="#fff"/>${distributionTable}`)}${svgCard(404, 430, 336, 150, "4. Received CN Breakdown", cnBars, `Impact ${formatReportCurrency(cnImpact)}`)}${svgCard(54, 604, 686, 150, "5. Profitability Movement", `<line x1="122" y1="710" x2="608" y2="710" stroke="#dbe4ef"/><line x1="166" y1="676" x2="320" y2="676" stroke="#94a3b8" stroke-dasharray="4 4"/><line x1="388" y1="676" x2="542" y2="676" stroke="#94a3b8" stroke-dasharray="4 4"/>${bridgeBars}`)}${svgCard(54, 774, 686, 150, "6. Executive Insights", insights)}${detailSection}<text x="54" y="1072" font-size="9" font-weight="800" fill="#0f766e">Notes:</text><text x="92" y="1072" font-size="9" fill="#334155">AFP: Application for Payment | CN: Credit Notes | pp: Percentage Points</text></svg>`;
 };
 
 const openPnlReportTemplate = ({ analysis, selectedCostCenter }) => {
@@ -1179,6 +1221,43 @@ export function ProfitabilityPage({ filters = {} }) {
       glMap.set(glName, current);
     }
     const printPeriods = monthlyRows.map((row) => row.period);
+    const detailMap = new Map();
+    for (const entry of contextRows) {
+      const costCenter = normalizeReportCostCenter(entry.costCenter);
+      const current = detailMap.get(costCenter) || {
+        costCenter,
+        revenue: 0,
+        baseSpentCost: 0,
+        allocatedGeneralCost: 0,
+        receivedCreditNotes: 0,
+      };
+      if (entry.type === "approved") current.revenue += entry.amount || 0;
+      if (entry.type === "spent" && entry.isAllocatedGeneralCost) current.allocatedGeneralCost += entry.amount || 0;
+      if (entry.type === "spent" && !entry.isAllocatedGeneralCost) current.baseSpentCost += entry.amount || 0;
+      detailMap.set(costCenter, current);
+    }
+    for (const entry of creditContextRows) {
+      const costCenter = normalizeReportCostCenter(entry.costCenter);
+      if (!detailMap.has(costCenter)) continue;
+      detailMap.get(costCenter).receivedCreditNotes += entry.amount || 0;
+    }
+    const costCenterDetailRows = [...detailMap.values()]
+      .map((row) => {
+        const updatedCost = row.baseSpentCost + row.allocatedGeneralCost + row.receivedCreditNotes;
+        const netProfit = row.revenue - updatedCost;
+        return {
+          ...row,
+          updatedCost: roundCurrency(updatedCost),
+          netProfit: roundCurrency(netProfit),
+          netMargin: getShare(netProfit, row.revenue),
+          revenue: roundCurrency(row.revenue),
+          baseSpentCost: roundCurrency(row.baseSpentCost),
+          allocatedGeneralCost: roundCurrency(row.allocatedGeneralCost),
+          receivedCreditNotes: roundCurrency(row.receivedCreditNotes),
+        };
+      })
+      .filter((row) => row.revenue || row.updatedCost || row.receivedCreditNotes)
+      .sort((a, b) => b.revenue - a.revenue);
     const glRows = [...glMap.values()]
       .map((row) => {
         const monthlyValues = printPeriods.map((period) => roundCurrency(row.periodValues.get(period) || 0));
@@ -1210,7 +1289,9 @@ export function ProfitabilityPage({ filters = {} }) {
         submittedPnl,
         monthlyRows,
         glRows,
+        costCenterDetailRows,
         meta: {
+          scopeLabel: getCostCenterFilterLabel(selectedCostCenter) || selectedCostCenter || "Cost Center",
           portfolio: portfolioLabel,
           hub: filters.hub && filters.hub !== ALL_FILTER_VALUE ? filters.hub : scopeEntry?.hub || "All hubs",
           region: scopeEntry?.region || portfolioLabel,

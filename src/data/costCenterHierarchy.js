@@ -134,6 +134,13 @@ export const getCostCenterFilterMembers = (filterValue) => {
   return [filterValue];
 };
 
+export const getCostCenterFilterLabel = (filterValue) => {
+  const group = getCostCenterGroupByValue(filterValue);
+  if (group) return group.label;
+  if (!filterValue || filterValue === ALL_FILTER_VALUE) return "";
+  return filterValue;
+};
+
 export const matchesCostCenterFilter = (costCenter, filterValue) => {
   if (!filterValue || filterValue === ALL_FILTER_VALUE) return true;
   return getCostCenterFilterMembers(filterValue).includes(costCenter);
