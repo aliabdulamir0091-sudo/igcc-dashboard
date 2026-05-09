@@ -747,6 +747,7 @@ const buildPnlReportSvg = ({ analysis, selectedCostCenter }) => {
   const glColors = ["#1d66b8", "#16a34a", "#f59e0b", "#7c3aed", "#14b8a6", "#0ea5e9", "#f97316", "#64748b", "#84cc16", "#db2777"];
   const glDistributionRows = analysis.print.glRows.map((row, index) => ({
     label: row.glName,
+    amount: row.amount,
     share: row.share,
     color: glColors[index % glColors.length],
   }));
@@ -754,7 +755,7 @@ const buildPnlReportSvg = ({ analysis, selectedCostCenter }) => {
   const unallocatedShare = Math.max(0, 100 - glShareTotal);
   const distributionRows = [
     ...glDistributionRows,
-    ...(unallocatedShare > 0.1 ? [{ label: "Received CN Adj.", share: unallocatedShare, color: "#e8edf5" }] : []),
+    ...(unallocatedShare > 0.1 ? [{ label: "Received CN Adj.", amount: approved.updatedCost - approved.totalCost, share: unallocatedShare, color: "#e8edf5" }] : []),
   ];
   let donutOffset = 0;
   const donutSegments = distributionRows.map((row) => {
@@ -767,7 +768,7 @@ const buildPnlReportSvg = ({ analysis, selectedCostCenter }) => {
     const rowIndex = Math.floor(index / 2);
     const x = 202 + column * 90;
     const y = 482 + rowIndex * 16;
-    return `<circle cx="${x}" cy="${y - 4}" r="3.7" fill="${row.color}"/><text x="${x + 10}" y="${y}" font-size="6.5" font-weight="850" fill="#102033">${escapeXml(row.label.slice(0, 13))}</text><text x="${x + 78}" y="${y}" text-anchor="end" font-size="6.5" font-weight="900" fill="#102033">${escapeXml(formatPercent(row.share))}</text>`;
+    return `<circle cx="${x}" cy="${y - 4}" r="3.7" fill="${row.color}"/><text x="${x + 10}" y="${y}" font-size="5.8" font-weight="850" fill="#102033">${escapeXml(row.label.slice(0, 12))}</text><text x="${x + 52}" y="${y}" text-anchor="end" font-size="5.8" font-weight="900" fill="#102033">${escapeXml(formatReportCurrency(row.amount || 0))}</text><text x="${x + 82}" y="${y}" text-anchor="end" font-size="5.8" font-weight="900" fill="#102033">${escapeXml(formatPercent(row.share))}</text>`;
   }).join("");
   const cnRows = (analysis.cnBreakdown.length ? analysis.cnBreakdown : [{ mode: "No CN", label: "No credit notes", amount: 0 }]).slice(0, 4);
   const maxCn = Math.max(...cnRows.map((row) => Math.abs(row.amount)), 1);
