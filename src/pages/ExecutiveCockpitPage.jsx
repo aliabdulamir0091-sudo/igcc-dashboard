@@ -47,6 +47,9 @@ const ROO_SUBGROUPS = [
   },
 ];
 const ROO_ASSIGNED_COST_CENTERS = new Set(ROO_SUBGROUPS.flatMap((group) => group.costCenters));
+const COST_CENTER_ALIASES = {
+  "PWT PWRI1_23": "PWRI-PWT",
+};
 const COST_CENTER_LOOKUP = new Map(COST_CENTER_HIERARCHY.flatMap((group) => (
   group.costCenters.map((costCenter) => [costCenter, { hub: group.hub, region: group.region }])
 )));
@@ -176,6 +179,8 @@ const getCostCenterHub = (costCenter, fallbackHub) => (
   COST_CENTER_LOOKUP.get(costCenter)?.hub || fallbackHub || "Other"
 );
 
+const normalizeCostCenter = (costCenter) => COST_CENTER_ALIASES[costCenter] || costCenter;
+
 const formatHubLabel = (hub) => hub.replace(/\s+Hub$/, "");
 
 const getCostCenterRow = (rowsByCostCenter, costCenter, hub) => {
@@ -240,11 +245,12 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
 
   for (const entry of rawRows) {
     if (entry.type !== "spent" || GENERAL_POOL_COST_CENTERS.has(entry.costCenter)) continue;
-    getCostCenterRow(rowsByCostCenter, entry.costCenter, entry.hub).spentCost += Number(entry.amount) || 0;
+    getCostCenterRow(rowsByCostCenter, normalizeCostCenter(entry.costCenter), entry.hub).spentCost += Number(entry.amount) || 0;
   }
 
   for (const entry of rows) {
-    const row = getCostCenterRow(rowsByCostCenter, entry.costCenter, entry.hub);
+    const costCenter = normalizeCostCenter(entry.costCenter);
+    const row = getCostCenterRow(rowsByCostCenter, costCenter, entry.hub);
     if (entry.type === "spent" && entry.isAllocatedGeneralCost) {
       row.allocatedGeneralCost += Number(entry.amount) || 0;
     } else if (entry.type === "creditNotes") {
