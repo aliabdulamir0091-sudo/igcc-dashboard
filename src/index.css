@@ -4974,6 +4974,18 @@ button {
   border-color: #0f7a35;
 }
 
+.executive-cost-center-table .is-igcc-total td {
+  background: #0b2b52 !important;
+  color: #ffffff !important;
+  font-weight: 950;
+  border-color: #071936;
+}
+
+.executive-cost-center-table .is-igcc-total td:first-child {
+  text-transform: uppercase;
+  border-left: 8px solid #14b8a6;
+}
+
 .executive-cost-center-table .is-hub-total td:first-child {
   text-transform: uppercase;
   border-left: 8px solid #064e3b;
@@ -5023,6 +5035,11 @@ button {
 
 [data-theme="dark"] .executive-cost-center-table .is-hub-total td {
   background: #15803d !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .executive-cost-center-table .is-igcc-total td {
+  background: #0b2b52 !important;
   color: #ffffff !important;
 }
 

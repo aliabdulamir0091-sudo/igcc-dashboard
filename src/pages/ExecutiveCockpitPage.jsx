@@ -377,11 +377,14 @@ const buildHubCostCenterRows = (costCenterRows) => {
     ...[...rowsByHub.keys()].filter((hub) => !EXECUTIVE_HUB_ORDER.includes(hub)).sort((a, b) => a.localeCompare(b)),
   ];
 
-  return orderedHubs.flatMap((hub) => {
+  const hubRows = orderedHubs.flatMap((hub) => {
     const rows = rowsByHub.get(hub).sort((a, b) => a.costCenter.localeCompare(b.costCenter));
     if (hub === "ROO Hub") return [sumCostCenterRows(rows, hub), ...buildRooRows(rows)];
     return [sumCostCenterRows(rows, hub), ...rows];
   });
+  return costCenterRows.length
+    ? [sumCostCenterRows(costCenterRows, "IGCC", "igcc", "IGCC Level 1"), ...hubRows]
+    : hubRows;
 };
 
 function SummaryValue({ value, isPercent = false, tone }) {
@@ -479,6 +482,7 @@ export function ExecutiveCockpitPage({ filters = {} }) {
                 <tr
                   key={`${row.type}-${row.hub}-${row.costCenter}`}
                   className={[
+                    row.type === "igcc" ? "is-igcc-total" : "",
                     row.type === "hub" ? "is-hub-total" : "",
                     row.type === "subgroup" ? "is-subgroup-total" : "",
                     row.profit < 0 ? "has-loss" : "",
