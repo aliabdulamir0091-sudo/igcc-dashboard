@@ -216,7 +216,7 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
     const row = getCostCenterRow(rowsByCostCenter, entry.costCenter, entry.hub);
     if (entry.type === "spent" && entry.isAllocatedGeneralCost) {
       row.allocatedGeneralCost += Number(entry.amount) || 0;
-    } else if (entry.type === "credit-note-received") {
+    } else if (entry.type === "creditNotes") {
       row.receivedCn += Number(entry.amount) || 0;
     } else if (entry.type === "approved") {
       row.approvedAfp += Number(entry.amount) || 0;
