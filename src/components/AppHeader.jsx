@@ -211,13 +211,24 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
             </select>
           </label>
           <label>
-            <span><Icon name="costCenter" /> Cost Center</span>
+            <span><Icon name="costCenter" /> {selectedHub === "ROO Hub" ? "ROO Sub Hub / Cost Center" : "Cost Center"}</span>
             <select value={selectedCostCenter} onChange={handleCostCenterChange}>
               <option value={ALL_FILTER_VALUE}>{selectedHub === "ROO Hub" ? "All ROO Hub" : "All centers"}</option>
-              {costCenterOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.type === "subHub" ? `Sub hub - ${option.label}` : option.label}
-                </option>
+              {selectedHub === "ROO Hub" ? (
+                <>
+                  <optgroup label="ROO sub hubs">
+                    {costCenterOptions.filter((option) => option.type === "subHub").map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="ROO cost centers">
+                    {costCenterOptions.filter((option) => option.type === "costCenter").map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </optgroup>
+                </>
+              ) : costCenterOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
           </label>
