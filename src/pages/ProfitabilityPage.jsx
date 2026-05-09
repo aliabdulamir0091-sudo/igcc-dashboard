@@ -283,23 +283,31 @@ function PnlKpiCard({ icon, label, value, context, tone = "blue", sparkline = []
 }
 
 function ProfitabilitySummary({ pnl, selectedCostCenter, revenueBasisLabel }) {
-  const scope = selectedCostCenter || "the selected portfolio";
+  const scope = selectedCostCenter || "portfolio";
+  const subjectReference = selectedCostCenter ? "cost center" : "portfolio";
   const revenue = pnl.isCostCenterLevel ? pnl.updatedRevenue : pnl.revenue;
   const cost = pnl.isCostCenterLevel ? pnl.updatedCost : pnl.totalCost;
-  const profitTone = pnl.netProfit >= 0 ? "profitable" : "loss-making";
-  const costPressure = `Cost-to-revenue is ${formatPercent(pnl.costToRevenue)}, showing how much revenue is consumed by cost.`;
+  const isProfitable = pnl.netProfit >= 0;
+  const basisLabel = revenueBasisLabel.toLowerCase();
+  const resultLabel = isProfitable ? "net profit" : "net loss";
+  const headline = isProfitable
+    ? `The ${basisLabel} ${scope} is profitable, with revenue comfortably exceeding cost and producing a healthy net margin.`
+    : `The ${basisLabel} ${scope} needs attention, with cost exceeding revenue and creating a negative margin.`;
+  const costEfficiencyText = isProfitable
+    ? `indicating the ${subjectReference} remains profitable while still leaving room to improve cost efficiency.`
+    : "indicating cost pressure is outweighing revenue and requires focused review.";
   const statusLabel = pnl.netProfit >= 0 ? "Healthy margin" : "Needs review";
 
   return (
     <article className="pnl-narrative-card">
       <div>
         <span>Profitability Summary</span>
-        <strong>{scope} is {profitTone} on a {revenueBasisLabel.toLowerCase()} basis.</strong>
+        <strong>{headline}</strong>
       </div>
       <p>
-        Revenue is {formatCurrency(revenue)} against {formatCurrency(cost)} cost, producing {formatCurrency(pnl.netProfit)} net profit and {formatPercent(pnl.netMargin)} net margin.
-        <br />
-        {costPressure} {pnl.netMargin < 10 ? "Margin requires attention." : "Margin remains within a healthy range."}
+        Revenue of {formatCurrency(revenue)} against {formatCurrency(cost)} in cost generated {formatCurrency(Math.abs(pnl.netProfit))} in {resultLabel}, resulting in a {formatPercent(pnl.netMargin)} margin.
+        {" "}
+        Cost-to-revenue stands at {formatPercent(pnl.costToRevenue)}, {costEfficiencyText}
       </p>
       <aside className={pnl.netProfit >= 0 ? "is-good" : "is-loss"}>
         <small>{statusLabel}</small>
@@ -1216,34 +1224,36 @@ export function ProfitabilityPage({ filters = {} }) {
 
   return (
     <section className="page-stack pnl-page">
-      <div className="page-heading pnl-heading">
-        <div>
-          <p className="eyebrow">Detailed Financial Analysis</p>
-          <h2>Profit & Loss Analysis</h2>
-          <p>Revenue, cost, margin, Credit Note impact, and cost-center profitability drilldown.</p>
+      <div className="pnl-hero-card">
+        <div className="pnl-heading">
+          <div>
+            <p className="eyebrow">Detailed Financial Analysis</p>
+            <h2>Profit & Loss Analysis</h2>
+            <p>Revenue, cost, margin, Credit Note impact, and cost-center profitability drilldown.</p>
+          </div>
+          <div className="pnl-heading-actions">
+            <RevenueBasisToggle revenueBasis={revenueBasis} onChange={setRevenueBasis} />
+            <button
+              type="button"
+              className="pnl-print-button"
+              disabled={!selectedCostCenter}
+              title={selectedCostCenter ? "Open the cost center report" : "Select one cost center from the table first"}
+              onClick={() => {
+                if (selectedCostCenter) openPnlReportTemplate({ analysis, selectedCostCenter });
+              }}
+            >
+              <Icon name="spending" />
+              Download cost center report
+            </button>
+          </div>
         </div>
-        <div className="pnl-heading-actions">
-          <RevenueBasisToggle revenueBasis={revenueBasis} onChange={setRevenueBasis} />
-          <button
-            type="button"
-            className="pnl-print-button"
-            disabled={!selectedCostCenter}
-            title={selectedCostCenter ? "Open the cost center report" : "Select one cost center from the table first"}
-            onClick={() => {
-              if (selectedCostCenter) openPnlReportTemplate({ analysis, selectedCostCenter });
-            }}
-          >
-            <Icon name="spending" />
-            Download cost center report
-          </button>
-        </div>
-      </div>
 
-      <ProfitabilitySummary
-        pnl={analysis.pnl}
-        selectedCostCenter={selectedCostCenter}
-        revenueBasisLabel={revenueBasisLabel}
-      />
+        <ProfitabilitySummary
+          pnl={analysis.pnl}
+          selectedCostCenter={selectedCostCenter}
+          revenueBasisLabel={revenueBasisLabel}
+        />
+      </div>
 
       <section className="pnl-kpi-grid" aria-label="P&L KPI summary">
         {kpiCards.map((card) => <PnlKpiCard key={card.label} {...card} />)}
