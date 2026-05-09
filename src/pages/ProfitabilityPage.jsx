@@ -819,6 +819,22 @@ const svgWrappedText = (text, x, y, maxChars, lineHeight, attrs = "") => {
 
 const svgCostCenterDetailTable = (rows) => {
   const visibleRows = rows.slice(0, 7);
+  const subtotal = visibleRows.reduce((total, row) => ({
+    revenue: total.revenue + row.revenue,
+    baseSpentCost: total.baseSpentCost + row.baseSpentCost,
+    allocatedGeneralCost: total.allocatedGeneralCost + row.allocatedGeneralCost,
+    receivedCreditNotes: total.receivedCreditNotes + row.receivedCreditNotes,
+    updatedCost: total.updatedCost + row.updatedCost,
+    netProfit: total.netProfit + row.netProfit,
+  }), {
+    revenue: 0,
+    baseSpentCost: 0,
+    allocatedGeneralCost: 0,
+    receivedCreditNotes: 0,
+    updatedCost: 0,
+    netProfit: 0,
+  });
+  const subtotalMargin = getShare(subtotal.netProfit, subtotal.revenue);
   const headers = [
     ["Cost Center", 62, "start"],
     ["AFP", 180, "end"],
@@ -848,7 +864,19 @@ const svgCostCenterDetailTable = (rows) => {
   const moreNote = rows.length > visibleRows.length
     ? `<text x="54" y="1066" font-size="7" font-weight="800" fill="#64748b">Showing ${visibleRows.length} of ${rows.length} cost centers. Use Executive table for full detail.</text>`
     : "";
-  return `<text x="54" y="948" font-size="13" font-weight="900" fill="#071b6f">7. Cost Center Allocation Detail</text><rect x="54" y="956" width="686" height="${Math.max(42, 24 + visibleRows.length * 11)}" rx="7" fill="#fff" stroke="#dbe4ef"/><line x1="54" y1="976" x2="740" y2="976" stroke="#dbe4ef"/>${header}${body}${moreNote}`;
+  const subtotalY = 986 + visibleRows.length * 11;
+  const subtotalProfitColor = subtotal.netProfit >= 0 ? "#15803d" : "#dc2626";
+  const subtotalRow = `<rect x="54" y="${subtotalY - 8}" width="686" height="13" fill="#e8f5ee"/>
+    <line x1="54" y1="${subtotalY - 9}" x2="740" y2="${subtotalY - 9}" stroke="#16a34a" stroke-width="1.4"/>
+    <text x="62" y="${subtotalY}" font-size="7.2" font-weight="900" fill="#063b24">Subtotal</text>
+    <text x="180" y="${subtotalY}" text-anchor="end" font-size="7.2" font-weight="900" fill="#063b24">${escapeXml(formatReportCurrency(subtotal.revenue))}</text>
+    <text x="260" y="${subtotalY}" text-anchor="end" font-size="7.2" font-weight="900" fill="#063b24">${escapeXml(formatReportCurrency(subtotal.baseSpentCost))}</text>
+    <text x="340" y="${subtotalY}" text-anchor="end" font-size="7.2" font-weight="900" fill="#c2410c">${escapeXml(formatReportCurrency(subtotal.allocatedGeneralCost))}</text>
+    <text x="420" y="${subtotalY}" text-anchor="end" font-size="7.2" font-weight="900" fill="#7c3aed">${escapeXml(formatReportCurrency(subtotal.receivedCreditNotes))}</text>
+    <text x="510" y="${subtotalY}" text-anchor="end" font-size="7.2" font-weight="900" fill="#063b24">${escapeXml(formatReportCurrency(subtotal.updatedCost))}</text>
+    <text x="600" y="${subtotalY}" text-anchor="end" font-size="7.2" font-weight="900" fill="${subtotalProfitColor}">${escapeXml(formatReportCurrency(subtotal.netProfit))}</text>
+    <text x="710" y="${subtotalY}" text-anchor="end" font-size="7.2" font-weight="900" fill="${subtotalProfitColor}">${escapeXml(formatPercent(subtotalMargin))}</text>`;
+  return `<text x="54" y="948" font-size="13" font-weight="900" fill="#071b6f">7. Cost Center Allocation Detail</text><rect x="54" y="956" width="686" height="${Math.max(55, 37 + visibleRows.length * 11)}" rx="7" fill="#fff" stroke="#dbe4ef"/><line x1="54" y1="976" x2="740" y2="976" stroke="#dbe4ef"/>${header}${body}${subtotalRow}${moreNote}`;
 };
 
 const buildPnlReportSvg = ({ analysis, selectedCostCenter }) => {
