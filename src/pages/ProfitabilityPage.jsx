@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Icon } from "../components/Icons";
-import { ALL_FILTER_VALUE } from "../data/costCenterHierarchy";
+import { ALL_FILTER_VALUE, COST_CENTER_HIERARCHY } from "../data/costCenterHierarchy";
 import financialInputsData from "../data/financialInputsData.json";
 import igccLogo from "../assets/igcc-logo.svg";
 
@@ -66,6 +66,25 @@ const escapeXml = (value) => String(value ?? "")
 
 const getQuarter = (period) => `Q${Math.ceil(Number(period?.slice(5, 7) || 1) / 3)}`;
 
+const GENERAL_COST_ALLOCATIONS = [
+  { poolCostCenter: "GRLBG_23", hub: "BGC Hub" },
+  { poolCostCenter: "GRLRO_23", hub: "ROO Hub" },
+];
+
+const getHubCostCenters = (hub, poolCostCenter) => (
+  COST_CENTER_HIERARCHY.find((group) => group.hub === hub)?.costCenters || []
+).filter((costCenter) => costCenter !== poolCostCenter);
+
+const createAllocatedSpentRow = (entry, costCenter, amount, hub) => ({
+  ...entry,
+  costCenter,
+  sourceCostCenter: entry.costCenter,
+  hub,
+  amount,
+  allocationSourceCostCenter: entry.costCenter,
+  isAllocatedGeneralCost: true,
+});
+
 const matchesPortfolio = (entry, portfolio) => (
   !portfolio
   || portfolio === ALL_FILTER_VALUE
@@ -82,6 +101,60 @@ const matchesFilters = (entry, filters = {}, { ignoreCostCenter = false } = {}) 
   && (filters.period !== "monthly" || !filters.month || filters.month === ALL_FILTER_VALUE || entry.month === filters.month)
   && (filters.period !== "quarterly" || !filters.quarter || filters.quarter === ALL_FILTER_VALUE || getQuarter(entry.period) === filters.quarter)
 );
+
+const allocateGeneralSpentCosts = (entries, filters = {}) => {
+  const periodFilters = {
+    ...filters,
+    costCenter: ALL_FILTER_VALUE,
+    hub: ALL_FILTER_VALUE,
+  };
+  const periodRows = entries.filter((entry) => matchesFilters(entry, periodFilters));
+  const allocatedRows = [];
+  const allocatedEntryIds = new Set();
+
+  for (const rule of GENERAL_COST_ALLOCATIONS) {
+    const recipients = getHubCostCenters(rule.hub, rule.poolCostCenter);
+    if (!recipients.length) continue;
+
+    const poolRows = periodRows.filter((entry) => entry.type === "spent" && entry.costCenter === rule.poolCostCenter);
+    const recipientRows = periodRows.filter((entry) => (
+      entry.type === "spent"
+      && recipients.includes(entry.costCenter)
+      && !entry.isAllocatedGeneralCost
+    ));
+    const fallbackTotals = recipients.map((costCenter) => ({
+      costCenter,
+      amount: sumRows(recipientRows, (entry) => entry.costCenter === costCenter),
+    })).filter((row) => row.amount > 0);
+    const fallbackTotal = fallbackTotals.reduce((total, row) => total + row.amount, 0);
+
+    for (const poolRow of poolRows) {
+      const periodRecipientTotals = recipients.map((costCenter) => ({
+        costCenter,
+        amount: sumRows(recipientRows, (entry) => entry.period === poolRow.period && entry.costCenter === costCenter),
+      })).filter((row) => row.amount > 0);
+      const periodTotal = periodRecipientTotals.reduce((total, row) => total + row.amount, 0);
+      const basisRows = periodTotal > 0 ? periodRecipientTotals : fallbackTotals;
+      const basisTotal = periodTotal > 0 ? periodTotal : fallbackTotal;
+      if (!basisTotal) continue;
+
+      allocatedEntryIds.add(poolRow);
+      for (const basis of basisRows) {
+        allocatedRows.push(createAllocatedSpentRow(
+          poolRow,
+          basis.costCenter,
+          (poolRow.amount || 0) * (basis.amount / basisTotal),
+          rule.hub,
+        ));
+      }
+    }
+  }
+
+  return [
+    ...entries.filter((entry) => !(entry.type === "spent" && allocatedEntryIds.has(entry))),
+    ...allocatedRows,
+  ];
+};
 
 const getStatus = (netMargin, netProfit) => {
   if (netProfit < 0) return { label: "Loss-Making", tone: "loss" };
@@ -923,7 +996,7 @@ export function ProfitabilityPage({ filters = {} }) {
   const revenueBasisLabel = REVENUE_BASIS_OPTIONS.find((option) => option.id === revenueBasis)?.label || "Approved AFP";
 
   const analysis = useMemo(() => {
-    const entries = financialInputsData.entries || [];
+    const entries = allocateGeneralSpentCosts(financialInputsData.entries || [], filters);
     const filteredRows = entries.filter((entry) => matchesFilters(entry, filters));
     const contextRows = selectedCostCenter
       ? entries.filter((entry) => matchesFilters(entry, { ...filters, costCenter: selectedCostCenter }))
