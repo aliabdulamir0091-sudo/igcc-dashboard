@@ -12,6 +12,8 @@ const GENERAL_COST_ALLOCATIONS = [
   { poolCostCenter: "GRLRO_23", hub: "ROO Hub" },
 ];
 const GENERAL_POOL_COST_CENTERS = new Set(GENERAL_COST_ALLOCATIONS.map((rule) => rule.poolCostCenter));
+const MANAGEMENT_SOURCE_COST_CENTER = "Management";
+const HEAD_OFFICE_COST_CENTER = "HO_SB_23";
 const EXECUTIVE_HUB_ORDER = [
   "BGC Hub",
   "ROO Hub",
@@ -89,12 +91,27 @@ const getHubCostCenters = (hub, poolCostCenter) => (
 const createAllocatedSpentRow = (entry, costCenter, amount, hub) => ({
   ...entry,
   costCenter,
-  sourceCostCenter: entry.costCenter,
+  sourceCostCenter: entry.sourceCostCenter || entry.costCenter,
   hub,
   amount,
   allocationSourceCostCenter: entry.costCenter,
   isAllocatedGeneralCost: true,
 });
+
+const createAllocatedManagementRow = (entry, costCenter, amount, hub) => ({
+  ...entry,
+  costCenter,
+  sourceCostCenter: entry.sourceCostCenter || entry.costCenter,
+  hub,
+  amount,
+  allocationSourceCostCenter: MANAGEMENT_SOURCE_COST_CENTER,
+  isAllocatedManagementCost: true,
+});
+
+const getAllOperationalCostCenters = () => COST_CENTER_HIERARCHY
+  .filter((group) => group.hub !== "Head Office")
+  .flatMap((group) => group.costCenters)
+  .filter((costCenter) => !GENERAL_POOL_COST_CENTERS.has(costCenter) && costCenter !== HEAD_OFFICE_COST_CENTER);
 
 const allocateGeneralSpentCosts = (entries, filters = {}) => {
   const periodFilters = {
@@ -144,6 +161,46 @@ const allocateGeneralSpentCosts = (entries, filters = {}) => {
     }
   }
 
+  const managementRecipients = getAllOperationalCostCenters();
+  const managementRows = periodRows.filter((entry) => (
+    entry.type === "spent"
+    && entry.sourceCostCenter === MANAGEMENT_SOURCE_COST_CENTER
+  ));
+  const managementBasisRows = periodRows.filter((entry) => (
+    entry.type === "spent"
+    && managementRecipients.includes(entry.costCenter)
+    && entry.sourceCostCenter !== MANAGEMENT_SOURCE_COST_CENTER
+    && !entry.isAllocatedGeneralCost
+    && !entry.isAllocatedManagementCost
+  ));
+  const fallbackManagementTotals = managementRecipients.map((costCenter) => ({
+    costCenter,
+    amount: sumRows(managementBasisRows, (entry) => entry.costCenter === costCenter),
+  })).filter((row) => row.amount > 0);
+  const fallbackManagementTotal = fallbackManagementTotals.reduce((total, row) => total + row.amount, 0);
+
+  for (const managementRow of managementRows) {
+    const periodRecipientTotals = managementRecipients.map((costCenter) => ({
+      costCenter,
+      amount: sumRows(managementBasisRows, (entry) => entry.period === managementRow.period && entry.costCenter === costCenter),
+    })).filter((row) => row.amount > 0);
+    const periodTotal = periodRecipientTotals.reduce((total, row) => total + row.amount, 0);
+    const basisRows = periodTotal > 0 ? periodRecipientTotals : fallbackManagementTotals;
+    const basisTotal = periodTotal > 0 ? periodTotal : fallbackManagementTotal;
+    if (!basisTotal) continue;
+
+    allocatedEntryIds.add(managementRow);
+    for (const basis of basisRows) {
+      const hub = getCostCenterHub(basis.costCenter, managementRow.hub);
+      allocatedRows.push(createAllocatedManagementRow(
+        managementRow,
+        basis.costCenter,
+        (managementRow.amount || 0) * (basis.amount / basisTotal),
+        hub,
+      ));
+    }
+  }
+
   return [
     ...entries.filter((entry) => !(entry.type === "spent" && allocatedEntryIds.has(entry))),
     ...allocatedRows,
@@ -166,6 +223,7 @@ const getCostCenterRow = (rowsByCostCenter, costCenter, hub) => {
       hub: getCostCenterHub(costCenter, hub),
       spentCost: 0,
       allocatedGeneralCost: 0,
+      allocatedManagementCost: 0,
       receivedCn: 0,
       totalCost: 0,
       approvedAfp: 0,
@@ -219,7 +277,11 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
   const rows = allocatedEntries.filter((entry) => matchesFilters(entry, yearFilters));
 
   for (const entry of rawRows) {
-    if (entry.type !== "spent" || GENERAL_POOL_COST_CENTERS.has(entry.costCenter)) continue;
+    if (
+      entry.type !== "spent"
+      || GENERAL_POOL_COST_CENTERS.has(entry.costCenter)
+      || entry.sourceCostCenter === MANAGEMENT_SOURCE_COST_CENTER
+    ) continue;
     getCostCenterRow(rowsByCostCenter, normalizeCostCenter(entry.costCenter), entry.hub).spentCost += Number(entry.amount) || 0;
   }
 
@@ -228,6 +290,8 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
     const row = getCostCenterRow(rowsByCostCenter, costCenter, entry.hub);
     if (entry.type === "spent" && entry.isAllocatedGeneralCost) {
       row.allocatedGeneralCost += Number(entry.amount) || 0;
+    } else if (entry.type === "spent" && entry.isAllocatedManagementCost) {
+      row.allocatedManagementCost += Number(entry.amount) || 0;
     } else if (entry.type === "creditNotes") {
       row.receivedCn += Number(entry.amount) || 0;
     } else if (entry.type === "approved") {
@@ -237,7 +301,7 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
 
   return [...rowsByCostCenter.values()]
     .map((row) => {
-      const totalCost = row.spentCost + row.allocatedGeneralCost + row.receivedCn;
+      const totalCost = row.spentCost + row.allocatedGeneralCost + row.allocatedManagementCost + row.receivedCn;
       const profit = row.approvedAfp - totalCost;
       return {
         ...row,
@@ -258,6 +322,7 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
   const total = rows.reduce((sum, row) => ({
     spentCost: sum.spentCost + row.spentCost,
     allocatedGeneralCost: sum.allocatedGeneralCost + row.allocatedGeneralCost,
+    allocatedManagementCost: sum.allocatedManagementCost + row.allocatedManagementCost,
     receivedCn: sum.receivedCn + row.receivedCn,
     totalCost: sum.totalCost + row.totalCost,
     approvedAfp: sum.approvedAfp + row.approvedAfp,
@@ -265,6 +330,7 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
   }), {
     spentCost: 0,
     allocatedGeneralCost: 0,
+    allocatedManagementCost: 0,
     receivedCn: 0,
     totalCost: 0,
     approvedAfp: 0,
@@ -397,6 +463,7 @@ export function ExecutiveCockpitPage({ filters = {} }) {
                 <th>Cost Center</th>
                 <th>Cost from Spent Report</th>
                 <th>General Cost Reallocate</th>
+                <th>Management Cost</th>
                 <th>Received CN</th>
                 <th>Total Cost</th>
                 <th>Approved AFP</th>
@@ -417,6 +484,7 @@ export function ExecutiveCockpitPage({ filters = {} }) {
                   <td>{row.type === "costCenter" ? <span>{row.costCenter}</span> : row.costCenter}</td>
                   <SummaryValue value={row.spentCost} />
                   <SummaryValue value={row.allocatedGeneralCost} />
+                  <SummaryValue value={row.allocatedManagementCost} />
                   <SummaryValue value={row.receivedCn} />
                   <SummaryValue value={row.totalCost} />
                   <SummaryValue value={row.approvedAfp} />
@@ -425,7 +493,7 @@ export function ExecutiveCockpitPage({ filters = {} }) {
                 </tr>
               )) : (
                 <tr>
-                  <td className="executive-empty-row" colSpan={8}>No cost center data for the selected filters.</td>
+                  <td className="executive-empty-row" colSpan={9}>No cost center data for the selected filters.</td>
                 </tr>
               )}
             </tbody>
