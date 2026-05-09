@@ -40,7 +40,7 @@ export const COST_CENTER_HIERARCHY = [
   {
     region: "Basra",
     hub: "Camp",
-    costCenters: ["Camp", "CmpSB_23", "MWS_23"],
+    costCenters: ["CmpSB_23", "MWS_23"],
   },
   {
     region: "Basra",

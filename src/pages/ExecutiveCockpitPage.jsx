@@ -14,6 +14,7 @@ const GENERAL_COST_ALLOCATIONS = [
 const GENERAL_POOL_COST_CENTERS = new Set(GENERAL_COST_ALLOCATIONS.map((rule) => rule.poolCostCenter));
 const MANAGEMENT_SOURCE_COST_CENTER = "Management";
 const HEAD_OFFICE_COST_CENTER = "HO_SB_23";
+const HIDDEN_COST_CENTER_ROWS = new Set(["Camp"]);
 const EXECUTIVE_HUB_ORDER = [
   "BGC Hub",
   "ROO Hub",
@@ -111,7 +112,7 @@ const createAllocatedManagementRow = (entry, costCenter, amount, hub) => ({
 const getAllOperationalCostCenters = () => COST_CENTER_HIERARCHY
   .filter((group) => group.hub !== "Head Office")
   .flatMap((group) => group.costCenters)
-  .filter((costCenter) => !GENERAL_POOL_COST_CENTERS.has(costCenter) && costCenter !== HEAD_OFFICE_COST_CENTER);
+  .filter((costCenter) => !GENERAL_POOL_COST_CENTERS.has(costCenter) && costCenter !== HEAD_OFFICE_COST_CENTER && !HIDDEN_COST_CENTER_ROWS.has(costCenter));
 
 const allocateGeneralSpentCosts = (entries, filters = {}) => {
   const periodFilters = {
@@ -280,6 +281,7 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
     if (
       entry.type !== "spent"
       || GENERAL_POOL_COST_CENTERS.has(entry.costCenter)
+      || HIDDEN_COST_CENTER_ROWS.has(normalizeCostCenter(entry.costCenter))
       || entry.sourceCostCenter === MANAGEMENT_SOURCE_COST_CENTER
     ) continue;
     getCostCenterRow(rowsByCostCenter, normalizeCostCenter(entry.costCenter), entry.hub).spentCost += Number(entry.amount) || 0;
@@ -287,6 +289,7 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
 
   for (const entry of rows) {
     const costCenter = normalizeCostCenter(entry.costCenter);
+    if (HIDDEN_COST_CENTER_ROWS.has(costCenter)) continue;
     const row = getCostCenterRow(rowsByCostCenter, costCenter, entry.hub);
     if (entry.type === "spent" && entry.isAllocatedGeneralCost) {
       row.allocatedGeneralCost += Number(entry.amount) || 0;
