@@ -2950,8 +2950,8 @@ button {
   .print-metric-card {
     position: relative;
     overflow: hidden;
-    padding: 12px;
-    min-height: 124px;
+    padding: 11px;
+    min-height: 118px;
     border-top: 4px solid #16a34a;
   }
 
@@ -2992,16 +2992,19 @@ button {
 
   .print-metric-card strong {
     display: block;
-    margin: 11px 0 4px;
-    font-size: 22px;
+    margin: 10px 0 4px;
+    font-size: 20px;
     line-height: 1;
   }
 
   .print-metric-card em {
+    display: block;
+    max-width: 100%;
     color: #15803d;
-    font-size: 9px;
+    font-size: 8px;
     font-style: normal;
     font-weight: 900;
+    line-height: 1.25;
   }
 
   .print-metric-card em.is-down {
@@ -3029,7 +3032,8 @@ button {
   .print-report-card h3 {
     margin: 0 0 10px;
     color: #071b6f;
-    font-size: 13px;
+    font-size: 12px;
+    line-height: 1.2;
     text-transform: uppercase;
     padding-bottom: 5px;
     border-bottom: 2px solid #e0f2fe;
@@ -3268,13 +3272,19 @@ button {
 
   .print-gl-bars p {
     display: grid;
-    grid-template-columns: 1fr 54px 36px;
+    grid-template-columns: minmax(0, 1fr) 48px 34px;
     gap: 7px;
     align-items: center;
     margin: 0;
     color: #334155;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 850;
+  }
+
+  .print-gl-bars p span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
   }
 
   .print-gl-bars strong,
