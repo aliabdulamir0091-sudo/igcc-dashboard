@@ -7,6 +7,15 @@ const GENERAL_COST_ALLOCATIONS = [
   { poolCostCenter: "GRLRO_23", hub: "ROO Hub" },
 ];
 const GENERAL_POOL_COST_CENTERS = new Set(GENERAL_COST_ALLOCATIONS.map((rule) => rule.poolCostCenter));
+const EXECUTIVE_HUB_ORDER = [
+  "BGC Hub",
+  "ROO Hub",
+  "Total Hub",
+  "BP Hub",
+  "Camp",
+  "Head Office",
+  "West Qurna",
+];
 const COST_CENTER_LOOKUP = new Map(COST_CENTER_HIERARCHY.flatMap((group) => (
   group.costCenters.map((costCenter) => [costCenter, { hub: group.hub, region: group.region }])
 )));
@@ -263,10 +272,9 @@ const buildHubCostCenterRows = (costCenterRows) => {
     groups.get(row.hub).push(row);
     return groups;
   }, new Map());
-  const hierarchyHubs = COST_CENTER_HIERARCHY.map((group) => group.hub);
   const orderedHubs = [
-    ...hierarchyHubs.filter((hub) => rowsByHub.has(hub)),
-    ...[...rowsByHub.keys()].filter((hub) => !hierarchyHubs.includes(hub)).sort((a, b) => a.localeCompare(b)),
+    ...EXECUTIVE_HUB_ORDER.filter((hub) => rowsByHub.has(hub)),
+    ...[...rowsByHub.keys()].filter((hub) => !EXECUTIVE_HUB_ORDER.includes(hub)).sort((a, b) => a.localeCompare(b)),
   ];
 
   return orderedHubs.flatMap((hub) => {
