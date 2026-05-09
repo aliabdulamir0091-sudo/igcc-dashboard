@@ -16,6 +16,37 @@ const EXECUTIVE_HUB_ORDER = [
   "Head Office",
   "West Qurna",
 ];
+const ROO_SUBGROUPS = [
+  {
+    label: "ROO MAINT",
+    costCenters: ["EITAR_23", "MPTAR_23", "MPMNT_23", "CVMNT_23", "EIMNT_23"],
+  },
+  {
+    label: "ROO- Small Project",
+    costCenters: ["EISP_23", "MPSP_23", "DS-01SP_24", "DG02_PWD", "QAWPT_23", "WOD_23", "KBR_23"],
+  },
+  {
+    label: "ROO MAJ Project",
+    costCenters: ["E&I-MAJ_24"],
+  },
+  {
+    label: "ROO- PWRI_23",
+    costCenters: ["PWRI-PWT", "PWRI_23"],
+  },
+  {
+    label: "ROO- FLWLN",
+    costCenters: ["FLWLN_23", "RTPFL_23"],
+  },
+  {
+    label: "ROO PWRI-2 and OHTL",
+    costCenters: ["PWRI2_23", "OHTL_25"],
+  },
+  {
+    label: "Other Project",
+    costCenters: ["Kiosk-25", "MWP_23", "FFF_23", "MITAS", "CMSN_23", "EIESP_23"],
+  },
+];
+const ROO_ASSIGNED_COST_CENTERS = new Set(ROO_SUBGROUPS.flatMap((group) => group.costCenters));
 const COST_CENTER_LOOKUP = new Map(COST_CENTER_HIERARCHY.flatMap((group) => (
   group.costCenters.map((costCenter) => [costCenter, { hub: group.hub, region: group.region }])
 )));
@@ -242,7 +273,7 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
     });
 };
 
-const sumCostCenterRows = (rows, hub) => {
+const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub)) => {
   const total = rows.reduce((sum, row) => ({
     spentCost: sum.spentCost + row.spentCost,
     allocatedGeneralCost: sum.allocatedGeneralCost + row.allocatedGeneralCost,
@@ -260,12 +291,29 @@ const sumCostCenterRows = (rows, hub) => {
   });
 
   return {
-    type: "hub",
-    costCenter: formatHubLabel(hub),
+    type,
+    costCenter: label,
     hub,
     ...total,
     margin: getShare(total.profit, total.approvedAfp),
   };
+};
+
+const buildRooRows = (rows) => {
+  const rowsByCostCenter = new Map(rows.map((row) => [row.costCenter, row]));
+  const orderedRows = [];
+  const unassignedRows = rows
+    .filter((row) => !ROO_ASSIGNED_COST_CENTERS.has(row.costCenter))
+    .sort((a, b) => a.costCenter.localeCompare(b.costCenter));
+
+  for (const group of ROO_SUBGROUPS) {
+    const listedRows = group.costCenters.map((costCenter) => rowsByCostCenter.get(costCenter)).filter(Boolean);
+    const groupRows = group.label === "Other Project" ? [...listedRows, ...unassignedRows] : listedRows;
+    if (!groupRows.length) continue;
+    orderedRows.push(sumCostCenterRows(groupRows, "ROO Hub", "subgroup", group.label), ...groupRows);
+  }
+
+  return orderedRows;
 };
 
 const buildHubCostCenterRows = (costCenterRows) => {
@@ -281,6 +329,7 @@ const buildHubCostCenterRows = (costCenterRows) => {
 
   return orderedHubs.flatMap((hub) => {
     const rows = rowsByHub.get(hub).sort((a, b) => a.costCenter.localeCompare(b.costCenter));
+    if (hub === "ROO Hub") return [sumCostCenterRows(rows, hub), ...buildRooRows(rows)];
     return [sumCostCenterRows(rows, hub), ...rows];
   });
 };
@@ -380,10 +429,11 @@ export function ExecutiveCockpitPage({ filters = {} }) {
                   key={`${row.type}-${row.hub}-${row.costCenter}`}
                   className={[
                     row.type === "hub" ? "is-hub-total" : "",
+                    row.type === "subgroup" ? "is-subgroup-total" : "",
                     row.profit < 0 ? "has-loss" : "",
                   ].filter(Boolean).join(" ")}
                 >
-                  <td>{row.type === "hub" ? row.costCenter : <span>{row.costCenter}</span>}</td>
+                  <td>{row.type === "costCenter" ? <span>{row.costCenter}</span> : row.costCenter}</td>
                   <SummaryValue value={row.spentCost} />
                   <SummaryValue value={row.allocatedGeneralCost} />
                   <SummaryValue value={row.receivedCn} />
