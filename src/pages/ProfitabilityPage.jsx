@@ -75,6 +75,23 @@ const REPORT_COST_CENTER_ALIASES = {
   "PWT PWRI1_23": "PWRI-PWT",
 };
 const normalizeReportCostCenter = (costCenter) => REPORT_COST_CENTER_ALIASES[costCenter] || costCenter;
+const getReportCostCenterMembers = (filterValue) => {
+  const members = getCostCenterFilterMembers(filterValue);
+  const expandedMembers = new Set(members);
+  for (const member of members) {
+    expandedMembers.add(normalizeReportCostCenter(member));
+  }
+  for (const [alias, normalized] of Object.entries(REPORT_COST_CENTER_ALIASES)) {
+    if (expandedMembers.has(alias) || expandedMembers.has(normalized)) {
+      expandedMembers.add(alias);
+      expandedMembers.add(normalized);
+    }
+  }
+  return [...expandedMembers];
+};
+const isReportCostCenterMember = (costCenter, members) => (
+  members.includes(costCenter) || members.includes(normalizeReportCostCenter(costCenter))
+);
 
 const GENERAL_COST_ALLOCATIONS = [
   { poolCostCenter: "GRLBG_23", hub: "BGC Hub" },
@@ -359,12 +376,12 @@ const calculatePnl = ({ rows, creditRows, selectedCostCenter, revenueBasis }) =>
   const baseSpentCost = totalCost - allocatedGeneralCost - allocatedManagementCost;
   const grossProfit = revenue - totalCost;
   const isCostCenterLevel = Boolean(selectedCostCenter && selectedCostCenter !== ALL_FILTER_VALUE);
-  const selectedCostCenters = getCostCenterFilterMembers(selectedCostCenter);
+  const selectedCostCenters = getReportCostCenterMembers(selectedCostCenter);
   const issuedCreditNotes = isCostCenterLevel
-    ? sumRows(creditRows, (entry) => selectedCostCenters.includes(entry.issuedBy))
+    ? sumRows(creditRows, (entry) => isReportCostCenterMember(entry.issuedBy, selectedCostCenters))
     : 0;
   const receivedCreditNotes = isCostCenterLevel
-    ? sumRows(creditRows, (entry) => selectedCostCenters.includes(entry.costCenter))
+    ? sumRows(creditRows, (entry) => isReportCostCenterMember(entry.costCenter, selectedCostCenters))
     : 0;
   const updatedRevenue = revenue + issuedCreditNotes;
   const updatedCost = totalCost + receivedCreditNotes;
@@ -1161,7 +1178,7 @@ export function ProfitabilityPage({ filters = {} }) {
   const [activeFilterColumn, setActiveFilterColumn] = useState("");
   const filterCostCenter = filters.costCenter && filters.costCenter !== ALL_FILTER_VALUE ? filters.costCenter : "";
   const selectedCostCenter = filterCostCenter || drilldownCostCenter;
-  const selectedCostCenters = getCostCenterFilterMembers(selectedCostCenter);
+  const selectedCostCenters = getReportCostCenterMembers(selectedCostCenter);
   const revenueBasisLabel = REVENUE_BASIS_OPTIONS.find((option) => option.id === revenueBasis)?.label || "Approved AFP";
 
   const analysis = useMemo(() => {
@@ -1209,8 +1226,8 @@ export function ProfitabilityPage({ filters = {} }) {
     }
     const monthlyTrend = [...periodMap.values()]
       .map((row) => {
-        const issued = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && selectedCostCenters.includes(entry.issuedBy)) : 0;
-        const received = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && selectedCostCenters.includes(entry.costCenter)) : 0;
+        const issued = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && isReportCostCenterMember(entry.issuedBy, selectedCostCenters)) : 0;
+        const received = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && isReportCostCenterMember(entry.costCenter, selectedCostCenters)) : 0;
         const grossProfit = row.revenue - row.totalCost;
         const updatedRevenue = row.revenue + issued;
         const updatedCost = row.totalCost + received;
@@ -1267,13 +1284,13 @@ export function ProfitabilityPage({ filters = {} }) {
     const cnCategoryMap = new Map();
     if (selectedCostCenter) {
       for (const entry of creditContextRows) {
-        const isIssued = selectedCostCenters.includes(entry.issuedBy);
-        const isReceived = selectedCostCenters.includes(entry.costCenter);
+        const isIssued = isReportCostCenterMember(entry.issuedBy, selectedCostCenters);
+        const isReceived = isReportCostCenterMember(entry.costCenter, selectedCostCenters);
         if (!isIssued && !isReceived) continue;
         const mode = isReceived ? "Received" : "Issued";
         const label = isReceived
-          ? normalizeReportCostCenter(entry.costCenter)
-          : normalizeReportCostCenter(entry.issuedBy || entry.category || "Credit Note");
+          ? normalizeReportCostCenter(entry.issuedBy || entry.category || "Credit Note")
+          : normalizeReportCostCenter(entry.costCenter || entry.category || "Credit Note");
         const key = `${mode}-${label}`;
         const current = cnCategoryMap.get(key) || { mode, label, amount: 0 };
         current.amount += entry.amount || 0;
@@ -1284,7 +1301,7 @@ export function ProfitabilityPage({ filters = {} }) {
     const transactions = selectedCostCenter
       ? [
         ...contextRows.filter((entry) => ["spent", revenueBasis].includes(entry.type)),
-        ...creditContextRows.filter((entry) => selectedCostCenters.includes(entry.issuedBy) || selectedCostCenters.includes(entry.costCenter)),
+        ...creditContextRows.filter((entry) => isReportCostCenterMember(entry.issuedBy, selectedCostCenters) || isReportCostCenterMember(entry.costCenter, selectedCostCenters)),
       ]
         .sort((a, b) => b.period.localeCompare(a.period) || Math.abs(b.amount || 0) - Math.abs(a.amount || 0))
         .slice(0, 18)
@@ -1308,8 +1325,8 @@ export function ProfitabilityPage({ filters = {} }) {
     const monthlyRows = [...printPeriodMap.values()]
       .sort((a, b) => a.period.localeCompare(b.period))
       .map((row) => {
-        const issued = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && selectedCostCenters.includes(entry.issuedBy)) : 0;
-        const received = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && selectedCostCenters.includes(entry.costCenter)) : 0;
+        const issued = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && isReportCostCenterMember(entry.issuedBy, selectedCostCenters)) : 0;
+        const received = selectedCostCenter ? sumRows(creditContextRows, (entry) => entry.period === row.period && isReportCostCenterMember(entry.costCenter, selectedCostCenters)) : 0;
         const approvedRevenue = selectedCostCenter ? row.approvedRevenue + issued : row.approvedRevenue;
         const submittedRevenue = selectedCostCenter ? row.submittedRevenue + issued : row.submittedRevenue;
         const totalCost = selectedCostCenter ? row.totalCost + received : row.totalCost;
