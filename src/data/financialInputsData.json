@@ -3,26 +3,26 @@
     "spentWorkbook": "C:/Users/asus/OneDrive/Desktop/Spent Report/Master Spent Report.xlsx",
     "revenueWorkbook": "C:/Users/asus/OneDrive/Desktop/Spent Report/Revenue .xlsx",
     "creditNoteFolder": "C:/Users/asus/OneDrive/Desktop/Spent Report/Credit Note",
-    "generatedAt": "2026-05-10T08:12:05.862Z"
+    "generatedAt": "2026-05-10T08:25:54.904Z"
   },
   "totals": {
     "spent": 107966844.29,
-    "submitted": 124594940.94,
-    "approved": 117194978.89,
+    "submitted": 125061246.87,
+    "approved": 120575331.46,
     "creditNotes": 7316307.08,
-    "netMovement": 9228134.6,
-    "afpGap": 7399962.05
+    "netMovement": 12608487.17,
+    "afpGap": 4485915.41
   },
   "latestPeriod": {
     "period": "2026-04",
     "month": "Apr",
     "year": "2026",
     "spent": 6510848.1,
-    "submitted": 6771689.55,
-    "approved": 1483609.4,
+    "submitted": 7237995.48,
+    "approved": 4863961.97,
     "creditNotes": 1595742.9,
-    "netMovement": -5027238.7,
-    "afpGap": 5288080.15
+    "netMovement": -1646886.13,
+    "afpGap": 2374033.51
   },
   "monthlyFlow": [
     {
@@ -195,11 +195,11 @@
       "month": "Apr",
       "year": "2026",
       "spent": 6510848.1,
-      "submitted": 6771689.55,
-      "approved": 1483609.4,
+      "submitted": 7237995.48,
+      "approved": 4863961.97,
       "creditNotes": 1595742.9,
-      "netMovement": -5027238.7,
-      "afpGap": 5288080.15
+      "netMovement": -1646886.13,
+      "afpGap": 2374033.51
     }
   ],
   "byCostCenter": [
@@ -215,11 +215,11 @@
       "glName": "Charitable Contributions",
       "amount": 344.83,
       "spent": 20667638.21,
-      "submitted": 30830997.74,
-      "approved": 27838717.11,
+      "submitted": 30818323.61,
+      "approved": 30815137.55,
       "creditNotes": 1433129.44,
-      "netMovement": 7171078.9,
-      "afpGap": 2992280.63
+      "netMovement": 10147499.34,
+      "afpGap": 3186.06
     },
     {
       "type": "spent",
@@ -252,10 +252,10 @@
       "amount": 237.93,
       "spent": 10055399.95,
       "submitted": 15557371.51,
-      "approved": 15420980.89,
+      "approved": 15555052.05,
       "creditNotes": 2066807.86,
-      "netMovement": 5365580.94,
-      "afpGap": 136390.62
+      "netMovement": 5499652.1,
+      "afpGap": 2319.46
     },
     {
       "type": "spent",
@@ -287,11 +287,11 @@
       "glName": "Communication & internet",
       "amount": 2354.48,
       "spent": 5160410.3,
-      "submitted": 7948667.51,
-      "approved": 7098620.81,
+      "submitted": 7933061.57,
+      "approved": 7164071.07,
       "creditNotes": 828289.39,
-      "netMovement": 1938210.51,
-      "afpGap": 850046.7
+      "netMovement": 2003660.77,
+      "afpGap": 768990.5
     },
     {
       "type": "spent",
@@ -359,11 +359,11 @@
       "glName": "Charitable Contributions",
       "amount": 896.55,
       "spent": 3945796.43,
-      "submitted": 5175180.15,
-      "approved": 5010738.32,
+      "submitted": 5167686.44,
+      "approved": 5100062.77,
       "creditNotes": 368809.27,
-      "netMovement": 1064941.89,
-      "afpGap": 164441.83
+      "netMovement": 1154266.34,
+      "afpGap": 67623.67
     },
     {
       "type": "spent",
@@ -377,11 +377,11 @@
       "glName": "Light & Heavy Equipment’s Rental",
       "amount": 6993.01,
       "spent": 3234943.43,
-      "submitted": 3259411.65,
+      "submitted": 3285638.62,
       "approved": 3139391.52,
       "creditNotes": 57726.93,
       "netMovement": -95551.91,
-      "afpGap": 120020.13
+      "afpGap": 146247.1
     },
     {
       "type": "spent",
@@ -413,10 +413,10 @@
       "glName": "Fuel & Lubricant",
       "amount": 559.44,
       "spent": 2792064.42,
-      "submitted": 2605336.91,
-      "approved": 2574238.79,
+      "submitted": 2605379.65,
+      "approved": 2574281.53,
       "creditNotes": 106039.05,
-      "netMovement": -217825.63,
+      "netMovement": -217782.89,
       "afpGap": 31098.12
     },
     {
@@ -521,11 +521,11 @@
       "glName": "Communication & internet",
       "amount": 36.55,
       "spent": 1669919.03,
-      "submitted": 2548310.61,
-      "approved": 1701796.25,
+      "submitted": 2538526.85,
+      "approved": 1760694.47,
       "creditNotes": 509359.95,
-      "netMovement": 31877.22,
-      "afpGap": 846514.36
+      "netMovement": 90775.44,
+      "afpGap": 777832.38
     },
     {
       "type": "spent",
@@ -539,11 +539,11 @@
       "glName": "Light & Heavy Equipment’s Rental",
       "amount": 4803.66,
       "spent": 1659454.27,
-      "submitted": 2215904.89,
-      "approved": 2215904.89,
+      "submitted": 2422700.48,
+      "approved": 2371395.95,
       "creditNotes": 152256.26,
-      "netMovement": 556450.62,
-      "afpGap": 0
+      "netMovement": 711941.68,
+      "afpGap": 51304.53
     },
     {
       "type": "spent",
@@ -557,11 +557,11 @@
       "glName": "Communication & internet",
       "amount": 621.38,
       "spent": 1634720.99,
-      "submitted": 3102757.58,
+      "submitted": 3473432.34,
       "approved": 2937361.66,
       "creditNotes": 113727.92,
       "netMovement": 1302640.67,
-      "afpGap": 165395.92
+      "afpGap": 536070.68
     },
     {
       "type": "spent",
@@ -611,11 +611,11 @@
       "glName": "Light & Heavy Equipment’s Rental",
       "amount": 6293.71,
       "spent": 1118046.02,
-      "submitted": 2682883.19,
-      "approved": 2802622.29,
+      "submitted": 2578653.19,
+      "approved": 2647131.23,
       "creditNotes": 0,
-      "netMovement": 1684576.27,
-      "afpGap": -119739.1
+      "netMovement": 1529085.21,
+      "afpGap": -68478.04
     },
     {
       "type": "spent",
@@ -720,10 +720,10 @@
       "amount": 7034.08,
       "spent": 528555.23,
       "submitted": 404979.89,
-      "approved": 361188,
+      "approved": 404979.89,
       "creditNotes": 0,
-      "netMovement": -167367.23,
-      "afpGap": 43791.89
+      "netMovement": -123575.34,
+      "afpGap": 0
     },
     {
       "type": "spent",
@@ -845,10 +845,10 @@
       "glName": "Material & Supplies",
       "amount": 117.11,
       "spent": 100046.87,
-      "submitted": 457940.95,
-      "approved": 457940.95,
+      "submitted": 470294.36,
+      "approved": 470294.36,
       "creditNotes": 1028.8,
-      "netMovement": 357894.08,
+      "netMovement": 370247.49,
       "afpGap": 0
     },
     {
@@ -55936,6 +55936,17 @@
       "amount": 778.95
     },
     {
+      "type": "submitted",
+      "sourceCostCenter": "BNGL-25",
+      "costCenter": "BNGL-25",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "amount": 370674.76
+    },
+    {
       "type": "creditNotes",
       "sourceCostCenter": "BNGL-25",
       "costCenter": "BNGL-25",
@@ -56303,7 +56314,7 @@
       "period": "2026-04",
       "month": "Apr",
       "year": "2026",
-      "amount": 53716.36
+      "amount": 53759.1
     },
     {
       "type": "approved",
@@ -56314,7 +56325,7 @@
       "period": "2026-04",
       "month": "Apr",
       "year": "2026",
-      "amount": 52914.56
+      "amount": 52957.3
     },
     {
       "type": "creditNotes",
@@ -56524,7 +56535,7 @@
       "period": "2026-04",
       "month": "Apr",
       "year": "2026",
-      "amount": 75959.89
+      "amount": 102186.86
     },
     {
       "type": "creditNotes",
@@ -56564,6 +56575,28 @@
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
       "amount": 2958.8
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "EITAR_23",
+      "costCenter": "EITAR_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "amount": 12353.41
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "EITAR_23",
+      "costCenter": "EITAR_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "amount": 12353.41
     },
     {
       "type": "creditNotes",
@@ -57185,7 +57218,18 @@
       "period": "2026-04",
       "month": "Apr",
       "year": "2026",
-      "amount": 2989232
+      "amount": 2976557.87
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "GRLTOT_25",
+      "costCenter": "GRLTOT_25",
+      "region": "Basra",
+      "hub": "Total Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "amount": 2976420.44
     },
     {
       "type": "creditNotes",
@@ -57575,7 +57619,7 @@
       "period": "2026-04",
       "month": "Apr",
       "year": "2026",
-      "amount": 135812.2
+      "amount": 128318.49
     },
     {
       "type": "submitted",
@@ -57587,6 +57631,17 @@
       "month": "Apr",
       "year": "2026",
       "amount": 99621.88
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "amount": 89324.45
     },
     {
       "type": "creditNotes",
@@ -57696,18 +57751,7 @@
       "period": "2026-04",
       "month": "Apr",
       "year": "2026",
-      "amount": 155491.06
-    },
-    {
-      "type": "approved",
-      "sourceCostCenter": "MANPR_23",
-      "costCenter": "MANPR_23",
-      "region": "Basra",
-      "hub": "BGC Hub",
-      "period": "2026-04",
-      "month": "Apr",
-      "year": "2026",
-      "amount": 155491.06
+      "amount": 51261.06
     },
     {
       "type": "creditNotes",
@@ -57817,7 +57861,18 @@
       "period": "2026-04",
       "month": "Apr",
       "year": "2026",
-      "amount": 798690.41
+      "amount": 788906.65
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "MWP_23",
+      "costCenter": "MWP_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "amount": 58898.22
     },
     {
       "type": "creditNotes",
@@ -58007,6 +58062,17 @@
     },
     {
       "type": "submitted",
+      "sourceCostCenter": "NR-NGL_2025",
+      "costCenter": "NR-NGL_2025",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "amount": 43791.89
+    },
+    {
+      "type": "approved",
       "sourceCostCenter": "NR-NGL_2025",
       "costCenter": "NR-NGL_2025",
       "region": "Basra",
@@ -58340,7 +58406,7 @@
       "period": "2026-04",
       "month": "Apr",
       "year": "2026",
-      "amount": 1275203.78
+      "amount": 1409274.94
     },
     {
       "type": "creditNotes",
@@ -58568,6 +58634,28 @@
       "amount": 139.47
     },
     {
+      "type": "submitted",
+      "sourceCostCenter": "SPAS_23",
+      "costCenter": "SPAS_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "amount": 206795.59
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "SPAS_23",
+      "costCenter": "SPAS_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "amount": 155491.06
+    },
+    {
       "type": "creditNotes",
       "sourceCostCenter": "SPAS_23",
       "costCenter": "SPAS_23",
@@ -58748,7 +58836,18 @@
       "period": "2026-04",
       "month": "Apr",
       "year": "2026",
-      "amount": 850046.7
+      "amount": 834440.76
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "UQ_23",
+      "costCenter": "UQ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "amount": 65450.26
     },
     {
       "type": "creditNotes",
@@ -58829,8 +58928,8 @@
     },
     {
       "label": "AFP gap",
-      "value": 7399962.05,
-      "detail": "Submitted vs approved gap. Approval rate is 94.1%."
+      "value": 4485915.41,
+      "detail": "Submitted vs approved gap. Approval rate is 96.4%."
     },
     {
       "label": "Credit note impact",
