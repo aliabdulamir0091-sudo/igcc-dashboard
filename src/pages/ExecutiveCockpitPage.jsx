@@ -559,7 +559,10 @@ function SimpleReportModal({ report, onClose }) {
             <h3>{report.title}</h3>
             <p>{report.scope} | {report.context}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close report">Close</button>
+          <div className="simple-report-actions">
+            <button type="button" onClick={() => window.print()}>Save PDF</button>
+            <button type="button" onClick={onClose} aria-label="Close report">Close</button>
+          </div>
         </header>
         <div className="simple-report-landscape">
           <table className="simple-report-table simple-report-summary-table">
