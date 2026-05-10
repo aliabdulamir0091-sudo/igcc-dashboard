@@ -542,14 +542,27 @@ const buildReportContext = (filters = {}) => {
 function SimpleReportModal({ report, onClose }) {
   if (!report) return null;
   const costRows = [
-    ["Approved AFP", report.approvedAfp],
-    ["Submitted AFP", report.submittedAfp],
-    ["Direct Cost from Spent report", report.directCost],
-    ["General Hub Cost", report.generalHubCost],
-    ["Management Cost", report.managementCost],
-    ["CN", report.receivedCn],
-    ["General CN Reallocated", report.allocatedGeneralCn],
+    { label: "Approved AFP", value: report.approvedAfp, tone: "is-afp" },
+    { label: "Submitted AFP", value: report.submittedAfp, tone: "is-afp is-submitted" },
+    { label: "Direct Cost from Spent report", value: report.directCost },
+    { label: "General Hub Cost", value: report.generalHubCost },
+    { label: "Management Cost", value: report.managementCost },
+    { label: "CN", value: report.receivedCn },
+    { label: "General CN Reallocated", value: report.allocatedGeneralCn },
   ];
+  const kpis = [
+    { label: "Approved AFP", value: report.approvedAfp, tone: "blue" },
+    { label: "Submitted AFP", value: report.submittedAfp, tone: "teal" },
+    { label: "Total Cost", value: report.totalCost, tone: "amber" },
+    { label: "Approved Margin", value: report.approvedMargin, detail: formatPercent(report.approvedMarginPercent), tone: report.approvedMargin < 0 ? "red" : "green" },
+  ];
+  const visualRows = [
+    { label: "Approved AFP", value: report.approvedAfp, tone: "blue" },
+    { label: "Submitted AFP", value: report.submittedAfp, tone: "teal" },
+    { label: "Total Cost", value: report.totalCost, tone: "amber" },
+    { label: "Received CN", value: report.receivedCn + report.allocatedGeneralCn, tone: "green" },
+  ];
+  const maxVisualValue = Math.max(...visualRows.map((item) => Math.abs(item.value)), 1);
   return (
     <div className="simple-report-backdrop" onClick={onClose}>
       <article className="simple-report-sheet" aria-label={`${report.title} simple report`} onClick={(event) => event.stopPropagation()}>
@@ -564,13 +577,22 @@ function SimpleReportModal({ report, onClose }) {
             <button type="button" onClick={onClose} aria-label="Close report">Close</button>
           </div>
         </header>
+        <section className="simple-report-kpi-grid">
+          {kpis.map((item) => (
+            <div className={`simple-report-kpi tone-${item.tone}`} key={item.label}>
+              <span>{item.label}</span>
+              <strong>{formatWholeNumber(item.value)}</strong>
+              {item.detail ? <em>{item.detail}</em> : null}
+            </div>
+          ))}
+        </section>
         <div className="simple-report-landscape">
           <table className="simple-report-table simple-report-summary-table">
             <tbody>
-              {costRows.map(([label, value]) => (
-                <tr key={label}>
-                  <td>{label}</td>
-                  <td>{formatWholeNumber(value)}</td>
+              {costRows.map((item) => (
+                <tr key={item.label} className={item.tone || ""}>
+                  <td>{item.label}</td>
+                  <td>{formatWholeNumber(item.value)}</td>
                   <td />
                 </tr>
               ))}
@@ -579,12 +601,12 @@ function SimpleReportModal({ report, onClose }) {
                 <td>{formatWholeNumber(report.totalCost)}</td>
                 <td />
               </tr>
-              <tr>
+              <tr className="is-margin-row">
                 <td>Margin- Approved AFP</td>
                 <td className={report.approvedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.approvedMargin)}</td>
                 <td>{formatPercent(report.approvedMarginPercent)}</td>
               </tr>
-              <tr>
+              <tr className="is-margin-row">
                 <td>Margin Submitted AFP</td>
                 <td className={report.submittedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.submittedMargin)}</td>
                 <td>{formatPercent(report.submittedMarginPercent)}</td>
@@ -630,6 +652,21 @@ function SimpleReportModal({ report, onClose }) {
                 ))}
               </tbody>
             </table>
+          </section>
+          <section className="simple-report-visuals">
+            <div>
+              <h4>Commercial snapshot</h4>
+              <p>AFP, total cost, and CN impact under the selected filter.</p>
+            </div>
+            <div className="simple-report-bars">
+              {visualRows.map((item) => (
+                <div className={`simple-report-bar tone-${item.tone}`} key={item.label}>
+                  <span>{item.label}</span>
+                  <i style={{ "--bar-width": `${Math.max(4, (Math.abs(item.value) / maxVisualValue) * 100)}%` }} />
+                  <strong>{formatWholeNumber(item.value)}</strong>
+                </div>
+              ))}
+            </div>
           </section>
         </div>
       </article>
