@@ -320,6 +320,7 @@ const compactEntries = (entries) => {
     const key = [
       entry.type,
       entry.period,
+      entry.sourceCostCenter || "",
       entry.costCenter,
       entry.glName || "",
       entry.category || "",

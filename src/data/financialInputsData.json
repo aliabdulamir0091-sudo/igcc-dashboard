@@ -3,13 +3,13 @@
     "spentWorkbook": "C:/Users/asus/OneDrive/Desktop/Spent Report/Master Spent Report.xlsx",
     "revenueWorkbook": "C:/Users/asus/OneDrive/Desktop/Spent Report/Revenue .xlsx",
     "creditNoteFolder": "C:/Users/asus/OneDrive/Desktop/Spent Report/Credit Note",
-    "generatedAt": "2026-05-10T07:59:08.807Z"
+    "generatedAt": "2026-05-10T08:12:05.862Z"
   },
   "totals": {
     "spent": 107966844.29,
     "submitted": 124594940.94,
     "approved": 117194978.89,
-    "creditNotes": 7338807.08,
+    "creditNotes": 7316307.08,
     "netMovement": 9228134.6,
     "afpGap": 7399962.05
   },
@@ -20,7 +20,7 @@
     "spent": 6510848.1,
     "submitted": 6771689.55,
     "approved": 1483609.4,
-    "creditNotes": 1618242.9,
+    "creditNotes": 1595742.9,
     "netMovement": -5027238.7,
     "afpGap": 5288080.15
   },
@@ -197,7 +197,7 @@
       "spent": 6510848.1,
       "submitted": 6771689.55,
       "approved": 1483609.4,
-      "creditNotes": 1618242.9,
+      "creditNotes": 1595742.9,
       "netMovement": -5027238.7,
       "afpGap": 5288080.15
     }
@@ -253,7 +253,7 @@
       "spent": 10055399.95,
       "submitted": 15557371.51,
       "approved": 15420980.89,
-      "creditNotes": 2089307.86,
+      "creditNotes": 2066807.86,
       "netMovement": 5365580.94,
       "afpGap": 136390.62
     },
@@ -1140,11 +1140,11 @@
     }
   ],
   "creditNotes": {
-    "total": 7338807.08,
-    "shareOfSpent": 6.8,
+    "total": 7316307.08,
+    "shareOfSpent": 6.78,
     "byCostCenter": [
       {
-        "amount": 2203682.86,
+        "amount": 2181182.86,
         "count": 41,
         "costCenter": "PWRI2_23",
         "hub": "ROO Hub",
@@ -2175,7 +2175,7 @@
         "period": "2026-04",
         "month": "Apr",
         "year": "2026",
-        "amount": 67500,
+        "amount": 45000,
         "category": "Workshop",
         "issuedBy": "MWS_23"
       },
@@ -10875,7 +10875,18 @@
       "period": "2025-01",
       "month": "Jan",
       "year": "2025",
-      "amount": 360635.21
+      "amount": 89716.13
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-01",
+      "month": "Jan",
+      "year": "2025",
+      "amount": 270919.08
     },
     {
       "type": "approved",
@@ -10886,7 +10897,18 @@
       "period": "2025-01",
       "month": "Jan",
       "year": "2025",
-      "amount": 359789.12
+      "amount": 88870.04
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-01",
+      "month": "Jan",
+      "year": "2025",
+      "amount": 270919.08
     },
     {
       "type": "creditNotes",
@@ -13559,7 +13581,18 @@
       "period": "2025-02",
       "month": "Feb",
       "year": "2025",
-      "amount": 473209
+      "amount": 360786.96
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-02",
+      "month": "Feb",
+      "year": "2025",
+      "amount": 112422.04
     },
     {
       "type": "approved",
@@ -13570,7 +13603,18 @@
       "period": "2025-02",
       "month": "Feb",
       "year": "2025",
-      "amount": 470011.98
+      "amount": 357589.94
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-02",
+      "month": "Feb",
+      "year": "2025",
+      "amount": 112422.04
     },
     {
       "type": "creditNotes",
@@ -16219,7 +16263,18 @@
       "period": "2025-03",
       "month": "Mar",
       "year": "2025",
-      "amount": 332820.28
+      "amount": 255850.1
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-03",
+      "month": "Mar",
+      "year": "2025",
+      "amount": 76970.18
     },
     {
       "type": "approved",
@@ -16230,7 +16285,18 @@
       "period": "2025-03",
       "month": "Mar",
       "year": "2025",
-      "amount": 320600.51
+      "amount": 243630.33
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-03",
+      "month": "Mar",
+      "year": "2025",
+      "amount": 76970.18
     },
     {
       "type": "spent",
@@ -18950,7 +19016,18 @@
       "period": "2025-04",
       "month": "Apr",
       "year": "2025",
-      "amount": 1364337.63
+      "amount": 124182.22
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-04",
+      "month": "Apr",
+      "year": "2025",
+      "amount": 1240155.41
     },
     {
       "type": "approved",
@@ -18961,7 +19038,18 @@
       "period": "2025-04",
       "month": "Apr",
       "year": "2025",
-      "amount": 1364337.63
+      "amount": 124182.22
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-04",
+      "month": "Apr",
+      "year": "2025",
+      "amount": 1240155.41
     },
     {
       "type": "spent",
@@ -21460,7 +21548,18 @@
       "period": "2025-05",
       "month": "May",
       "year": "2025",
-      "amount": 660998.29
+      "amount": 297893.13
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-05",
+      "month": "May",
+      "year": "2025",
+      "amount": 363105.16
     },
     {
       "type": "approved",
@@ -21471,7 +21570,18 @@
       "period": "2025-05",
       "month": "May",
       "year": "2025",
-      "amount": 651511.04
+      "amount": 288405.88
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-05",
+      "month": "May",
+      "year": "2025",
+      "amount": 363105.16
     },
     {
       "type": "spent",
@@ -24194,7 +24304,18 @@
       "period": "2025-06",
       "month": "Jun",
       "year": "2025",
-      "amount": 101694.14
+      "amount": 96896.64
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-06",
+      "month": "Jun",
+      "year": "2025",
+      "amount": 4797.5
     },
     {
       "type": "approved",
@@ -24205,7 +24326,18 @@
       "period": "2025-06",
       "month": "Jun",
       "year": "2025",
-      "amount": 89102.55
+      "amount": 84305.05
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-06",
+      "month": "Jun",
+      "year": "2025",
+      "amount": 4797.5
     },
     {
       "type": "spent",
@@ -31521,7 +31653,19 @@
       "month": "Sep",
       "year": "2025",
       "glName": "Third party Manpower",
-      "amount": 20667.2
+      "amount": 945.45
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "EIMNT_23",
+      "costCenter": "EIMNT_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2025-09",
+      "month": "Sep",
+      "year": "2025",
+      "glName": "Third party Manpower",
+      "amount": 19721.75
     },
     {
       "type": "spent",
@@ -32821,7 +32965,18 @@
       "period": "2025-09",
       "month": "Sep",
       "year": "2025",
-      "amount": 152747.38
+      "amount": 126757.39
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-09",
+      "month": "Sep",
+      "year": "2025",
+      "amount": 25989.99
     },
     {
       "type": "approved",
@@ -32832,7 +32987,18 @@
       "period": "2025-09",
       "month": "Sep",
       "year": "2025",
-      "amount": 262081.35
+      "amount": 236091.36
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-09",
+      "month": "Sep",
+      "year": "2025",
+      "amount": 25989.99
     },
     {
       "type": "creditNotes",
@@ -39784,7 +39950,18 @@
       "period": "2025-11",
       "month": "Nov",
       "year": "2025",
-      "amount": 224761.27
+      "amount": 194251.27
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-11",
+      "month": "Nov",
+      "year": "2025",
+      "amount": 30510
     },
     {
       "type": "approved",
@@ -39795,7 +39972,18 @@
       "period": "2025-11",
       "month": "Nov",
       "year": "2025",
-      "amount": 224761.27
+      "amount": 194251.27
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-11",
+      "month": "Nov",
+      "year": "2025",
+      "amount": 30510
     },
     {
       "type": "creditNotes",
@@ -42775,7 +42963,19 @@
       "month": "Dec",
       "year": "2025",
       "glName": "Communication & internet",
-      "amount": 2414.6
+      "amount": 556.42
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "ROOP_23",
+      "costCenter": "GRLRO_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2025-12",
+      "month": "Dec",
+      "year": "2025",
+      "glName": "Communication & internet",
+      "amount": 1858.18
     },
     {
       "type": "spent",
@@ -43369,7 +43569,7 @@
       "month": "Dec",
       "year": "2025",
       "glName": "Material & Supplies",
-      "amount": 69655.08
+      "amount": 40175.22
     },
     {
       "type": "spent",
@@ -43408,6 +43608,18 @@
       "amount": 15677.68
     },
     {
+      "type": "spent",
+      "sourceCostCenter": "KAZ",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-12",
+      "month": "Dec",
+      "year": "2025",
+      "glName": "Material & Supplies",
+      "amount": 29479.86
+    },
+    {
       "type": "submitted",
       "sourceCostCenter": "KAZ_23",
       "costCenter": "KAZ_23",
@@ -43416,7 +43628,18 @@
       "period": "2025-12",
       "month": "Dec",
       "year": "2025",
-      "amount": 245187.06
+      "amount": 190784.34
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-12",
+      "month": "Dec",
+      "year": "2025",
+      "amount": 54402.72
     },
     {
       "type": "approved",
@@ -43427,7 +43650,18 @@
       "period": "2025-12",
       "month": "Dec",
       "year": "2025",
-      "amount": 245187.06
+      "amount": 190784.34
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2025-12",
+      "month": "Dec",
+      "year": "2025",
+      "amount": 54402.72
     },
     {
       "type": "creditNotes",
@@ -44311,7 +44545,19 @@
       "month": "Dec",
       "year": "2025",
       "glName": "Material & Supplies",
-      "amount": 27784.78
+      "amount": 27123.58
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "pwri_23",
+      "costCenter": "PWRI_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2025-12",
+      "month": "Dec",
+      "year": "2025",
+      "glName": "Material & Supplies",
+      "amount": 661.2
     },
     {
       "type": "spent",
@@ -46433,7 +46679,19 @@
       "month": "Jan",
       "year": "2026",
       "glName": "Communication & internet",
-      "amount": 2453.84
+      "amount": 560.08
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "ROOP_23",
+      "costCenter": "GRLRO_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2026-01",
+      "month": "Jan",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 1893.76
     },
     {
       "type": "spent",
@@ -46881,7 +47139,19 @@
       "month": "Jan",
       "year": "2026",
       "glName": "Staff Salary & Compensation",
-      "amount": 250885.7
+      "amount": 167885.7
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "Management",
+      "costCenter": "HO_SB_23",
+      "region": "Basra",
+      "hub": "Head Office",
+      "period": "2026-01",
+      "month": "Jan",
+      "year": "2026",
+      "glName": "Staff Salary & Compensation",
+      "amount": 83000
     },
     {
       "type": "spent",
@@ -47037,7 +47307,18 @@
       "period": "2026-01",
       "month": "Jan",
       "year": "2026",
-      "amount": 177896.39
+      "amount": 112151.1
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-01",
+      "month": "Jan",
+      "year": "2026",
+      "amount": 65745.29
     },
     {
       "type": "approved",
@@ -47048,7 +47329,18 @@
       "period": "2026-01",
       "month": "Jan",
       "year": "2026",
-      "amount": 177896.39
+      "amount": 112151.1
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-01",
+      "month": "Jan",
+      "year": "2026",
+      "amount": 65745.29
     },
     {
       "type": "creditNotes",
@@ -49945,7 +50237,19 @@
       "month": "Feb",
       "year": "2026",
       "glName": "Communication & internet",
-      "amount": 2705.1
+      "amount": 1893.76
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "GRLRO_23",
+      "costCenter": "GRLRO_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2026-02",
+      "month": "Feb",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 811.34
     },
     {
       "type": "spent",
@@ -50286,7 +50590,19 @@
       "month": "Feb",
       "year": "2026",
       "glName": "Air Ticket / Travel",
-      "amount": 6360.93
+      "amount": 6032.07
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "HO_SB_23",
+      "costCenter": "HO_SB_23",
+      "region": "Basra",
+      "hub": "Head Office",
+      "period": "2026-02",
+      "month": "Feb",
+      "year": "2026",
+      "glName": "Air Ticket / Travel",
+      "amount": 328.86
     },
     {
       "type": "spent",
@@ -50394,7 +50710,19 @@
       "month": "Feb",
       "year": "2026",
       "glName": "Staff Salary & Compensation",
-      "amount": 216895.03
+      "amount": 133895.03
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "Management",
+      "costCenter": "HO_SB_23",
+      "region": "Basra",
+      "hub": "Head Office",
+      "period": "2026-02",
+      "month": "Feb",
+      "year": "2026",
+      "glName": "Staff Salary & Compensation",
+      "amount": 83000
     },
     {
       "type": "spent",
@@ -50563,7 +50891,18 @@
       "period": "2026-02",
       "month": "Feb",
       "year": "2026",
-      "amount": 266829.58
+      "amount": 256135.08
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-02",
+      "month": "Feb",
+      "year": "2026",
+      "amount": 10694.5
     },
     {
       "type": "approved",
@@ -50574,7 +50913,18 @@
       "period": "2026-02",
       "month": "Feb",
       "year": "2026",
-      "amount": 266829.58
+      "amount": 256135.08
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-02",
+      "month": "Feb",
+      "year": "2026",
+      "amount": 10694.5
     },
     {
       "type": "creditNotes",
@@ -50880,7 +51230,19 @@
       "month": "Feb",
       "year": "2026",
       "glName": "Staff Salary & Compensation",
-      "amount": 80839
+      "amount": 52997
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "TMS_26",
+      "costCenter": "MWP_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2026-02",
+      "month": "Feb",
+      "year": "2026",
+      "glName": "Staff Salary & Compensation",
+      "amount": 27842
     },
     {
       "type": "submitted",
@@ -52267,7 +52629,7 @@
       "month": "Mar",
       "year": "2026",
       "glName": "Communication & internet",
-      "amount": 606.78
+      "amount": 251.95
     },
     {
       "type": "spent",
@@ -52316,6 +52678,18 @@
       "year": "2026",
       "glName": "Lease & Rent",
       "amount": 2500
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "camp_23",
+      "costCenter": "CmpSB_23",
+      "region": "Basra",
+      "hub": "Camp",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 354.83
     },
     {
       "type": "spent",
@@ -53289,7 +53663,19 @@
       "month": "Mar",
       "year": "2026",
       "glName": "Communication & internet",
-      "amount": 2607.17
+      "amount": 2547.66
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "BGCG_23",
+      "costCenter": "GRLBG_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 59.51
     },
     {
       "type": "creditNotes",
@@ -53362,7 +53748,7 @@
       "month": "Mar",
       "year": "2026",
       "glName": "Communication & internet",
-      "amount": 1917.68
+      "amount": 224.68
     },
     {
       "type": "spent",
@@ -53387,6 +53773,30 @@
       "year": "2026",
       "glName": "Security",
       "amount": 32550
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "ROOG_23",
+      "costCenter": "GRLRO_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 174.42
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "ROOP_23",
+      "costCenter": "GRLRO_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 1518.58
     },
     {
       "type": "spent",
@@ -53483,7 +53893,7 @@
       "month": "Mar",
       "year": "2026",
       "glName": "Communication & internet",
-      "amount": 1028.15
+      "amount": 251.95
     },
     {
       "type": "spent",
@@ -53532,6 +53942,18 @@
       "year": "2026",
       "glName": "Lease & Rent",
       "amount": 4000
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "TOTAL_25",
+      "costCenter": "GRLTOT_25",
+      "region": "Basra",
+      "hub": "Total Hub",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 776.2
     },
     {
       "type": "spent",
@@ -53641,7 +54063,19 @@
       "month": "Mar",
       "year": "2026",
       "glName": "Staff Salary & Compensation",
-      "amount": 211125
+      "amount": 128125
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "Management",
+      "costCenter": "HO_SB_23",
+      "region": "Basra",
+      "hub": "Head Office",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "glName": "Staff Salary & Compensation",
+      "amount": 83000
     },
     {
       "type": "spent",
@@ -53725,7 +54159,7 @@
       "month": "Mar",
       "year": "2026",
       "glName": "Communication & internet",
-      "amount": 1251.45
+      "amount": 584.42
     },
     {
       "type": "spent",
@@ -53750,6 +54184,30 @@
       "year": "2026",
       "glName": "Light & Heavy Equipment’s Rental",
       "amount": 8102.41
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "HO_23",
+      "costCenter": "HO_SB_23",
+      "region": "Basra",
+      "hub": "Head Office",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 404.8
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "Management",
+      "costCenter": "HO_SB_23",
+      "region": "Basra",
+      "hub": "Head Office",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 262.23
     },
     {
       "type": "spent",
@@ -53906,7 +54364,18 @@
       "period": "2026-03",
       "month": "Mar",
       "year": "2026",
-      "amount": 127529.19
+      "amount": 30309.41
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "amount": 97219.78
     },
     {
       "type": "approved",
@@ -53917,7 +54386,18 @@
       "period": "2026-03",
       "month": "Mar",
       "year": "2026",
-      "amount": 127529.19
+      "amount": 30309.41
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "amount": 97219.78
     },
     {
       "type": "creditNotes",
@@ -55235,7 +55715,18 @@
       "period": "2026-03",
       "month": "Mar",
       "year": "2026",
-      "amount": 1117211.43
+      "amount": 1041073.32
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "UQ_A23",
+      "costCenter": "UQ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "amount": 76138.11
     },
     {
       "type": "approved",
@@ -55246,7 +55737,18 @@
       "period": "2026-03",
       "month": "Mar",
       "year": "2026",
-      "amount": 1117211.43
+      "amount": 1041073.32
+    },
+    {
+      "type": "approved",
+      "sourceCostCenter": "UQ_A23",
+      "costCenter": "UQ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-03",
+      "month": "Mar",
+      "year": "2026",
+      "amount": 76138.11
     },
     {
       "type": "creditNotes",
@@ -56382,7 +56884,19 @@
       "month": "Apr",
       "year": "2026",
       "glName": "Communication & internet",
-      "amount": 1543.08
+      "amount": 1482.44
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "BGCG_23",
+      "costCenter": "GRLBG_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 60.64
     },
     {
       "type": "spent",
@@ -56431,7 +56945,19 @@
       "month": "Apr",
       "year": "2026",
       "glName": "Communication & internet",
-      "amount": 1725.17
+      "amount": 177.74
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "ROOP_23",
+      "costCenter": "GRLRO_23",
+      "region": "Basra",
+      "hub": "ROO Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 1547.43
     },
     {
       "type": "spent",
@@ -56784,7 +57310,19 @@
       "month": "Apr",
       "year": "2026",
       "glName": "Communication & internet",
-      "amount": 679.7
+      "amount": 412.49
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "Management",
+      "costCenter": "HO_SB_23",
+      "region": "Basra",
+      "hub": "Head Office",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "glName": "Communication & internet",
+      "amount": 267.21
     },
     {
       "type": "spent",
@@ -56856,7 +57394,19 @@
       "month": "Apr",
       "year": "2026",
       "glName": "Staff Salary & Compensation",
-      "amount": 214587
+      "amount": 131587
+    },
+    {
+      "type": "spent",
+      "sourceCostCenter": "Management",
+      "costCenter": "HO_SB_23",
+      "region": "Basra",
+      "hub": "Head Office",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "glName": "Staff Salary & Compensation",
+      "amount": 83000
     },
     {
       "type": "spent",
@@ -57025,7 +57575,18 @@
       "period": "2026-04",
       "month": "Apr",
       "year": "2026",
-      "amount": 235434.08
+      "amount": 135812.2
+    },
+    {
+      "type": "submitted",
+      "sourceCostCenter": "KAZ_A23",
+      "costCenter": "KAZ_23",
+      "region": "Basra",
+      "hub": "BGC Hub",
+      "period": "2026-04",
+      "month": "Apr",
+      "year": "2026",
+      "amount": 99621.88
     },
     {
       "type": "creditNotes",
@@ -57844,7 +58405,7 @@
       "year": "2026",
       "category": "Workshop",
       "issuedBy": "MWS_23",
-      "amount": 135000
+      "amount": 112500
     },
     {
       "type": "creditNotes",
@@ -58273,7 +58834,7 @@
     },
     {
       "label": "Credit note impact",
-      "value": 7338807.08,
+      "value": 7316307.08,
       "detail": "CN equals 6.8% of total spent."
     }
   ]
