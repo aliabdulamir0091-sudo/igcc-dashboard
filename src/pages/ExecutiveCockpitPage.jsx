@@ -503,12 +503,12 @@ function SimpleReportModal({ report, onClose }) {
             </tr>
             <tr>
               <td>Margin- Approved AFP</td>
-              <td>{formatWholeNumber(report.approvedMargin)}</td>
+              <td className={report.approvedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.approvedMargin)}</td>
               <td>{formatPercent(report.approvedMarginPercent)}</td>
             </tr>
             <tr>
               <td>Margin Submitted AFP</td>
-              <td>{formatWholeNumber(report.submittedMargin)}</td>
+              <td className={report.submittedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.submittedMargin)}</td>
               <td>{formatPercent(report.submittedMarginPercent)}</td>
             </tr>
             <tr className="is-section">

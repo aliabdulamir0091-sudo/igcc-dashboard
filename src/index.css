@@ -5050,17 +5050,18 @@ button {
   display: grid;
   place-items: center;
   padding: 22px;
-  background: rgba(15, 23, 42, 0.36);
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(3px);
 }
 
 .simple-report-sheet {
   width: min(520px, 96vw);
   max-height: min(820px, 92vh);
   overflow: auto;
-  border: 2px solid #15803d;
-  border-radius: 0;
-  background: #c9c9c9;
-  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.26);
+  border: 1px solid #0f766e;
+  border-radius: 10px;
+  background: #eef2f7;
+  box-shadow: 0 30px 90px rgba(15, 23, 42, 0.32);
 }
 
 .simple-report-header {
@@ -5072,20 +5073,20 @@ button {
   gap: 14px;
   align-items: start;
   padding: 12px;
-  border-bottom: 1px solid #9ca3af;
-  background: #d7d7d7;
+  border-bottom: 1px solid rgba(15, 118, 110, 0.22);
+  background: linear-gradient(135deg, #0b2b52, #0f766e);
 }
 
 .simple-report-header span,
 .simple-report-header p {
-  color: #374151;
+  color: rgba(255, 255, 255, 0.76);
   font-size: 12px;
   font-weight: 850;
 }
 
 .simple-report-header h3 {
   margin: 3px 0;
-  color: #020617;
+  color: #ffffff;
   font-size: 18px;
 }
 
@@ -5095,10 +5096,10 @@ button {
 
 .simple-report-header button {
   min-height: 34px;
-  border: 1px solid #6b7280;
-  border-radius: 4px;
-  background: #f8fafc;
-  color: #020617;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
   padding: 0 10px;
   font-size: 12px;
   font-weight: 900;
@@ -5113,14 +5114,16 @@ button {
 }
 
 .simple-report-table td {
-  height: 28px;
-  border: 1px solid #a9a9a9;
-  padding: 4px 7px;
+  height: 30px;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  padding: 5px 8px;
   vertical-align: middle;
 }
 
 .simple-report-table td:first-child {
   width: 62%;
+  background: #eef2f7;
   font-weight: 800;
 }
 
@@ -5132,13 +5135,26 @@ button {
 }
 
 .simple-report-table .is-total td {
-  background: #d4d700;
+  background: #facc15;
+  color: #1f2937;
   font-weight: 950;
 }
 
 .simple-report-table .is-section td {
-  height: 38px;
-  padding-top: 14px;
+  height: 40px;
+  padding-top: 13px;
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-weight: 950;
+}
+
+.simple-report-table .is-good {
+  color: #15803d;
+  font-weight: 950;
+}
+
+.simple-report-table .is-bad {
+  color: #dc2626;
   font-weight: 950;
 }
 
