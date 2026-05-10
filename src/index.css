@@ -5049,17 +5049,17 @@ button {
   z-index: 90;
   display: grid;
   place-items: center;
-  padding: 22px;
+  padding: 16px;
   background: rgba(15, 23, 42, 0.42);
   backdrop-filter: blur(3px);
 }
 
 .simple-report-sheet {
-  width: min(520px, 96vw);
-  max-height: min(820px, 92vh);
+  width: min(430px, 94vw);
+  max-height: min(760px, 92vh);
   overflow: auto;
   border: 1px solid #0f766e;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #eef2f7;
   box-shadow: 0 30px 90px rgba(15, 23, 42, 0.32);
 }
@@ -5072,7 +5072,7 @@ button {
   justify-content: space-between;
   gap: 14px;
   align-items: start;
-  padding: 12px;
+  padding: 10px 12px;
   border-bottom: 1px solid rgba(15, 118, 110, 0.22);
   background: linear-gradient(135deg, #0b2b52, #0f766e);
 }
@@ -5080,14 +5080,14 @@ button {
 .simple-report-header span,
 .simple-report-header p {
   color: rgba(255, 255, 255, 0.76);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 850;
 }
 
 .simple-report-header h3 {
   margin: 3px 0;
   color: #ffffff;
-  font-size: 18px;
+  font-size: 17px;
 }
 
 .simple-report-header p {
@@ -5095,7 +5095,7 @@ button {
 }
 
 .simple-report-header button {
-  min-height: 34px;
+  min-height: 32px;
   border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.12);
@@ -5110,26 +5110,26 @@ button {
   border-collapse: collapse;
   table-layout: fixed;
   color: #020617;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .simple-report-table td {
-  height: 30px;
+  height: 26px;
   border: 1px solid #d1d5db;
   background: #f8fafc;
-  padding: 5px 8px;
+  padding: 4px 7px;
   vertical-align: middle;
 }
 
 .simple-report-table td:first-child {
-  width: 62%;
+  width: 64%;
   background: #eef2f7;
   font-weight: 800;
 }
 
 .simple-report-table td:nth-child(2),
 .simple-report-table td:nth-child(3) {
-  width: 19%;
+  width: 18%;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -5141,8 +5141,8 @@ button {
 }
 
 .simple-report-table .is-section td {
-  height: 40px;
-  padding-top: 13px;
+  height: 34px;
+  padding-top: 10px;
   background: #dbeafe;
   color: #1e3a8a;
   font-weight: 950;

@@ -509,6 +509,7 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
   return {
     title: row.type === "costCenter" ? row.costCenter : row.costCenter,
     scope: row.type === "costCenter" ? row.hub : `${row.type.toUpperCase()} | ${members.size} cost centers`,
+    context: buildReportContext(filters),
     approvedAfp: row.approvedAfp,
     submittedAfp: row.submittedAfp,
     directCost: row.spentCost,
@@ -527,6 +528,17 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
   };
 };
 
+const buildReportContext = (filters = {}) => {
+  const parts = [];
+  if (filters.portfolio && filters.portfolio !== ALL_FILTER_VALUE) parts.push(filters.portfolio.replace("-", " "));
+  if (filters.hub && filters.hub !== ALL_FILTER_VALUE) parts.push(filters.hub);
+  if (filters.year && filters.year !== ALL_FILTER_VALUE) parts.push(`Year ${filters.year}`);
+  if (filters.period === "monthly" && filters.month && filters.month !== ALL_FILTER_VALUE) parts.push(filters.month);
+  if (filters.period === "quarterly" && filters.quarter && filters.quarter !== ALL_FILTER_VALUE) parts.push(filters.quarter);
+  if (!parts.length) return "All active dashboard filters";
+  return parts.join(" | ");
+};
+
 function SimpleReportModal({ report, onClose }) {
   if (!report) return null;
   const costRows = [
@@ -543,9 +555,9 @@ function SimpleReportModal({ report, onClose }) {
       <article className="simple-report-sheet" aria-label={`${report.title} simple report`} onClick={(event) => event.stopPropagation()}>
         <header className="simple-report-header">
           <div>
-            <span>Simple report</span>
+            <span>Construction Team Snapshot</span>
             <h3>{report.title}</h3>
-            <p>{report.scope}</p>
+            <p>{report.scope} | {report.context}</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Close report">Close</button>
         </header>
