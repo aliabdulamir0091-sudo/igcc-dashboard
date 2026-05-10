@@ -104,6 +104,16 @@ const createAllocatedSpentRow = (entry, costCenter, amount, hub) => ({
   isAllocatedGeneralCost: true,
 });
 
+const createAllocatedGeneralCreditNoteRow = (entry, costCenter, amount, hub) => ({
+  ...entry,
+  costCenter,
+  sourceCostCenter: entry.sourceCostCenter || entry.costCenter,
+  hub,
+  amount,
+  allocationSourceCostCenter: entry.costCenter,
+  isAllocatedGeneralCreditNote: true,
+});
+
 const createAllocatedManagementRow = (entry, costCenter, amount, hub) => ({
   ...entry,
   costCenter,
@@ -134,6 +144,7 @@ const allocateGeneralSpentCosts = (entries, filters = {}) => {
     if (!recipients.length) continue;
 
     const poolRows = periodRows.filter((entry) => entry.type === "spent" && entry.costCenter === rule.poolCostCenter);
+    const poolCreditNoteRows = periodRows.filter((entry) => entry.type === "creditNotes" && entry.costCenter === rule.poolCostCenter);
     const recipientRows = periodRows.filter((entry) => (
       entry.type === "spent"
       && recipients.includes(entry.costCenter)
@@ -161,6 +172,27 @@ const allocateGeneralSpentCosts = (entries, filters = {}) => {
           poolRow,
           basis.costCenter,
           (poolRow.amount || 0) * (basis.amount / basisTotal),
+          rule.hub,
+        ));
+      }
+    }
+
+    for (const poolCreditNoteRow of poolCreditNoteRows) {
+      const periodRecipientTotals = recipients.map((costCenter) => ({
+        costCenter,
+        amount: sumRows(recipientRows, (entry) => entry.period === poolCreditNoteRow.period && entry.costCenter === costCenter),
+      })).filter((row) => row.amount > 0);
+      const periodTotal = periodRecipientTotals.reduce((total, row) => total + row.amount, 0);
+      const basisRows = periodTotal > 0 ? periodRecipientTotals : fallbackTotals;
+      const basisTotal = periodTotal > 0 ? periodTotal : fallbackTotal;
+      if (!basisTotal) continue;
+
+      allocatedEntryIds.add(poolCreditNoteRow);
+      for (const basis of basisRows) {
+        allocatedRows.push(createAllocatedGeneralCreditNoteRow(
+          poolCreditNoteRow,
+          basis.costCenter,
+          (poolCreditNoteRow.amount || 0) * (basis.amount / basisTotal),
           rule.hub,
         ));
       }
@@ -208,7 +240,7 @@ const allocateGeneralSpentCosts = (entries, filters = {}) => {
   }
 
   return [
-    ...entries.filter((entry) => !(entry.type === "spent" && allocatedEntryIds.has(entry))),
+    ...entries.filter((entry) => !allocatedEntryIds.has(entry)),
     ...allocatedRows,
   ];
 };
