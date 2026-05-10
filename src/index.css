@@ -5043,6 +5043,105 @@ button {
   font-weight: 850;
 }
 
+.simple-report-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(15, 23, 42, 0.36);
+}
+
+.simple-report-sheet {
+  width: min(520px, 96vw);
+  max-height: min(820px, 92vh);
+  overflow: auto;
+  border: 2px solid #15803d;
+  border-radius: 0;
+  background: #c9c9c9;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.26);
+}
+
+.simple-report-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: start;
+  padding: 12px;
+  border-bottom: 1px solid #9ca3af;
+  background: #d7d7d7;
+}
+
+.simple-report-header span,
+.simple-report-header p {
+  color: #374151;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.simple-report-header h3 {
+  margin: 3px 0;
+  color: #020617;
+  font-size: 18px;
+}
+
+.simple-report-header p {
+  margin: 0;
+}
+
+.simple-report-header button {
+  min-height: 34px;
+  border: 1px solid #6b7280;
+  border-radius: 4px;
+  background: #f8fafc;
+  color: #020617;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.simple-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  color: #020617;
+  font-size: 13px;
+}
+
+.simple-report-table td {
+  height: 28px;
+  border: 1px solid #a9a9a9;
+  padding: 4px 7px;
+  vertical-align: middle;
+}
+
+.simple-report-table td:first-child {
+  width: 62%;
+  font-weight: 800;
+}
+
+.simple-report-table td:nth-child(2),
+.simple-report-table td:nth-child(3) {
+  width: 19%;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.simple-report-table .is-total td {
+  background: #d4d700;
+  font-weight: 950;
+}
+
+.simple-report-table .is-section td {
+  height: 38px;
+  padding-top: 14px;
+  font-weight: 950;
+}
+
 [data-theme="dark"] .executive-table-title h3 {
   color: var(--text);
 }
@@ -5060,6 +5159,10 @@ button {
 [data-theme="dark"] .executive-cost-center-table .is-subgroup-total td {
   background: #eab308 !important;
   color: #111827 !important;
+}
+
+[data-theme="dark"] .simple-report-sheet {
+  background: #bfbfbf;
 }
 
 .home-command-page {

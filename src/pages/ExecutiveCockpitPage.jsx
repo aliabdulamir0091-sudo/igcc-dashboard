@@ -1,7 +1,9 @@
+import { useState } from "react";
 import {
   ALL_FILTER_VALUE,
   COST_CENTER_HIERARCHY,
   ROO_SUB_HUBS,
+  getCostCenterFilterMembers,
   getCostCenterGroupValue,
   matchesCostCenterFilter,
 } from "../data/costCenterHierarchy";
@@ -228,6 +230,7 @@ const getCostCenterRow = (rowsByCostCenter, costCenter, hub) => {
       allocatedManagementCost: 0,
       receivedCn: 0,
       totalCost: 0,
+      submittedAfp: 0,
       approvedAfp: 0,
       profit: 0,
       margin: 0,
@@ -298,6 +301,8 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
       row.allocatedManagementCost += Number(entry.amount) || 0;
     } else if (entry.type === "creditNotes") {
       row.receivedCn += Number(entry.amount) || 0;
+    } else if (entry.type === "submitted") {
+      row.submittedAfp += Number(entry.amount) || 0;
     } else if (entry.type === "approved") {
       row.approvedAfp += Number(entry.amount) || 0;
     }
@@ -329,6 +334,7 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
     allocatedManagementCost: sum.allocatedManagementCost + row.allocatedManagementCost,
     receivedCn: sum.receivedCn + row.receivedCn,
     totalCost: sum.totalCost + row.totalCost,
+    submittedAfp: sum.submittedAfp + row.submittedAfp,
     approvedAfp: sum.approvedAfp + row.approvedAfp,
     profit: sum.profit + row.profit,
   }), {
@@ -337,6 +343,7 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
     allocatedManagementCost: 0,
     receivedCn: 0,
     totalCost: 0,
+    submittedAfp: 0,
     approvedAfp: 0,
     profit: 0,
   });
@@ -400,7 +407,139 @@ function SummaryValue({ value, isPercent = false, tone }) {
   );
 }
 
+const getRowCostCenters = (row, costCenterRows) => {
+  if (!row) return [];
+  if (row.type === "costCenter") return [row.costCenter];
+  if (row.type === "subgroup") {
+    const members = getCostCenterFilterMembers(row.filterCostCenter);
+    return members.length ? members : costCenterRows.filter((item) => item.hub === row.hub).map((item) => item.costCenter);
+  }
+  if (row.type === "hub") return costCenterRows.filter((item) => item.hub === row.hub).map((item) => item.costCenter);
+  if (row.type === "igcc") return costCenterRows.map((item) => item.costCenter);
+  return [];
+};
+
+const groupAmounts = (entries, getKey) => [...entries.reduce((map, entry) => {
+  const key = getKey(entry);
+  map.set(key, (map.get(key) || 0) + (Number(entry.amount) || 0));
+  return map;
+}, new Map())]
+  .map(([label, amount]) => ({ label, amount }))
+  .filter((item) => item.amount)
+  .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+
+const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, filters) => {
+  if (!row) return null;
+  const members = new Set(getRowCostCenters(row, costCenterRows));
+  const rowsInScope = (entries, type) => entries.filter((entry) => (
+    entry.type === type
+    && members.has(normalizeCostCenter(entry.costCenter))
+    && matchesFilters(entry, filters, { ignoreCostCenter: true })
+  ));
+  const rawSpentRows = rowsInScope(rawEntries, "spent")
+    .filter((entry) => (
+      !GENERAL_POOL_COST_CENTERS.has(entry.costCenter)
+      && !HIDDEN_COST_CENTER_ROWS.has(normalizeCostCenter(entry.costCenter))
+      && entry.sourceCostCenter !== MANAGEMENT_SOURCE_COST_CENTER
+    ));
+  const cnRows = rowsInScope(allocatedEntries, "creditNotes");
+
+  const approvedMargin = row.approvedAfp - row.totalCost;
+  const submittedMargin = row.submittedAfp - row.totalCost;
+
+  return {
+    title: row.type === "costCenter" ? row.costCenter : row.costCenter,
+    scope: row.type === "costCenter" ? row.hub : `${row.type.toUpperCase()} | ${members.size} cost centers`,
+    approvedAfp: row.approvedAfp,
+    submittedAfp: row.submittedAfp,
+    directCost: row.spentCost,
+    generalHubCost: row.allocatedGeneralCost,
+    managementCost: row.allocatedManagementCost,
+    receivedCn: row.receivedCn,
+    totalCost: row.totalCost,
+    approvedMargin,
+    approvedMarginPercent: getShare(approvedMargin, row.approvedAfp),
+    submittedMargin,
+    submittedMarginPercent: getShare(submittedMargin, row.submittedAfp),
+    spendBreakdown: groupAmounts(rawSpentRows, (entry) => entry.glName || "Unclassified"),
+    cnBreakdown: groupAmounts(cnRows, (entry) => entry.category || entry.issuedBy || "Credit Note"),
+  };
+};
+
+function SimpleReportModal({ report, onClose }) {
+  if (!report) return null;
+  const costRows = [
+    ["Approved AFP", report.approvedAfp],
+    ["Submitted AFP", report.submittedAfp],
+    ["Direct Cost from Spent report", report.directCost],
+    ["General Hub Cost", report.generalHubCost],
+    ["Management Cost", report.managementCost],
+    ["CN", report.receivedCn],
+  ];
+  return (
+    <div className="simple-report-backdrop" onClick={onClose}>
+      <article className="simple-report-sheet" aria-label={`${report.title} simple report`} onClick={(event) => event.stopPropagation()}>
+        <header className="simple-report-header">
+          <div>
+            <span>Simple report</span>
+            <h3>{report.title}</h3>
+            <p>{report.scope}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close report">Close</button>
+        </header>
+        <table className="simple-report-table">
+          <tbody>
+            {costRows.map(([label, value]) => (
+              <tr key={label}>
+                <td>{label}</td>
+                <td>{formatWholeNumber(value)}</td>
+                <td />
+              </tr>
+            ))}
+            <tr className="is-total">
+              <td>Total Cost</td>
+              <td>{formatWholeNumber(report.totalCost)}</td>
+              <td />
+            </tr>
+            <tr>
+              <td>Margin- Approved AFP</td>
+              <td>{formatWholeNumber(report.approvedMargin)}</td>
+              <td>{formatPercent(report.approvedMarginPercent)}</td>
+            </tr>
+            <tr>
+              <td>Margin Submitted AFP</td>
+              <td>{formatWholeNumber(report.submittedMargin)}</td>
+              <td>{formatPercent(report.submittedMarginPercent)}</td>
+            </tr>
+            <tr className="is-section">
+              <td colSpan={3}>Spent Report Cost Breakdown</td>
+            </tr>
+            {(report.spendBreakdown.length ? report.spendBreakdown : [{ label: "No spent detail", amount: 0 }]).map((item) => (
+              <tr key={`spent-${item.label}`}>
+                <td>{item.label}</td>
+                <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
+                <td />
+              </tr>
+            ))}
+            <tr className="is-section">
+              <td colSpan={3}>Received CN Breakdown</td>
+            </tr>
+            {(report.cnBreakdown.length ? report.cnBreakdown : [{ label: "No CN detail", amount: 0 }]).map((item) => (
+              <tr key={`cn-${item.label}`}>
+                <td>{item.label}</td>
+                <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
+                <td />
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </article>
+    </div>
+  );
+}
+
 export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters }) {
+  const [reportRow, setReportRow] = useState(null);
   const isYearFiltered = hasSelectedYear(filters);
   const year = getSelectedYear(filters);
   const quarters = buildQuarters(year);
@@ -411,6 +550,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
   const { byQuarter, yearTotal } = buildIgccSummary(summaryEntries, filters, year, quarters);
   const costCenterRows = buildCostCenterSummary(costCenterEntries, rawEntries, costCenterFilters);
   const hubCostCenterRows = buildHubCostCenterRows(costCenterRows);
+  const selectedReport = buildSimpleReport(reportRow, costCenterRows, costCenterEntries, rawEntries, costCenterFilters);
   const costCenterYearLabel = isYearFiltered ? `Year ${year}` : "Years 2025 & 2026";
   const rows = [
     { label: "Total Revenue (Approved AFP)", key: "revenue", highlight: true },
@@ -421,6 +561,9 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
     { label: "Net Profit", key: "netProfit", highlight: true },
   ];
   const openDetailRow = (row) => {
+    setReportRow(row);
+  };
+  const navigateDetailRow = (row) => {
     if (!onNavigate || !onApplyFilters) return;
     const nextFilters = {
       ...filters,
@@ -520,6 +663,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                       openDetailRow(row);
                     }
                   }}
+                  onDoubleClick={() => navigateDetailRow(row)}
                 >
                   <td>{row.type === "costCenter" ? <span>{row.costCenter}</span> : row.costCenter}</td>
                   <SummaryValue value={row.spentCost} />
@@ -540,6 +684,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
           </table>
         </div>
       </article>
+      <SimpleReportModal report={selectedReport} onClose={() => setReportRow(null)} />
     </section>
   );
 }
