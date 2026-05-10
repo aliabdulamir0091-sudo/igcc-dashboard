@@ -638,9 +638,11 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 <th>Management Cost</th>
                 <th>Received CN</th>
                 <th>Total Cost</th>
+                <th>Submitted AFP</th>
                 <th>Approved AFP</th>
                 <th>Profit</th>
                 <th>Margin %</th>
+                <th>Submitted Margin %</th>
               </tr>
             </thead>
             <tbody>
@@ -671,13 +673,15 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                   <SummaryValue value={row.allocatedManagementCost} />
                   <SummaryValue value={row.receivedCn} />
                   <SummaryValue value={row.totalCost} />
+                  <SummaryValue value={row.submittedAfp} />
                   <SummaryValue value={row.approvedAfp} />
                   <SummaryValue value={row.profit} />
                   <SummaryValue value={row.margin} isPercent />
+                  <SummaryValue value={getShare(row.submittedAfp - row.totalCost, row.submittedAfp)} isPercent />
                 </tr>
               )) : (
                 <tr>
-                  <td className="executive-empty-row" colSpan={9}>No cost center data for the selected filters.</td>
+                  <td className="executive-empty-row" colSpan={11}>No cost center data for the selected filters.</td>
                 </tr>
               )}
             </tbody>
