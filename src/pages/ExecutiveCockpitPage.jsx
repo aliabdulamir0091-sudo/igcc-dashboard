@@ -500,7 +500,8 @@ const groupAmounts = (entries, getKey) => [...entries.reduce((map, entry) => {
 
 const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, filters) => {
   if (!row) return null;
-  const members = new Set(getRowCostCenters(row, costCenterRows));
+  const memberList = getRowCostCenters(row, costCenterRows);
+  const members = new Set(memberList);
   const rowsInScope = (entries, type) => entries.filter((entry) => (
     entry.type === type
     && members.has(normalizeCostCenter(entry.costCenter))
@@ -515,6 +516,9 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
   const cnRows = rowsInScope(allocatedEntries, "creditNotes");
   const period = getReportPeriod(filters, rawEntries);
   const history = buildReportHistory([...members], allocatedEntries, rawEntries, filters, period);
+  const memberDetails = row.type === "costCenter"
+    ? []
+    : buildGroupedReportDetails(memberList, costCenterRows, allocatedEntries, rawEntries, filters);
 
   const approvedMargin = row.approvedAfp - row.totalCost;
   const submittedMargin = row.submittedAfp - row.totalCost;
@@ -544,6 +548,7 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
     cnBreakdown: groupAmounts(cnRows.filter((entry) => !entry.isAllocatedGeneralCreditNote), (entry) => entry.category || entry.issuedBy || "Credit Note"),
     generalCnBreakdown: groupAmounts(cnRows.filter((entry) => entry.isAllocatedGeneralCreditNote), (entry) => entry.allocationSourceCostCenter || "General CN Reallocated"),
     history,
+    memberDetails,
     topCost,
     insights: buildReportInsights({
       approvedAfp: row.approvedAfp,
@@ -554,6 +559,34 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
     }),
   };
 };
+
+const buildGroupedReportDetails = (memberList, costCenterRows, allocatedEntries, rawEntries, filters) => memberList
+  .map((costCenter) => {
+    const summary = costCenterRows.find((row) => row.costCenter === costCenter);
+    if (!summary) return null;
+    const rawRows = rawEntries.filter((entry) => (
+      entry.costCenter === costCenter
+      && matchesFilters(entry, filters, { ignoreCostCenter: true })
+    ));
+    const rows = allocatedEntries.filter((entry) => (
+      entry.costCenter === costCenter
+      && matchesFilters(entry, filters, { ignoreCostCenter: true })
+    ));
+    const spentRows = rawRows.filter((entry) => (
+      entry.type === "spent"
+      && !GENERAL_POOL_COST_CENTERS.has(entry.costCenter)
+      && !HIDDEN_COST_CENTER_ROWS.has(normalizeCostCenter(entry.costCenter))
+      && entry.sourceCostCenter !== MANAGEMENT_SOURCE_COST_CENTER
+    ));
+    const cnRows = rows.filter((entry) => entry.type === "creditNotes");
+    return {
+      ...summary,
+      spentBreakdown: groupAmounts(spentRows, (entry) => entry.glName || "Unclassified"),
+      cnBreakdown: groupAmounts(cnRows.filter((entry) => !entry.isAllocatedGeneralCreditNote), (entry) => entry.category || entry.issuedBy || "Credit Note"),
+      generalCnBreakdown: groupAmounts(cnRows.filter((entry) => entry.isAllocatedGeneralCreditNote), (entry) => entry.allocationSourceCostCenter || "General CN Reallocated"),
+    };
+  })
+  .filter(Boolean);
 
 const getReportPeriod = (filters = {}, entries = []) => {
   if (filters.period === "monthly" && filters.year && filters.year !== ALL_FILTER_VALUE && filters.month && filters.month !== ALL_FILTER_VALUE) {
@@ -754,7 +787,7 @@ function SimpleReportModal({ report, onClose }) {
   ];
   return (
     <div className="simple-report-backdrop" onClick={onClose}>
-      <article className="simple-report-sheet" aria-label={`${report.title} simple report`} onClick={(event) => event.stopPropagation()}>
+      <article className={`simple-report-sheet ${report.memberDetails.length ? "has-group-detail" : ""}`} aria-label={`${report.title} simple report`} onClick={(event) => event.stopPropagation()}>
         <header className="pnl-modern-header">
           <div className="pnl-modern-brand">
             <img src={igccLogo} alt="IGCC" />
@@ -885,6 +918,70 @@ function SimpleReportModal({ report, onClose }) {
             <span>Currency: USD</span>
           </footer>
         </div>
+        {report.memberDetails.length ? (
+          <section className="group-detail-page">
+            <header className="group-detail-header">
+              <div>
+                <span>Cost Center Detail Breakdown</span>
+                <h3>{report.title}</h3>
+                <p>{report.periodLabel} | {report.memberDetails.length} cost centers | USD</p>
+              </div>
+              <strong>Audit view</strong>
+            </header>
+            <div className="group-detail-grid">
+              {report.memberDetails.map((item) => {
+                const cnTotal = item.receivedCn + item.allocatedGeneralCn;
+                const spentRows = item.spentBreakdown.slice(0, 5);
+                const cnRows = [
+                  ...item.cnBreakdown,
+                  ...item.generalCnBreakdown.map((row) => ({ ...row, label: `General CN - ${row.label}` })),
+                ].slice(0, 5);
+                return (
+                  <article className="cost-center-audit-card" key={item.costCenter}>
+                    <header>
+                      <strong>{item.costCenter}</strong>
+                      <span>{item.hub}</span>
+                    </header>
+                    <div className="audit-metric-grid">
+                      <p><span>Submitted AFP</span><b>{formatWholeNumber(item.submittedAfp)}</b></p>
+                      <p><span>Approved AFP</span><b>{formatWholeNumber(item.approvedAfp)}</b></p>
+                      <p><span>Direct Spent</span><b>{formatWholeNumber(item.spentCost)}</b></p>
+                      <p><span>General Cost</span><b>{formatWholeNumber(item.allocatedGeneralCost)}</b></p>
+                      <p><span>Management</span><b>{formatWholeNumber(item.allocatedManagementCost)}</b></p>
+                      <p><span>Total CN</span><b>{formatWholeNumber(cnTotal)}</b></p>
+                      <p className="is-total"><span>Total Cost</span><b>{formatWholeNumber(item.totalCost)}</b></p>
+                      <p className={item.profit < 0 ? "is-loss" : "is-profit"}><span>Profit / Margin</span><b>{formatWholeNumber(item.profit)} | {formatPercent(item.margin)}</b></p>
+                    </div>
+                    <div className="audit-breakdown-grid">
+                      <section>
+                        <h4>Spent Report Breakdown</h4>
+                        {(spentRows.length ? spentRows : [{ label: "No spent detail", amount: 0 }]).map((row) => (
+                          <p key={`spent-${item.costCenter}-${row.label}`}>
+                            <span>{row.label}</span>
+                            <strong>{row.amount ? formatWholeNumber(row.amount) : "-"}</strong>
+                          </p>
+                        ))}
+                      </section>
+                      <section>
+                        <h4>CN Breakdown</h4>
+                        {(cnRows.length ? cnRows : [{ label: "No CN detail", amount: 0 }]).map((row) => (
+                          <p key={`cn-${item.costCenter}-${row.label}`}>
+                            <span>{row.label}</span>
+                            <strong>{row.amount ? formatWholeNumber(row.amount) : "-"}</strong>
+                          </p>
+                        ))}
+                      </section>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+            <footer className="pnl-modern-footer">
+              <span>Grouped report detail page for construction review</span>
+              <span>Currency: USD</span>
+            </footer>
+          </section>
+        ) : null}
       </article>
     </div>
   );
