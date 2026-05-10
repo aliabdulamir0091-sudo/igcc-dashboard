@@ -3,13 +3,13 @@
     "spentWorkbook": "C:/Users/asus/OneDrive/Desktop/Spent Report/Master Spent Report.xlsx",
     "revenueWorkbook": "C:/Users/asus/OneDrive/Desktop/Spent Report/Revenue .xlsx",
     "creditNoteFolder": "C:/Users/asus/OneDrive/Desktop/Spent Report/Credit Note",
-    "generatedAt": "2026-05-10T08:25:54.904Z"
+    "generatedAt": "2026-05-10T08:31:48.470Z"
   },
   "totals": {
     "spent": 107966844.29,
     "submitted": 125061246.87,
     "approved": 120575331.46,
-    "creditNotes": 7316307.08,
+    "creditNotes": 6507185.63,
     "netMovement": 12608487.17,
     "afpGap": 4485915.41
   },
@@ -20,7 +20,7 @@
     "spent": 6510848.1,
     "submitted": 7237995.48,
     "approved": 4863961.97,
-    "creditNotes": 1595742.9,
+    "creditNotes": 786621.45,
     "netMovement": -1646886.13,
     "afpGap": 2374033.51
   },
@@ -197,7 +197,7 @@
       "spent": 6510848.1,
       "submitted": 7237995.48,
       "approved": 4863961.97,
-      "creditNotes": 1595742.9,
+      "creditNotes": 786621.45,
       "netMovement": -1646886.13,
       "afpGap": 2374033.51
     }
@@ -217,7 +217,7 @@
       "spent": 20667638.21,
       "submitted": 30818323.61,
       "approved": 30815137.55,
-      "creditNotes": 1433129.44,
+      "creditNotes": 1227365.59,
       "netMovement": 10147499.34,
       "afpGap": 3186.06
     },
@@ -235,7 +235,7 @@
       "spent": 10782285.21,
       "submitted": 0,
       "approved": 0,
-      "creditNotes": 60954.02,
+      "creditNotes": 52295.9,
       "netMovement": -10782285.21,
       "afpGap": 0
     },
@@ -253,7 +253,7 @@
       "spent": 10055399.95,
       "submitted": 15557371.51,
       "approved": 15555052.05,
-      "creditNotes": 2066807.86,
+      "creditNotes": 1928035.6,
       "netMovement": 5499652.1,
       "afpGap": 2319.46
     },
@@ -271,7 +271,7 @@
       "spent": 9543799.29,
       "submitted": 0,
       "approved": 0,
-      "creditNotes": 33694.61,
+      "creditNotes": 27203.67,
       "netMovement": -9543799.29,
       "afpGap": 0
     },
@@ -289,7 +289,7 @@
       "spent": 5160410.3,
       "submitted": 7933061.57,
       "approved": 7164071.07,
-      "creditNotes": 828289.39,
+      "creditNotes": 731876.98,
       "netMovement": 2003660.77,
       "afpGap": 768990.5
     },
@@ -307,7 +307,7 @@
       "spent": 4584346.95,
       "submitted": 4254380.48,
       "approved": 4254380.48,
-      "creditNotes": 199255.94,
+      "creditNotes": 182197.04,
       "netMovement": -329966.47,
       "afpGap": 0
     },
@@ -325,7 +325,7 @@
       "spent": 4093834.15,
       "submitted": 2231119.08,
       "approved": 2064751.93,
-      "creditNotes": 44570.03,
+      "creditNotes": 42985.07,
       "netMovement": -2029082.22,
       "afpGap": 166367.15
     },
@@ -343,7 +343,7 @@
       "spent": 4093065.57,
       "submitted": 0,
       "approved": 0,
-      "creditNotes": 57169.66,
+      "creditNotes": 57088.86,
       "netMovement": -4093065.57,
       "afpGap": 0
     },
@@ -361,7 +361,7 @@
       "spent": 3945796.43,
       "submitted": 5167686.44,
       "approved": 5100062.77,
-      "creditNotes": 368809.27,
+      "creditNotes": 329190.7,
       "netMovement": 1154266.34,
       "afpGap": 67623.67
     },
@@ -379,7 +379,7 @@
       "spent": 3234943.43,
       "submitted": 3285638.62,
       "approved": 3139391.52,
-      "creditNotes": 57726.93,
+      "creditNotes": 50934.74,
       "netMovement": -95551.91,
       "afpGap": 146247.1
     },
@@ -397,7 +397,7 @@
       "spent": 2949943.13,
       "submitted": 308483.05,
       "approved": 308483.05,
-      "creditNotes": 387782.19,
+      "creditNotes": 359625.14,
       "netMovement": -2641460.08,
       "afpGap": 0
     },
@@ -415,7 +415,7 @@
       "spent": 2792064.42,
       "submitted": 2605379.65,
       "approved": 2574281.53,
-      "creditNotes": 106039.05,
+      "creditNotes": 82045.12,
       "netMovement": -217782.89,
       "afpGap": 31098.12
     },
@@ -433,7 +433,7 @@
       "spent": 2648802.3,
       "submitted": 11755393.22,
       "approved": 11343546.07,
-      "creditNotes": 226771.58,
+      "creditNotes": 200010.71,
       "netMovement": 8694743.77,
       "afpGap": 411847.15
     },
@@ -469,7 +469,7 @@
       "spent": 2137560.96,
       "submitted": 3017163.02,
       "approved": 2697215.48,
-      "creditNotes": 63712.1,
+      "creditNotes": 58128.07,
       "netMovement": 559654.52,
       "afpGap": 319947.54
     },
@@ -523,7 +523,7 @@
       "spent": 1669919.03,
       "submitted": 2538526.85,
       "approved": 1760694.47,
-      "creditNotes": 509359.95,
+      "creditNotes": 369827.91,
       "netMovement": 90775.44,
       "afpGap": 777832.38
     },
@@ -541,7 +541,7 @@
       "spent": 1659454.27,
       "submitted": 2422700.48,
       "approved": 2371395.95,
-      "creditNotes": 152256.26,
+      "creditNotes": 146342.03,
       "netMovement": 711941.68,
       "afpGap": 51304.53
     },
@@ -559,7 +559,7 @@
       "spent": 1634720.99,
       "submitted": 3473432.34,
       "approved": 2937361.66,
-      "creditNotes": 113727.92,
+      "creditNotes": 103373.77,
       "netMovement": 1302640.67,
       "afpGap": 536070.68
     },
@@ -577,7 +577,7 @@
       "spent": 1487662.61,
       "submitted": 2118545.58,
       "approved": 1876192.37,
-      "creditNotes": 116110.96,
+      "creditNotes": 105306.32,
       "netMovement": 388529.76,
       "afpGap": 242353.21
     },
@@ -595,7 +595,7 @@
       "spent": 1206135.74,
       "submitted": 1569511.15,
       "approved": 1569511.15,
-      "creditNotes": 9409.79,
+      "creditNotes": 7408.41,
       "netMovement": 363375.41,
       "afpGap": 0
     },
@@ -631,7 +631,7 @@
       "spent": 1078002.91,
       "submitted": 1165856.11,
       "approved": 1165856.11,
-      "creditNotes": 14748.31,
+      "creditNotes": 12941.88,
       "netMovement": 87853.2,
       "afpGap": 0
     },
@@ -649,7 +649,7 @@
       "spent": 686115.03,
       "submitted": 1356882.58,
       "approved": 1356882.58,
-      "creditNotes": 13570.4,
+      "creditNotes": 13215.04,
       "netMovement": 670767.55,
       "afpGap": 0
     },
@@ -667,7 +667,7 @@
       "spent": 681248.37,
       "submitted": 1845720.17,
       "approved": 1844702.7,
-      "creditNotes": 4256.64,
+      "creditNotes": 4157.47,
       "netMovement": 1163454.33,
       "afpGap": 1017.47
     },
@@ -685,7 +685,7 @@
       "spent": 664199.93,
       "submitted": 0,
       "approved": 0,
-      "creditNotes": 43177.14,
+      "creditNotes": 40632.09,
       "netMovement": -664199.93,
       "afpGap": 0
     },
@@ -703,7 +703,7 @@
       "spent": 633608.35,
       "submitted": 1577357.99,
       "approved": 1577357.99,
-      "creditNotes": 13121.35,
+      "creditNotes": 11789.73,
       "netMovement": 943749.64,
       "afpGap": 0
     },
@@ -757,7 +757,7 @@
       "spent": 335326.38,
       "submitted": 730648.61,
       "approved": 724123.51,
-      "creditNotes": 10708.55,
+      "creditNotes": 9960.91,
       "netMovement": 388797.13,
       "afpGap": 6525.1
     },
@@ -775,7 +775,7 @@
       "spent": 316977.74,
       "submitted": 497815,
       "approved": 490957,
-      "creditNotes": 14633.12,
+      "creditNotes": 14351.84,
       "netMovement": 173979.26,
       "afpGap": 6858
     },
@@ -793,7 +793,7 @@
       "spent": 312069.19,
       "submitted": 1167277.88,
       "approved": 1167277.88,
-      "creditNotes": 14713.9,
+      "creditNotes": 14696.12,
       "netMovement": 855208.69,
       "afpGap": 0
     },
@@ -811,7 +811,7 @@
       "spent": 285549.03,
       "submitted": 48838.2,
       "approved": 48838.2,
-      "creditNotes": 93958.45,
+      "creditNotes": 83596.79,
       "netMovement": -236710.83,
       "afpGap": 0
     },
@@ -829,7 +829,7 @@
       "spent": 227890.65,
       "submitted": 0,
       "approved": 0,
-      "creditNotes": 33730.36,
+      "creditNotes": 29094.11,
       "netMovement": -227890.65,
       "afpGap": 0
     },
@@ -847,7 +847,7 @@
       "spent": 100046.87,
       "submitted": 470294.36,
       "approved": 470294.36,
-      "creditNotes": 1028.8,
+      "creditNotes": 935.46,
       "netMovement": 370247.49,
       "afpGap": 0
     },
@@ -919,7 +919,7 @@
       "spent": 20047.21,
       "submitted": 0,
       "approved": 0,
-      "creditNotes": 12164.2,
+      "creditNotes": 6423.88,
       "netMovement": -20047.21,
       "afpGap": 0
     },
@@ -1008,7 +1008,7 @@
       "spent": 0,
       "submitted": 0,
       "approved": 0,
-      "creditNotes": 50126.83,
+      "creditNotes": 46256.53,
       "netMovement": 0,
       "afpGap": 0
     },
@@ -1027,7 +1027,7 @@
       "spent": 0,
       "submitted": 0,
       "approved": 0,
-      "creditNotes": 11599.71,
+      "creditNotes": 8699.78,
       "netMovement": 0,
       "afpGap": 0
     }
@@ -1140,76 +1140,69 @@
     }
   ],
   "creditNotes": {
-    "total": 7316307.08,
-    "shareOfSpent": 6.78,
+    "total": 6507185.63,
+    "shareOfSpent": 6.03,
     "byCostCenter": [
       {
-        "amount": 2181182.86,
-        "count": 41,
+        "amount": 2042410.6,
+        "count": 36,
         "costCenter": "PWRI2_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 1442789.44,
-        "count": 39,
+        "amount": 1237025.59,
+        "count": 34,
         "costCenter": "GRLTOT_25",
         "hub": "Total Hub",
         "region": "Basra"
       },
       {
-        "amount": 836421.14,
-        "count": 29,
+        "amount": 740008.73,
+        "count": 26,
         "costCenter": "UQ_23",
         "hub": "BGC Hub",
         "region": "Basra"
       },
       {
-        "amount": 561842.19,
-        "count": 19,
+        "amount": 533685.14,
+        "count": 17,
         "costCenter": "MWS_23",
         "hub": "Camp",
         "region": "Basra"
       },
       {
-        "amount": 513910.85,
-        "count": 29,
+        "amount": 374378.81,
+        "count": 25,
         "costCenter": "MWP_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 378609.27,
-        "count": 29,
+        "amount": 338990.7,
+        "count": 26,
         "costCenter": "KAZ_23",
         "hub": "BGC Hub",
         "region": "Basra"
       },
       {
-        "amount": 256771.58,
-        "count": 29,
+        "amount": 230010.71,
+        "count": 25,
         "costCenter": "OHTL_25",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 232255.94,
-        "count": 27,
+        "amount": 215197.04,
+        "count": 24,
         "costCenter": "FLWLN_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 203696.26,
-        "count": 36,
+        "amount": 197782.03,
+        "count": 32,
         "costCenter": "SPAS_23",
-        "hub": "BGC Hub",
-        "region": "Basra"
-      },
-      {
-        "amount": 128110.96,
-        "count": 13,
-        "costCenter": "ZBR_23",
         "hub": "BGC Hub",
         "region": "Basra"
       },
@@ -1221,24 +1214,17 @@
         "region": "Basra"
       },
       {
-        "amount": 117854.17,
-        "count": 26,
-        "costCenter": "BNGL-25",
+        "amount": 117306.32,
+        "count": 12,
+        "costCenter": "ZBR_23",
         "hub": "BGC Hub",
         "region": "Basra"
       },
       {
-        "amount": 112135.05,
-        "count": 25,
-        "costCenter": "E&I-MAJ_24",
-        "hub": "ROO Hub",
-        "region": "Basra"
-      },
-      {
-        "amount": 104127.11,
-        "count": 22,
-        "costCenter": "CPSs_23",
-        "hub": "ROO Hub",
+        "amount": 107500.02,
+        "count": 23,
+        "costCenter": "BNGL-25",
+        "hub": "BGC Hub",
         "region": "Basra"
       },
       {
@@ -1249,66 +1235,66 @@
         "region": "Basra"
       },
       {
-        "amount": 70650.83,
-        "count": 14,
+        "amount": 93765.45,
+        "count": 20,
+        "costCenter": "CPSs_23",
+        "hub": "ROO Hub",
+        "region": "Basra"
+      },
+      {
+        "amount": 88141.12,
+        "count": 21,
+        "costCenter": "E&I-MAJ_24",
+        "hub": "ROO Hub",
+        "region": "Basra"
+      },
+      {
+        "amount": 66780.53,
+        "count": 13,
         "costCenter": "PWT PWRI1_23",
         "hub": "Unmapped",
         "region": "Unmapped"
       },
       {
-        "amount": 66848.1,
-        "count": 22,
+        "amount": 61264.07,
+        "count": 20,
         "costCenter": "EIMNT_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 63976.62,
-        "count": 17,
-        "costCenter": "HO_SB_23",
-        "hub": "Head Office",
-        "region": "Basra"
-      },
-      {
-        "amount": 60504.31,
-        "count": 24,
-        "costCenter": "EISP_23",
-        "hub": "ROO Hub",
-        "region": "Basra"
-      },
-      {
-        "amount": 58570.03,
-        "count": 16,
-        "costCenter": "PWRI_23",
-        "hub": "ROO Hub",
-        "region": "Basra"
-      },
-      {
-        "amount": 57250.46,
-        "count": 14,
+        "amount": 57169.66,
+        "count": 13,
         "costCenter": "GRLRO_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 45722.19,
-        "count": 10,
-        "costCenter": "GRLBG_23",
-        "hub": "BGC Hub",
-        "region": "Basra"
-      },
-      {
-        "amount": 38366.61,
-        "count": 9,
-        "costCenter": "RTPFL_23",
+        "amount": 56985.07,
+        "count": 15,
+        "costCenter": "PWRI_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 36007.85,
-        "count": 20,
-        "costCenter": "CmpSB_23",
-        "hub": "Camp",
+        "amount": 55318.5,
+        "count": 15,
+        "costCenter": "HO_SB_23",
+        "hub": "Head Office",
+        "region": "Basra"
+      },
+      {
+        "amount": 53712.12,
+        "count": 21,
+        "costCenter": "EISP_23",
+        "hub": "ROO Hub",
+        "region": "Basra"
+      },
+      {
+        "amount": 43177.14,
+        "count": 9,
+        "costCenter": "GRLBG_23",
+        "hub": "BGC Hub",
         "region": "Basra"
       },
       {
@@ -1319,78 +1305,92 @@
         "region": "Basra"
       },
       {
-        "amount": 28433.9,
-        "count": 10,
+        "amount": 33730.36,
+        "count": 8,
+        "costCenter": "RTPFL_23",
+        "hub": "ROO Hub",
+        "region": "Basra"
+      },
+      {
+        "amount": 29516.91,
+        "count": 17,
+        "costCenter": "CmpSB_23",
+        "hub": "Camp",
+        "region": "Basra"
+      },
+      {
+        "amount": 28416.12,
+        "count": 9,
         "costCenter": "EIESP_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 25833.12,
-        "count": 16,
+        "amount": 25551.84,
+        "count": 14,
         "costCenter": "CVMNT_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 16554.74,
-        "count": 12,
+        "amount": 14748.31,
+        "count": 11,
         "costCenter": "WOD_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 14499.64,
-        "count": 5,
-        "costCenter": "DS-01SP_24",
-        "hub": "ROO Hub",
-        "region": "Basra"
-      },
-      {
-        "amount": 13991.97,
-        "count": 18,
-        "costCenter": "QAWPT_23",
-        "hub": "ROO Hub",
-        "region": "Basra"
-      },
-      {
-        "amount": 13925.76,
-        "count": 16,
+        "amount": 13570.4,
+        "count": 15,
         "costCenter": "MPSP_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 12521.2,
-        "count": 8,
-        "costCenter": "GRL-VLV",
-        "hub": "Valves Hub",
+        "amount": 12660.35,
+        "count": 16,
+        "costCenter": "QAWPT_23",
+        "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 11456.19,
-        "count": 12,
+        "amount": 11599.71,
+        "count": 4,
+        "costCenter": "DS-01SP_24",
+        "hub": "ROO Hub",
+        "region": "Basra"
+      },
+      {
+        "amount": 10708.55,
+        "count": 11,
         "costCenter": "MPTAR_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 10465.79,
-        "count": 18,
+        "amount": 8464.41,
+        "count": 15,
         "costCenter": "FFF_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 4355.81,
-        "count": 12,
+        "amount": 6780.88,
+        "count": 6,
+        "costCenter": "GRL-VLV",
+        "hub": "Valves Hub",
+        "region": "Basra"
+      },
+      {
+        "amount": 4256.64,
+        "count": 11,
         "costCenter": "MPMNT_23",
         "hub": "ROO Hub",
         "region": "Basra"
       },
       {
-        "amount": 1122.14,
-        "count": 10,
+        "amount": 1028.8,
+        "count": 9,
         "costCenter": "EITAR_23",
         "hub": "ROO Hub",
         "region": "Basra"
@@ -2176,968 +2176,6 @@
         "month": "Apr",
         "year": "2026",
         "amount": 45000,
-        "category": "Workshop",
-        "issuedBy": "MWS_23"
-      },
-      {
-        "sourceCostCenter": "QAWPT_23",
-        "costCenter": "QAWPT_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 870.62,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "QAWPT_23",
-        "costCenter": "QAWPT_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 461,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "MWP_23",
-        "costCenter": "MWP_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 4550.9,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "MWP_23",
-        "costCenter": "MWP_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 3898.85,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "MWP_23",
-        "costCenter": "MWP_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 847,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "MWP_23",
-        "costCenter": "MWP_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 130235.29,
-        "category": "Workshop",
-        "issuedBy": "MWS_23"
-      },
-      {
-        "sourceCostCenter": "FFF_23",
-        "costCenter": "FFF_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 1056,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "FFF_23",
-        "costCenter": "FFF_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 495.38,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "FFF_23",
-        "costCenter": "FFF_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 450,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "CPSs_23",
-        "costCenter": "CPSs_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 10168.66,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "CPSs_23",
-        "costCenter": "CPSs_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 193,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "FLWLN_23",
-        "costCenter": "FLWLN_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 2380.8,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "FLWLN_23",
-        "costCenter": "FLWLN_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 13344.1,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "FLWLN_23",
-        "costCenter": "FLWLN_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 1334,
-        "category": "Materials",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "RTPFL_23",
-        "costCenter": "RTPFL_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 4636.25,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "CmpSB_23",
-        "costCenter": "CmpSB_23",
-        "region": "Basra",
-        "hub": "Camp",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 2313.24,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "CmpSB_23",
-        "costCenter": "CmpSB_23",
-        "region": "Basra",
-        "hub": "Camp",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 3754.7,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "CmpSB_23",
-        "costCenter": "CmpSB_23",
-        "region": "Basra",
-        "hub": "Camp",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 423,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "MWS_23",
-        "costCenter": "MWS_23",
-        "region": "Basra",
-        "hub": "Camp",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 8949.35,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "MWS_23",
-        "costCenter": "MWS_23",
-        "region": "Basra",
-        "hub": "Camp",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 19207.7,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "GRLTOT_25",
-        "costCenter": "GRLTOT_25",
-        "region": "Basra",
-        "hub": "Total Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 19449.27,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "GRLTOT_25",
-        "costCenter": "GRLTOT_25",
-        "region": "Basra",
-        "hub": "Total Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 47497.03,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "GRLTOT_25",
-        "costCenter": "GRLTOT_25",
-        "region": "Basra",
-        "hub": "Total Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 8038.5,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "GRLTOT_25",
-        "costCenter": "GRLTOT_25",
-        "region": "Basra",
-        "hub": "Total Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 10672,
-        "category": "Materials",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "GRLTOT_25",
-        "costCenter": "GRLTOT_25",
-        "region": "Basra",
-        "hub": "Total Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 120107.05,
-        "category": "Workshop",
-        "issuedBy": "MWS_23"
-      },
-      {
-        "sourceCostCenter": "HO_SB_23",
-        "costCenter": "HO_SB_23",
-        "region": "Basra",
-        "hub": "Head Office",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 3022.6,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "HO_SB_23",
-        "costCenter": "HO_SB_23",
-        "region": "Basra",
-        "hub": "Head Office",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 5635.52,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "GRLBG_23",
-        "costCenter": "GRLBG_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 2545.05,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "GRLRO_23",
-        "costCenter": "GRLRO_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 80.8,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "GRL_VLV",
-        "costCenter": "GRL-VLV",
-        "region": "Basra",
-        "hub": "Valves Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 357,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "GRL_VLV",
-        "costCenter": "GRL-VLV",
-        "region": "Basra",
-        "hub": "Valves Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 5383.32,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "ZBR_23",
-        "costCenter": "ZBR_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 10804.64,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "KAZ_23",
-        "costCenter": "KAZ_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 6139.62,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "KAZ_23",
-        "costCenter": "KAZ_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 22098.75,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "KAZ_23",
-        "costCenter": "KAZ_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 11380.2,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "UQ_23",
-        "costCenter": "UQ_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 8131.75,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "UQ_23",
-        "costCenter": "UQ_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 23415.16,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "UQ_23",
-        "costCenter": "UQ_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 64865.5,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "SPAS_23",
-        "costCenter": "SPAS_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 3747.4,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "SPAS_23",
-        "costCenter": "SPAS_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 1399.83,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "SPAS_23",
-        "costCenter": "SPAS_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 100,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "SPAS_23",
-        "costCenter": "SPAS_23",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 667,
-        "category": "Materials",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "BNGL-25",
-        "costCenter": "BNGL-25",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 4126.25,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "BNGL-25",
-        "costCenter": "BNGL-25",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 5560.9,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "BNGL-25",
-        "costCenter": "BNGL-25",
-        "region": "Basra",
-        "hub": "BGC Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 667,
-        "category": "Materials",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "EITAR_23",
-        "costCenter": "EITAR_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 93.34,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "MPTAR_23",
-        "costCenter": "MPTAR_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 747.64,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "MPMNT_23",
-        "costCenter": "MPMNT_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 99.17,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "CVMNT_23",
-        "costCenter": "CVMNT_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 218.78,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "CVMNT_23",
-        "costCenter": "CVMNT_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 62.5,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "EIMNT_23",
-        "costCenter": "EIMNT_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 3136,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "EIMNT_23",
-        "costCenter": "EIMNT_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 2448.03,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "EISP_23",
-        "costCenter": "EISP_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 2777.38,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "EISP_23",
-        "costCenter": "EISP_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 2535.41,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "EISP_23",
-        "costCenter": "EISP_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 1479.4,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "DS-01SP_24",
-        "costCenter": "DS-01SP_24",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 2899.93,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "MPSP_23",
-        "costCenter": "MPSP_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 355.36,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "EIESP_23",
-        "costCenter": "EIESP_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 17.78,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "PWRI_23",
-        "costCenter": "PWRI_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 1584.96,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "PWT PWRI1_23",
-        "costCenter": "PWT PWRI1_23",
-        "region": "Unmapped",
-        "hub": "Unmapped",
-        "isMapped": false,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 3870.3,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "WOD_23",
-        "costCenter": "WOD_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 1806.43,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "E&I-MAJ_24",
-        "costCenter": "E&I-MAJ_24",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 6096,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "E&I-MAJ_24",
-        "costCenter": "E&I-MAJ_24",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 5005.93,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "E&I-MAJ_24",
-        "costCenter": "E&I-MAJ_24",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 11558,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "E&I-MAJ_24",
-        "costCenter": "E&I-MAJ_24",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 1334,
-        "category": "Materials",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "OHTL_25",
-        "costCenter": "OHTL_25",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 8675.94,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "OHTL_25",
-        "costCenter": "OHTL_25",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 14003.93,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "OHTL_25",
-        "costCenter": "OHTL_25",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 2080,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "OHTL_25",
-        "costCenter": "OHTL_25",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 2001,
-        "category": "Materials",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "PWRI2_23",
-        "costCenter": "PWRI2_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 14078,
-        "category": "Store",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "PWRI2_23",
-        "costCenter": "PWRI2_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 16361.29,
-        "category": "FA",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "PWRI2_23",
-        "costCenter": "PWRI2_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 36830.97,
-        "category": "Scaffolding",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "PWRI2_23",
-        "costCenter": "PWRI2_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 4002,
-        "category": "Materials",
-        "issuedBy": "CmpSB_23"
-      },
-      {
-        "sourceCostCenter": "PWRI2_23",
-        "costCenter": "PWRI2_23",
-        "region": "Basra",
-        "hub": "ROO Hub",
-        "isMapped": true,
-        "period": "2026-04",
-        "month": "Apr",
-        "year": "2026",
-        "amount": 67500,
         "category": "Workshop",
         "issuedBy": "MWS_23"
       },
@@ -55957,7 +54995,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 8252.5
+      "amount": 4126.25
     },
     {
       "type": "creditNotes",
@@ -55970,7 +55008,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 11121.8
+      "amount": 5560.9
     },
     {
       "type": "creditNotes",
@@ -55983,7 +55021,7 @@
       "year": "2026",
       "category": "Materials",
       "issuedBy": "CmpSB_23",
-      "amount": 1334
+      "amount": 667
     },
     {
       "type": "spent",
@@ -56128,7 +55166,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 4626.48
+      "amount": 2313.24
     },
     {
       "type": "creditNotes",
@@ -56141,7 +55179,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 7509.4
+      "amount": 3754.7
     },
     {
       "type": "creditNotes",
@@ -56154,7 +55192,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 846
+      "amount": 423
     },
     {
       "type": "spent",
@@ -56191,7 +55229,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 20337.32
+      "amount": 10168.66
     },
     {
       "type": "creditNotes",
@@ -56204,7 +55242,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 386
+      "amount": 193
     },
     {
       "type": "spent",
@@ -56229,7 +55267,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 437.56
+      "amount": 218.78
     },
     {
       "type": "creditNotes",
@@ -56242,7 +55280,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 125
+      "amount": 62.5
     },
     {
       "type": "creditNotes",
@@ -56255,7 +55293,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 5799.86
+      "amount": 2899.93
     },
     {
       "type": "spent",
@@ -56338,7 +55376,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 12192
+      "amount": 6096
     },
     {
       "type": "creditNotes",
@@ -56351,7 +55389,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 10011.86
+      "amount": 5005.93
     },
     {
       "type": "creditNotes",
@@ -56364,7 +55402,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 23116
+      "amount": 11558
     },
     {
       "type": "creditNotes",
@@ -56377,7 +55415,7 @@
       "year": "2026",
       "category": "Materials",
       "issuedBy": "CmpSB_23",
-      "amount": 2668
+      "amount": 1334
     },
     {
       "type": "creditNotes",
@@ -56390,7 +55428,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 35.56
+      "amount": 17.78
     },
     {
       "type": "spent",
@@ -56463,7 +55501,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 6272
+      "amount": 3136
     },
     {
       "type": "creditNotes",
@@ -56476,7 +55514,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 4896.06
+      "amount": 2448.03
     },
     {
       "type": "spent",
@@ -56548,7 +55586,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 5554.76
+      "amount": 2777.38
     },
     {
       "type": "creditNotes",
@@ -56561,7 +55599,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 5070.82
+      "amount": 2535.41
     },
     {
       "type": "creditNotes",
@@ -56574,7 +55612,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 2958.8
+      "amount": 1479.4
     },
     {
       "type": "submitted",
@@ -56609,7 +55647,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 186.68
+      "amount": 93.34
     },
     {
       "type": "spent",
@@ -56670,7 +55708,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 2112
+      "amount": 1056
     },
     {
       "type": "creditNotes",
@@ -56683,7 +55721,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 990.76
+      "amount": 495.38
     },
     {
       "type": "creditNotes",
@@ -56696,7 +55734,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 900
+      "amount": 450
     },
     {
       "type": "spent",
@@ -56757,7 +55795,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 4761.6
+      "amount": 2380.8
     },
     {
       "type": "creditNotes",
@@ -56770,7 +55808,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 26688.2
+      "amount": 13344.1
     },
     {
       "type": "creditNotes",
@@ -56783,7 +55821,7 @@
       "year": "2026",
       "category": "Materials",
       "issuedBy": "CmpSB_23",
-      "amount": 2668
+      "amount": 1334
     },
     {
       "type": "spent",
@@ -56892,7 +55930,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 714
+      "amount": 357
     },
     {
       "type": "creditNotes",
@@ -56905,7 +55943,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 10766.64
+      "amount": 5383.32
     },
     {
       "type": "spent",
@@ -56954,7 +55992,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 5090.1
+      "amount": 2545.05
     },
     {
       "type": "spent",
@@ -57075,7 +56113,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 161.6
+      "amount": 80.8
     },
     {
       "type": "spent",
@@ -57242,7 +56280,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 38898.54
+      "amount": 19449.27
     },
     {
       "type": "creditNotes",
@@ -57255,7 +56293,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 94994.06
+      "amount": 47497.03
     },
     {
       "type": "creditNotes",
@@ -57268,7 +56306,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 16077
+      "amount": 8038.5
     },
     {
       "type": "creditNotes",
@@ -57281,7 +56319,7 @@
       "year": "2026",
       "category": "Materials",
       "issuedBy": "CmpSB_23",
-      "amount": 21344
+      "amount": 10672
     },
     {
       "type": "creditNotes",
@@ -57294,7 +56332,7 @@
       "year": "2026",
       "category": "Workshop",
       "issuedBy": "MWS_23",
-      "amount": 240214.1
+      "amount": 120107.05
     },
     {
       "type": "spent",
@@ -57499,7 +56537,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 6045.2
+      "amount": 3022.6
     },
     {
       "type": "creditNotes",
@@ -57512,7 +56550,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 11271.04
+      "amount": 5635.52
     },
     {
       "type": "spent",
@@ -57654,7 +56692,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 12279.24
+      "amount": 6139.62
     },
     {
       "type": "creditNotes",
@@ -57667,7 +56705,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 44197.5
+      "amount": 22098.75
     },
     {
       "type": "creditNotes",
@@ -57680,7 +56718,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 22760.4
+      "amount": 11380.2
     },
     {
       "type": "spent",
@@ -57764,7 +56802,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 198.34
+      "amount": 99.17
     },
     {
       "type": "creditNotes",
@@ -57777,7 +56815,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 710.72
+      "amount": 355.36
     },
     {
       "type": "creditNotes",
@@ -57790,7 +56828,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 1495.28
+      "amount": 747.64
     },
     {
       "type": "spent",
@@ -57885,7 +56923,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 9101.8
+      "amount": 4550.9
     },
     {
       "type": "creditNotes",
@@ -57898,7 +56936,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 7797.7
+      "amount": 3898.85
     },
     {
       "type": "creditNotes",
@@ -57911,7 +56949,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 1694
+      "amount": 847
     },
     {
       "type": "creditNotes",
@@ -57924,7 +56962,7 @@
       "year": "2026",
       "category": "Workshop",
       "issuedBy": "MWS_23",
-      "amount": 260470.58
+      "amount": 130235.29
     },
     {
       "type": "spent",
@@ -57997,7 +57035,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 17898.7
+      "amount": 8949.35
     },
     {
       "type": "creditNotes",
@@ -58010,7 +57048,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 38415.4
+      "amount": 19207.7
     },
     {
       "type": "spent",
@@ -58200,7 +57238,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 17351.88
+      "amount": 8675.94
     },
     {
       "type": "creditNotes",
@@ -58213,7 +57251,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 28007.86
+      "amount": 14003.93
     },
     {
       "type": "creditNotes",
@@ -58226,7 +57264,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 4160
+      "amount": 2080
     },
     {
       "type": "creditNotes",
@@ -58239,7 +57277,7 @@
       "year": "2026",
       "category": "Materials",
       "issuedBy": "CmpSB_23",
-      "amount": 4002
+      "amount": 2001
     },
     {
       "type": "spent",
@@ -58288,7 +57326,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 3169.92
+      "amount": 1584.96
     },
     {
       "type": "spent",
@@ -58419,7 +57457,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 28156
+      "amount": 14078
     },
     {
       "type": "creditNotes",
@@ -58432,7 +57470,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 32722.58
+      "amount": 16361.29
     },
     {
       "type": "creditNotes",
@@ -58445,7 +57483,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 73661.94
+      "amount": 36830.97
     },
     {
       "type": "creditNotes",
@@ -58458,7 +57496,7 @@
       "year": "2026",
       "category": "Materials",
       "issuedBy": "CmpSB_23",
-      "amount": 8004
+      "amount": 4002
     },
     {
       "type": "creditNotes",
@@ -58471,7 +57509,7 @@
       "year": "2026",
       "category": "Workshop",
       "issuedBy": "MWS_23",
-      "amount": 112500
+      "amount": 45000
     },
     {
       "type": "creditNotes",
@@ -58484,7 +57522,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 7740.6
+      "amount": 3870.3
     },
     {
       "type": "spent",
@@ -58557,7 +57595,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 1741.24
+      "amount": 870.62
     },
     {
       "type": "creditNotes",
@@ -58570,7 +57608,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 922
+      "amount": 461
     },
     {
       "type": "spent",
@@ -58607,7 +57645,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 9272.5
+      "amount": 4636.25
     },
     {
       "type": "spent",
@@ -58666,7 +57704,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 7494.8
+      "amount": 3747.4
     },
     {
       "type": "creditNotes",
@@ -58679,7 +57717,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 2799.66
+      "amount": 1399.83
     },
     {
       "type": "creditNotes",
@@ -58692,7 +57730,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 200
+      "amount": 100
     },
     {
       "type": "creditNotes",
@@ -58705,7 +57743,7 @@
       "year": "2026",
       "category": "Materials",
       "issuedBy": "CmpSB_23",
-      "amount": 1334
+      "amount": 667
     },
     {
       "type": "spent",
@@ -58860,7 +57898,7 @@
       "year": "2026",
       "category": "Store",
       "issuedBy": "CmpSB_23",
-      "amount": 16263.5
+      "amount": 8131.75
     },
     {
       "type": "creditNotes",
@@ -58873,7 +57911,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 46830.32
+      "amount": 23415.16
     },
     {
       "type": "creditNotes",
@@ -58886,7 +57924,7 @@
       "year": "2026",
       "category": "Scaffolding",
       "issuedBy": "CmpSB_23",
-      "amount": 129731
+      "amount": 64865.5
     },
     {
       "type": "creditNotes",
@@ -58899,7 +57937,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 3612.86
+      "amount": 1806.43
     },
     {
       "type": "creditNotes",
@@ -58912,7 +57950,7 @@
       "year": "2026",
       "category": "FA",
       "issuedBy": "CmpSB_23",
-      "amount": 21609.28
+      "amount": 10804.64
     }
   ],
   "insights": [
@@ -58933,8 +57971,8 @@
     },
     {
       "label": "Credit note impact",
-      "value": 7316307.08,
-      "detail": "CN equals 6.8% of total spent."
+      "value": 6507185.63,
+      "detail": "CN equals 6.0% of total spent."
     }
   ]
 }
