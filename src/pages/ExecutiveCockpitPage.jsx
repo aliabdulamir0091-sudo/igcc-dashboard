@@ -9,6 +9,7 @@ import {
   matchesCostCenterFilter,
 } from "../data/costCenterHierarchy";
 import financialInputsData from "../data/financialInputsData.json";
+import igccLogo from "../assets/igcc-logo.svg";
 
 const DEFAULT_YEAR = "2025";
 const GENERAL_COST_ALLOCATIONS = [
@@ -50,6 +51,10 @@ const buildQuarters = (year) => [
   { key: "q4", label: "Q-4", periods: [`${year}-10`, `${year}-11`, `${year}-12`] },
 ];
 
+const MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTH_NO_BY_NAME = Object.fromEntries(MONTH_ORDER.map((month, index) => [month, String(index + 1).padStart(2, "0")]));
+const REPORT_COLORS = ["#2563eb", "#14b8a6", "#22c55e", "#f59e0b", "#f97316", "#ef4444", "#7c3aed", "#db2777"];
+
 const getQuarter = (period) => `Q${Math.ceil(Number(period?.slice(5, 7) || 1) / 3)}`;
 
 const isHeadOffice = (entry) => entry.hub === "Head Office" || entry.costCenter === "HO_SB_23";
@@ -57,6 +62,12 @@ const isHeadOffice = (entry) => entry.hub === "Head Office" || entry.costCenter 
 const formatWholeNumber = (value) => Math.round(value || 0).toLocaleString("en-US");
 
 const formatPercent = (value) => `${Math.round(value || 0)}%`;
+
+const formatSignedChange = (value, suffix = "%") => {
+  if (!Number.isFinite(value)) return "n/a";
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${Math.round(value)}${suffix}`;
+};
 
 const getShare = (value, revenue) => (revenue ? (value / revenue) * 100 : 0);
 
@@ -502,14 +513,20 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
       && entry.sourceCostCenter !== MANAGEMENT_SOURCE_COST_CENTER
     ));
   const cnRows = rowsInScope(allocatedEntries, "creditNotes");
+  const period = getReportPeriod(filters, rawEntries);
+  const history = buildReportHistory([...members], allocatedEntries, rawEntries, filters, period);
 
   const approvedMargin = row.approvedAfp - row.totalCost;
   const submittedMargin = row.submittedAfp - row.totalCost;
+  const receivedCnTotal = row.receivedCn + row.allocatedGeneralCn;
+  const topCost = groupAmounts(rawSpentRows, (entry) => entry.glName || "Unclassified")[0];
 
   return {
     title: row.type === "costCenter" ? row.costCenter : row.costCenter,
     scope: row.type === "costCenter" ? row.hub : `${row.type.toUpperCase()} | ${members.size} cost centers`,
     context: buildReportContext(filters),
+    periodLabel: formatPeriodLabel(period, filters),
+    generatedAt: new Date().toLocaleString("en-US", { month: "short", day: "2-digit", year: "numeric", hour: "numeric", minute: "2-digit" }),
     approvedAfp: row.approvedAfp,
     submittedAfp: row.submittedAfp,
     directCost: row.spentCost,
@@ -517,6 +534,7 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
     managementCost: row.allocatedManagementCost,
     receivedCn: row.receivedCn,
     allocatedGeneralCn: row.allocatedGeneralCn,
+    receivedCnTotal,
     totalCost: row.totalCost,
     approvedMargin,
     approvedMarginPercent: getShare(approvedMargin, row.approvedAfp),
@@ -525,7 +543,107 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
     spendBreakdown: groupAmounts(rawSpentRows, (entry) => entry.glName || "Unclassified"),
     cnBreakdown: groupAmounts(cnRows.filter((entry) => !entry.isAllocatedGeneralCreditNote), (entry) => entry.category || entry.issuedBy || "Credit Note"),
     generalCnBreakdown: groupAmounts(cnRows.filter((entry) => entry.isAllocatedGeneralCreditNote), (entry) => entry.allocationSourceCostCenter || "General CN Reallocated"),
+    history,
+    topCost,
+    insights: buildReportInsights({
+      approvedAfp: row.approvedAfp,
+      totalCost: row.totalCost,
+      approvedMargin,
+      receivedCnTotal,
+      topCost,
+    }),
   };
+};
+
+const getReportPeriod = (filters = {}, entries = []) => {
+  if (filters.period === "monthly" && filters.year && filters.year !== ALL_FILTER_VALUE && filters.month && filters.month !== ALL_FILTER_VALUE) {
+    return `${filters.year}-${MONTH_NO_BY_NAME[filters.month] || "01"}`;
+  }
+  return entries
+    .map((entry) => entry.period)
+    .filter(Boolean)
+    .sort((a, b) => b.localeCompare(a))[0] || "";
+};
+
+const formatPeriodLabel = (period, filters = {}) => {
+  if (filters.period === "monthly" && filters.month && filters.month !== ALL_FILTER_VALUE && filters.year && filters.year !== ALL_FILTER_VALUE) {
+    return `${filters.month} ${filters.year}`;
+  }
+  if (!period) return "Selected period";
+  const month = MONTH_ORDER[Number(period.slice(5, 7)) - 1] || period.slice(5, 7);
+  return `${month} ${period.slice(0, 4)}`;
+};
+
+const buildReportHistory = (members, allocatedEntries, rawEntries, filters, selectedPeriod) => {
+  const memberSet = new Set(members);
+  const entryInScope = (entry) => (
+    memberSet.has(normalizeCostCenter(entry.costCenter))
+    && matchesPortfolio(entry, filters.portfolio)
+    && (!filters.hub || filters.hub === ALL_FILTER_VALUE || entry.hub === filters.hub)
+  );
+  const periods = [...new Set([...allocatedEntries, ...rawEntries].map((entry) => entry.period).filter(Boolean))]
+    .filter((period) => !selectedPeriod || period <= selectedPeriod)
+    .sort((a, b) => a.localeCompare(b))
+    .slice(-7);
+
+  return periods.map((period) => {
+    const rawRows = rawEntries.filter((entry) => entry.period === period && entryInScope(entry));
+    const rows = allocatedEntries.filter((entry) => entry.period === period && entryInScope(entry));
+    const directCost = sumRows(rawRows, (entry) => (
+      entry.type === "spent"
+      && !GENERAL_POOL_COST_CENTERS.has(entry.costCenter)
+      && !HIDDEN_COST_CENTER_ROWS.has(normalizeCostCenter(entry.costCenter))
+      && entry.sourceCostCenter !== MANAGEMENT_SOURCE_COST_CENTER
+    ));
+    const generalCost = sumRows(rows, (entry) => entry.type === "spent" && entry.isAllocatedGeneralCost);
+    const managementCost = sumRows(rows, (entry) => entry.type === "spent" && entry.isAllocatedManagementCost);
+    const receivedCn = sumRows(rows, (entry) => entry.type === "creditNotes" && !entry.isAllocatedGeneralCreditNote);
+    const generalCn = sumRows(rows, (entry) => entry.type === "creditNotes" && entry.isAllocatedGeneralCreditNote);
+    const totalCost = directCost + generalCost + managementCost + receivedCn + generalCn;
+    const approvedAfp = sumRows(rows, (entry) => entry.type === "approved");
+    const submittedAfp = sumRows(rows, (entry) => entry.type === "submitted");
+    const approvedProfit = approvedAfp - totalCost;
+    return {
+      period,
+      approvedAfp,
+      submittedAfp,
+      totalCost,
+      receivedCn: receivedCn + generalCn,
+      approvedProfit,
+      approvedMargin: getShare(approvedProfit, approvedAfp),
+    };
+  });
+};
+
+const getHistoryMetric = (history, key) => {
+  const current = history[history.length - 1]?.[key] || 0;
+  const previous = history[history.length - 2]?.[key] || 0;
+  const previousSix = history.slice(0, -1).slice(-6);
+  const average = previousSix.length ? previousSix.reduce((sum, item) => sum + (item[key] || 0), 0) / previousSix.length : 0;
+  return {
+    current,
+    previous,
+    average,
+    change: previous ? ((current - previous) / Math.abs(previous)) * 100 : 0,
+    averageChange: average ? ((current - average) / Math.abs(average)) * 100 : 0,
+    values: history.map((item) => item[key] || 0),
+  };
+};
+
+const buildReportInsights = ({ approvedAfp, totalCost, approvedMargin, receivedCnTotal, topCost }) => {
+  const insights = [];
+  if (totalCost > approvedAfp) {
+    insights.push(`Total Cost is ${Math.round(getShare(totalCost - approvedAfp, approvedAfp))}% higher than Approved AFP, driving negative margin.`);
+  } else {
+    insights.push(`Approved AFP covers Total Cost with ${formatPercent(approvedMargin)} approved margin.`);
+  }
+  if (topCost) {
+    insights.push(`${topCost.label} is the top cost driver at ${formatPercent(getShare(topCost.amount, totalCost))} of total cost.`);
+  }
+  if (receivedCnTotal) {
+    insights.push(`Received CN of ${formatWholeNumber(receivedCnTotal)} is shown separately from spent report cost.`);
+  }
+  return insights.slice(0, 3);
 };
 
 const buildReportContext = (filters = {}) => {
@@ -539,8 +657,66 @@ const buildReportContext = (filters = {}) => {
   return parts.join(" | ");
 };
 
+function MiniSparkline({ values = [], color = "#2563eb" }) {
+  const width = 150;
+  const height = 44;
+  const min = Math.min(...values, 0);
+  const max = Math.max(...values, 1);
+  const range = max - min || 1;
+  const points = values.map((value, index) => {
+    const x = values.length <= 1 ? 0 : (index / (values.length - 1)) * width;
+    const y = height - ((value - min) / range) * (height - 8) - 4;
+    return `${x},${y}`;
+  });
+  const area = points.length ? `0,${height} ${points.join(" ")} ${width},${height}` : "";
+  return (
+    <svg className="mini-sparkline" viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
+      <polygon points={area} style={{ fill: color, opacity: 0.12 }} />
+      <polyline points={points.join(" ")} style={{ stroke: color }} />
+    </svg>
+  );
+}
+
+function DonutChart({ items, total }) {
+  let offset = 25;
+  return (
+    <div className="report-donut-wrap">
+      <svg className="report-donut" viewBox="0 0 42 42" aria-hidden="true">
+        <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#e5edf6" strokeWidth="7" />
+        {items.map((item, index) => {
+          const value = total ? (Math.abs(item.amount) / total) * 100 : 0;
+          const circle = (
+            <circle
+              key={item.label}
+              cx="21"
+              cy="21"
+              r="15.915"
+              fill="transparent"
+              stroke={REPORT_COLORS[index % REPORT_COLORS.length]}
+              strokeWidth="7"
+              strokeDasharray={`${value} ${100 - value}`}
+              strokeDashoffset={offset}
+            />
+          );
+          offset -= value;
+          return circle;
+        })}
+      </svg>
+      <div>
+        <strong>{formatWholeNumber(total)}</strong>
+        <span>Total CN</span>
+      </div>
+    </div>
+  );
+}
+
 function SimpleReportModal({ report, onClose }) {
   if (!report) return null;
+  const approvedMetric = getHistoryMetric(report.history, "approvedAfp");
+  const submittedMetric = getHistoryMetric(report.history, "submittedAfp");
+  const totalCostMetric = getHistoryMetric(report.history, "totalCost");
+  const profitMetric = getHistoryMetric(report.history, "approvedProfit");
+  const marginMetric = getHistoryMetric(report.history, "approvedMargin");
   const costRows = [
     { label: "Approved AFP", value: report.approvedAfp, tone: "is-afp" },
     { label: "Submitted AFP", value: report.submittedAfp, tone: "is-afp is-submitted" },
@@ -551,10 +727,11 @@ function SimpleReportModal({ report, onClose }) {
     { label: "General CN Reallocated", value: report.allocatedGeneralCn },
   ];
   const kpis = [
-    { label: "Approved AFP", value: report.approvedAfp, tone: "blue" },
-    { label: "Submitted AFP", value: report.submittedAfp, tone: "teal" },
-    { label: "Total Cost", value: report.totalCost, tone: "amber" },
-    { label: "Approved Margin", value: report.approvedMargin, detail: formatPercent(report.approvedMarginPercent), tone: report.approvedMargin < 0 ? "red" : "green" },
+    { label: "Approved AFP", value: report.approvedAfp, metric: approvedMetric, tone: "blue", color: "#2563eb" },
+    { label: "Submitted AFP", value: report.submittedAfp, metric: submittedMetric, tone: "teal", color: "#0f766e" },
+    { label: "Total Cost", value: report.totalCost, metric: totalCostMetric, tone: "amber", color: "#f97316" },
+    { label: "Net Profit (Approved)", value: report.approvedMargin, metric: profitMetric, tone: report.approvedMargin < 0 ? "red" : "purple", color: "#7c3aed" },
+    { label: "Margin (Approved)", value: report.approvedMarginPercent, metric: marginMetric, tone: "red", color: "#ef4444", isPercent: true, suffix: "pp" },
   ];
   const visualRows = [
     { label: "Approved AFP", value: report.approvedAfp, tone: "blue" },
@@ -563,14 +740,42 @@ function SimpleReportModal({ report, onClose }) {
     { label: "Received CN", value: report.receivedCn + report.allocatedGeneralCn, tone: "green" },
   ];
   const maxVisualValue = Math.max(...visualRows.map((item) => Math.abs(item.value)), 1);
+  const cnLegend = [
+    ...report.cnBreakdown,
+    ...report.generalCnBreakdown.map((item) => ({ ...item, label: "General CN Reallocated" })),
+  ].filter((item) => item.amount);
+  const topSpendRows = report.spendBreakdown.slice(0, 8);
+  const maxSpendAmount = Math.max(...topSpendRows.map((item) => Math.abs(item.amount)), 1);
+  const movementCards = [
+    { label: "Approved AFP", metric: approvedMetric, tone: "blue", color: "#2563eb" },
+    { label: "Total Cost", metric: totalCostMetric, tone: "amber", color: "#f97316" },
+    { label: "Net Profit (Approved)", metric: profitMetric, tone: profitMetric.current < 0 ? "red" : "purple", color: "#7c3aed" },
+    { label: "Margin (Approved)", metric: marginMetric, tone: "red", color: "#ef4444", isPercent: true, suffix: "pp" },
+  ];
   return (
     <div className="simple-report-backdrop" onClick={onClose}>
       <article className="simple-report-sheet" aria-label={`${report.title} simple report`} onClick={(event) => event.stopPropagation()}>
-        <header className="simple-report-header">
-          <div>
-            <span>Construction Team Snapshot</span>
-            <h3>{report.title}</h3>
-            <p>{report.scope} | {report.context}</p>
+        <header className="pnl-modern-header">
+          <div className="pnl-modern-brand">
+            <img src={igccLogo} alt="IGCC" />
+            <div>
+              <strong>IGCC</strong>
+              <span>Financial Dashboard</span>
+            </div>
+          </div>
+          <div className="pnl-modern-title">
+            <h3>Profit & Loss Analysis Report</h3>
+            <p>Monthly Financial Performance Overview</p>
+          </div>
+          <div className="pnl-modern-meta">
+            <div><span>Report for</span><strong>{report.periodLabel}</strong></div>
+            <div><span>Hub</span><strong>{report.scope}</strong></div>
+            <div><span>Cost Center</span><strong>{report.title}</strong></div>
+          </div>
+          <div className={`pnl-modern-status ${report.approvedMargin < 0 ? "is-loss" : "is-profit"}`}>
+            <span>{report.approvedMargin < 0 ? "Loss Making" : "Profitable"}</span>
+            <strong>{formatPercent(report.approvedMarginPercent)}</strong>
+            <em>Margin Approved</em>
           </div>
           <div className="simple-report-actions">
             <button type="button" onClick={() => window.print()}>Save PDF</button>
@@ -581,93 +786,104 @@ function SimpleReportModal({ report, onClose }) {
           {kpis.map((item) => (
             <div className={`simple-report-kpi tone-${item.tone}`} key={item.label}>
               <span>{item.label}</span>
-              <strong>{formatWholeNumber(item.value)}</strong>
-              {item.detail ? <em>{item.detail}</em> : null}
+              <strong>{item.isPercent ? formatPercent(item.value) : formatWholeNumber(item.value)}</strong>
+              <em>vs previous {formatSignedChange(item.metric.change, item.suffix || "%")}</em>
+              <MiniSparkline values={item.metric.values} color={item.color} />
             </div>
           ))}
         </section>
         <div className="simple-report-landscape">
-          <table className="simple-report-table simple-report-summary-table">
-            <tbody>
+          <section className="pnl-report-main-grid">
+            <article className="pnl-report-card financial-summary-modern">
+              <h4>Financial Summary <span>{report.periodLabel}</span></h4>
               {costRows.map((item) => (
-                <tr key={item.label} className={item.tone || ""}>
-                  <td>{item.label}</td>
-                  <td>{formatWholeNumber(item.value)}</td>
-                  <td />
-                </tr>
-              ))}
-              <tr className="is-total">
-                <td>Total Cost</td>
-                <td>{formatWholeNumber(report.totalCost)}</td>
-                <td />
-              </tr>
-              <tr className="is-margin-row">
-                <td>Margin- Approved AFP</td>
-                <td className={report.approvedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.approvedMargin)}</td>
-                <td>{formatPercent(report.approvedMarginPercent)}</td>
-              </tr>
-              <tr className="is-margin-row">
-                <td>Margin Submitted AFP</td>
-                <td className={report.submittedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.submittedMargin)}</td>
-                <td>{formatPercent(report.submittedMarginPercent)}</td>
-              </tr>
-            </tbody>
-          </table>
-          <section className="simple-report-breakdowns">
-            <table className="simple-report-table">
-              <tbody>
-                <tr className="is-section">
-                  <td colSpan={3}>Spent Report Cost Breakdown</td>
-                </tr>
-                {(report.spendBreakdown.length ? report.spendBreakdown : [{ label: "No spent detail", amount: 0 }]).map((item) => (
-                  <tr key={`spent-${item.label}`}>
-                    <td>{item.label}</td>
-                    <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
-                    <td />
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <table className="simple-report-table">
-              <tbody>
-                <tr className="is-section">
-                  <td colSpan={3}>Received CN Breakdown</td>
-                </tr>
-                {(report.cnBreakdown.length ? report.cnBreakdown : [{ label: "No CN detail", amount: 0 }]).map((item) => (
-                  <tr key={`cn-${item.label}`}>
-                    <td>{item.label}</td>
-                    <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
-                    <td />
-                  </tr>
-                ))}
-                <tr className="is-section">
-                  <td colSpan={3}>General CN Reallocated</td>
-                </tr>
-                {(report.generalCnBreakdown.length ? report.generalCnBreakdown : [{ label: "No general CN reallocation", amount: 0 }]).map((item) => (
-                  <tr key={`general-cn-${item.label}`}>
-                    <td>{item.label}</td>
-                    <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
-                    <td />
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-          <section className="simple-report-visuals">
-            <div>
-              <h4>Commercial snapshot</h4>
-              <p>AFP, total cost, and CN impact under the selected filter.</p>
-            </div>
-            <div className="simple-report-bars">
-              {visualRows.map((item) => (
-                <div className={`simple-report-bar tone-${item.tone}`} key={item.label}>
+                <p key={item.label} className={item.tone || ""}>
                   <span>{item.label}</span>
-                  <i style={{ "--bar-width": `${Math.max(4, (Math.abs(item.value) / maxVisualValue) * 100)}%` }} />
                   <strong>{formatWholeNumber(item.value)}</strong>
+                </p>
+              ))}
+              <p className="is-total"><span>Total Cost</span><strong>{formatWholeNumber(report.totalCost)}</strong></p>
+              <div className="pnl-margin-block">
+                <p><span>Net Profit (Approved AFP)</span><strong className={report.approvedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.approvedMargin)}</strong></p>
+                <p><span>Margin (Approved AFP)</span><strong className={report.approvedMargin < 0 ? "is-bad" : "is-good"}>{formatPercent(report.approvedMarginPercent)}</strong></p>
+                <p><span>Net Profit (Submitted AFP)</span><strong className={report.submittedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.submittedMargin)}</strong></p>
+                <p><span>Margin (Submitted AFP)</span><strong className={report.submittedMargin < 0 ? "is-bad" : "is-good"}>{formatPercent(report.submittedMarginPercent)}</strong></p>
+              </div>
+            </article>
+            <article className="pnl-report-card spend-breakdown-modern">
+              <h4>Spent Report Cost Breakdown</h4>
+              {topSpendRows.map((item, index) => (
+                <div className="spend-progress-row" key={item.label}>
+                  <i style={{ "--dot-color": REPORT_COLORS[index % REPORT_COLORS.length] }}>{item.label.slice(0, 1)}</i>
+                  <span>{item.label}</span>
+                  <b><em style={{ "--bar-color": REPORT_COLORS[index % REPORT_COLORS.length], "--bar-width": `${(Math.abs(item.amount) / maxSpendAmount) * 100}%` }} /></b>
+                  <strong>{formatWholeNumber(item.amount)}</strong>
+                  <small>{formatPercent(getShare(item.amount, report.directCost))}</small>
                 </div>
               ))}
-            </div>
+              <footer><span>Total Cost from Spent Report</span><strong>{formatWholeNumber(report.directCost)}</strong></footer>
+            </article>
           </section>
+          <section className="pnl-report-secondary-grid">
+            <article className="pnl-report-card cn-modern-card">
+              <h4>Received CN Breakdown</h4>
+              <div className="cn-modern-layout">
+                <DonutChart items={cnLegend} total={report.receivedCnTotal} />
+                <div className="cn-modern-legend">
+                  {cnLegend.map((item, index) => (
+                    <p key={item.label}>
+                      <i style={{ "--dot-color": REPORT_COLORS[index % REPORT_COLORS.length] }} />
+                      <span>{item.label}</span>
+                      <strong>{formatWholeNumber(item.amount)}</strong>
+                      <em>{formatPercent(getShare(item.amount, report.receivedCnTotal))}</em>
+                    </p>
+                  ))}
+                </div>
+              </div>
+              <footer><span>Total Received CN</span><strong>{formatWholeNumber(report.receivedCnTotal)}</strong></footer>
+            </article>
+            <article className="pnl-report-card commercial-modern-card">
+              <h4>Commercial Snapshot <span>{report.periodLabel}</span></h4>
+              <p>AFP, Total Cost and CN impact under the selected filter.</p>
+              <div className="simple-report-bars">
+                {visualRows.map((item) => (
+                  <div className={`simple-report-bar tone-${item.tone}`} key={item.label}>
+                    <span>{item.label}</span>
+                    <i style={{ "--bar-width": `${Math.max(4, (Math.abs(item.value) / maxVisualValue) * 100)}%` }} />
+                    <strong>{formatWholeNumber(item.value)}</strong>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </section>
+          <section className="pnl-report-bottom-grid">
+            <article className="pnl-report-card movement-modern-card">
+              <h4>Historical Movement <span>vs Previous 6 Months</span></h4>
+              <div className="movement-card-grid">
+                {movementCards.map((item) => (
+                  <div className={`movement-mini-card tone-${item.tone}`} key={item.label}>
+                    <span>{item.label}</span>
+                    <strong>{item.isPercent ? formatPercent(item.metric.current) : formatWholeNumber(item.metric.current)}</strong>
+                    <em>vs 6M Avg {formatSignedChange(item.metric.averageChange, item.suffix || "%")}</em>
+                    <MiniSparkline values={item.metric.values} color={item.color} />
+                  </div>
+                ))}
+              </div>
+            </article>
+            <article className="pnl-report-card insight-modern-card">
+              <h4>Key Insights</h4>
+              {report.insights.map((insight, index) => (
+                <p key={insight}>
+                  <i>{index + 1}</i>
+                  <span>{insight}</span>
+                </p>
+              ))}
+            </article>
+          </section>
+          <footer className="pnl-modern-footer">
+            <span>Report generated on {report.generatedAt}</span>
+            <span>Currency: USD</span>
+          </footer>
         </div>
       </article>
     </div>
