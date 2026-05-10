@@ -73,6 +73,21 @@ export const ALL_FILTER_VALUE = "all";
 
 export const COST_CENTER_GROUP_PREFIX = "group:";
 
+export const BGC_SUB_HUBS = [
+  {
+    id: "bgc-standalone",
+    label: "BGC Standalone Cost Centers",
+    hub: "BGC Hub",
+    costCenters: ["BNGL-25", "KAZ_23", "MANPR_23", "QTC_24", "UQ_23", "ZBR_23", "EX_23"],
+  },
+  {
+    id: "bgc-mapped",
+    label: "BGC Mapped Cost Centers",
+    hub: "BGC Hub",
+    costCenters: ["NR-NGL_2025", "SPAS_23"],
+  },
+];
+
 export const ROO_SUB_HUBS = [
   {
     id: "roo-maint",
@@ -119,12 +134,17 @@ export const ROO_SUB_HUBS = [
   },
 ];
 
+export const COST_CENTER_GROUPS = [
+  ...BGC_SUB_HUBS,
+  ...ROO_SUB_HUBS,
+];
+
 export const getCostCenterGroupValue = (id) => `${COST_CENTER_GROUP_PREFIX}${id}`;
 
 export const getCostCenterGroupByValue = (value) => {
   if (!value?.startsWith(COST_CENTER_GROUP_PREFIX)) return null;
   const id = value.slice(COST_CENTER_GROUP_PREFIX.length);
-  return ROO_SUB_HUBS.find((group) => group.id === id) || null;
+  return COST_CENTER_GROUPS.find((group) => group.id === id) || null;
 };
 
 export const getCostCenterFilterMembers = (filterValue) => {

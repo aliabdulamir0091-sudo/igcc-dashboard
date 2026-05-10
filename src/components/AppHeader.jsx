@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import {
   ALL_FILTER_VALUE,
+  COST_CENTER_GROUPS,
   COST_CENTER_HIERARCHY,
-  ROO_SUB_HUBS,
   getCostCenterGroupByValue,
   getCostCenterGroupValue,
   getUniqueFilterValues,
@@ -98,13 +98,16 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
     ));
     const centerOptions = getUniqueFilterValues(matchingRows.flatMap((item) => item.costCenters))
       .map((costCenter) => ({ value: costCenter, label: costCenter, type: "costCenter" }));
-    if (selectedHub !== "ROO Hub") return centerOptions;
-    return [
-      ...ROO_SUB_HUBS.map((group) => ({
+    const groupOptions = COST_CENTER_GROUPS
+      .filter((group) => group.hub === selectedHub)
+      .map((group) => ({
         value: getCostCenterGroupValue(group.id),
         label: group.label,
         type: "subHub",
-      })),
+      }));
+    if (!groupOptions.length) return centerOptions;
+    return [
+      ...groupOptions,
       ...centerOptions,
     ];
   }, [selectedHub, selectedPortfolio]);

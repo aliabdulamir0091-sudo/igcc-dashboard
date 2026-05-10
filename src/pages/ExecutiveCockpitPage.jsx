@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   ALL_FILTER_VALUE,
+  BGC_SUB_HUBS,
   COST_CENTER_HIERARCHY,
   ROO_SUB_HUBS,
   getCostCenterFilterMembers,
@@ -28,6 +29,7 @@ const EXECUTIVE_HUB_ORDER = [
   "West Qurna",
 ];
 const ROO_ASSIGNED_COST_CENTERS = new Set(ROO_SUB_HUBS.flatMap((group) => group.costCenters));
+const BGC_ASSIGNED_COST_CENTERS = new Set(BGC_SUB_HUBS.flatMap((group) => group.costCenters));
 const COST_CENTER_ALIASES = {
   "PWT PWRI1_23": "PWRI-PWT",
 };
@@ -377,6 +379,25 @@ const buildRooRows = (rows) => {
   return orderedRows;
 };
 
+const buildGroupedHubRows = (rows, groups, assignedCostCenters) => {
+  const rowsByCostCenter = new Map(rows.map((row) => [row.costCenter, row]));
+  const orderedRows = [];
+  const unassignedRows = rows
+    .filter((row) => !assignedCostCenters.has(row.costCenter))
+    .sort((a, b) => a.costCenter.localeCompare(b.costCenter));
+
+  for (const group of groups) {
+    const groupRows = group.costCenters.map((costCenter) => rowsByCostCenter.get(costCenter)).filter(Boolean);
+    if (!groupRows.length) continue;
+    orderedRows.push({
+      ...sumCostCenterRows(groupRows, group.hub, "subgroup", group.label),
+      filterCostCenter: getCostCenterGroupValue(group.id),
+    }, ...groupRows);
+  }
+
+  return [...orderedRows, ...unassignedRows];
+};
+
 const buildHubCostCenterRows = (costCenterRows) => {
   const rowsByHub = costCenterRows.reduce((groups, row) => {
     if (!groups.has(row.hub)) groups.set(row.hub, []);
@@ -390,6 +411,7 @@ const buildHubCostCenterRows = (costCenterRows) => {
 
   const hubRows = orderedHubs.flatMap((hub) => {
     const rows = rowsByHub.get(hub).sort((a, b) => a.costCenter.localeCompare(b.costCenter));
+    if (hub === "BGC Hub") return [sumCostCenterRows(rows, hub), ...buildGroupedHubRows(rows, BGC_SUB_HUBS, BGC_ASSIGNED_COST_CENTERS)];
     if (hub === "ROO Hub") return [sumCostCenterRows(rows, hub), ...buildRooRows(rows)];
     return [sumCostCenterRows(rows, hub), ...rows];
   });
