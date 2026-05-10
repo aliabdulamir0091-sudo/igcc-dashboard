@@ -5349,8 +5349,36 @@ button {
     margin: 0;
   }
 
+  html,
+  body,
+  #root {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
   body * {
     visibility: hidden !important;
+  }
+
+  .app-shell,
+  .page-content,
+  .executive-cockpit-page {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .app-shell > :not(.page-content),
+  .page-content > :not(.executive-cockpit-page),
+  .executive-cockpit-page > :not(.simple-report-backdrop) {
+    display: none !important;
   }
 
   .simple-report-backdrop,
@@ -5367,11 +5395,13 @@ button {
   }
 
   .simple-report-sheet {
-    width: 100% !important;
+    width: calc(100vw - 16mm) !important;
     max-height: none !important;
     overflow: visible !important;
     border: 1px solid #0f766e !important;
     box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   .simple-report-header {
