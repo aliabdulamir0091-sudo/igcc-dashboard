@@ -263,6 +263,7 @@ const getCostCenterRow = (rowsByCostCenter, costCenter, hub) => {
       allocatedGeneralCost: 0,
       allocatedManagementCost: 0,
       receivedCn: 0,
+      allocatedGeneralCn: 0,
       totalCost: 0,
       submittedAfp: 0,
       approvedAfp: 0,
@@ -333,6 +334,8 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
       row.allocatedGeneralCost += Number(entry.amount) || 0;
     } else if (entry.type === "spent" && entry.isAllocatedManagementCost) {
       row.allocatedManagementCost += Number(entry.amount) || 0;
+    } else if (entry.type === "creditNotes" && entry.isAllocatedGeneralCreditNote) {
+      row.allocatedGeneralCn += Number(entry.amount) || 0;
     } else if (entry.type === "creditNotes") {
       row.receivedCn += Number(entry.amount) || 0;
     } else if (entry.type === "submitted") {
@@ -344,7 +347,7 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
 
   return [...rowsByCostCenter.values()]
     .map((row) => {
-      const totalCost = row.spentCost + row.allocatedGeneralCost + row.allocatedManagementCost + row.receivedCn;
+      const totalCost = row.spentCost + row.allocatedGeneralCost + row.allocatedManagementCost + row.receivedCn + row.allocatedGeneralCn;
       const profit = row.approvedAfp - totalCost;
       return {
         ...row,
@@ -353,7 +356,7 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
         margin: getShare(profit, row.approvedAfp),
       };
     })
-    .filter((row) => row.spentCost || row.allocatedGeneralCost || row.receivedCn || row.approvedAfp)
+    .filter((row) => row.spentCost || row.allocatedGeneralCost || row.receivedCn || row.allocatedGeneralCn || row.approvedAfp)
     .sort((a, b) => {
       const hubOrder = COST_CENTER_HIERARCHY.findIndex((group) => group.hub === a.hub)
         - COST_CENTER_HIERARCHY.findIndex((group) => group.hub === b.hub);
@@ -367,6 +370,7 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
     allocatedGeneralCost: sum.allocatedGeneralCost + row.allocatedGeneralCost,
     allocatedManagementCost: sum.allocatedManagementCost + row.allocatedManagementCost,
     receivedCn: sum.receivedCn + row.receivedCn,
+    allocatedGeneralCn: sum.allocatedGeneralCn + row.allocatedGeneralCn,
     totalCost: sum.totalCost + row.totalCost,
     submittedAfp: sum.submittedAfp + row.submittedAfp,
     approvedAfp: sum.approvedAfp + row.approvedAfp,
@@ -376,6 +380,7 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
     allocatedGeneralCost: 0,
     allocatedManagementCost: 0,
     receivedCn: 0,
+    allocatedGeneralCn: 0,
     totalCost: 0,
     submittedAfp: 0,
     approvedAfp: 0,
@@ -510,13 +515,15 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
     generalHubCost: row.allocatedGeneralCost,
     managementCost: row.allocatedManagementCost,
     receivedCn: row.receivedCn,
+    allocatedGeneralCn: row.allocatedGeneralCn,
     totalCost: row.totalCost,
     approvedMargin,
     approvedMarginPercent: getShare(approvedMargin, row.approvedAfp),
     submittedMargin,
     submittedMarginPercent: getShare(submittedMargin, row.submittedAfp),
     spendBreakdown: groupAmounts(rawSpentRows, (entry) => entry.glName || "Unclassified"),
-    cnBreakdown: groupAmounts(cnRows, (entry) => entry.category || entry.issuedBy || "Credit Note"),
+    cnBreakdown: groupAmounts(cnRows.filter((entry) => !entry.isAllocatedGeneralCreditNote), (entry) => entry.category || entry.issuedBy || "Credit Note"),
+    generalCnBreakdown: groupAmounts(cnRows.filter((entry) => entry.isAllocatedGeneralCreditNote), (entry) => entry.allocationSourceCostCenter || "General CN Reallocated"),
   };
 };
 
@@ -529,6 +536,7 @@ function SimpleReportModal({ report, onClose }) {
     ["General Hub Cost", report.generalHubCost],
     ["Management Cost", report.managementCost],
     ["CN", report.receivedCn],
+    ["General CN Reallocated", report.allocatedGeneralCn],
   ];
   return (
     <div className="simple-report-backdrop" onClick={onClose}>
@@ -580,6 +588,16 @@ function SimpleReportModal({ report, onClose }) {
             </tr>
             {(report.cnBreakdown.length ? report.cnBreakdown : [{ label: "No CN detail", amount: 0 }]).map((item) => (
               <tr key={`cn-${item.label}`}>
+                <td>{item.label}</td>
+                <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
+                <td />
+              </tr>
+            ))}
+            <tr className="is-section">
+              <td colSpan={3}>General CN Reallocated</td>
+            </tr>
+            {(report.generalCnBreakdown.length ? report.generalCnBreakdown : [{ label: "No general CN reallocation", amount: 0 }]).map((item) => (
+              <tr key={`general-cn-${item.label}`}>
                 <td>{item.label}</td>
                 <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
                 <td />
@@ -691,6 +709,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 <th>General Cost Reallocate</th>
                 <th>Management Cost</th>
                 <th>Received CN</th>
+                <th>General CN Reallocate</th>
                 <th>Total Cost</th>
                 <th>Submitted AFP</th>
                 <th>Approved AFP</th>
@@ -726,6 +745,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                   <SummaryValue value={row.allocatedGeneralCost} />
                   <SummaryValue value={row.allocatedManagementCost} />
                   <SummaryValue value={row.receivedCn} />
+                  <SummaryValue value={row.allocatedGeneralCn} />
                   <SummaryValue value={row.totalCost} />
                   <SummaryValue value={row.submittedAfp} />
                   <SummaryValue value={row.approvedAfp} />
@@ -735,7 +755,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 </tr>
               )) : (
                 <tr>
-                  <td className="executive-empty-row" colSpan={11}>No cost center data for the selected filters.</td>
+                  <td className="executive-empty-row" colSpan={12}>No cost center data for the selected filters.</td>
                 </tr>
               )}
             </tbody>
