@@ -561,62 +561,74 @@ function SimpleReportModal({ report, onClose }) {
           </div>
           <button type="button" onClick={onClose} aria-label="Close report">Close</button>
         </header>
-        <table className="simple-report-table">
-          <tbody>
-            {costRows.map(([label, value]) => (
-              <tr key={label}>
-                <td>{label}</td>
-                <td>{formatWholeNumber(value)}</td>
+        <div className="simple-report-landscape">
+          <table className="simple-report-table simple-report-summary-table">
+            <tbody>
+              {costRows.map(([label, value]) => (
+                <tr key={label}>
+                  <td>{label}</td>
+                  <td>{formatWholeNumber(value)}</td>
+                  <td />
+                </tr>
+              ))}
+              <tr className="is-total">
+                <td>Total Cost</td>
+                <td>{formatWholeNumber(report.totalCost)}</td>
                 <td />
               </tr>
-            ))}
-            <tr className="is-total">
-              <td>Total Cost</td>
-              <td>{formatWholeNumber(report.totalCost)}</td>
-              <td />
-            </tr>
-            <tr>
-              <td>Margin- Approved AFP</td>
-              <td className={report.approvedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.approvedMargin)}</td>
-              <td>{formatPercent(report.approvedMarginPercent)}</td>
-            </tr>
-            <tr>
-              <td>Margin Submitted AFP</td>
-              <td className={report.submittedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.submittedMargin)}</td>
-              <td>{formatPercent(report.submittedMarginPercent)}</td>
-            </tr>
-            <tr className="is-section">
-              <td colSpan={3}>Spent Report Cost Breakdown</td>
-            </tr>
-            {(report.spendBreakdown.length ? report.spendBreakdown : [{ label: "No spent detail", amount: 0 }]).map((item) => (
-              <tr key={`spent-${item.label}`}>
-                <td>{item.label}</td>
-                <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
-                <td />
+              <tr>
+                <td>Margin- Approved AFP</td>
+                <td className={report.approvedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.approvedMargin)}</td>
+                <td>{formatPercent(report.approvedMarginPercent)}</td>
               </tr>
-            ))}
-            <tr className="is-section">
-              <td colSpan={3}>Received CN Breakdown</td>
-            </tr>
-            {(report.cnBreakdown.length ? report.cnBreakdown : [{ label: "No CN detail", amount: 0 }]).map((item) => (
-              <tr key={`cn-${item.label}`}>
-                <td>{item.label}</td>
-                <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
-                <td />
+              <tr>
+                <td>Margin Submitted AFP</td>
+                <td className={report.submittedMargin < 0 ? "is-bad" : "is-good"}>{formatWholeNumber(report.submittedMargin)}</td>
+                <td>{formatPercent(report.submittedMarginPercent)}</td>
               </tr>
-            ))}
-            <tr className="is-section">
-              <td colSpan={3}>General CN Reallocated</td>
-            </tr>
-            {(report.generalCnBreakdown.length ? report.generalCnBreakdown : [{ label: "No general CN reallocation", amount: 0 }]).map((item) => (
-              <tr key={`general-cn-${item.label}`}>
-                <td>{item.label}</td>
-                <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
-                <td />
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+          <section className="simple-report-breakdowns">
+            <table className="simple-report-table">
+              <tbody>
+                <tr className="is-section">
+                  <td colSpan={3}>Spent Report Cost Breakdown</td>
+                </tr>
+                {(report.spendBreakdown.length ? report.spendBreakdown : [{ label: "No spent detail", amount: 0 }]).map((item) => (
+                  <tr key={`spent-${item.label}`}>
+                    <td>{item.label}</td>
+                    <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
+                    <td />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <table className="simple-report-table">
+              <tbody>
+                <tr className="is-section">
+                  <td colSpan={3}>Received CN Breakdown</td>
+                </tr>
+                {(report.cnBreakdown.length ? report.cnBreakdown : [{ label: "No CN detail", amount: 0 }]).map((item) => (
+                  <tr key={`cn-${item.label}`}>
+                    <td>{item.label}</td>
+                    <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
+                    <td />
+                  </tr>
+                ))}
+                <tr className="is-section">
+                  <td colSpan={3}>General CN Reallocated</td>
+                </tr>
+                {(report.generalCnBreakdown.length ? report.generalCnBreakdown : [{ label: "No general CN reallocation", amount: 0 }]).map((item) => (
+                  <tr key={`general-cn-${item.label}`}>
+                    <td>{item.label}</td>
+                    <td>{item.amount ? formatWholeNumber(item.amount) : ""}</td>
+                    <td />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </div>
       </article>
     </div>
   );
