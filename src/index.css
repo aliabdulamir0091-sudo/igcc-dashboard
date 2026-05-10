@@ -5346,7 +5346,7 @@ button {
 @media print {
   @page {
     size: landscape;
-    margin: 10mm;
+    margin: 0;
   }
 
   body * {
@@ -5361,7 +5361,7 @@ button {
   .simple-report-backdrop {
     position: static !important;
     display: block !important;
-    padding: 0 !important;
+    padding: 8mm !important;
     background: #ffffff !important;
     backdrop-filter: none !important;
   }
