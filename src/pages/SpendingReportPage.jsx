@@ -1,7 +1,7 @@
 import { useState } from "react";
-import financialInputsData from "../data/financialInputsData.json";
 import { matchesCostCenterFilter } from "../data/costCenterHierarchy";
 import { Icon } from "../components/Icons";
+import { useAfpFinancialInputs } from "../hooks/useAfpFinancialInputs";
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -922,7 +922,8 @@ function CostCenterProfileDrawer({ costCenterName, byCostCenter, byGlCostCenter,
 }
 
 export function SpendingReportPage({ filters }) {
-  const { totals, monthlyFlow, byCostCenter, byGlName, byGlCostCenter, costCenterSparklineByName, creditNotes, insights } = buildFilteredInputs(financialInputsData, filters);
+  const { entries } = useAfpFinancialInputs();
+  const { totals, monthlyFlow, byCostCenter, byGlName, byGlCostCenter, costCenterSparklineByName, creditNotes, insights } = buildFilteredInputs({ entries }, filters);
   const [selectedProfileCostCenter, setSelectedProfileCostCenter] = useState("");
   const chartRows = monthlyFlow.filter((row) => row.spent || row.submitted || row.approved).slice(-16);
   const cnShare = getShare(totals.creditNotes, totals.spent);

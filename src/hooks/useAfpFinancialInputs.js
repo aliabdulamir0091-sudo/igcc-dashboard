@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import financialInputsData from "../data/financialInputsData.json";
 import { fetchAfpRecords } from "../services/afp/afpRepository";
 import { mergeFinancialInputsWithAfpMaster } from "../services/afp/afpFinancialEntries";
+import { fetchSpentEntries } from "../services/spent/spentRepository";
 
 const DEFAULT_COMPARISON = {
   startYear: import.meta.env.VITE_AFP_MASTER_START_YEAR || "2026",
@@ -18,8 +19,11 @@ const DEFAULT_COMPARISON = {
 
 export function useAfpFinancialInputs() {
   const [afpRecords, setAfpRecords] = useState([]);
+  const [spentEntries, setSpentEntries] = useState([]);
   const [isLoadingAfpMaster, setIsLoadingAfpMaster] = useState(true);
+  const [isLoadingSpentReport, setIsLoadingSpentReport] = useState(true);
   const [afpMasterError, setAfpMasterError] = useState("");
+  const [spentReportError, setSpentReportError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -42,17 +46,49 @@ export function useAfpFinancialInputs() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoadingSpentReport(true);
+    setSpentReportError("");
+
+    fetchSpentEntries()
+      .then((entries) => {
+        if (isMounted) setSpentEntries(entries);
+      })
+      .catch((error) => {
+        if (isMounted) setSpentReportError(error.message || "Unable to load Spent Report.");
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingSpentReport(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const merged = useMemo(() => (
     !isLoadingAfpMaster && !afpMasterError
       ? mergeFinancialInputsWithAfpMaster(financialInputsData.entries || [], afpRecords)
       : { entries: financialInputsData.entries || [], comparison: DEFAULT_COMPARISON }
   ), [afpMasterError, afpRecords, isLoadingAfpMaster]);
 
+  const entries = useMemo(() => {
+    if (isLoadingSpentReport || spentReportError) return merged.entries;
+    return [
+      ...merged.entries.filter((entry) => entry.type !== "spent"),
+      ...spentEntries,
+    ];
+  }, [isLoadingSpentReport, merged.entries, spentEntries, spentReportError]);
+
   return {
-    entries: merged.entries,
+    entries,
     afpMasterComparison: merged.comparison,
     afpRecords,
+    spentEntries,
     isLoadingAfpMaster,
+    isLoadingSpentReport,
     afpMasterError,
+    spentReportError,
   };
 }
