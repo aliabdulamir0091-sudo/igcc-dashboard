@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import financialInputsData from "../data/financialInputsData.json";
 import { fetchAfpRecords } from "../services/afp/afpRepository";
 import { mergeFinancialInputsWithAfpMaster } from "../services/afp/afpFinancialEntries";
+import { fetchCreditNoteEntries } from "../services/creditNotes/creditNoteRepository";
 import { fetchSpentEntries } from "../services/spent/spentRepository";
 
 const DEFAULT_COMPARISON = {
@@ -16,14 +17,18 @@ const DEFAULT_COMPARISON = {
   replacedLegacyRows: 0,
   masterRows: 0,
 };
+const CREDIT_NOTE_START_YEAR = import.meta.env.VITE_CREDIT_NOTE_START_YEAR || "2026";
 
 export function useAfpFinancialInputs() {
   const [afpRecords, setAfpRecords] = useState([]);
   const [spentEntries, setSpentEntries] = useState([]);
+  const [creditNoteEntries, setCreditNoteEntries] = useState([]);
   const [isLoadingAfpMaster, setIsLoadingAfpMaster] = useState(true);
   const [isLoadingSpentReport, setIsLoadingSpentReport] = useState(true);
+  const [isLoadingCreditNotes, setIsLoadingCreditNotes] = useState(true);
   const [afpMasterError, setAfpMasterError] = useState("");
   const [spentReportError, setSpentReportError] = useState("");
+  const [creditNoteError, setCreditNoteError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -39,6 +44,27 @@ export function useAfpFinancialInputs() {
       })
       .finally(() => {
         if (isMounted) setIsLoadingAfpMaster(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoadingCreditNotes(true);
+    setCreditNoteError("");
+
+    fetchCreditNoteEntries()
+      .then((entries) => {
+        if (isMounted) setCreditNoteEntries(entries);
+      })
+      .catch((error) => {
+        if (isMounted) setCreditNoteError(error.message || "Unable to load Credit Note.");
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingCreditNotes(false);
       });
 
     return () => {
@@ -74,21 +100,39 @@ export function useAfpFinancialInputs() {
   ), [afpMasterError, afpRecords, isLoadingAfpMaster]);
 
   const entries = useMemo(() => {
-    if (isLoadingSpentReport || spentReportError) return merged.entries;
-    return [
+    const entriesWithSpent = isLoadingSpentReport || spentReportError ? merged.entries : [
       ...merged.entries.filter((entry) => entry.type !== "spent"),
       ...spentEntries,
     ];
-  }, [isLoadingSpentReport, merged.entries, spentEntries, spentReportError]);
+
+    if (isLoadingCreditNotes || creditNoteError) return entriesWithSpent;
+    return [
+      ...entriesWithSpent.filter((entry) => (
+        entry.type !== "creditNotes" || String(entry.year || entry.period?.slice(0, 4)) < CREDIT_NOTE_START_YEAR
+      )),
+      ...creditNoteEntries,
+    ];
+  }, [
+    creditNoteEntries,
+    creditNoteError,
+    isLoadingCreditNotes,
+    isLoadingSpentReport,
+    merged.entries,
+    spentEntries,
+    spentReportError,
+  ]);
 
   return {
     entries,
     afpMasterComparison: merged.comparison,
     afpRecords,
     spentEntries,
+    creditNoteEntries,
     isLoadingAfpMaster,
     isLoadingSpentReport,
+    isLoadingCreditNotes,
     afpMasterError,
     spentReportError,
+    creditNoteError,
   };
 }
