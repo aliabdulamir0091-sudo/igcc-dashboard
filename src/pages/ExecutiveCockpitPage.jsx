@@ -373,7 +373,7 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
         margin: getShare(profit, row.approvedAfp),
       };
     })
-    .filter((row) => row.spentCost || row.allocatedGeneralCost || row.receivedCn || row.allocatedGeneralCn || row.approvedAfp)
+    .filter((row) => row.spentCost || row.allocatedGeneralCost || row.receivedCn || row.allocatedGeneralCn || row.submittedAfp || row.approvedAfp)
     .sort((a, b) => {
       const hubOrder = COST_CENTER_HIERARCHY.findIndex((group) => group.hub === a.hub)
         - COST_CENTER_HIERARCHY.findIndex((group) => group.hub === b.hub);
