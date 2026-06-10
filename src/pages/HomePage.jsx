@@ -17,6 +17,13 @@ const pageCards = [
     detail: "Spend, AFP, GL drilldown, CN allocation detail",
     action: "Open",
   },
+  {
+    id: "afp",
+    icon: "approve",
+    title: "AFP Master",
+    detail: "Live AFP submissions and approvals from Google Sheets",
+    action: "Open",
+  },
 ];
 
 const workflowSteps = [
@@ -43,6 +50,7 @@ const readinessItems = [
 const sideItems = [
   { id: "home", icon: "home", label: "Home" },
   { id: "executive", icon: "executive", label: "Operations Performance" },
+  { id: "afp", icon: "approve", label: "AFP Master" },
   { id: "spending", icon: "spending", label: "Financial Input" },
   { id: "data", icon: "download", label: "Data & Sync" },
   { id: "settings", icon: "folder", label: "Settings" },

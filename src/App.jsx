@@ -3,6 +3,7 @@ import { AccessDeniedPage } from "./components/AccessDeniedPage";
 import { AuthPage } from "./components/AuthPage";
 import { DATA_SCHEMAS } from "./data/firestoreCollections";
 import { AppLayout } from "./layouts/AppLayout";
+import { AfpDashboardPage } from "./pages/AfpDashboardPage";
 import { ExecutiveCockpitPage } from "./pages/ExecutiveCockpitPage";
 import { HomePage } from "./pages/HomePage";
 import { ProfitabilityPage } from "./pages/ProfitabilityPage";
@@ -22,6 +23,7 @@ const DEFAULT_DASHBOARD_FILTERS = {
 const PAGE_COMPONENTS = {
   home: HomePage,
   executive: ExecutiveCockpitPage,
+  afp: AfpDashboardPage,
   detail: ProfitabilityPage,
   spending: SpendingReportPage,
 };

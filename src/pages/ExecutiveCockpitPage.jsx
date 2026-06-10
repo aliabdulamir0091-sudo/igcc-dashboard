@@ -8,10 +8,10 @@ import {
   getCostCenterGroupValue,
   matchesCostCenterFilter,
 } from "../data/costCenterHierarchy";
-import financialInputsData from "../data/financialInputsData.json";
+import { useAfpFinancialInputs } from "../hooks/useAfpFinancialInputs";
 import igccLogo from "../assets/igcc-logo.svg";
 
-const DEFAULT_YEAR = "2025";
+const DEFAULT_YEAR = "2026";
 const GENERAL_COST_ALLOCATIONS = [
   { poolCostCenter: "GRLBG_23", hub: "BGC Hub" },
   { poolCostCenter: "GRLRO_23", hub: "ROO Hub" },
@@ -67,6 +67,12 @@ const formatSignedChange = (value, suffix = "%") => {
   if (!Number.isFinite(value)) return "n/a";
   const sign = value > 0 ? "+" : "";
   return `${sign}${Math.round(value)}${suffix}`;
+};
+
+const formatSignedWholeNumber = (value) => {
+  const rounded = Math.round(value || 0);
+  const sign = rounded > 0 ? "+" : "";
+  return `${sign}${rounded.toLocaleString("en-US")}`;
 };
 
 const getShare = (value, revenue) => (revenue ? (value / revenue) * 100 : 0);
@@ -989,10 +995,16 @@ function SimpleReportModal({ report, onClose }) {
 
 export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters }) {
   const [reportRow, setReportRow] = useState(null);
+  const {
+    entries,
+    afpMasterComparison,
+    isLoadingAfpMaster,
+    afpMasterError,
+  } = useAfpFinancialInputs();
   const isYearFiltered = hasSelectedYear(filters);
   const year = getSelectedYear(filters);
   const quarters = buildQuarters(year);
-  const rawEntries = financialInputsData.entries || [];
+  const rawEntries = entries;
   const summaryEntries = allocateGeneralSpentCosts(rawEntries, { ...filters, year });
   const costCenterFilters = isYearFiltered ? { ...filters, year } : { ...filters, year: ALL_FILTER_VALUE };
   const costCenterEntries = allocateGeneralSpentCosts(rawEntries, costCenterFilters);
@@ -1037,8 +1049,18 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
       <div className="page-heading executive-heading">
         <p className="eyebrow">Operations control view</p>
         <h2>IGCC Operations Performance</h2>
-        <p>Hub, cost center, AFP, cost, CN, and profit view.</p>
+        <p>Hub, cost center, AFP, cost, CN, and profit view. AFP values from Jan 2026 onward are sourced from AFP_MASTER.</p>
       </div>
+
+      <section className={`afp-source-strip executive-afp-source ${afpMasterError ? "has-error" : ""}`} aria-label="AFP master source status">
+        <span>AFP source</span>
+        <strong>{isLoadingAfpMaster ? "Loading AFP_MASTER" : afpMasterError ? "AFP_MASTER unavailable" : `AFP_MASTER from ${afpMasterComparison.startYear}`}</strong>
+        <time>
+          Submitted diff {formatSignedWholeNumber(afpMasterComparison.submittedDifference)}
+          {" | "}
+          Approved diff {formatSignedWholeNumber(afpMasterComparison.approvedDifference)}
+        </time>
+      </section>
 
       <article className="surface-card executive-summary-card">
         <div className="executive-table-title">

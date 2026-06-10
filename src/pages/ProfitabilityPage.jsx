@@ -7,7 +7,7 @@ import {
   getCostCenterFilterLabel,
   matchesCostCenterFilter,
 } from "../data/costCenterHierarchy";
-import financialInputsData from "../data/financialInputsData.json";
+import { useAfpFinancialInputs } from "../hooks/useAfpFinancialInputs";
 import igccLogo from "../assets/igcc-logo.svg";
 
 const REVENUE_BASIS_OPTIONS = [
@@ -1176,6 +1176,7 @@ export function ProfitabilityPage({ filters = {}, activePage }) {
   const [tableFilters, setTableFilters] = useState(DEFAULT_TABLE_FILTERS);
   const [sortConfig, setSortConfig] = useState({ key: "costCenter", direction: "asc" });
   const [activeFilterColumn, setActiveFilterColumn] = useState("");
+  const { entries: financialEntries } = useAfpFinancialInputs();
   const filterCostCenter = filters.costCenter && filters.costCenter !== ALL_FILTER_VALUE ? filters.costCenter : "";
   const selectedCostCenter = filterCostCenter || drilldownCostCenter;
   const isDetailPage = activePage === "detail";
@@ -1183,7 +1184,7 @@ export function ProfitabilityPage({ filters = {}, activePage }) {
   const revenueBasisLabel = REVENUE_BASIS_OPTIONS.find((option) => option.id === revenueBasis)?.label || "Approved AFP";
 
   const analysis = useMemo(() => {
-    const entries = allocateGeneralSpentCosts(financialInputsData.entries || [], filters);
+    const entries = allocateGeneralSpentCosts(financialEntries || [], filters);
     const filteredRows = entries.filter((entry) => matchesFilters(entry, filters));
     const contextRows = selectedCostCenter
       ? entries.filter((entry) => matchesFilters(entry, { ...filters, costCenter: selectedCostCenter }))
@@ -1458,7 +1459,7 @@ export function ProfitabilityPage({ filters = {}, activePage }) {
         },
       },
     };
-  }, [filters, revenueBasis, selectedCostCenter]);
+  }, [financialEntries, filters, revenueBasis, selectedCostCenter]);
 
   const kpiCards = [
     { icon: "approve", label: "Revenue", value: formatCompactCurrency(analysis.pnl.isCostCenterLevel ? analysis.pnl.updatedRevenue : analysis.pnl.revenue), context: revenueBasisLabel, tone: "green", sparkline: analysis.monthlyTrend.map((row) => row.revenue), movement: getTrend(analysis.monthlyTrend.at(-1)?.revenue || 0, analysis.monthlyTrend.at(-2)?.revenue || 0) },
