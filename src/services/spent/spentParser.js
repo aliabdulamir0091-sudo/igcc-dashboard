@@ -19,6 +19,10 @@ const COST_CENTER_LOOKUP = new Map(COST_CENTER_HIERARCHY.flatMap((group) => (
   group.costCenters.map((costCenter) => [costCenter, { hub: group.hub, region: group.region }])
 )));
 
+const COST_CENTER_ALIASES = {
+  GRLTOT: "GRLTOT_25",
+};
+
 const cleanText = (value) => String(value ?? "").trim();
 
 const parseAmount = (value) => {
@@ -56,6 +60,8 @@ const normalizeHub = (level1, costCenter) => {
   return cleanText(level1) || "Unassigned";
 };
 
+const normalizeCostCenter = (costCenter) => COST_CENTER_ALIASES[costCenter] || costCenter;
+
 const getRegion = (hub, costCenter) => {
   const mapped = COST_CENTER_LOOKUP.get(costCenter);
   if (mapped?.region) return mapped.region;
@@ -66,8 +72,10 @@ const getRegion = (hub, costCenter) => {
 export function parseSpentRows(rows) {
   return rows
     .map((row) => {
-      const costCenter = cleanText(row["Level 2"]) || cleanText(row["Level 1"]) || "Unassigned";
-      const sourceCostCenter = cleanText(row["Level 1"]) || costCenter;
+      const rawCostCenter = cleanText(row["Level 2"]) || cleanText(row["Level 1"]) || "Unassigned";
+      const rawSourceCostCenter = cleanText(row["Level 1"]) || rawCostCenter;
+      const costCenter = normalizeCostCenter(rawCostCenter);
+      const sourceCostCenter = normalizeCostCenter(rawSourceCostCenter);
       const month = normalizeMonth(row.Month);
       const year = normalizeYear(row.Year);
       const period = year && month ? `${year}-${MONTH_NUMBER_BY_NAME[month]}` : "";
