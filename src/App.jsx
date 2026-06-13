@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { AccessDeniedPage } from "./components/AccessDeniedPage";
 import { AuthPage } from "./components/AuthPage";
+import {
+  ALL_FILTER_VALUE,
+  COST_CENTER_GROUPS,
+  COST_CENTER_HIERARCHY,
+  getCostCenterGroupByValue,
+  getCostCenterGroupValue,
+} from "./data/costCenterHierarchy";
 import { DATA_SCHEMAS } from "./data/firestoreCollections";
 import { AppLayout } from "./layouts/AppLayout";
 import { AfpDashboardPage } from "./pages/AfpDashboardPage";
@@ -26,6 +33,53 @@ const PAGE_COMPONENTS = {
   afp: AfpDashboardPage,
   detail: ProfitabilityPage,
   spending: SpendingReportPage,
+};
+
+const matchesPortfolio = (row, portfolio) => (
+  portfolio === ALL_FILTER_VALUE
+  || (portfolio === "basra" && row.region === "Basra")
+  || (portfolio === "kirkuk" && row.region === "Kirkuk")
+  || (portfolio === "head-office" && row.hub === "Head Office")
+);
+
+const getValidCostCenterFilters = (portfolio, hub) => {
+  const matchingRows = COST_CENTER_HIERARCHY.filter((row) => (
+    matchesPortfolio(row, portfolio)
+    && (hub === ALL_FILTER_VALUE || row.hub === hub)
+  ));
+  const costCenters = matchingRows.flatMap((row) => row.costCenters);
+  const groups = COST_CENTER_GROUPS
+    .filter((group) => hub === "ROO Hub" && matchingRows.some((row) => row.hub === group.hub))
+    .map((group) => getCostCenterGroupValue(group.id));
+
+  return new Set([ALL_FILTER_VALUE, ...costCenters, ...groups]);
+};
+
+const sanitizeDashboardFilters = (filters) => {
+  const nextFilters = { ...DEFAULT_DASHBOARD_FILTERS, ...filters };
+  const portfolio = nextFilters.portfolio || ALL_FILTER_VALUE;
+  const hub = nextFilters.hub || ALL_FILTER_VALUE;
+  const validHubs = new Set([
+    ALL_FILTER_VALUE,
+    ...COST_CENTER_HIERARCHY.filter((row) => matchesPortfolio(row, portfolio)).map((row) => row.hub),
+  ]);
+
+  if (!validHubs.has(hub)) {
+    nextFilters.hub = ALL_FILTER_VALUE;
+    nextFilters.costCenter = ALL_FILTER_VALUE;
+  }
+
+  const validCostCenters = getValidCostCenterFilters(portfolio, nextFilters.hub);
+  if (!validCostCenters.has(nextFilters.costCenter) || (getCostCenterGroupByValue(nextFilters.costCenter) && nextFilters.hub !== "ROO Hub")) {
+    nextFilters.costCenter = ALL_FILTER_VALUE;
+  }
+
+  if (nextFilters.period === "yearly") {
+    nextFilters.month = ALL_FILTER_VALUE;
+    nextFilters.quarter = ALL_FILTER_VALUE;
+  }
+
+  return nextFilters;
 };
 
 export default function App() {
@@ -72,6 +126,10 @@ export default function App() {
   }
 
   const Page = PAGE_COMPONENTS[activePage] ?? ExecutiveCockpitPage;
+  const sanitizedDashboardFilters = sanitizeDashboardFilters(dashboardFilters);
+  const applyDashboardFilters = (filters) => {
+    setDashboardFilters(sanitizeDashboardFilters(filters));
+  };
 
   return (
     <AppLayout
@@ -85,8 +143,8 @@ export default function App() {
       onLogout={handleLogout}
       theme={theme}
       onToggleTheme={toggleTheme}
-      filters={dashboardFilters}
-      onApplyFilters={setDashboardFilters}
+      filters={sanitizedDashboardFilters}
+      onApplyFilters={applyDashboardFilters}
       onClearFilters={() => setDashboardFilters(DEFAULT_DASHBOARD_FILTERS)}
     >
       <Page
@@ -94,8 +152,8 @@ export default function App() {
         dataSchemas={DATA_SCHEMAS}
         accessProfile={accessProfile}
         onNavigate={setActivePage}
-        filters={dashboardFilters}
-        onApplyFilters={setDashboardFilters}
+        filters={sanitizedDashboardFilters}
+        onApplyFilters={applyDashboardFilters}
       />
     </AppLayout>
   );

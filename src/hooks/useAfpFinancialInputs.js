@@ -18,6 +18,23 @@ const DEFAULT_COMPARISON = {
   masterRows: 0,
 };
 const CREDIT_NOTE_START_YEAR = import.meta.env.VITE_CREDIT_NOTE_START_YEAR || "2026";
+const MIN_LIVE_SPENT_ROW_COVERAGE = 0.8;
+
+const getSpentEntries = (entries) => entries.filter((entry) => entry.type === "spent");
+
+const getEntryYears = (entries) => new Set(entries.map((entry) => String(entry.year || "").trim()).filter(Boolean));
+
+const hasAllBaselineYears = (liveEntries, baselineEntries) => {
+  const liveYears = getEntryYears(liveEntries);
+  return [...getEntryYears(baselineEntries)].every((year) => liveYears.has(year));
+};
+
+const isLiveSpentReportCompleteEnough = (liveEntries, baselineEntries) => {
+  if (!baselineEntries.length) return liveEntries.length > 0;
+  if (!liveEntries.length) return false;
+  if (!hasAllBaselineYears(liveEntries, baselineEntries)) return false;
+  return liveEntries.length >= baselineEntries.length * MIN_LIVE_SPENT_ROW_COVERAGE;
+};
 
 export function useAfpFinancialInputs() {
   const [afpRecords, setAfpRecords] = useState([]);
@@ -100,10 +117,16 @@ export function useAfpFinancialInputs() {
   ), [afpMasterError, afpRecords, isLoadingAfpMaster]);
 
   const entries = useMemo(() => {
-    const entriesWithSpent = isLoadingSpentReport || spentReportError ? merged.entries : [
+    const baselineSpentEntries = getSpentEntries(merged.entries);
+    const shouldUseLiveSpent = (
+      !isLoadingSpentReport
+      && !spentReportError
+      && isLiveSpentReportCompleteEnough(spentEntries, baselineSpentEntries)
+    );
+    const entriesWithSpent = shouldUseLiveSpent ? [
       ...merged.entries.filter((entry) => entry.type !== "spent"),
       ...spentEntries,
-    ];
+    ] : merged.entries;
 
     if (isLoadingCreditNotes || creditNoteError) return entriesWithSpent;
     return [
