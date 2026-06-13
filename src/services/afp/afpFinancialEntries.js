@@ -1,5 +1,5 @@
 import { COST_CENTER_HIERARCHY } from "../../data/costCenterHierarchy";
-import { getAfpRecordPeriodKey, isAfpRecordOnOrAfterYear } from "./afpPeriods";
+import { getAfpRecordPeriodKey, getAfpRecordStartYear, isAfpRecordInMasterCoverage } from "./afpPeriods";
 
 const AFP_MASTER_START_YEAR = import.meta.env.VITE_AFP_MASTER_START_YEAR || "2026";
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -65,7 +65,7 @@ const createAfpEntry = ({ record, type, amount, period }) => {
 };
 
 export function buildAfpFinancialEntries(records) {
-  return records.filter((record) => isAfpRecordOnOrAfterYear(record, AFP_MASTER_START_YEAR)).flatMap((record) => {
+  return records.filter(isAfpRecordInMasterCoverage).flatMap((record) => {
     const entries = [];
     if (record.submitted_value) {
       entries.push(createAfpEntry({
@@ -89,7 +89,7 @@ export function buildAfpFinancialEntries(records) {
 
 const isReplacedLegacyAfpEntry = (entry) => (
   (entry.type === "submitted" || entry.type === "approved")
-  && String(entry.year) >= AFP_MASTER_START_YEAR
+  && (!getAfpRecordStartYear(entry) || String(entry.year) >= getAfpRecordStartYear(entry))
 );
 
 const sumByType = (entries, type) => entries.reduce((total, entry) => (
@@ -104,7 +104,7 @@ export function compareLegacyAndMasterAfp(legacyEntries, masterEntries) {
   const masterApproved = roundCurrency(sumByType(masterEntries, "approved"));
 
   return {
-    startYear: AFP_MASTER_START_YEAR,
+    startYear: `BGC ${AFP_MASTER_START_YEAR}, ROO 2022`,
     legacySubmitted,
     legacyApproved,
     masterSubmitted,

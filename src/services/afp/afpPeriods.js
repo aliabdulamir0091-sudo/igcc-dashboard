@@ -13,6 +13,9 @@ const MONTH_NUMBER_BY_NAME = {
   dec: "12",
 };
 
+const BGC_AFP_START_YEAR = import.meta.env.VITE_AFP_BGC_START_YEAR || import.meta.env.VITE_AFP_MASTER_START_YEAR || "2026";
+const ROO_AFP_START_YEAR = import.meta.env.VITE_AFP_ROO_START_YEAR || "2022";
+
 export function getAfpRecordPeriodKey(record) {
   const period = String(record.period || "").trim();
   const periodMatch = period.match(/^([a-z]{3})\s+(\d{4})$/i);
@@ -34,7 +37,28 @@ export function getAfpRecordPeriodKey(record) {
   return "";
 }
 
+const getAfpScopeText = (record) => [
+  record.hub_unit,
+  record.hub,
+  record.cost_center,
+  record.costCenter,
+  record.sourceCostCenter,
+].map((value) => String(value || "").trim().toLowerCase()).join(" ");
+
+export function getAfpRecordStartYear(record) {
+  const text = getAfpScopeText(record);
+  if (text.includes("bgc")) return BGC_AFP_START_YEAR;
+  if (text.includes("roo")) return ROO_AFP_START_YEAR;
+  return "";
+}
+
 export function isAfpRecordOnOrAfterYear(record, startYear) {
   const periodKey = getAfpRecordPeriodKey(record);
   return periodKey ? periodKey.slice(0, 4) >= String(startYear) : false;
+}
+
+export function isAfpRecordInMasterCoverage(record) {
+  const startYear = getAfpRecordStartYear(record);
+  if (!startYear) return true;
+  return isAfpRecordOnOrAfterYear(record, startYear);
 }
