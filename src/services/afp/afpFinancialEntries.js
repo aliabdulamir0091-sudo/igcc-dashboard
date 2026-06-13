@@ -1,5 +1,5 @@
 import { COST_CENTER_HIERARCHY } from "../../data/costCenterHierarchy";
-import { getAfpRecordPeriodKey, getAfpRecordStartYear, isAfpRecordInMasterCoverage } from "./afpPeriods";
+import { getAfpRecordPeriodKey, isAfpRecordInMasterCoverage } from "./afpPeriods";
 
 const AFP_MASTER_START_YEAR = import.meta.env.VITE_AFP_MASTER_START_YEAR || "2026";
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -88,8 +88,7 @@ export function buildAfpFinancialEntries(records) {
 }
 
 const isReplacedLegacyAfpEntry = (entry) => (
-  (entry.type === "submitted" || entry.type === "approved")
-  && (!getAfpRecordStartYear(entry) || String(entry.year) >= getAfpRecordStartYear(entry))
+  entry.type === "submitted" || entry.type === "approved"
 );
 
 const sumByType = (entries, type) => entries.reduce((total, entry) => (
