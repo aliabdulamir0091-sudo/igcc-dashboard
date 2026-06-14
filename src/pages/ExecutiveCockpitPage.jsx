@@ -8,6 +8,7 @@ import {
   getCostCenterGroupValue,
   matchesCostCenterFilter,
 } from "../data/costCenterHierarchy";
+import { normalizeCostCenterAlias } from "../data/costCenterAliases";
 import { useAfpFinancialInputs } from "../hooks/useAfpFinancialInputs";
 import igccLogo from "../assets/igcc-logo.svg";
 
@@ -31,9 +32,6 @@ const EXECUTIVE_HUB_ORDER = [
 ];
 const ROO_ASSIGNED_COST_CENTERS = new Set(ROO_SUB_HUBS.flatMap((group) => group.costCenters));
 const BGC_ASSIGNED_COST_CENTERS = new Set(BGC_SUB_HUBS.flatMap((group) => group.costCenters));
-const COST_CENTER_ALIASES = {
-  "PWT PWRI1_23": "PWRI-PWT",
-};
 const COST_CENTER_LOOKUP = new Map(COST_CENTER_HIERARCHY.flatMap((group) => (
   group.costCenters.map((costCenter) => [costCenter, { hub: group.hub, region: group.region }])
 )));
@@ -266,7 +264,7 @@ const getCostCenterHub = (costCenter, fallbackHub) => (
   COST_CENTER_LOOKUP.get(costCenter)?.hub || fallbackHub || "Other"
 );
 
-const normalizeCostCenter = (costCenter) => COST_CENTER_ALIASES[costCenter] || costCenter;
+const normalizeCostCenter = (costCenter) => normalizeCostCenterAlias(costCenter);
 
 const formatHubLabel = (hub) => hub.replace(/\s+Hub$/, "");
 

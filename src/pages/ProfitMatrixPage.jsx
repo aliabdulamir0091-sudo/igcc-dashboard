@@ -9,6 +9,7 @@ import {
   getCostCenterGroupValue,
   matchesCostCenterFilter,
 } from "../data/costCenterHierarchy";
+import { normalizeCostCenterAlias } from "../data/costCenterAliases";
 import { useAfpFinancialInputs } from "../hooks/useAfpFinancialInputs";
 
 const BASIS_OPTIONS = [
@@ -62,10 +63,6 @@ const EXECUTIVE_HUB_ORDER = [
 ];
 const ROO_ASSIGNED_COST_CENTERS = new Set(ROO_SUB_HUBS.flatMap((group) => group.costCenters));
 const BGC_ASSIGNED_COST_CENTERS = new Set(BGC_SUB_HUBS.flatMap((group) => group.costCenters));
-const REPORT_COST_CENTER_ALIASES = {
-  "PWT PWRI1_23": "PWRI-PWT",
-};
-
 const roundCurrency = (value) => Math.round(((value || 0) + Number.EPSILON) * 100) / 100;
 const formatCurrency = (value) => CURRENCY_FORMAT.format(value || 0);
 const formatCompactCurrency = (value) => `$${COMPACT_FORMAT.format(value || 0)}`;
@@ -77,7 +74,7 @@ const sumRows = (rows, predicate) => rows.reduce((sum, entry) => (
 
 const getQuarter = (period) => `Q${Math.ceil(Number(period?.slice(5, 7) || 1) / 3)}`;
 const getPeriodLabel = (period) => `${MONTH_LABELS[period.slice(5, 7)] || period.slice(5, 7)} ${period.slice(2, 4)}`;
-const normalizeReportCostCenter = (costCenter) => REPORT_COST_CENTER_ALIASES[costCenter] || costCenter;
+const normalizeReportCostCenter = (costCenter) => normalizeCostCenterAlias(costCenter);
 
 const matchesPortfolio = (entry, portfolio) => (
   !portfolio

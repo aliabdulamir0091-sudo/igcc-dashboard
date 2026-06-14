@@ -1,4 +1,5 @@
 import { COST_CENTER_HIERARCHY } from "../../data/costCenterHierarchy";
+import { normalizeCostCenterAlias } from "../../data/costCenterAliases";
 
 const MONTH_NUMBER_BY_NAME = {
   Jan: "01",
@@ -18,15 +19,6 @@ const MONTH_NUMBER_BY_NAME = {
 const COST_CENTER_LOOKUP = new Map(COST_CENTER_HIERARCHY.flatMap((group) => (
   group.costCenters.map((costCenter) => [costCenter, { hub: group.hub, region: group.region }])
 )));
-
-const COST_CENTER_ALIASES = {
-  GRLTOT: "GRLTOT_25",
-  TOTAL_25: "GRLTOT_25",
-  "OHTL _25": "OHTL_25",
-  MITSOHTL: "MITAS",
-  MITASOHTL: "MITAS",
-  ROOP_23: "GRLRO_23",
-};
 
 const cleanText = (value) => String(value ?? "").trim();
 
@@ -65,7 +57,7 @@ const normalizeHub = (level1, costCenter) => {
   return cleanText(level1) || "Unassigned";
 };
 
-const normalizeCostCenter = (costCenter) => COST_CENTER_ALIASES[costCenter] || costCenter;
+const normalizeCostCenter = (costCenter) => normalizeCostCenterAlias(costCenter);
 
 const getRegion = (hub, costCenter) => {
   const mapped = COST_CENTER_LOOKUP.get(costCenter);

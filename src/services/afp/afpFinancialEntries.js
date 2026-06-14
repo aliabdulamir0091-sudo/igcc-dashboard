@@ -1,4 +1,5 @@
 import { COST_CENTER_HIERARCHY } from "../../data/costCenterHierarchy";
+import { normalizeCostCenterAlias } from "../../data/costCenterAliases";
 import { getAfpRecordPeriodKey, isAfpRecordInMasterCoverage } from "./afpPeriods";
 
 const AFP_MASTER_START_YEAR = import.meta.env.VITE_AFP_MASTER_START_YEAR || "2026";
@@ -45,7 +46,7 @@ const normalizePeriod = (record, dateValue) => {
 const monthFromPeriod = (period) => MONTH_NAMES[Math.max(Number(period?.slice(5, 7) || 1) - 1, 0)] || "";
 
 const createAfpEntry = ({ record, type, amount, period }) => {
-  const costCenter = record.cost_center || record.hub_unit || "Unassigned";
+  const costCenter = normalizeCostCenterAlias(record.cost_center || record.hub_unit || "Unassigned");
   const hub = normalizeHub(record.hub_unit, costCenter);
   return {
     type,

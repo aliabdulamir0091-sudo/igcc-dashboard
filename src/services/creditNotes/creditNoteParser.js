@@ -1,4 +1,5 @@
 import { COST_CENTER_HIERARCHY } from "../../data/costCenterHierarchy";
+import { normalizeCostCenterAlias } from "../../data/costCenterAliases";
 
 const CREDIT_NOTE_START_YEAR = import.meta.env.VITE_CREDIT_NOTE_START_YEAR || "2026";
 const CATEGORIES = ["Store", "FA", "Scaffolding", "Materials", "Workshop"];
@@ -43,16 +44,12 @@ const MONTH_NAME_BY_NUMBER = {
   "12": "Dec",
 };
 
-const COST_CENTER_ALIASES = {
-  GRLTOT: "GRLTOT_25",
-};
-
 const COST_CENTER_LOOKUP = new Map(COST_CENTER_HIERARCHY.flatMap((group) => (
   group.costCenters.map((costCenter) => [costCenter, { hub: group.hub, region: group.region }])
 )));
 
 const cleanText = (value) => String(value ?? "").trim();
-const normalizeCostCenter = (costCenter) => COST_CENTER_ALIASES[costCenter] || costCenter;
+const normalizeCostCenter = (costCenter) => normalizeCostCenterAlias(costCenter);
 
 const parseAmount = (value) => {
   const text = cleanText(value)

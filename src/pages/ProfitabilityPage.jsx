@@ -7,6 +7,7 @@ import {
   getCostCenterFilterLabel,
   matchesCostCenterFilter,
 } from "../data/costCenterHierarchy";
+import { normalizeCostCenterAlias } from "../data/costCenterAliases";
 import { useAfpFinancialInputs } from "../hooks/useAfpFinancialInputs";
 import igccLogo from "../assets/igcc-logo.svg";
 
@@ -71,21 +72,12 @@ const escapeXml = (value) => String(value ?? "")
   .replaceAll('"', "&quot;");
 
 const getQuarter = (period) => `Q${Math.ceil(Number(period?.slice(5, 7) || 1) / 3)}`;
-const REPORT_COST_CENTER_ALIASES = {
-  "PWT PWRI1_23": "PWRI-PWT",
-};
-const normalizeReportCostCenter = (costCenter) => REPORT_COST_CENTER_ALIASES[costCenter] || costCenter;
+const normalizeReportCostCenter = (costCenter) => normalizeCostCenterAlias(costCenter);
 const getReportCostCenterMembers = (filterValue) => {
   const members = getCostCenterFilterMembers(filterValue);
   const expandedMembers = new Set(members);
   for (const member of members) {
     expandedMembers.add(normalizeReportCostCenter(member));
-  }
-  for (const [alias, normalized] of Object.entries(REPORT_COST_CENTER_ALIASES)) {
-    if (expandedMembers.has(alias) || expandedMembers.has(normalized)) {
-      expandedMembers.add(alias);
-      expandedMembers.add(normalized);
-    }
   }
   return [...expandedMembers];
 };
