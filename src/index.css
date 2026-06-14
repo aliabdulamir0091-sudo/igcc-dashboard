@@ -1238,6 +1238,297 @@ button {
   gap: 20px;
 }
 
+.profit-matrix-page {
+  gap: 18px;
+}
+
+.profit-matrix-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 6px 2px 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.profit-matrix-heading h2 {
+  margin: 6px 0 0;
+  color: var(--text);
+  font-size: 28px;
+  line-height: 1.12;
+}
+
+.profit-matrix-heading p:not(.eyebrow) {
+  max-width: 720px;
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.profit-matrix-toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(96px, 1fr));
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #f8fafc;
+  flex: 0 0 auto;
+}
+
+.profit-matrix-toggle button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.profit-matrix-toggle button.is-active {
+  background: #ffffff;
+  color: var(--teal);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
+}
+
+.profit-matrix-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profit-matrix-kpis article {
+  min-height: 118px;
+  display: grid;
+  align-content: space-between;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.075);
+}
+
+.profit-matrix-kpis span,
+.profit-matrix-toolbar span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.profit-matrix-kpis .svg-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.profit-matrix-kpis strong {
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.profit-matrix-kpis strong.is-loss {
+  color: #dc2626;
+}
+
+.profit-matrix-kpis small {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.profit-matrix-toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.06);
+}
+
+.profit-matrix-toolbar label {
+  min-width: min(420px, 100%);
+  display: grid;
+  gap: 7px;
+}
+
+.profit-matrix-toolbar input {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #f8fafc;
+  color: var(--text);
+  font-weight: 800;
+}
+
+.profit-matrix-toolbar div {
+  min-width: 130px;
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.profit-matrix-toolbar strong {
+  color: var(--text);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.profit-matrix-table-shell {
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+}
+
+.profit-matrix-scroll {
+  overflow: auto;
+  max-height: calc(100vh - 270px);
+}
+
+.profit-matrix-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+
+.profit-matrix-table th,
+.profit-matrix-table td {
+  min-width: 122px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+  border-right: 1px solid rgba(226, 232, 240, 0.78);
+  padding: 10px 12px;
+  vertical-align: middle;
+  background: #ffffff;
+}
+
+.profit-matrix-table th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 950;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.profit-matrix-table th.is-month {
+  text-align: center;
+}
+
+.profit-matrix-table .is-number {
+  text-align: right;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.profit-matrix-table .is-profit {
+  color: #15803d;
+}
+
+.profit-matrix-table .is-loss {
+  color: #dc2626;
+}
+
+.profit-matrix-sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 180px !important;
+  max-width: 180px;
+  box-shadow: 12px 0 18px rgba(15, 23, 42, 0.05);
+}
+
+th.profit-matrix-sticky-col {
+  z-index: 4;
+}
+
+td.profit-matrix-sticky-col {
+  display: grid;
+  gap: 3px;
+}
+
+td.profit-matrix-sticky-col strong {
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+td.profit-matrix-sticky-col span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.profit-matrix-value,
+.profit-matrix-empty {
+  display: block;
+  text-align: center;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.profit-matrix-pair {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  justify-items: center;
+  white-space: nowrap;
+}
+
+.profit-matrix-pair span,
+.profit-matrix-value {
+  min-width: 74px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #f8fafc;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.profit-matrix-pair .tone-profit,
+.profit-matrix-value.tone-profit {
+  background: rgba(22, 163, 74, 0.1);
+  color: #15803d;
+}
+
+.profit-matrix-pair .tone-loss,
+.profit-matrix-value.tone-loss {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.profit-matrix-pair .tone-empty,
+.profit-matrix-value.tone-empty,
+.profit-matrix-empty {
+  color: #94a3b8;
+}
+
+.profit-matrix-loading {
+  margin: 0;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(226, 232, 240, 0.95);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
 .pnl-hero-card {
   display: grid;
   gap: 16px;

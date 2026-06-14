@@ -13,6 +13,7 @@ import { AppLayout } from "./layouts/AppLayout";
 import { AfpDashboardPage } from "./pages/AfpDashboardPage";
 import { ExecutiveCockpitPage } from "./pages/ExecutiveCockpitPage";
 import { HomePage } from "./pages/HomePage";
+import { ProfitMatrixPage } from "./pages/ProfitMatrixPage";
 import { ProfitabilityPage } from "./pages/ProfitabilityPage";
 import { SpendingReportPage } from "./pages/SpendingReportPage";
 import { useAuthorizedUser } from "./hooks/useAuthorizedUser";
@@ -30,6 +31,7 @@ const DEFAULT_DASHBOARD_FILTERS = {
 const PAGE_COMPONENTS = {
   home: HomePage,
   executive: ExecutiveCockpitPage,
+  profitMatrix: ProfitMatrixPage,
   afp: AfpDashboardPage,
   detail: ProfitabilityPage,
   spending: SpendingReportPage,

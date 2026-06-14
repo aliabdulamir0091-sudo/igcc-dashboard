@@ -18,6 +18,13 @@ const pageCards = [
     action: "Open",
   },
   {
+    id: "profitMatrix",
+    icon: "pnl",
+    title: "Profit Matrix",
+    detail: "Monthly approved and submitted AFP profit by cost center",
+    action: "Open",
+  },
+  {
     id: "afp",
     icon: "approve",
     title: "AFP Master",
@@ -50,6 +57,7 @@ const readinessItems = [
 const sideItems = [
   { id: "home", icon: "home", label: "Home" },
   { id: "executive", icon: "executive", label: "Operations Performance" },
+  { id: "profitMatrix", icon: "pnl", label: "Profit Matrix" },
   { id: "afp", icon: "approve", label: "AFP Master" },
   { id: "spending", icon: "spending", label: "Financial Input" },
   { id: "data", icon: "download", label: "Data & Sync" },
