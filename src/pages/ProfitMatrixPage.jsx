@@ -10,7 +10,6 @@ import {
 import { useAfpFinancialInputs } from "../hooks/useAfpFinancialInputs";
 
 const BASIS_OPTIONS = [
-  { id: "both", label: "Both" },
   { id: "approved", label: "Approved AFP" },
   { id: "submitted", label: "Submitted AFP" },
 ];
@@ -242,25 +241,16 @@ const getCellTone = (value) => {
 function ProfitCell({ cell, viewMode }) {
   if (!cell) return <span className="profit-matrix-empty">-</span>;
 
-  if (viewMode !== "both") {
-    const value = viewMode === "approved" ? cell.approvedProfit : cell.submittedProfit;
-    return (
-      <span className={`profit-matrix-value tone-${getCellTone(value)}`}>
-        {value ? formatCompactCurrency(value) : "-"}
-      </span>
-    );
-  }
-
+  const value = viewMode === "approved" ? cell.approvedProfit : cell.submittedProfit;
   return (
-    <span className="profit-matrix-pair">
-      <span className={`tone-${getCellTone(cell.approvedProfit)}`}>A {cell.approvedProfit ? formatCompactCurrency(cell.approvedProfit) : "-"}</span>
-      <span className={`tone-${getCellTone(cell.submittedProfit)}`}>S {cell.submittedProfit ? formatCompactCurrency(cell.submittedProfit) : "-"}</span>
+    <span className={`profit-matrix-value tone-${getCellTone(value)}`}>
+      {value ? formatCompactCurrency(value) : "-"}
     </span>
   );
 }
 
 export function ProfitMatrixPage({ filters = {} }) {
-  const [viewMode, setViewMode] = useState("both");
+  const [viewMode, setViewMode] = useState("approved");
   const [searchTerm, setSearchTerm] = useState("");
   const { entries: financialEntries, isLoadingAfpMaster, isLoadingSpentReport, isLoadingCreditNotes } = useAfpFinancialInputs();
 
@@ -434,7 +424,7 @@ export function ProfitMatrixPage({ filters = {} }) {
           <h2>Monthly Cost Center Profit</h2>
           <p>Cost centers are listed vertically and months run horizontally, with profit calculated from approved AFP and submitted AFP against spent cost.</p>
         </div>
-        <div className="profit-matrix-toggle" aria-label="Profit basis">
+        <div className="profit-matrix-toggle" aria-label="Profit basis filter">
           {BASIS_OPTIONS.map((option) => (
             <button
               key={option.id}
@@ -494,8 +484,7 @@ export function ProfitMatrixPage({ filters = {} }) {
               <tr>
                 <th className="profit-matrix-sticky-col">Cost Center</th>
                 <th>Hub</th>
-                <th className="is-number">Approved Total</th>
-                <th className="is-number">Submitted Total</th>
+                <th className="is-number">{viewMode === "approved" ? "Approved Total" : "Submitted Total"}</th>
                 {analysis.periods.map((period) => (
                   <th key={period} className="is-month">{getPeriodLabel(period)}</th>
                 ))}
@@ -509,8 +498,9 @@ export function ProfitMatrixPage({ filters = {} }) {
                     <span>{row.region}</span>
                   </td>
                   <td>{row.hub}</td>
-                  <td className={`is-number ${row.approvedProfit < 0 ? "is-loss" : "is-profit"}`}>{formatCurrency(row.approvedProfit)}</td>
-                  <td className={`is-number ${row.submittedProfit < 0 ? "is-loss" : "is-profit"}`}>{formatCurrency(row.submittedProfit)}</td>
+                  <td className={`is-number ${(viewMode === "approved" ? row.approvedProfit : row.submittedProfit) < 0 ? "is-loss" : "is-profit"}`}>
+                    {formatCurrency(viewMode === "approved" ? row.approvedProfit : row.submittedProfit)}
+                  </td>
                   {analysis.periods.map((period) => (
                     <td key={`${row.costCenter}-${period}`}>
                       <ProfitCell cell={row.periods.get(period)} viewMode={viewMode} />

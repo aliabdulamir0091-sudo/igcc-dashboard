@@ -1268,7 +1268,7 @@ button {
 
 .profit-matrix-toggle {
   display: inline-grid;
-  grid-template-columns: repeat(3, minmax(96px, 1fr));
+  grid-template-columns: repeat(2, minmax(118px, 1fr));
   gap: 5px;
   padding: 5px;
   border: 1px solid var(--line);
@@ -1484,16 +1484,9 @@ td.profit-matrix-sticky-col span {
   white-space: nowrap;
 }
 
-.profit-matrix-pair {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 4px;
-  justify-items: center;
-  white-space: nowrap;
-}
-
-.profit-matrix-pair span,
 .profit-matrix-value {
+  display: block;
+  margin-inline: auto;
   min-width: 74px;
   padding: 4px 7px;
   border-radius: 999px;
@@ -1502,19 +1495,16 @@ td.profit-matrix-sticky-col span {
   line-height: 1;
 }
 
-.profit-matrix-pair .tone-profit,
 .profit-matrix-value.tone-profit {
   background: rgba(22, 163, 74, 0.1);
   color: #15803d;
 }
 
-.profit-matrix-pair .tone-loss,
 .profit-matrix-value.tone-loss {
   background: rgba(220, 38, 38, 0.1);
   color: #dc2626;
 }
 
-.profit-matrix-pair .tone-empty,
 .profit-matrix-value.tone-empty,
 .profit-matrix-empty {
   color: #94a3b8;
