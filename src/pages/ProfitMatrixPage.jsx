@@ -6,7 +6,6 @@ import {
   COST_CENTER_HIERARCHY,
   ROO_SUB_HUBS,
   getCostCenterFilterLabel,
-  getCostCenterFilterMembers,
   getCostCenterGroupValue,
   matchesCostCenterFilter,
 } from "../data/costCenterHierarchy";
@@ -80,23 +79,6 @@ const getQuarter = (period) => `Q${Math.ceil(Number(period?.slice(5, 7) || 1) / 
 const getPeriodLabel = (period) => `${MONTH_LABELS[period.slice(5, 7)] || period.slice(5, 7)} ${period.slice(2, 4)}`;
 const normalizeReportCostCenter = (costCenter) => REPORT_COST_CENTER_ALIASES[costCenter] || costCenter;
 
-const getReportCostCenterMembers = (filterValue) => {
-  const members = getCostCenterFilterMembers(filterValue);
-  const expandedMembers = new Set(members);
-  for (const member of members) expandedMembers.add(normalizeReportCostCenter(member));
-  for (const [alias, normalized] of Object.entries(REPORT_COST_CENTER_ALIASES)) {
-    if (expandedMembers.has(alias) || expandedMembers.has(normalized)) {
-      expandedMembers.add(alias);
-      expandedMembers.add(normalized);
-    }
-  }
-  return [...expandedMembers];
-};
-
-const isReportCostCenterMember = (costCenter, members) => (
-  members.includes(costCenter) || members.includes(normalizeReportCostCenter(costCenter))
-);
-
 const matchesPortfolio = (entry, portfolio) => (
   !portfolio
   || portfolio === ALL_FILTER_VALUE
@@ -143,6 +125,16 @@ const createAllocatedSpentRow = (entry, costCenter, amount, hub) => ({
   isAllocatedGeneralCost: true,
 });
 
+const createAllocatedGeneralCreditNoteRow = (entry, costCenter, amount, hub) => ({
+  ...entry,
+  costCenter,
+  sourceCostCenter: entry.sourceCostCenter || entry.costCenter,
+  hub,
+  amount,
+  allocationSourceCostCenter: entry.costCenter,
+  isAllocatedGeneralCreditNote: true,
+});
+
 const createAllocatedManagementRow = (entry, costCenter, amount, hub) => ({
   ...entry,
   costCenter,
@@ -168,6 +160,7 @@ const allocateGeneralSpentCosts = (entries, filters = {}) => {
     if (!recipients.length) continue;
 
     const poolRows = periodRows.filter((entry) => entry.type === "spent" && entry.costCenter === rule.poolCostCenter);
+    const poolCreditNoteRows = periodRows.filter((entry) => entry.type === "creditNotes" && entry.costCenter === rule.poolCostCenter);
     const recipientRows = periodRows.filter((entry) => (
       entry.type === "spent"
       && recipients.includes(entry.costCenter)
@@ -195,6 +188,27 @@ const allocateGeneralSpentCosts = (entries, filters = {}) => {
           poolRow,
           basis.costCenter,
           (poolRow.amount || 0) * (basis.amount / basisTotal),
+          rule.hub,
+        ));
+      }
+    }
+
+    for (const poolCreditNoteRow of poolCreditNoteRows) {
+      const periodRecipientTotals = recipients.map((costCenter) => ({
+        costCenter,
+        amount: sumRows(recipientRows, (entry) => entry.period === poolCreditNoteRow.period && entry.costCenter === costCenter),
+      })).filter((row) => row.amount > 0);
+      const periodTotal = periodRecipientTotals.reduce((total, row) => total + row.amount, 0);
+      const basisRows = periodTotal > 0 ? periodRecipientTotals : fallbackTotals;
+      const basisTotal = periodTotal > 0 ? periodTotal : fallbackTotal;
+      if (!basisTotal) continue;
+
+      allocatedEntryIds.add(poolCreditNoteRow);
+      for (const basis of basisRows) {
+        allocatedRows.push(createAllocatedGeneralCreditNoteRow(
+          poolCreditNoteRow,
+          basis.costCenter,
+          (poolCreditNoteRow.amount || 0) * (basis.amount / basisTotal),
           rule.hub,
         ));
       }
@@ -241,7 +255,7 @@ const allocateGeneralSpentCosts = (entries, filters = {}) => {
   }
 
   return [
-    ...entries.filter((entry) => !(entry.type === "spent" && allocatedEntryIds.has(entry))),
+    ...entries.filter((entry) => !allocatedEntryIds.has(entry)),
     ...allocatedRows,
   ];
 };
@@ -257,8 +271,6 @@ const createEmptyCell = (period) => ({
   approvedRevenue: 0,
   submittedRevenue: 0,
   totalCost: 0,
-  issuedCreditNotes: 0,
-  receivedCreditNotes: 0,
   approvedProfit: 0,
   submittedProfit: 0,
 });
@@ -400,6 +412,7 @@ export function ProfitMatrixPage({ filters = {} }) {
   const analysis = useMemo(() => {
     const scopedFilters = { ...filters };
     const entries = allocateGeneralSpentCosts(financialEntries || [], scopedFilters);
+    const periodRows = entries.filter((entry) => matchesFilters(entry, scopedFilters, { ignoreTimeDetail: true }));
     const activityRows = entries.filter((entry) => (
       entry.type !== "creditNotes"
       && matchesFilters(entry, scopedFilters, { ignoreTimeDetail: true })
@@ -408,7 +421,7 @@ export function ProfitMatrixPage({ filters = {} }) {
       entry.type === "creditNotes"
       && matchesFilters(entry, scopedFilters, { ignoreCostCenter: true, ignoreTimeDetail: true })
     ));
-    const periods = [...new Set(activityRows.map((entry) => entry.period).filter(Boolean))]
+    const periods = [...new Set(periodRows.map((entry) => entry.period).filter(Boolean))]
       .sort((a, b) => a.localeCompare(b));
     const rowMap = new Map();
 
@@ -430,8 +443,6 @@ export function ProfitMatrixPage({ filters = {} }) {
         approvedRevenue: 0,
         submittedRevenue: 0,
         totalCost: 0,
-        issuedCreditNotes: 0,
-        receivedCreditNotes: 0,
         approvedProfit: 0,
         submittedProfit: 0,
       };
@@ -445,38 +456,31 @@ export function ProfitMatrixPage({ filters = {} }) {
     }
 
     for (const entry of creditRows) {
-      const issuedCostCenter = normalizeReportCostCenter(entry.issuedBy);
       const receivedCostCenter = normalizeReportCostCenter(entry.costCenter);
-      for (const costCenter of [issuedCostCenter, receivedCostCenter]) {
-        if (!costCenter) continue;
-        if (!matchesCostCenterScope(costCenter, scopedFilters)) continue;
-        const row = rowMap.get(costCenter) || {
-          costCenter,
-          hub: getCostCenterHub(costCenter, entry.hub),
-          region: entry.region,
-          approvedRevenue: 0,
-          submittedRevenue: 0,
-          totalCost: 0,
-          approvedProfit: 0,
-          submittedProfit: 0,
-          periods: new Map(),
-        };
-        const cell = row.periods.get(entry.period) || {
-          period: entry.period,
-          approvedRevenue: 0,
-          submittedRevenue: 0,
-          totalCost: 0,
-          issuedCreditNotes: 0,
-          receivedCreditNotes: 0,
-          approvedProfit: 0,
-          submittedProfit: 0,
-        };
-        const members = getReportCostCenterMembers(costCenter);
-        if (isReportCostCenterMember(entry.issuedBy, members)) cell.issuedCreditNotes += entry.amount || 0;
-        if (isReportCostCenterMember(entry.costCenter, members)) cell.receivedCreditNotes += entry.amount || 0;
-        row.periods.set(entry.period, cell);
-        rowMap.set(costCenter, row);
-      }
+      if (!receivedCostCenter) continue;
+      if (!matchesCostCenterScope(receivedCostCenter, scopedFilters)) continue;
+      const row = rowMap.get(receivedCostCenter) || {
+        costCenter: receivedCostCenter,
+        hub: getCostCenterHub(receivedCostCenter, entry.hub),
+        region: entry.region,
+        approvedRevenue: 0,
+        submittedRevenue: 0,
+        totalCost: 0,
+        approvedProfit: 0,
+        submittedProfit: 0,
+        periods: new Map(),
+      };
+      const cell = row.periods.get(entry.period) || {
+        period: entry.period,
+        approvedRevenue: 0,
+        submittedRevenue: 0,
+        totalCost: 0,
+        approvedProfit: 0,
+        submittedProfit: 0,
+      };
+      cell.totalCost += entry.amount || 0;
+      row.periods.set(entry.period, cell);
+      rowMap.set(receivedCostCenter, row);
     }
 
     const rows = [...rowMap.values()]
@@ -485,9 +489,9 @@ export function ProfitMatrixPage({ filters = {} }) {
         for (const period of periods) {
           const cell = row.periods.get(period);
           if (!cell) continue;
-          const approvedRevenue = cell.approvedRevenue + cell.issuedCreditNotes;
-          const submittedRevenue = cell.submittedRevenue + cell.issuedCreditNotes;
-          const totalCost = cell.totalCost + cell.receivedCreditNotes;
+          const approvedRevenue = cell.approvedRevenue;
+          const submittedRevenue = cell.submittedRevenue;
+          const totalCost = cell.totalCost;
           const approvedProfit = approvedRevenue - totalCost;
           const submittedProfit = submittedRevenue - totalCost;
           const nextCell = {
