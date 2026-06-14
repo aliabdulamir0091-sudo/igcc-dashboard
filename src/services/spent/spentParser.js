@@ -21,6 +21,11 @@ const COST_CENTER_LOOKUP = new Map(COST_CENTER_HIERARCHY.flatMap((group) => (
 
 const COST_CENTER_ALIASES = {
   GRLTOT: "GRLTOT_25",
+  TOTAL_25: "GRLTOT_25",
+  "OHTL _25": "OHTL_25",
+  MITSOHTL: "MITAS",
+  MITASOHTL: "MITAS",
+  ROOP_23: "GRLRO_23",
 };
 
 const cleanText = (value) => String(value ?? "").trim();
@@ -69,7 +74,10 @@ const getRegion = (hub, costCenter) => {
   return "Basra";
 };
 
-export function parseSpentRows(rows) {
+export function parseSpentRows(rows, options = {}) {
+  const source = options.source || "SPENT_REPORT";
+  const sourceSheet = options.sourceSheet || "";
+
   return rows
     .map((row) => {
       const rawCostCenter = cleanText(row["Level 2"]) || cleanText(row["Level 1"]) || "Unassigned";
@@ -83,7 +91,8 @@ export function parseSpentRows(rows) {
 
       return {
         type: "spent",
-        source: "SPENT_REPORT",
+        source,
+        sourceSheet,
         sourceCostCenter,
         costCenter,
         region: getRegion(hub, costCenter),

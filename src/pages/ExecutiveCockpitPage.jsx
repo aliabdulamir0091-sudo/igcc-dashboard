@@ -850,7 +850,7 @@ function SimpleReportModal({ report, onClose }) {
               </div>
             </article>
             <article className="pnl-report-card spend-breakdown-modern">
-              <h4>Spent Report Cost Breakdown</h4>
+              <h4>Spent + Not Recorded Cost Breakdown</h4>
               {topSpendRows.map((item, index) => (
                 <div className="spend-progress-row" key={item.label}>
                   <i style={{ "--dot-color": REPORT_COLORS[index % REPORT_COLORS.length] }}>{item.label.slice(0, 1)}</i>
@@ -860,7 +860,7 @@ function SimpleReportModal({ report, onClose }) {
                   <small>{formatPercent(getShare(item.amount, report.directCost))}</small>
                 </div>
               ))}
-              <footer><span>Total Cost from Spent Report</span><strong>{formatWholeNumber(report.directCost)}</strong></footer>
+              <footer><span>Total Cost from Spent + Not Recorded</span><strong>{formatWholeNumber(report.directCost)}</strong></footer>
             </article>
           </section>
           <section className="pnl-report-secondary-grid">

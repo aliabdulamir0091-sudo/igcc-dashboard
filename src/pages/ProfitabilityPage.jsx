@@ -718,7 +718,7 @@ function CostCenterDetail({ selectedCostCenter, pnl, cnBreakdown, transactions, 
           </div>
           <div>
             <h4>Cost</h4>
-            <p><span>Spent Report Cost</span><strong>{formatCurrency(pnl.baseSpentCost)}</strong></p>
+            <p><span>Spent + Not Recorded Cost</span><strong>{formatCurrency(pnl.baseSpentCost)}</strong></p>
             <p><span>Reallocated General Cost</span><strong>{formatCurrency(pnl.allocatedGeneralCost)}</strong></p>
             <p><span>Management Cost</span><strong>{formatCurrency(pnl.allocatedManagementCost)}</strong></p>
             <p><span>Received Credit Notes</span><strong>{formatCurrency(pnl.receivedCreditNotes)}</strong></p>
@@ -764,6 +764,7 @@ function CostCenterDetail({ selectedCostCenter, pnl, cnBreakdown, transactions, 
               <tr>
                 <th>Period</th>
                 <th>Type</th>
+                <th>Source</th>
                 <th>GL / CN Item</th>
                 <th className="is-number">Amount</th>
               </tr>
@@ -773,6 +774,7 @@ function CostCenterDetail({ selectedCostCenter, pnl, cnBreakdown, transactions, 
                 <tr key={`${entry.period}-${entry.type}-${entry.glName || entry.category}-${index}`}>
                   <td>{entry.period}</td>
                   <td>{entry.type}</td>
+                  <td>{entry.sourceSheet || entry.source || "-"}</td>
                   <td>{entry.glName || entry.category || entry.issuedBy || "AFP"}</td>
                   <td className="is-number">{formatCurrency(entry.amount)}</td>
                 </tr>
@@ -1132,7 +1134,7 @@ function ProfitabilityPrintReport({ analysis, selectedCostCenter, isScreen = fal
             <p><span>Approved AFP</span><strong>{formatMillions(approved.revenue)}</strong></p>
             <p><span>Issued Credit Notes</span><strong>{formatMillions(approved.issuedCreditNotes)}</strong></p>
             <p className="is-total"><span>Adjusted Revenue</span><strong>{formatMillions(approved.updatedRevenue)}</strong></p>
-            <p><span>Spent Report Cost</span><strong className="is-red">{formatMillions(-approved.baseSpentCost)}</strong></p>
+            <p><span>Spent + Not Recorded Cost</span><strong className="is-red">{formatMillions(-approved.baseSpentCost)}</strong></p>
             <p><span>Reallocated General Cost</span><strong className="is-red">{formatMillions(-approved.allocatedGeneralCost)}</strong></p>
             <p><span>Management Cost</span><strong className="is-red">{formatMillions(-approved.allocatedManagementCost)}</strong></p>
             <p><span>Received Credit Notes</span><strong className="is-red">{formatMillions(-approved.receivedCreditNotes)}</strong></p>

@@ -10,6 +10,7 @@ export const SPENT_DATA_SOURCE = {
   googleSheetId: import.meta.env.VITE_SPENT_GOOGLE_SHEET_ID || "1947QuaCl4NkqzbAb2Fex6M7VhQ0QANVjFIE2lhGFP0w",
   googleSheetGid: import.meta.env.VITE_SPENT_GOOGLE_SHEET_GID || "",
   googleSheetName: import.meta.env.VITE_SPENT_GOOGLE_SHEET_NAME || "Spent Report",
+  notRecordedGoogleSheetName: import.meta.env.VITE_SPENT_NOT_RECORDED_GOOGLE_SHEET_NAME || "Not Recorded",
 };
 
 export const CREDIT_NOTE_DATA_SOURCE = {
