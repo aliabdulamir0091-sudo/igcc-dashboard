@@ -2,9 +2,12 @@ import { useMemo, useState } from "react";
 import { Icon } from "../components/Icons";
 import {
   ALL_FILTER_VALUE,
+  BGC_SUB_HUBS,
   COST_CENTER_HIERARCHY,
+  ROO_SUB_HUBS,
   getCostCenterFilterLabel,
   getCostCenterFilterMembers,
+  getCostCenterGroupValue,
   matchesCostCenterFilter,
 } from "../data/costCenterHierarchy";
 import { useAfpFinancialInputs } from "../hooks/useAfpFinancialInputs";
@@ -49,6 +52,17 @@ const GENERAL_COST_ALLOCATIONS = [
 const GENERAL_POOL_COST_CENTERS = new Set(GENERAL_COST_ALLOCATIONS.map((rule) => rule.poolCostCenter));
 const MANAGEMENT_SOURCE_COST_CENTER = "Management";
 const HEAD_OFFICE_COST_CENTER = "HO_SB_23";
+const EXECUTIVE_HUB_ORDER = [
+  "BGC Hub",
+  "ROO Hub",
+  "Total Hub",
+  "BP Hub",
+  "Camp",
+  "Head Office",
+  "West Qurna",
+];
+const ROO_ASSIGNED_COST_CENTERS = new Set(ROO_SUB_HUBS.flatMap((group) => group.costCenters));
+const BGC_ASSIGNED_COST_CENTERS = new Set(BGC_SUB_HUBS.flatMap((group) => group.costCenters));
 const REPORT_COST_CENTER_ALIASES = {
   "PWT PWRI1_23": "PWRI-PWT",
 };
@@ -238,6 +252,135 @@ const getCellTone = (value) => {
   return "profit";
 };
 
+const createEmptyCell = (period) => ({
+  period,
+  approvedRevenue: 0,
+  submittedRevenue: 0,
+  totalCost: 0,
+  issuedCreditNotes: 0,
+  receivedCreditNotes: 0,
+  approvedProfit: 0,
+  submittedProfit: 0,
+});
+
+const sumMatrixRows = (rows, periods, hub, type = "hub", label = hub) => {
+  const total = rows.reduce((sum, row) => ({
+    approvedRevenue: sum.approvedRevenue + row.approvedRevenue,
+    submittedRevenue: sum.submittedRevenue + row.submittedRevenue,
+    totalCost: sum.totalCost + row.totalCost,
+    approvedProfit: sum.approvedProfit + row.approvedProfit,
+    submittedProfit: sum.submittedProfit + row.submittedProfit,
+  }), {
+    approvedRevenue: 0,
+    submittedRevenue: 0,
+    totalCost: 0,
+    approvedProfit: 0,
+    submittedProfit: 0,
+  });
+
+  const periodMap = new Map();
+  for (const period of periods) {
+    const cellTotal = rows.reduce((sum, row) => {
+      const cell = row.periods.get(period) || createEmptyCell(period);
+      return {
+        ...sum,
+        approvedRevenue: sum.approvedRevenue + cell.approvedRevenue,
+        submittedRevenue: sum.submittedRevenue + cell.submittedRevenue,
+        totalCost: sum.totalCost + cell.totalCost,
+        approvedProfit: sum.approvedProfit + cell.approvedProfit,
+        submittedProfit: sum.submittedProfit + cell.submittedProfit,
+      };
+    }, createEmptyCell(period));
+
+    periodMap.set(period, {
+      ...cellTotal,
+      approvedRevenue: roundCurrency(cellTotal.approvedRevenue),
+      submittedRevenue: roundCurrency(cellTotal.submittedRevenue),
+      totalCost: roundCurrency(cellTotal.totalCost),
+      approvedProfit: roundCurrency(cellTotal.approvedProfit),
+      submittedProfit: roundCurrency(cellTotal.submittedProfit),
+    });
+  }
+
+  return {
+    type,
+    key: `${type}-${hub}-${label}`,
+    costCenter: label,
+    hub,
+    region: rows[0]?.region || "",
+    periods: periodMap,
+    approvedRevenue: roundCurrency(total.approvedRevenue),
+    submittedRevenue: roundCurrency(total.submittedRevenue),
+    totalCost: roundCurrency(total.totalCost),
+    approvedProfit: roundCurrency(total.approvedProfit),
+    submittedProfit: roundCurrency(total.submittedProfit),
+    approvedMargin: getShare(total.approvedProfit, total.approvedRevenue),
+    submittedMargin: getShare(total.submittedProfit, total.submittedRevenue),
+  };
+};
+
+const buildRooMatrixRows = (rows, periods) => {
+  const rowsByCostCenter = new Map(rows.map((row) => [row.costCenter, row]));
+  const orderedRows = [];
+  const unassignedRows = rows
+    .filter((row) => !ROO_ASSIGNED_COST_CENTERS.has(row.costCenter))
+    .sort((a, b) => a.costCenter.localeCompare(b.costCenter));
+
+  for (const group of ROO_SUB_HUBS) {
+    const listedRows = group.costCenters.map((costCenter) => rowsByCostCenter.get(costCenter)).filter(Boolean);
+    const groupRows = group.label === "Other Project" ? [...listedRows, ...unassignedRows] : listedRows;
+    if (!groupRows.length) continue;
+    orderedRows.push({
+      ...sumMatrixRows(groupRows, periods, "ROO Hub", "subgroup", group.label),
+      filterCostCenter: getCostCenterGroupValue(group.id),
+    }, ...groupRows);
+  }
+
+  return orderedRows;
+};
+
+const buildGroupedMatrixRows = (rows, periods, groups, assignedCostCenters) => {
+  const rowsByCostCenter = new Map(rows.map((row) => [row.costCenter, row]));
+  const orderedRows = [];
+  const unassignedRows = rows
+    .filter((row) => !assignedCostCenters.has(row.costCenter))
+    .sort((a, b) => a.costCenter.localeCompare(b.costCenter));
+
+  for (const group of groups) {
+    const groupRows = group.costCenters.map((costCenter) => rowsByCostCenter.get(costCenter)).filter(Boolean);
+    if (!groupRows.length) continue;
+    orderedRows.push({
+      ...sumMatrixRows(groupRows, periods, group.hub, "subgroup", group.label),
+      filterCostCenter: getCostCenterGroupValue(group.id),
+    }, ...groupRows);
+  }
+
+  return [...orderedRows, ...unassignedRows];
+};
+
+const buildHubMatrixRows = (costCenterRows, periods) => {
+  const rowsByHub = costCenterRows.reduce((groups, row) => {
+    if (!groups.has(row.hub)) groups.set(row.hub, []);
+    groups.get(row.hub).push(row);
+    return groups;
+  }, new Map());
+  const orderedHubs = [
+    ...EXECUTIVE_HUB_ORDER.filter((hub) => rowsByHub.has(hub)),
+    ...[...rowsByHub.keys()].filter((hub) => !EXECUTIVE_HUB_ORDER.includes(hub)).sort((a, b) => a.localeCompare(b)),
+  ];
+
+  const hubRows = orderedHubs.flatMap((hub) => {
+    const rows = rowsByHub.get(hub).sort((a, b) => a.costCenter.localeCompare(b.costCenter));
+    if (hub === "BGC Hub") return [sumMatrixRows(rows, periods, hub), ...buildGroupedMatrixRows(rows, periods, BGC_SUB_HUBS, BGC_ASSIGNED_COST_CENTERS)];
+    if (hub === "ROO Hub") return [sumMatrixRows(rows, periods, hub), ...buildRooMatrixRows(rows, periods)];
+    return [sumMatrixRows(rows, periods, hub), ...rows];
+  });
+
+  return costCenterRows.length
+    ? [sumMatrixRows(costCenterRows, periods, "IGCC", "igcc", "IGCC Level 1"), ...hubRows]
+    : hubRows;
+};
+
 function ProfitCell({ cell, viewMode }) {
   if (!cell) return <span className="profit-matrix-empty">-</span>;
 
@@ -392,9 +535,16 @@ export function ProfitMatrixPage({ filters = {} }) {
       submittedProfit: 0,
     });
 
+    const displayRows = buildHubMatrixRows(rows.map((row) => ({
+      ...row,
+      type: "costCenter",
+      key: `costCenter-${row.costCenter}`,
+    })), periods);
+
     return {
       periods,
       rows,
+      displayRows,
       totals: {
         ...totals,
         approvedMargin: getShare(totals.approvedProfit, totals.approvedRevenue),
@@ -405,13 +555,13 @@ export function ProfitMatrixPage({ filters = {} }) {
 
   const visibleRows = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
-    if (!query) return analysis.rows;
-    return analysis.rows.filter((row) => (
+    if (!query) return analysis.displayRows;
+    return analysis.displayRows.filter((row) => (
       row.costCenter.toLowerCase().includes(query)
       || row.hub.toLowerCase().includes(query)
       || row.region.toLowerCase().includes(query)
     ));
-  }, [analysis.rows, searchTerm]);
+  }, [analysis.displayRows, searchTerm]);
 
   const scopeLabel = getCostCenterFilterLabel(filters.costCenter) || (filters.costCenter && filters.costCenter !== ALL_FILTER_VALUE ? filters.costCenter : "All cost centers");
   const isLoading = isLoadingAfpMaster || isLoadingSpentReport || isLoadingCreditNotes;
@@ -492,10 +642,17 @@ export function ProfitMatrixPage({ filters = {} }) {
             </thead>
             <tbody>
               {visibleRows.map((row) => (
-                <tr key={row.costCenter}>
+                <tr
+                  key={row.key || row.costCenter}
+                  className={[
+                    row.type === "igcc" ? "is-igcc-total" : "",
+                    row.type === "hub" ? "is-hub-total" : "",
+                    row.type === "subgroup" ? "is-subgroup-total" : "",
+                  ].filter(Boolean).join(" ")}
+                >
                   <td className="profit-matrix-sticky-col">
                     <strong>{row.costCenter}</strong>
-                    <span>{row.region}</span>
+                    <span>{row.type === "subgroup" ? "Cost center combination" : row.region}</span>
                   </td>
                   <td>{row.hub}</td>
                   <td className={`is-number ${(viewMode === "approved" ? row.approvedProfit : row.submittedProfit) < 0 ? "is-loss" : "is-profit"}`}>

@@ -1446,6 +1446,31 @@ button {
   color: #dc2626;
 }
 
+.profit-matrix-table tr.is-igcc-total td,
+.profit-matrix-table tr.is-igcc-total .profit-matrix-sticky-col {
+  background: #eaf6f4;
+  color: #0f3f3a;
+  font-weight: 950;
+}
+
+.profit-matrix-table tr.is-hub-total td,
+.profit-matrix-table tr.is-hub-total .profit-matrix-sticky-col {
+  background: #f1f5f9;
+  font-weight: 950;
+}
+
+.profit-matrix-table tr.is-subgroup-total td,
+.profit-matrix-table tr.is-subgroup-total .profit-matrix-sticky-col {
+  background: #fff7ed;
+  font-weight: 900;
+}
+
+.profit-matrix-table tr.is-igcc-total td:first-child strong,
+.profit-matrix-table tr.is-hub-total td:first-child strong,
+.profit-matrix-table tr.is-subgroup-total td:first-child strong {
+  font-size: 12.5px;
+}
+
 .profit-matrix-sticky-col {
   position: sticky;
   left: 0;
