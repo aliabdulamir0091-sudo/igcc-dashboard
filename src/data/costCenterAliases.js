@@ -23,6 +23,10 @@ export const COST_CENTER_ALIASES = {
   "Bai Hassan": "GRL-KR-BP-25",
   QUR_23: "QTC_24",
   TMS_26: "MWP_23",
+  BNGL_25: "BNGL-25",
+  KAZ: "KAZ_23",
+  CMNT_23: "CVMNT_23",
+  EPMNT_23: "EIMNT_23",
 };
 
 export const normalizeCostCenterAlias = (costCenter) => {
