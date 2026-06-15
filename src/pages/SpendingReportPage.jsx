@@ -670,7 +670,7 @@ function CreditNoteTable({ creditNotes, totalSpent, onSelectCostCenter }) {
   );
 }
 
-function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenterSparklineByName, totals, onSelectCostCenter }) {
+function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenterSparklineByName, totals, filters, onSelectCostCenter }) {
   const [selectedGlNames, setSelectedGlNames] = useState([]);
   const [pendingGlNames, setPendingGlNames] = useState([]);
   const [analysisMode, setAnalysisMode] = useState("gl");
@@ -746,9 +746,16 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
     return rows.sort(compareRows).slice(0, 14);
   })();
   const tableRows = activeGlNames.length ? costCenterRows : analysisMode === "cost-center" ? overallCostCenterRows : glRows;
+  const selectedPeriodLabel = filters?.period === "monthly" && filters?.year !== "all" && filters?.month !== "all"
+    ? `${filters.month} ${filters.year}`
+    : filters?.period === "quarterly" && filters?.year !== "all" && filters?.quarter !== "all"
+      ? `${filters.quarter} ${filters.year}`
+      : filters?.year && filters.year !== "all"
+        ? `Year ${filters.year}`
+        : "the selected filters";
   const emptyMessage = isSelectedCostCenter
-    ? `No spent report entries found for ${selectedCostCenter} under the selected filters.`
-    : "No spent report entries found under the selected filters.";
+    ? `No Spent Report entries found for ${selectedCostCenter} in ${selectedPeriodLabel}.`
+    : `No Spent Report entries found in ${selectedPeriodLabel}. This section only ranks Spent Report cost.`;
   const exportRows = tableRows.map((row) => {
     if (isCostCenterMode) {
       return {
@@ -1069,6 +1076,7 @@ export function SpendingReportPage({ filters }) {
         byGlName={byGlName}
         costCenterSparklineByName={costCenterSparklineByName}
         totals={totals}
+        filters={filters}
         onSelectCostCenter={setSelectedProfileCostCenter}
       />
 
