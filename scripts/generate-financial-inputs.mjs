@@ -27,6 +27,7 @@ const MONTHS = {
 };
 
 const COST_CENTER_ALIASES = {
+  EIMNT_23: "EIMNT_23",
   BNGL_25: "BNGL-25",
   GRLBG: "GRLBG_23",
   "GRL_VLV": "GRL-VLV",
@@ -51,17 +52,43 @@ const COST_CENTER_ALIASES = {
   MITASOHTL: "MITAS",
   Management: "HO_SB_23",
   TMS_26: "MWP_23",
+  KBR23: "KBR_23",
+  KBR_23: "KBR_23",
+  MPMNT_23: "MPMNT_23",
+  PWRI_23: "PWRI_23",
+  CPS_23: "CPSs_23",
   CMNT_23: "CVMNT_23",
   BGCG_23: "GRLBG_23",
   ROOP_23: "GRLRO_23",
   BGC_23: "GRLBG_23",
   ROOM_23: "CVMNT_23",
   EPMNT_23: "EIMNT_23",
+  MAINT: "EIMNT_23",
+  MAINTENANCE: "EIMNT_23",
+  EIMNT_24: "EIMNT_23",
+  EIMNT_25: "EIMNT_23",
+  "EIMNT-23": "EIMNT_23",
+  "EIMNT-24": "EIMNT_23",
+  "EIMNT-25": "EIMNT_23",
   HO_23: "HO_SB_23",
   ROOG_23: "GRLRO_23",
 };
 
 const clean = (value) => String(value ?? "").trim();
+
+const getAliasKey = (value) => String(value ?? "")
+  .trim()
+  .toUpperCase()
+  .replace(/[^A-Z0-9]+/g, "_")
+  .replace(/^_+|_+$/g, "");
+
+const COST_CENTER_ALIAS_LOOKUP = new Map(Object.entries(COST_CENTER_ALIASES)
+  .map(([alias, canonical]) => [getAliasKey(alias), canonical]));
+
+const normalizeCostCenterAlias = (value) => {
+  const source = clean(value);
+  return COST_CENTER_ALIASES[source] || COST_CENTER_ALIAS_LOOKUP.get(getAliasKey(source)) || source;
+};
 
 const parseAmount = (value) => {
   if (typeof value === "number") return value;
@@ -85,7 +112,7 @@ for (const item of COST_CENTER_HIERARCHY) {
 
 const resolveCostCenter = (value) => {
   const source = clean(value);
-  const canonical = COST_CENTER_ALIASES[source] || source;
+  const canonical = normalizeCostCenterAlias(source);
   const mapping = canonicalIndex.get(canonical);
   return {
     sourceCostCenter: source,

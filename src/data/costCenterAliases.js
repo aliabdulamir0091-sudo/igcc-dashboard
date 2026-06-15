@@ -1,4 +1,5 @@
 export const COST_CENTER_ALIASES = {
+  EIMNT_23: "EIMNT_23",
   GRLTOT: "GRLTOT_25",
   TOTAL_25: "GRLTOT_25",
   "OHTL _25": "OHTL_25",
@@ -25,11 +26,32 @@ export const COST_CENTER_ALIASES = {
   TMS_26: "MWP_23",
   BNGL_25: "BNGL-25",
   KAZ: "KAZ_23",
+  KBR23: "KBR_23",
+  KBR_23: "KBR_23",
+  MPMNT_23: "MPMNT_23",
+  PWRI_23: "PWRI_23",
+  CPS_23: "CPSs_23",
   CMNT_23: "CVMNT_23",
   EPMNT_23: "EIMNT_23",
+  MAINT: "EIMNT_23",
+  MAINTENANCE: "EIMNT_23",
+  EIMNT_24: "EIMNT_23",
+  EIMNT_25: "EIMNT_23",
+  "EIMNT-23": "EIMNT_23",
+  "EIMNT-24": "EIMNT_23",
+  "EIMNT-25": "EIMNT_23",
 };
+
+const getAliasKey = (value) => String(value ?? "")
+  .trim()
+  .toUpperCase()
+  .replace(/[^A-Z0-9]+/g, "_")
+  .replace(/^_+|_+$/g, "");
+
+const COST_CENTER_ALIAS_LOOKUP = new Map(Object.entries(COST_CENTER_ALIASES)
+  .map(([alias, canonical]) => [getAliasKey(alias), canonical]));
 
 export const normalizeCostCenterAlias = (costCenter) => {
   const value = String(costCenter ?? "").trim();
-  return COST_CENTER_ALIASES[value] || value;
+  return COST_CENTER_ALIASES[value] || COST_CENTER_ALIAS_LOOKUP.get(getAliasKey(value)) || value;
 };

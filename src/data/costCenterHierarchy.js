@@ -1,3 +1,5 @@
+import { normalizeCostCenterAlias } from "./costCenterAliases";
+
 export const COST_CENTER_HIERARCHY = [
   {
     region: "Basra",
@@ -130,7 +132,7 @@ export const ROO_SUB_HUBS = [
     id: "roo-other-project",
     label: "Other Project",
     hub: "ROO Hub",
-    costCenters: ["Kiosk-25", "MWP_23", "FFF_23", "MITAS", "CMSN_23", "EIESP_23"],
+    costCenters: ["Kiosk-25", "MWP_23", "FFF_23", "MITAS", "CMSN_23", "EIESP_23", "CPSs_23"],
   },
 ];
 
@@ -163,7 +165,7 @@ export const getCostCenterFilterLabel = (filterValue) => {
 
 export const matchesCostCenterFilter = (costCenter, filterValue) => {
   if (!filterValue || filterValue === ALL_FILTER_VALUE) return true;
-  return getCostCenterFilterMembers(filterValue).includes(costCenter);
+  return getCostCenterFilterMembers(filterValue).map(normalizeCostCenterAlias).includes(normalizeCostCenterAlias(costCenter));
 };
 
 export const getUniqueFilterValues = (values) => [...new Set(values)].sort((a, b) => a.localeCompare(b));

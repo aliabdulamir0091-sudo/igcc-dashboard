@@ -145,6 +145,9 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
   const timeDetailValue = selectedPeriod === "quarterly" ? selectedQuarter : selectedMonth;
   const timeDetailOptions = selectedPeriod === "quarterly" ? QUARTER_OPTIONS : MONTH_OPTIONS;
   const isYearly = selectedPeriod === "yearly";
+  const hasSubHubOptions = costCenterOptions.some((option) => option.type === "subHub");
+  const costCenterFilterLabel = hasSubHubOptions ? "Sub Hub / Cost Center" : "Cost Center";
+  const allCostCentersLabel = selectedHub !== ALL_FILTER_VALUE ? `All ${selectedHub}` : "All centers";
 
   return (
     <header className="app-header">
@@ -214,17 +217,17 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
             </select>
           </label>
           <label>
-            <span><Icon name="costCenter" /> {selectedHub === "ROO Hub" ? "ROO Sub Hub / Cost Center" : "Cost Center"}</span>
+            <span><Icon name="costCenter" /> {costCenterFilterLabel}</span>
             <select value={selectedCostCenter} onChange={handleCostCenterChange}>
-              <option value={ALL_FILTER_VALUE}>{selectedHub === "ROO Hub" ? "All ROO Hub" : "All centers"}</option>
-              {selectedHub === "ROO Hub" ? (
+              <option value={ALL_FILTER_VALUE}>{allCostCentersLabel}</option>
+              {hasSubHubOptions ? (
                 <>
-                  <optgroup label="ROO sub hubs">
+                  <optgroup label={`${selectedHub} sub hubs`}>
                     {costCenterOptions.filter((option) => option.type === "subHub").map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </optgroup>
-                  <optgroup label="ROO cost centers">
+                  <optgroup label={`${selectedHub} cost centers`}>
                     {costCenterOptions.filter((option) => option.type === "costCenter").map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}

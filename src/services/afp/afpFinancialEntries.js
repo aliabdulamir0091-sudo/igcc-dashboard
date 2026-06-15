@@ -51,7 +51,7 @@ const createAfpEntry = ({ record, type, amount, period }) => {
   return {
     type,
     source: "AFP_MASTER",
-    sourceCostCenter: costCenter,
+    sourceCostCenter: record.source_cost_center || costCenter,
     costCenter,
     region: getRegion(hub, costCenter),
     hub,

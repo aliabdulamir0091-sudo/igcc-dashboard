@@ -1,3 +1,5 @@
+import { normalizeCostCenterAlias } from "../../data/costCenterAliases";
+
 const HEADER_ALIASES = {
   hub_unit: ["hub_unit", "hub unit", "hub", "unit"],
   wo_no: ["wo_no", "wo no", "wo number", "work order"],
@@ -67,6 +69,7 @@ export function parseAfpRecords(rows) {
         return record;
       }, {});
 
+      const sourceCostCenter = cleanText(mapped.cost_center);
       const record = {
         row_number: index + 2,
         hub_unit: cleanText(mapped.hub_unit),
@@ -81,7 +84,8 @@ export function parseAfpRecords(rows) {
         approved_date: parseDate(mapped.approved_date),
         approved_value: parseNumber(mapped.approved_value),
         status: "",
-        cost_center: cleanText(mapped.cost_center),
+        source_cost_center: sourceCostCenter,
+        cost_center: normalizeCostCenterAlias(sourceCostCenter),
         period: cleanText(mapped.period),
         remarks: cleanText(mapped.remarks),
       };

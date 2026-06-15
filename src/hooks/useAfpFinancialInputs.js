@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { normalizeCostCenterAlias } from "../data/costCenterAliases";
 import financialInputsData from "../data/financialInputsData.json";
 import { fetchAfpRecords } from "../services/afp/afpRepository";
 import { mergeFinancialInputsWithAfpMaster } from "../services/afp/afpFinancialEntries";
@@ -35,6 +36,12 @@ const isLiveSpentReportCompleteEnough = (liveEntries, baselineEntries) => {
   if (!hasAllBaselineYears(liveEntries, baselineEntries)) return false;
   return liveEntries.length >= baselineEntries.length * MIN_LIVE_SPENT_ROW_COVERAGE;
 };
+
+const normalizeFinancialEntry = (entry) => ({
+  ...entry,
+  sourceCostCenter: entry.sourceCostCenter || entry.costCenter,
+  costCenter: normalizeCostCenterAlias(entry.costCenter),
+});
 
 export function useAfpFinancialInputs() {
   const [afpRecords, setAfpRecords] = useState([]);
@@ -128,13 +135,14 @@ export function useAfpFinancialInputs() {
       ...spentEntries,
     ] : merged.entries;
 
-    if (isLoadingCreditNotes || creditNoteError) return entriesWithSpent;
-    return [
+    const combinedEntries = isLoadingCreditNotes || creditNoteError ? entriesWithSpent : [
       ...entriesWithSpent.filter((entry) => (
         entry.type !== "creditNotes" || String(entry.year || entry.period?.slice(0, 4)) < CREDIT_NOTE_START_YEAR
       )),
       ...creditNoteEntries,
     ];
+
+    return combinedEntries.map(normalizeFinancialEntry);
   }, [
     creditNoteEntries,
     creditNoteError,

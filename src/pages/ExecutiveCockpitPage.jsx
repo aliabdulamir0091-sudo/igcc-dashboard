@@ -1032,7 +1032,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
     if (row.type === "hub") {
       nextFilters.hub = row.hub;
     } else if (row.type === "subgroup") {
-      nextFilters.hub = "ROO Hub";
+      nextFilters.hub = row.hub;
       nextFilters.costCenter = row.filterCostCenter || ALL_FILTER_VALUE;
     } else if (row.type === "costCenter") {
       nextFilters.hub = row.hub;

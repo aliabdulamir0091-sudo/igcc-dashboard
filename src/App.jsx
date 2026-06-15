@@ -51,7 +51,10 @@ const getValidCostCenterFilters = (portfolio, hub) => {
   ));
   const costCenters = matchingRows.flatMap((row) => row.costCenters);
   const groups = COST_CENTER_GROUPS
-    .filter((group) => hub === "ROO Hub" && matchingRows.some((row) => row.hub === group.hub))
+    .filter((group) => (
+      (hub === ALL_FILTER_VALUE || group.hub === hub)
+      && matchingRows.some((row) => row.hub === group.hub)
+    ))
     .map((group) => getCostCenterGroupValue(group.id));
 
   return new Set([ALL_FILTER_VALUE, ...costCenters, ...groups]);
@@ -72,7 +75,11 @@ const sanitizeDashboardFilters = (filters) => {
   }
 
   const validCostCenters = getValidCostCenterFilters(portfolio, nextFilters.hub);
-  if (!validCostCenters.has(nextFilters.costCenter) || (getCostCenterGroupByValue(nextFilters.costCenter) && nextFilters.hub !== "ROO Hub")) {
+  const selectedGroup = getCostCenterGroupByValue(nextFilters.costCenter);
+  if (
+    !validCostCenters.has(nextFilters.costCenter)
+    || (selectedGroup && nextFilters.hub !== ALL_FILTER_VALUE && selectedGroup.hub !== nextFilters.hub)
+  ) {
     nextFilters.costCenter = ALL_FILTER_VALUE;
   }
 
