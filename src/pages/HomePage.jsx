@@ -55,7 +55,6 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 });
 
 const formatCurrency = (value) => currencyFormatter.format(value || 0);
-const formatWholeNumber = (value) => Math.round(value || 0).toLocaleString("en-US");
 const formatPercent = (value) => `${Math.round(value || 0)}%`;
 const getShare = (value, revenue) => (revenue ? (value / revenue) * 100 : 0);
 const sumRows = (rows, predicate) => rows.reduce((total, row) => (
@@ -165,17 +164,36 @@ export function HomePage({ onNavigate, accessProfile }) {
     { label: "Submitted Profit", value: yearTotal.submittedProfit, tone: getDeviationTone(yearTotal.submittedProfit) },
     { label: "Approved Margin", value: yearTotal.approvedMargin, isPercent: true, tone: getDeviationTone(yearTotal.approvedMargin) },
   ];
-  const activeMonths = months
-    .map((month) => ({ ...month, summary: byMonth[month.key] || createEmptyIgccSummary() }))
+  const chartMonths = months.map((month) => ({
+    ...month,
+    summary: byMonth[month.key] || createEmptyIgccSummary(),
+  }));
+  const activeMonths = chartMonths
     .filter((month) => month.summary.totalCost || month.summary.approvedAfp || month.summary.submittedAfp);
   const latestActiveMonth = activeMonths.at(-1);
   const strongestMonth = activeMonths
     .slice()
     .sort((a, b) => b.summary.approvedProfit - a.summary.approvedProfit)[0];
-  const yearSourceRows = [
-    { label: "Approved AFP", value: yearTotal.approvedAfp, tone: "is-blue" },
-    { label: "Submitted AFP", value: yearTotal.submittedAfp, tone: "is-teal" },
-    { label: "Spent + Not Recorded", value: yearTotal.totalCost, tone: "is-orange" },
+  const insightCards = [
+    {
+      label: "Latest active month",
+      value: latestActiveMonth ? latestActiveMonth.label : "No data",
+      detail: latestActiveMonth
+        ? `${formatCurrency(latestActiveMonth.summary.approvedProfit)} approved profit`
+        : "Waiting for monthly inputs",
+    },
+    {
+      label: "Best approved profit",
+      value: strongestMonth ? strongestMonth.label : "No data",
+      detail: strongestMonth
+        ? `${formatCurrency(strongestMonth.summary.approvedProfit)} at ${formatPercent(strongestMonth.summary.approvedMargin)} margin`
+        : "Waiting for monthly inputs",
+    },
+    {
+      label: "Data rule",
+      value: "CN excluded",
+      detail: "Spent Report + Not Recorded only",
+    },
   ];
 
   return (
@@ -225,93 +243,61 @@ export function HomePage({ onNavigate, accessProfile }) {
           </div>
         </header>
 
-        <section className="home-overview-layout">
-          <article className="surface-card home-igcc-summary-card home-igcc-summary-card-clean">
-            <div className="home-igcc-heading">
-              <div>
-                <span className="home-kicker">Live P&L overview</span>
-                <h3>2026 Monthly Performance</h3>
-              </div>
-              <div className="home-igcc-badges">
-                <span>Year {DEFAULT_YEAR}</span>
-                <span>CN excluded</span>
-              </div>
-            </div>
-
-            <div className="home-igcc-kpis" aria-label={`IGCC ${DEFAULT_YEAR} profit and loss totals`}>
-              {homePnlHighlights.map((item) => (
-                <div className={`home-igcc-kpi ${item.tone}`} key={item.label}>
-                  <span>{item.label}</span>
-                  <strong>{item.isPercent ? formatPercent(item.value) : formatCurrency(item.value)}</strong>
-                </div>
-              ))}
-            </div>
-
-            <div className="home-month-strip" aria-label={`Monthly IGCC performance for ${DEFAULT_YEAR}`}>
-              {months.map((month) => {
-                const summary = byMonth[month.key] || createEmptyIgccSummary();
-                const hasData = summary.totalCost || summary.approvedAfp || summary.submittedAfp;
-                return (
-                  <article className={`home-month-tile ${hasData ? "" : "is-empty"}`} key={month.key}>
-                    <div className="home-month-tile-head">
-                      <strong>{month.label}</strong>
-                      <span className={getDeviationTone(summary.approvedProfit)}>
-                        {formatCurrency(summary.approvedProfit)}
-                      </span>
-                    </div>
-                    <div className="home-month-bars" aria-hidden="true">
-                      <i style={{ width: `${Math.max(2, (summary.totalCost / maxMonthlyScale) * 100)}%` }} />
-                      <i style={{ width: `${Math.max(2, (summary.approvedAfp / maxMonthlyScale) * 100)}%` }} />
-                      <i style={{ width: `${Math.max(2, (summary.submittedAfp / maxMonthlyScale) * 100)}%` }} />
-                    </div>
-                    <div className="home-month-tile-footer">
-                      <span>Margin</span>
-                      <strong className={getDeviationTone(summary.approvedMargin)}>
-                        {formatPercent(summary.approvedMargin)}
-                      </strong>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </article>
-
-          <aside className="home-year-snapshot" aria-label={`IGCC ${DEFAULT_YEAR} snapshot`}>
+        <article className="home-performance-board">
+          <div className="home-board-head">
             <div>
-              <span className="home-kicker">Year snapshot</span>
-              <h3>{DEFAULT_YEAR} totals</h3>
+              <span className="home-kicker">Live P&L overview</span>
+              <h3>2026 Performance Board</h3>
+              <p>Approved AFP, submitted AFP, and spend movement in one view.</p>
             </div>
-            <div className="home-snapshot-list">
-              {yearSourceRows.map((row) => (
-                <div className={row.tone} key={row.label}>
-                  <span>{row.label}</span>
-                  <strong>{formatCurrency(row.value)}</strong>
-                </div>
-              ))}
+            <div className="home-board-legend" aria-label="Chart legend">
+              <span><i className="is-cost" /> Spent</span>
+              <span><i className="is-approved" /> Approved</span>
+              <span><i className="is-submitted" /> Submitted</span>
             </div>
-            <div className="home-insight-card">
-              <span>Latest active month</span>
-              <strong>{latestActiveMonth ? latestActiveMonth.label : "No data"}</strong>
-              <small>
-                {latestActiveMonth
-                  ? `${formatCurrency(latestActiveMonth.summary.approvedProfit)} approved profit`
-                  : "Waiting for monthly inputs"}
-              </small>
-            </div>
-            <div className="home-insight-card">
-              <span>Strongest approved profit</span>
-              <strong>{strongestMonth ? strongestMonth.label : "No data"}</strong>
-              <small>
-                {strongestMonth
-                  ? `${formatCurrency(strongestMonth.summary.approvedProfit)} at ${formatPercent(strongestMonth.summary.approvedMargin)} margin`
-                  : "Waiting for monthly inputs"}
-              </small>
-            </div>
-            <p>Total Spent includes Google Sheet Spent Report and Not Recorded tabs only. Issued and received CN are excluded.</p>
-          </aside>
-        </section>
+          </div>
 
-        <section className="home-actions-clean" aria-label="Dashboard destinations">
+          <div className="home-command-metrics" aria-label={`IGCC ${DEFAULT_YEAR} profit and loss totals`}>
+            {homePnlHighlights.map((item) => (
+              <div className={`home-command-metric ${item.tone}`} key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.isPercent ? formatPercent(item.value) : formatCurrency(item.value)}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="home-month-chart" aria-label={`Monthly IGCC chart for ${DEFAULT_YEAR}`}>
+            {chartMonths.map((month) => {
+              const { summary } = month;
+              const hasData = summary.totalCost || summary.approvedAfp || summary.submittedAfp;
+              return (
+                <article className={`home-month-column ${hasData ? "" : "is-empty"}`} key={month.key}>
+                  <div className="home-month-column-bars" aria-hidden="true">
+                    <span className="is-cost" style={{ height: `${Math.max(3, (summary.totalCost / maxMonthlyScale) * 100)}%` }} />
+                    <span className="is-approved" style={{ height: `${Math.max(3, (summary.approvedAfp / maxMonthlyScale) * 100)}%` }} />
+                    <span className="is-submitted" style={{ height: `${Math.max(3, (summary.submittedAfp / maxMonthlyScale) * 100)}%` }} />
+                  </div>
+                  <strong>{month.label}</strong>
+                  <small className={getDeviationTone(summary.approvedProfit)}>
+                    {formatCurrency(summary.approvedProfit)}
+                  </small>
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="home-insight-strip">
+            {insightCards.map((item) => (
+              <div className="home-signal-card" key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+                <small>{item.detail}</small>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <section className="home-actions-clean home-actions-modern" aria-label="Dashboard destinations">
           <div className="home-actions-clean-title">
             <span className="home-kicker">Work areas</span>
             <h2>Open the detail view you need</h2>
