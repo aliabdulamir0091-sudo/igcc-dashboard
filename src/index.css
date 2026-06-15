@@ -7307,6 +7307,33 @@ td.profit-matrix-sticky-col span {
   padding: 26px;
 }
 
+.home-igcc-summary-card {
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 20px 55px rgba(15, 23, 42, 0.08);
+}
+
+.home-igcc-table-wrap {
+  overflow-x: hidden;
+}
+
+.home-igcc-summary-table {
+  min-width: 0;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+.home-igcc-summary-table th,
+.home-igcc-summary-table td {
+  padding: 6px 7px;
+}
+
+.home-igcc-summary-table th:first-child,
+.home-igcc-summary-table td:first-child {
+  width: 37%;
+  min-width: 0;
+}
+
 .home-year-table {
   display: grid;
   gap: 8px;
