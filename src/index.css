@@ -4712,6 +4712,16 @@ td.profit-matrix-sticky-col span {
   min-width: 190px;
 }
 
+.spend-analysis-card .chart-header {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(150px, 0.28fr) minmax(220px, 0.42fr) minmax(150px, 0.28fr) auto;
+  align-items: end;
+}
+
+.spend-analysis-card .chart-header > div:first-child {
+  align-self: start;
+}
+
 .analysis-sort-control span {
   color: #475569;
   font-size: 11px;
@@ -8090,6 +8100,15 @@ td.profit-matrix-sticky-col span {
   .home-year-total,
   .home-year-empty {
     min-width: 880px;
+  }
+
+  .spend-analysis-card .chart-header {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spend-analysis-card .chart-header > div:first-child,
+  .spend-analysis-card .analysis-export-button {
+    grid-column: 1 / -1;
   }
 
   .home-deviation-head,

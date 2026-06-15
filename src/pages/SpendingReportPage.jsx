@@ -673,54 +673,102 @@ function CreditNoteTable({ creditNotes, totalSpent, onSelectCostCenter }) {
 function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenterSparklineByName, totals, onSelectCostCenter }) {
   const [selectedGlNames, setSelectedGlNames] = useState([]);
   const [pendingGlNames, setPendingGlNames] = useState([]);
+  const [analysisMode, setAnalysisMode] = useState("gl");
+  const [selectedCostCenter, setSelectedCostCenter] = useState("all");
   const [sortMode, setSortMode] = useState("spent-desc");
   const [isDrilldownOpen, setIsDrilldownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   const glOptions = byGlName.map((row) => row.glName);
+  const costCenterOptions = byCostCenter.map((row) => row.costCenter).sort((a, b) => a.localeCompare(b));
   const costCenterLookup = new Map(byCostCenter.map((row) => [row.costCenter, row]));
+  const glLookup = new Map(byGlName.map((row) => [row.glName, row]));
   const activeGlSet = new Set(selectedGlNames);
   const pendingGlSet = new Set(pendingGlNames);
   const activeGlNames = glOptions.filter((glName) => activeGlSet.has(glName));
   const filteredGlOptions = glOptions.filter((glName) => glName.toLowerCase().includes(searchTerm.trim().toLowerCase()));
-  const isCostCenterMode = activeGlNames.length > 0;
+  const isSelectedCostCenter = selectedCostCenter !== "all";
+  const selectedCostCenterTotal = costCenterLookup.get(selectedCostCenter)?.spent || 0;
+  const isCostCenterMode = analysisMode === "cost-center" || activeGlNames.length > 0;
+  const compareRows = (a, b) => {
+    const aAmount = a.displayAmount ?? a.total ?? a.amount ?? a.spent ?? 0;
+    const bAmount = b.displayAmount ?? b.total ?? b.amount ?? b.spent ?? 0;
+    const aBase = a.shareBase ?? totals.spent;
+    const bBase = b.shareBase ?? totals.spent;
+    if (sortMode === "name") return (a.costCenter || a.glName || "").localeCompare(b.costCenter || b.glName || "");
+    if (sortMode === "hub") return (a.hub || "").localeCompare(b.hub || "") || Math.abs(bAmount) - Math.abs(aAmount);
+    if (sortMode === "share-desc") return getShare(bAmount, bBase) - getShare(aAmount, aBase);
+    return Math.abs(bAmount) - Math.abs(aAmount);
+  };
   const costCenterRows = getGlFilteredCostCenterRows(byGlCostCenter, activeGlNames, sortMode).map((row) => {
     const totalsForCostCenter = costCenterLookup.get(row.costCenter) || {};
     return {
       ...row,
       spent: totalsForCostCenter.spent || 0,
+      displayAmount: row.total,
+      shareBase: totalsForCostCenter.spent || 0,
       sparkline: costCenterSparklineByName[row.costCenter] || [],
     };
-  }).sort((a, b) => {
-    if (sortMode === "cost-center") return a.costCenter.localeCompare(b.costCenter);
-    if (sortMode === "hub") return a.hub.localeCompare(b.hub) || getShare(b.total, b.spent) - getShare(a.total, a.spent);
-    return getShare(b.total, b.spent) - getShare(a.total, a.spent);
-  });
+  })
+    .filter((row) => !isSelectedCostCenter || row.costCenter === selectedCostCenter)
+    .sort(compareRows);
+  const overallCostCenterRows = byCostCenter
+    .filter((row) => !isSelectedCostCenter || row.costCenter === selectedCostCenter)
+    .map((row) => ({
+      ...row,
+      total: row.spent,
+      displayAmount: row.spent,
+      shareBase: totals.spent,
+      sparkline: costCenterSparklineByName[row.costCenter] || [],
+    }))
+    .sort(compareRows);
   const glRows = (() => {
-    const rows = [...byGlName];
-    if (sortMode === "cost-center") rows.sort((a, b) => a.glName.localeCompare(b.glName));
-    return rows.slice(0, 14);
+    const rows = isSelectedCostCenter
+      ? byGlCostCenter
+        .filter((row) => row.costCenter === selectedCostCenter)
+        .map((row) => ({
+          ...row,
+          displayAmount: row.amount,
+          shareBase: selectedCostCenterTotal,
+          sparkline: glLookup.get(row.glName)?.sparkline || [],
+        }))
+      : byGlName.map((row) => ({
+        ...row,
+        displayAmount: row.amount,
+        shareBase: totals.spent,
+      }));
+    return rows.sort(compareRows).slice(0, 14);
   })();
-  const tableRows = isCostCenterMode ? costCenterRows : glRows;
+  const tableRows = activeGlNames.length ? costCenterRows : analysisMode === "cost-center" ? overallCostCenterRows : glRows;
   const exportRows = tableRows.map((row) => {
     if (isCostCenterMode) {
       return {
         costCenter: row.costCenter,
         hub: row.hub,
-        selectedSpent: roundCurrency(row.total),
-        selectedShareOfCostCenter: formatPercent(getShare(row.total, row.spent)),
-        selectedGlNames: activeGlNames.join("; "),
+        spent: roundCurrency(row.displayAmount ?? row.total),
+        share: formatPercent(getShare(row.displayAmount ?? row.total, row.shareBase)),
+        selectedGlNames: activeGlNames.join("; ") || "All GL names",
       };
     }
     return {
       glName: row.glName,
-      spent: roundCurrency(row.amount),
-      shareOfSpent: formatPercent(getShare(row.amount, totals.spent)),
+      costCenter: isSelectedCostCenter ? selectedCostCenter : "All cost centers",
+      spent: roundCurrency(row.displayAmount ?? row.amount),
+      shareOfSpent: formatPercent(getShare(row.displayAmount ?? row.amount, row.shareBase)),
     };
   });
-  const subtitle = isCostCenterMode
+  const subtitle = activeGlNames.length
     ? `${activeGlNames.join(", ")} selected. Rows now compare cost centers for the selected GL spend.`
+    : analysisMode === "cost-center"
+      ? "Rank cost centers by total spent and view each cost center's share of filtered spend."
+      : isSelectedCostCenter
+        ? `Showing GL spend inside ${selectedCostCenter}. Share is calculated against that cost center's total spent.`
     : "Organized by GL names. Use the Dimension column drilldown to compare selected GLs by cost center.";
+  const analysisTitle = activeGlNames.length
+    ? "Cost Center Drilldown"
+    : analysisMode === "cost-center"
+      ? "Cost Center Spend Drivers"
+      : "GL Name Cost Drivers";
   const firstColumnLabel = isCostCenterMode ? "Cost Center" : "GL Name";
 
   const togglePending = (glName) => {
@@ -753,14 +801,39 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
       <div className="chart-header">
         <div>
           <p className="eyebrow">Spend Analysis</p>
-          <h3>{isCostCenterMode ? "Cost Center Drilldown" : "GL Name Cost Drivers"}</h3>
+          <h3>{analysisTitle}</h3>
           <p>{subtitle}</p>
         </div>
         <label className="analysis-sort-control">
+          <span>Dimension</span>
+          <select
+            value={analysisMode}
+            onChange={(event) => {
+              setAnalysisMode(event.target.value);
+              setSelectedGlNames([]);
+              setPendingGlNames([]);
+              setIsDrilldownOpen(false);
+            }}
+          >
+            <option value="gl">GL Name</option>
+            <option value="cost-center">Cost Center</option>
+          </select>
+        </label>
+        <label className="analysis-sort-control">
+          <span>Cost Center</span>
+          <select value={selectedCostCenter} onChange={(event) => setSelectedCostCenter(event.target.value)}>
+            <option value="all">All cost centers</option>
+            {costCenterOptions.map((costCenter) => (
+              <option value={costCenter} key={costCenter}>{costCenter}</option>
+            ))}
+          </select>
+        </label>
+        <label className="analysis-sort-control">
           <span>Sort</span>
           <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
-            <option value="spent-desc">{isCostCenterMode ? "Highest %" : "Highest spent"}</option>
-            <option value="cost-center">Name</option>
+            <option value="spent-desc">Highest spent</option>
+            <option value="share-desc">Highest share</option>
+            <option value="name">Name</option>
             <option value="hub">Hub</option>
           </select>
         </label>
@@ -817,9 +890,15 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
           <tbody>
             {tableRows.map((row) => {
               const key = isCostCenterMode ? row.costCenter : row.glName;
-              const amount = isCostCenterMode ? row.total : row.amount;
-              const percent = isCostCenterMode ? getShare(amount, row.spent) : getShare(amount, totals.spent);
-              const segments = isCostCenterMode
+              const amount = row.displayAmount ?? (isCostCenterMode ? row.total : row.amount);
+              const shareBase = row.shareBase ?? (isCostCenterMode ? row.spent : totals.spent);
+              const percent = getShare(amount, shareBase);
+              const shareLabel = isSelectedCostCenter && !isCostCenterMode
+                ? selectedCostCenter
+                : activeGlNames.length
+                  ? row.costCenter
+                  : "total spent";
+              const segments = activeGlNames.length
                 ? activeGlNames.map((glName) => ({
                   label: glName,
                   amount: row.byGl[glName] || 0,
@@ -837,7 +916,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
                 >
                   <td>
                     <strong>{key}</strong>
-                    <span>{isCostCenterMode ? row.hub : "GL category"}</span>
+                    <span>{isCostCenterMode ? row.hub : isSelectedCostCenter ? selectedCostCenter : "GL category"}</span>
                   </td>
                   <td>
                     <SpendShareBar
@@ -846,7 +925,10 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
                     />
                   </td>
                   <td><SpendingSparkline values={row.sparkline} /></td>
-                  <td className="is-number"><strong>{formatCurrency(amount)}</strong></td>
+                  <td className="is-number">
+                    <strong>{formatCurrency(amount)}</strong>
+                    <span>{formatPercent(percent)} of {shareLabel}</span>
+                  </td>
                 </tr>
               );
             })}
