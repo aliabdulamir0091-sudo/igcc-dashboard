@@ -52,6 +52,7 @@ const normalizeFinancialEntry = (entry) => ({
   ...entry,
   sourceCostCenter: entry.sourceCostCenter || entry.costCenter,
   costCenter: normalizeCostCenterAlias(entry.costCenter),
+  issuedBy: entry.issuedBy ? normalizeCostCenterAlias(entry.issuedBy) : entry.issuedBy,
 });
 
 export function useAfpFinancialInputs() {

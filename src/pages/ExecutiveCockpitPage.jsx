@@ -102,6 +102,15 @@ const matchesIssuedCreditNoteFilters = (entry, filters = {}) => {
     && (filters.period !== "quarterly" || !filters.quarter || filters.quarter === ALL_FILTER_VALUE || getQuarter(entry.period) === filters.quarter);
 };
 
+const matchesIssuedCreditNoteScope = (entry, members, filters = {}) => (
+  members.has(normalizeCostCenter(entry.issuedBy))
+  && matchesIssuedCreditNoteFilters(entry, {
+    ...filters,
+    hub: ALL_FILTER_VALUE,
+    costCenter: ALL_FILTER_VALUE,
+  })
+);
+
 const getHubCostCenters = (hub, poolCostCenter) => (
   COST_CENTER_HIERARCHY.find((group) => group.hub === hub)?.costCenters || []
 ).filter((costCenter) => costCenter !== poolCostCenter);
@@ -498,14 +507,17 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
       && entry.sourceCostCenter !== MANAGEMENT_SOURCE_COST_CENTER
     ));
   const cnRows = rowsInScope(allocatedEntries, "creditNotes");
+  const issuedCnRows = rawEntries.filter((entry) => matchesIssuedCreditNoteScope(entry, members, filters));
   const period = getReportPeriod(filters, rawEntries);
   const history = buildReportHistory([...members], allocatedEntries, rawEntries, filters, period);
   const memberDetails = row.type === "costCenter"
     ? []
     : buildGroupedReportDetails(memberList, costCenterRows, allocatedEntries, rawEntries, filters);
 
-  const approvedMargin = row.approvedAfp - row.totalCost;
-  const submittedMargin = row.submittedAfp - row.totalCost;
+  const approvedRevenue = row.approvedAfp + row.issuedCn;
+  const submittedRevenue = row.submittedAfp + row.issuedCn;
+  const approvedMargin = approvedRevenue - row.totalCost;
+  const submittedMargin = submittedRevenue - row.totalCost;
   const receivedCnTotal = row.receivedCn + row.allocatedGeneralCn;
   const topCost = groupAmounts(rawSpentRows, (entry) => entry.glName || "Unclassified")[0];
 
@@ -517,6 +529,9 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
     generatedAt: new Date().toLocaleString("en-US", { month: "short", day: "2-digit", year: "numeric", hour: "numeric", minute: "2-digit" }),
     approvedAfp: row.approvedAfp,
     submittedAfp: row.submittedAfp,
+    issuedCn: row.issuedCn,
+    approvedRevenue,
+    submittedRevenue,
     directCost: row.spentCost,
     generalHubCost: row.allocatedGeneralCost,
     managementCost: row.allocatedManagementCost,
@@ -525,20 +540,22 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
     receivedCnTotal,
     totalCost: row.totalCost,
     approvedMargin,
-    approvedMarginPercent: getShare(approvedMargin, row.approvedAfp),
+    approvedMarginPercent: getShare(approvedMargin, approvedRevenue),
     submittedMargin,
-    submittedMarginPercent: getShare(submittedMargin, row.submittedAfp),
+    submittedMarginPercent: getShare(submittedMargin, submittedRevenue),
     spendBreakdown: groupAmounts(rawSpentRows, (entry) => entry.glName || "Unclassified"),
     cnBreakdown: groupAmounts(cnRows.filter((entry) => !entry.isAllocatedGeneralCreditNote), (entry) => entry.category || entry.issuedBy || "Credit Note"),
     generalCnBreakdown: groupAmounts(cnRows.filter((entry) => entry.isAllocatedGeneralCreditNote), (entry) => entry.allocationSourceCostCenter || "General CN Reallocated"),
+    issuedCnBreakdown: groupAmounts(issuedCnRows, (entry) => entry.category || entry.costCenter || "Issued Credit Note"),
     history,
     memberDetails,
     topCost,
     insights: buildReportInsights({
-      approvedAfp: row.approvedAfp,
+      approvedAfp: approvedRevenue,
       totalCost: row.totalCost,
       approvedMargin,
       receivedCnTotal,
+      issuedCn: row.issuedCn,
       topCost,
     }),
   };
@@ -619,15 +636,21 @@ const buildReportHistory = (members, allocatedEntries, rawEntries, filters, sele
     const totalCost = directCost + generalCost + managementCost + receivedCn + generalCn;
     const approvedAfp = sumRows(rows, (entry) => entry.type === "approved");
     const submittedAfp = sumRows(rows, (entry) => entry.type === "submitted");
-    const approvedProfit = approvedAfp - totalCost;
+    const issuedCn = sumRows(rawEntries, (entry) => entry.period === period && matchesIssuedCreditNoteScope(entry, memberSet, filters));
+    const approvedRevenue = approvedAfp + issuedCn;
+    const submittedRevenue = submittedAfp + issuedCn;
+    const approvedProfit = approvedRevenue - totalCost;
     return {
       period,
       approvedAfp,
       submittedAfp,
+      issuedCn,
+      approvedRevenue,
+      submittedRevenue,
       totalCost,
       receivedCn: receivedCn + generalCn,
       approvedProfit,
-      approvedMargin: getShare(approvedProfit, approvedAfp),
+      approvedMargin: getShare(approvedProfit, approvedRevenue),
     };
   });
 };
@@ -647,7 +670,7 @@ const getHistoryMetric = (history, key) => {
   };
 };
 
-const buildReportInsights = ({ approvedAfp, totalCost, approvedMargin, receivedCnTotal, topCost }) => {
+const buildReportInsights = ({ approvedAfp, totalCost, approvedMargin, receivedCnTotal, issuedCn, topCost }) => {
   const insights = [];
   if (totalCost > approvedAfp) {
     insights.push(`Total Cost is ${Math.round(getShare(totalCost - approvedAfp, approvedAfp))}% higher than Approved AFP, driving negative margin.`);
@@ -659,6 +682,9 @@ const buildReportInsights = ({ approvedAfp, totalCost, approvedMargin, receivedC
   }
   if (receivedCnTotal) {
     insights.push(`Received CN of ${formatWholeNumber(receivedCnTotal)} is shown separately from spent report cost.`);
+  }
+  if (issuedCn) {
+    insights.push(`Issued CN of ${formatWholeNumber(issuedCn)} is included in adjusted AFP revenue.`);
   }
   return insights.slice(0, 3);
 };
@@ -729,14 +755,15 @@ function DonutChart({ items, total }) {
 
 function SimpleReportModal({ report, onClose }) {
   if (!report) return null;
-  const approvedMetric = getHistoryMetric(report.history, "approvedAfp");
-  const submittedMetric = getHistoryMetric(report.history, "submittedAfp");
+  const approvedRevenueMetric = getHistoryMetric(report.history, "approvedRevenue");
+  const submittedRevenueMetric = getHistoryMetric(report.history, "submittedRevenue");
   const totalCostMetric = getHistoryMetric(report.history, "totalCost");
   const profitMetric = getHistoryMetric(report.history, "approvedProfit");
   const marginMetric = getHistoryMetric(report.history, "approvedMargin");
   const costRows = [
     { label: "Approved AFP", value: report.approvedAfp, tone: "is-afp" },
     { label: "Submitted AFP", value: report.submittedAfp, tone: "is-afp is-submitted" },
+    { label: "Issued CN", value: report.issuedCn, tone: "is-afp" },
     { label: "Direct Cost from Spent report", value: report.directCost },
     { label: "General Hub Cost", value: report.generalHubCost },
     { label: "Management Cost", value: report.managementCost },
@@ -744,15 +771,16 @@ function SimpleReportModal({ report, onClose }) {
     { label: "General CN Reallocated", value: report.allocatedGeneralCn },
   ];
   const kpis = [
-    { label: "Approved AFP", value: report.approvedAfp, metric: approvedMetric, tone: "blue", color: "#2563eb" },
-    { label: "Submitted AFP", value: report.submittedAfp, metric: submittedMetric, tone: "teal", color: "#0f766e" },
+    { label: "Approved Revenue", value: report.approvedRevenue, metric: approvedRevenueMetric, tone: "blue", color: "#2563eb" },
+    { label: "Submitted Revenue", value: report.submittedRevenue, metric: submittedRevenueMetric, tone: "teal", color: "#0f766e" },
     { label: "Total Cost", value: report.totalCost, metric: totalCostMetric, tone: "amber", color: "#f97316" },
     { label: "Net Profit (Approved)", value: report.approvedMargin, metric: profitMetric, tone: report.approvedMargin < 0 ? "red" : "purple", color: "#7c3aed" },
     { label: "Margin (Approved)", value: report.approvedMarginPercent, metric: marginMetric, tone: "red", color: "#ef4444", isPercent: true, suffix: "pp" },
   ];
   const visualRows = [
-    { label: "Approved AFP", value: report.approvedAfp, tone: "blue" },
-    { label: "Submitted AFP", value: report.submittedAfp, tone: "teal" },
+    { label: "Approved Revenue", value: report.approvedRevenue, tone: "blue" },
+    { label: "Submitted Revenue", value: report.submittedRevenue, tone: "teal" },
+    { label: "Issued CN", value: report.issuedCn, tone: "green" },
     { label: "Total Cost", value: report.totalCost, tone: "amber" },
     { label: "Received CN", value: report.receivedCn + report.allocatedGeneralCn, tone: "green" },
   ];
@@ -761,10 +789,11 @@ function SimpleReportModal({ report, onClose }) {
     ...report.cnBreakdown,
     ...report.generalCnBreakdown.map((item) => ({ ...item, label: "General CN Reallocated" })),
   ].filter((item) => item.amount);
+  const issuedCnLegend = report.issuedCnBreakdown.filter((item) => item.amount);
   const topSpendRows = report.spendBreakdown.slice(0, 8);
   const maxSpendAmount = Math.max(...topSpendRows.map((item) => Math.abs(item.amount)), 1);
   const movementCards = [
-    { label: "Approved AFP", metric: approvedMetric, tone: "blue", color: "#2563eb" },
+    { label: "Approved Revenue", metric: approvedRevenueMetric, tone: "blue", color: "#2563eb" },
     { label: "Total Cost", metric: totalCostMetric, tone: "amber", color: "#f97316" },
     { label: "Net Profit (Approved)", metric: profitMetric, tone: profitMetric.current < 0 ? "red" : "purple", color: "#7c3aed" },
     { label: "Margin (Approved)", metric: marginMetric, tone: "red", color: "#ef4444", isPercent: true, suffix: "pp" },
@@ -871,6 +900,18 @@ function SimpleReportModal({ report, onClose }) {
                   </div>
                 ))}
               </div>
+              {issuedCnLegend.length ? (
+                <div className="cn-modern-legend">
+                  {issuedCnLegend.map((item, index) => (
+                    <p key={`issued-${item.label}`}>
+                      <i style={{ "--dot-color": REPORT_COLORS[index % REPORT_COLORS.length] }} />
+                      <span>Issued - {item.label}</span>
+                      <strong>{formatWholeNumber(item.amount)}</strong>
+                      <em>{formatPercent(getShare(item.amount, report.issuedCn))}</em>
+                    </p>
+                  ))}
+                </div>
+              ) : null}
             </article>
           </section>
           <section className="pnl-report-bottom-grid">
@@ -929,6 +970,7 @@ function SimpleReportModal({ report, onClose }) {
                     <div className="audit-metric-grid">
                       <p><span>Submitted AFP</span><b>{formatWholeNumber(item.submittedAfp)}</b></p>
                       <p><span>Approved AFP</span><b>{formatWholeNumber(item.approvedAfp)}</b></p>
+                      <p><span>Issued CN</span><b>{formatWholeNumber(item.issuedCn)}</b></p>
                       <p><span>Direct Spent</span><b>{formatWholeNumber(item.spentCost)}</b></p>
                       <p><span>General Cost</span><b>{formatWholeNumber(item.allocatedGeneralCost)}</b></p>
                       <p><span>Management</span><b>{formatWholeNumber(item.allocatedManagementCost)}</b></p>
