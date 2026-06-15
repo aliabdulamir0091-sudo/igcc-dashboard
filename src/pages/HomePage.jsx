@@ -270,10 +270,6 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
             </div>
           </div>
           <div className="home-hero-actions">
-            <div className="home-hero-year-control">
-              <strong>Year</strong>
-              {renderYearSwitch("Home year switch")}
-            </div>
             <span><Icon name="calendar" /> {today}</span>
             <button type="button" onClick={() => onNavigate("executive")}><Icon name="filter" /> Open Analysis</button>
           </div>
@@ -286,13 +282,10 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
               <h3>{selectedYear} Performance Board</h3>
               <p>Approved AFP, submitted AFP, and spend movement in one view.</p>
             </div>
-            <div className="home-board-controls">
-              {renderYearSwitch("Performance board year switch")}
-              <div className="home-board-legend" aria-label="Chart legend">
-                <span><i className="is-cost" /> Spent</span>
-                <span><i className="is-approved" /> Approved</span>
-                <span><i className="is-submitted" /> Submitted</span>
-              </div>
+            <div className="home-board-legend" aria-label="Chart legend">
+              <span><i className="is-cost" /> Spent</span>
+              <span><i className="is-approved" /> Approved</span>
+              <span><i className="is-submitted" /> Submitted</span>
             </div>
           </div>
 
