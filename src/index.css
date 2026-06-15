@@ -7257,6 +7257,28 @@ td.profit-matrix-sticky-col span {
   font-weight: 750;
 }
 
+.home-title-year-control {
+  width: max-content;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  padding: 6px;
+  color: #1d4ed8;
+}
+
+.home-title-year-control strong {
+  padding: 0 8px;
+  color: #1e3a8a;
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
 .home-hero-actions {
   display: flex;
   align-items: center;
@@ -7264,6 +7286,22 @@ td.profit-matrix-sticky-col span {
   color: #22314a;
   font-size: 14px;
   font-weight: 850;
+}
+
+.home-hero-year-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #dbe4ef;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 4px 5px 4px 12px;
+}
+
+.home-hero-year-control strong {
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 950;
 }
 
 .home-hero-actions span,
@@ -7655,6 +7693,40 @@ td.profit-matrix-sticky-col span {
   color: #64748b;
   font-size: 14px;
   font-weight: 800;
+}
+
+.home-board-controls {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+}
+
+.home-year-switch {
+  display: inline-flex;
+  gap: 4px;
+  border: 1px solid #dbe4ef;
+  border-radius: 999px;
+  background: #f8fafc;
+  padding: 4px;
+}
+
+.home-year-switch button {
+  min-width: 62px;
+  min-height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #475569;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.home-year-switch button.is-active {
+  background: #071936;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
 }
 
 .home-board-legend {
@@ -8113,6 +8185,10 @@ td.profit-matrix-sticky-col span {
 @media (max-width: 1180px) {
   .home-board-head {
     display: grid;
+  }
+
+  .home-board-controls {
+    justify-items: start;
   }
 
   .home-board-legend {

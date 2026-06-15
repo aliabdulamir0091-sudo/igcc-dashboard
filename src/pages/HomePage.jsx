@@ -2,10 +2,12 @@ import { useMemo } from "react";
 
 import { Icon } from "../components/Icons";
 import { NAV_ITEMS } from "../data/navigation";
+import { ALL_FILTER_VALUE } from "../data/costCenterHierarchy";
 import { useAfpFinancialInputs } from "../hooks/useAfpFinancialInputs";
 import igccLogo from "../assets/igcc-logo.svg";
 
 const DEFAULT_YEAR = "2026";
+const HOME_YEAR_OPTIONS = ["2026", "2025"];
 
 const pageCards = [
   {
@@ -138,7 +140,7 @@ const getDeviationTone = (value) => {
   return "";
 };
 
-export function HomePage({ onNavigate, accessProfile }) {
+export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters }) {
   const today = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date());
   const {
     entries,
@@ -147,9 +149,21 @@ export function HomePage({ onNavigate, accessProfile }) {
     isLoadingSpentReport,
   } = useAfpFinancialInputs();
   const isLoading = isLoadingAfpMaster || isLoadingSpentReport;
+  const selectedYear = filters?.year && filters.year !== ALL_FILTER_VALUE ? filters.year : DEFAULT_YEAR;
+  const handleHomeYearChange = (year) => {
+    onApplyFilters?.({ ...filters, year });
+  };
+  const yearOptions = useMemo(() => {
+    const dataYears = new Set([
+      ...entries.map((entry) => entry.year).filter(Boolean),
+      ...spentEntries.map((entry) => entry.year).filter(Boolean),
+      ...HOME_YEAR_OPTIONS,
+    ]);
+    return [...dataYears].sort((a, b) => Number(b) - Number(a));
+  }, [entries, spentEntries]);
   const { months, byMonth, yearTotal } = useMemo(
-    () => buildHomeIgccSummary({ entries, spentEntries, year: DEFAULT_YEAR }),
-    [entries, spentEntries],
+    () => buildHomeIgccSummary({ entries, spentEntries, year: selectedYear }),
+    [entries, spentEntries, selectedYear],
   );
   const maxMonthlyScale = Math.max(
     ...months.flatMap((month) => {
@@ -195,6 +209,20 @@ export function HomePage({ onNavigate, accessProfile }) {
       detail: "Spent Report + Not Recorded only",
     },
   ];
+  const renderYearSwitch = (label) => (
+    <div className="home-year-switch" aria-label={label}>
+      {yearOptions.map((year) => (
+        <button
+          key={year}
+          type="button"
+          className={year === selectedYear ? "is-active" : ""}
+          onClick={() => handleHomeYearChange(year)}
+        >
+          {year}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <section className="home-dashboard-frame">
@@ -235,9 +263,17 @@ export function HomePage({ onNavigate, accessProfile }) {
           <span className="home-hero-icon"><Icon name="executive" /></span>
           <div>
             <h1>IGCC Financial Control</h1>
-            <p>One clean view of 2026 spend, AFP, and profit performance</p>
+            <p>One clean view of {selectedYear} spend, AFP, and profit performance</p>
+            <div className="home-title-year-control">
+              <strong>Switch year</strong>
+              {renderYearSwitch("Home title year switch")}
+            </div>
           </div>
           <div className="home-hero-actions">
+            <div className="home-hero-year-control">
+              <strong>Year</strong>
+              {renderYearSwitch("Home year switch")}
+            </div>
             <span><Icon name="calendar" /> {today}</span>
             <button type="button" onClick={() => onNavigate("executive")}><Icon name="filter" /> Open Analysis</button>
           </div>
@@ -247,17 +283,20 @@ export function HomePage({ onNavigate, accessProfile }) {
           <div className="home-board-head">
             <div>
               <span className="home-kicker">Live P&L overview</span>
-              <h3>2026 Performance Board</h3>
+              <h3>{selectedYear} Performance Board</h3>
               <p>Approved AFP, submitted AFP, and spend movement in one view.</p>
             </div>
-            <div className="home-board-legend" aria-label="Chart legend">
-              <span><i className="is-cost" /> Spent</span>
-              <span><i className="is-approved" /> Approved</span>
-              <span><i className="is-submitted" /> Submitted</span>
+            <div className="home-board-controls">
+              {renderYearSwitch("Performance board year switch")}
+              <div className="home-board-legend" aria-label="Chart legend">
+                <span><i className="is-cost" /> Spent</span>
+                <span><i className="is-approved" /> Approved</span>
+                <span><i className="is-submitted" /> Submitted</span>
+              </div>
             </div>
           </div>
 
-          <div className="home-command-metrics" aria-label={`IGCC ${DEFAULT_YEAR} profit and loss totals`}>
+          <div className="home-command-metrics" aria-label={`IGCC ${selectedYear} profit and loss totals`}>
             {homePnlHighlights.map((item) => (
               <div className={`home-command-metric ${item.tone}`} key={item.label}>
                 <span>{item.label}</span>
@@ -266,7 +305,7 @@ export function HomePage({ onNavigate, accessProfile }) {
             ))}
           </div>
 
-          <div className="home-month-chart" aria-label={`Monthly IGCC chart for ${DEFAULT_YEAR}`}>
+          <div className="home-month-chart" aria-label={`Monthly IGCC chart for ${selectedYear}`}>
             {chartMonths.map((month) => {
               const { summary } = month;
               const hasData = summary.totalCost || summary.approvedAfp || summary.submittedAfp;
