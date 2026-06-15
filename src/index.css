@@ -5359,12 +5359,27 @@ td.profit-matrix-sticky-col span {
   font-weight: 950;
 }
 
-.executive-cost-center-table {
-  min-width: 1840px;
+.executive-cost-center-wrap {
+  overflow-x: hidden;
 }
 
+.executive-cost-center-table {
+  min-width: 0;
+  table-layout: fixed;
+  font-size: 10px;
+}
+
+.executive-cost-center-table th,
+.executive-cost-center-table td {
+  padding: 5px 4px;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.executive-cost-center-table th:first-child,
 .executive-cost-center-table td:first-child {
-  min-width: 150px;
+  width: 9.5%;
+  min-width: 0;
 }
 
 .executive-cost-center-table thead th[rowspan] {
@@ -5373,7 +5388,7 @@ td.profit-matrix-sticky-col span {
 
 .executive-cost-center-table .executive-table-section {
   color: #ffffff;
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 0;
   text-align: center;
   text-transform: uppercase;
@@ -5393,7 +5408,7 @@ td.profit-matrix-sticky-col span {
 
 .executive-cost-center-table td:first-child span {
   display: inline-block;
-  padding-left: 18px;
+  padding-left: 8px;
   font-weight: 800;
 }
 

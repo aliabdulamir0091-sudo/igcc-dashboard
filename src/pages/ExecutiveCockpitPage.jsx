@@ -1131,7 +1131,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
           <h3>2- Cost Center Profitability Summary</h3>
           <span>{costCenterYearLabel} - {costCenterRows.length} cost centers</span>
         </div>
-        <div className="executive-table-wrap">
+        <div className="executive-table-wrap executive-cost-center-wrap">
           <table className="executive-summary-table executive-cost-center-table">
             <thead>
               <tr>
