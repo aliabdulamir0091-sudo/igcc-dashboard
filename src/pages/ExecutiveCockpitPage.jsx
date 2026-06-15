@@ -105,6 +105,21 @@ const matchesFilters = (entry, filters = {}, { ignoreCostCenter = false } = {}) 
   && (filters.period !== "quarterly" || !filters.quarter || filters.quarter === ALL_FILTER_VALUE || getQuarter(entry.period) === filters.quarter)
 );
 
+const matchesIssuedCreditNoteFilters = (entry, filters = {}) => {
+  const issuedBy = normalizeCostCenter(entry.issuedBy);
+  if (!issuedBy || HIDDEN_COST_CENTER_ROWS.has(issuedBy)) return false;
+  const issuedHub = getCostCenterHub(issuedBy, entry.hub);
+  const issuedMeta = COST_CENTER_LOOKUP.get(issuedBy);
+  return entry.type === "creditNotes"
+    && !entry.isAllocatedGeneralCreditNote
+    && matchesPortfolio({ hub: issuedHub, region: issuedMeta?.region || entry.region }, filters.portfolio)
+    && (!filters.hub || filters.hub === ALL_FILTER_VALUE || issuedHub === filters.hub)
+    && matchesCostCenterFilter(issuedBy, filters.costCenter)
+    && (!filters.year || filters.year === ALL_FILTER_VALUE || entry.year === filters.year)
+    && (filters.period !== "monthly" || !filters.month || filters.month === ALL_FILTER_VALUE || entry.month === filters.month)
+    && (filters.period !== "quarterly" || !filters.quarter || filters.quarter === ALL_FILTER_VALUE || getQuarter(entry.period) === filters.quarter);
+};
+
 const getHubCostCenters = (hub, poolCostCenter) => (
   COST_CENTER_HIERARCHY.find((group) => group.hub === hub)?.costCenters || []
 ).filter((costCenter) => costCenter !== poolCostCenter);
@@ -282,6 +297,9 @@ const getCostCenterRow = (rowsByCostCenter, costCenter, hub) => {
       totalCost: 0,
       submittedAfp: 0,
       approvedAfp: 0,
+      issuedCn: 0,
+      submittedRevenue: 0,
+      totalRevenue: 0,
       profit: 0,
       margin: 0,
     });
@@ -360,18 +378,28 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
     }
   }
 
+  for (const entry of rawRows) {
+    if (!matchesIssuedCreditNoteFilters(entry, yearFilters)) continue;
+    const issuedBy = normalizeCostCenter(entry.issuedBy);
+    getCostCenterRow(rowsByCostCenter, issuedBy, getCostCenterHub(issuedBy, entry.hub)).issuedCn += Number(entry.amount) || 0;
+  }
+
   return [...rowsByCostCenter.values()]
     .map((row) => {
       const totalCost = row.spentCost + row.allocatedGeneralCost + row.allocatedManagementCost + row.receivedCn + row.allocatedGeneralCn;
-      const profit = row.approvedAfp - totalCost;
+      const submittedRevenue = row.submittedAfp + row.issuedCn;
+      const totalRevenue = row.approvedAfp + row.issuedCn;
+      const profit = totalRevenue - totalCost;
       return {
         ...row,
         totalCost,
+        submittedRevenue,
+        totalRevenue,
         profit,
-        margin: getShare(profit, row.approvedAfp),
+        margin: getShare(profit, totalRevenue),
       };
     })
-    .filter((row) => row.spentCost || row.allocatedGeneralCost || row.receivedCn || row.allocatedGeneralCn || row.submittedAfp || row.approvedAfp)
+    .filter((row) => row.spentCost || row.allocatedGeneralCost || row.receivedCn || row.allocatedGeneralCn || row.submittedAfp || row.approvedAfp || row.issuedCn)
     .sort((a, b) => {
       const hubOrder = COST_CENTER_HIERARCHY.findIndex((group) => group.hub === a.hub)
         - COST_CENTER_HIERARCHY.findIndex((group) => group.hub === b.hub);
@@ -389,6 +417,9 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
     totalCost: sum.totalCost + row.totalCost,
     submittedAfp: sum.submittedAfp + row.submittedAfp,
     approvedAfp: sum.approvedAfp + row.approvedAfp,
+    issuedCn: sum.issuedCn + row.issuedCn,
+    submittedRevenue: sum.submittedRevenue + row.submittedRevenue,
+    totalRevenue: sum.totalRevenue + row.totalRevenue,
     profit: sum.profit + row.profit,
   }), {
     spentCost: 0,
@@ -399,6 +430,9 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
     totalCost: 0,
     submittedAfp: 0,
     approvedAfp: 0,
+    issuedCn: 0,
+    submittedRevenue: 0,
+    totalRevenue: 0,
     profit: 0,
   });
 
@@ -407,7 +441,7 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
     costCenter: label,
     hub,
     ...total,
-    margin: getShare(total.profit, total.approvedAfp),
+    margin: getShare(total.profit, total.totalRevenue),
   };
 };
 
@@ -1101,7 +1135,12 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
           <table className="executive-summary-table executive-cost-center-table">
             <thead>
               <tr>
-                <th>Cost Center</th>
+                <th rowSpan={2}>Cost Center</th>
+                <th className="executive-table-section is-cost-section" colSpan={6}>Cost / Expenses</th>
+                <th className="executive-table-section is-revenue-section" colSpan={4}>Revenue</th>
+                <th className="executive-table-section is-profit-section" colSpan={3}>Profitability</th>
+              </tr>
+              <tr>
                 <th>Cost from Spent Report</th>
                 <th>General Cost Reallocate</th>
                 <th>Management Cost</th>
@@ -1110,6 +1149,8 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 <th>Total Cost</th>
                 <th>Submitted AFP</th>
                 <th>Approved AFP</th>
+                <th>Issued CN</th>
+                <th>Total Revenue</th>
                 <th>Profit</th>
                 <th>Margin %</th>
                 <th>Submitted Margin %</th>
@@ -1146,13 +1187,15 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                   <SummaryValue value={row.totalCost} />
                   <SummaryValue value={row.submittedAfp} />
                   <SummaryValue value={row.approvedAfp} />
+                  <SummaryValue value={row.issuedCn} />
+                  <SummaryValue value={row.totalRevenue} />
                   <SummaryValue value={row.profit} />
                   <SummaryValue value={row.margin} isPercent />
-                  <SummaryValue value={getShare(row.submittedAfp - row.totalCost, row.submittedAfp)} isPercent />
+                  <SummaryValue value={getShare(row.submittedRevenue - row.totalCost, row.submittedRevenue)} isPercent />
                 </tr>
               )) : (
                 <tr>
-                  <td className="executive-empty-row" colSpan={12}>No cost center data for the selected filters.</td>
+                  <td className="executive-empty-row" colSpan={14}>No cost center data for the selected filters.</td>
                 </tr>
               )}
             </tbody>

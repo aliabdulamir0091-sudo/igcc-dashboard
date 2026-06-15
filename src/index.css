@@ -5360,11 +5360,35 @@ td.profit-matrix-sticky-col span {
 }
 
 .executive-cost-center-table {
-  min-width: 1540px;
+  min-width: 1840px;
 }
 
 .executive-cost-center-table td:first-child {
   min-width: 150px;
+}
+
+.executive-cost-center-table thead th[rowspan] {
+  vertical-align: middle;
+}
+
+.executive-cost-center-table .executive-table-section {
+  color: #ffffff;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.executive-cost-center-table .is-cost-section {
+  background: #0f766e;
+}
+
+.executive-cost-center-table .is-revenue-section {
+  background: #2563eb;
+}
+
+.executive-cost-center-table .is-profit-section {
+  background: #7c2d12;
 }
 
 .executive-cost-center-table td:first-child span {
