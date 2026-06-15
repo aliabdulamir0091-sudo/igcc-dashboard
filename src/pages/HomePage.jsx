@@ -149,6 +149,13 @@ const getDeviationTone = (value) => {
   return "";
 };
 
+const getValueTone = (key, value) => {
+  if (!key.toLowerCase().includes("profit") && !key.toLowerCase().includes("margin")) return "";
+  if (value > 0) return "is-positive";
+  if (value < 0) return "is-negative";
+  return "";
+};
+
 const buildHomeSummary = (entries) => {
   const yearlyMap = new Map();
   const totals = entries.reduce((summary, entry) => {
@@ -253,6 +260,19 @@ export function HomePage({ onNavigate, accessProfile }) {
     () => buildHomeIgccSummary({ entries, spentEntries, year: DEFAULT_YEAR }),
     [entries, spentEntries],
   );
+  const maxMonthlyScale = Math.max(
+    ...months.flatMap((month) => {
+      const summary = byMonth[month.key] || createEmptyIgccSummary();
+      return [summary.totalCost, summary.approvedAfp, summary.submittedAfp];
+    }),
+    1,
+  );
+  const homePnlHighlights = [
+    { label: "Total Spent", value: yearTotal.totalCost, tone: "" },
+    { label: "Approved AFP", value: yearTotal.approvedAfp, tone: "is-blue" },
+    { label: "Approved Profit", value: yearTotal.approvedProfit, tone: getDeviationTone(yearTotal.approvedProfit) },
+    { label: "Approved Margin", value: yearTotal.approvedMargin, isPercent: true, tone: getDeviationTone(yearTotal.approvedMargin) },
+  ];
 
   return (
     <section className="home-dashboard-frame">
@@ -301,38 +321,75 @@ export function HomePage({ onNavigate, accessProfile }) {
           </div>
         </header>
 
-        <article className="surface-card executive-summary-card home-igcc-summary-card">
-          <div className="executive-table-title">
-            <h3>1- IGCC Monthly Profit & Loss</h3>
-            <span>Year {DEFAULT_YEAR} | CN excluded</span>
+        <article className="surface-card home-igcc-summary-card">
+          <div className="home-igcc-heading">
+            <div>
+              <span className="home-kicker">Live P&L overview</span>
+              <h3>IGCC Monthly Profit & Loss</h3>
+            </div>
+            <div className="home-igcc-badges">
+              <span>Year {DEFAULT_YEAR}</span>
+              <span>CN excluded</span>
+            </div>
           </div>
-          <div className="executive-table-wrap home-igcc-table-wrap">
-            <table className="executive-summary-table home-igcc-summary-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  {months.map((month) => <th key={month.key}>{month.label}</th>)}
-                  <th>Year {DEFAULT_YEAR}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {igccSummaryRows.map((row) => (
-                  <tr key={row.key} className={row.highlight ? "is-highlight" : ""}>
-                    <td>{row.label}</td>
-                    {months.map((month) => (
-                      <td className="is-number" key={month.key}>
-                        {row.isPercent
-                          ? formatPercent(byMonth[month.key]?.[row.key] || 0)
-                          : formatWholeNumber(byMonth[month.key]?.[row.key] || 0)}
-                      </td>
-                    ))}
-                    <td className="is-number">
-                      {row.isPercent ? formatPercent(yearTotal[row.key]) : formatWholeNumber(yearTotal[row.key])}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          <div className="home-igcc-kpis" aria-label={`IGCC ${DEFAULT_YEAR} profit and loss totals`}>
+            {homePnlHighlights.map((item) => (
+              <div className={`home-igcc-kpi ${item.tone}`} key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.isPercent ? formatPercent(item.value) : formatCurrency(item.value)}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="home-igcc-months" aria-label={`Monthly IGCC profit and loss for ${DEFAULT_YEAR}`}>
+            {months.map((month) => {
+              const summary = byMonth[month.key] || createEmptyIgccSummary();
+              return (
+                <article className="home-igcc-month-card" key={month.key}>
+                  <div className="home-igcc-month-head">
+                    <strong>{month.label}</strong>
+                    <span className={getDeviationTone(summary.approvedProfit)}>
+                      {formatCurrency(summary.approvedProfit)}
+                    </span>
+                  </div>
+                  <div className="home-igcc-month-bars" aria-hidden="true">
+                    <span style={{ width: `${Math.max(2, (summary.totalCost / maxMonthlyScale) * 100)}%` }} />
+                    <span style={{ width: `${Math.max(2, (summary.approvedAfp / maxMonthlyScale) * 100)}%` }} />
+                    <span style={{ width: `${Math.max(2, (summary.submittedAfp / maxMonthlyScale) * 100)}%` }} />
+                  </div>
+                  <dl>
+                    <div><dt>Spent</dt><dd>{formatWholeNumber(summary.totalCost)}</dd></div>
+                    <div><dt>Approved</dt><dd>{formatWholeNumber(summary.approvedAfp)}</dd></div>
+                    <div><dt>Submitted</dt><dd>{formatWholeNumber(summary.submittedAfp)}</dd></div>
+                  </dl>
+                </article>
+              );
+            })}
+          </div>
+
+          <div className="home-igcc-matrix" aria-label={`Detailed IGCC monthly P&L for ${DEFAULT_YEAR}`}>
+            <div className="home-igcc-matrix-row is-head">
+              <span>Item</span>
+              {months.map((month) => <span key={month.key}>{month.label}</span>)}
+              <span>Year {DEFAULT_YEAR}</span>
+            </div>
+            {igccSummaryRows.map((row) => (
+              <div className={`home-igcc-matrix-row ${row.highlight ? "is-highlight" : ""}`} key={row.key}>
+                <strong>{row.label}</strong>
+                {months.map((month) => {
+                  const value = byMonth[month.key]?.[row.key] || 0;
+                  return (
+                    <span className={getValueTone(row.key, value)} key={month.key}>
+                      {row.isPercent ? formatPercent(value) : formatWholeNumber(value)}
+                    </span>
+                  );
+                })}
+                <span className={getValueTone(row.key, yearTotal[row.key])}>
+                  {row.isPercent ? formatPercent(yearTotal[row.key]) : formatWholeNumber(yearTotal[row.key])}
+                </span>
+              </div>
+            ))}
           </div>
           <p className="executive-table-note">Total Spent + Not Recorded comes from the Google Sheet Spent Report and Not Recorded tabs. Issued and received CN are excluded from this Home P&L.</p>
         </article>
