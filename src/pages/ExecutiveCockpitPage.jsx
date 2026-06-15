@@ -42,20 +42,11 @@ const getSelectedYear = (filters = {}) => (
 
 const hasSelectedYear = (filters = {}) => filters.year && filters.year !== ALL_FILTER_VALUE;
 
-const buildQuarters = (year) => [
-  { key: "q1", label: "Q-1", periods: [`${year}-01`, `${year}-02`, `${year}-03`] },
-  { key: "q2", label: "Q-2", periods: [`${year}-04`, `${year}-05`, `${year}-06`] },
-  { key: "q3", label: "Q-3", periods: [`${year}-07`, `${year}-08`, `${year}-09`] },
-  { key: "q4", label: "Q-4", periods: [`${year}-10`, `${year}-11`, `${year}-12`] },
-];
-
 const MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const MONTH_NO_BY_NAME = Object.fromEntries(MONTH_ORDER.map((month, index) => [month, String(index + 1).padStart(2, "0")]));
 const REPORT_COLORS = ["#2563eb", "#14b8a6", "#22c55e", "#f59e0b", "#f97316", "#ef4444", "#7c3aed", "#db2777"];
 
 const getQuarter = (period) => `Q${Math.ceil(Number(period?.slice(5, 7) || 1) / 3)}`;
-
-const isHeadOffice = (entry) => entry.hub === "Head Office" || entry.costCenter === "HO_SB_23";
 
 const formatWholeNumber = (value) => Math.round(value || 0).toLocaleString("en-US");
 
@@ -78,15 +69,6 @@ const getShare = (value, revenue) => (revenue ? (value / revenue) * 100 : 0);
 const sumRows = (rows, predicate) => rows.reduce((total, row) => (
   predicate(row) ? total + (Number(row.amount) || 0) : total
 ), 0);
-
-const createEmptySummary = () => ({
-  revenue: 0,
-  directCost: 0,
-  overhead: 0,
-  grossProfit: 0,
-  totalCost: 0,
-  netProfit: 0,
-});
 
 const matchesPortfolio = (entry, portfolio) => (
   !portfolio
@@ -305,42 +287,6 @@ const getCostCenterRow = (rowsByCostCenter, costCenter, hub) => {
     });
   }
   return rowsByCostCenter.get(costCenter);
-};
-
-const buildIgccSummary = (entries, filters, year, quarters) => {
-  const yearFilters = { ...filters, year };
-  const yearRows = entries.filter((entry) => matchesFilters(entry, yearFilters));
-  const byQuarter = {};
-
-  for (const quarter of quarters) {
-    const rows = yearRows.filter((entry) => quarter.periods.includes(entry.period));
-    const revenue = sumRows(rows, (entry) => entry.type === "approved");
-    const directCost = sumRows(rows, (entry) => entry.type === "spent" && !isHeadOffice(entry));
-    const overhead = sumRows(rows, (entry) => entry.type === "spent" && isHeadOffice(entry));
-    const totalCost = directCost + overhead;
-    byQuarter[quarter.key] = {
-      revenue,
-      directCost,
-      overhead,
-      grossProfit: revenue - directCost,
-      totalCost,
-      netProfit: revenue - totalCost,
-    };
-  }
-
-  const yearTotal = quarters.reduce((total, quarter) => {
-    const summary = byQuarter[quarter.key] || createEmptySummary();
-    return {
-      revenue: total.revenue + summary.revenue,
-      directCost: total.directCost + summary.directCost,
-      overhead: total.overhead + summary.overhead,
-      grossProfit: total.grossProfit + summary.grossProfit,
-      totalCost: total.totalCost + summary.totalCost,
-      netProfit: total.netProfit + summary.netProfit,
-    };
-  }, createEmptySummary());
-
-  return { byQuarter, yearTotal };
 };
 
 const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
@@ -1035,24 +981,13 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
   } = useAfpFinancialInputs();
   const isYearFiltered = hasSelectedYear(filters);
   const year = getSelectedYear(filters);
-  const quarters = buildQuarters(year);
   const rawEntries = entries;
-  const summaryEntries = allocateGeneralSpentCosts(rawEntries, { ...filters, year });
   const costCenterFilters = isYearFiltered ? { ...filters, year } : { ...filters, year: ALL_FILTER_VALUE };
   const costCenterEntries = allocateGeneralSpentCosts(rawEntries, costCenterFilters);
-  const { byQuarter, yearTotal } = buildIgccSummary(summaryEntries, filters, year, quarters);
   const costCenterRows = buildCostCenterSummary(costCenterEntries, rawEntries, costCenterFilters);
   const hubCostCenterRows = buildHubCostCenterRows(costCenterRows);
   const selectedReport = buildSimpleReport(reportRow, costCenterRows, costCenterEntries, rawEntries, costCenterFilters);
   const costCenterYearLabel = isYearFiltered ? `Year ${year}` : "Years 2025 & 2026";
-  const rows = [
-    { label: "Total Revenue (Approved AFP)", key: "revenue", highlight: true },
-    { label: "Direct Cost", key: "directCost" },
-    { label: "Gross Profit", key: "grossProfit", highlight: true },
-    { label: "Indirect Cost (Head Office)", key: "overhead" },
-    { label: "Total Cost", key: "totalCost" },
-    { label: "Net Profit", key: "netProfit", highlight: true },
-  ];
   const openDetailRow = (row) => {
     setReportRow(row);
   };
@@ -1093,38 +1028,6 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
           Approved diff {formatSignedWholeNumber(afpMasterComparison.approvedDifference)}
         </time>
       </section>
-
-      <article className="surface-card executive-summary-card">
-        <div className="executive-table-title">
-          <h3>1- IGCC-Level Summary</h3>
-          <span>Year {year}</span>
-        </div>
-        <div className="executive-table-wrap">
-          <table className="executive-summary-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                {quarters.map((quarter) => <th key={quarter.key}>{quarter.label}</th>)}
-                <th>Year {year}</th>
-                <th>% of Revenue</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.key} className={row.highlight ? "is-highlight" : ""}>
-                  <td>{row.label}</td>
-                  {quarters.map((quarter) => (
-                    <SummaryValue key={quarter.key} value={byQuarter[quarter.key]?.[row.key] || 0} />
-                  ))}
-                  <SummaryValue value={yearTotal[row.key]} />
-                  <SummaryValue value={getShare(yearTotal[row.key], yearTotal.revenue)} isPercent />
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="executive-table-note">Indirect cost is calculated from Head Office only; general BGC and ROO costs are reallocated to their operational cost centers.</p>
-      </article>
 
       <article className="surface-card executive-summary-card">
         <div className="executive-table-title">
