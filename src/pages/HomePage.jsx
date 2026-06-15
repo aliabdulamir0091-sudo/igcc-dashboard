@@ -74,23 +74,30 @@ const sumRows = (rows, predicate) => rows.reduce((total, row) => (
   predicate(row) ? total + (Number(row.amount) || 0) : total
 ), 0);
 
-const buildQuarters = (year) => [
-  { key: "q1", label: "Q-1", periods: [`${year}-01`, `${year}-02`, `${year}-03`] },
-  { key: "q2", label: "Q-2", periods: [`${year}-04`, `${year}-05`, `${year}-06`] },
-  { key: "q3", label: "Q-3", periods: [`${year}-07`, `${year}-08`, `${year}-09`] },
-  { key: "q4", label: "Q-4", periods: [`${year}-10`, `${year}-11`, `${year}-12`] },
+const MONTHS = [
+  { key: "01", label: "Jan" },
+  { key: "02", label: "Feb" },
+  { key: "03", label: "Mar" },
+  { key: "04", label: "Apr" },
+  { key: "05", label: "May" },
+  { key: "06", label: "Jun" },
+  { key: "07", label: "Jul" },
+  { key: "08", label: "Aug" },
+  { key: "09", label: "Sep" },
+  { key: "10", label: "Oct" },
+  { key: "11", label: "Nov" },
+  { key: "12", label: "Dec" },
 ];
 
 const createEmptyIgccSummary = () => ({
-  revenue: 0,
-  directCost: 0,
-  overhead: 0,
-  grossProfit: 0,
   totalCost: 0,
-  netProfit: 0,
+  approvedAfp: 0,
+  submittedAfp: 0,
+  approvedProfit: 0,
+  submittedProfit: 0,
+  approvedMargin: 0,
+  submittedMargin: 0,
 });
-
-const isHeadOffice = (entry) => entry.hub === "Head Office" || entry.costCenter === HEAD_OFFICE_COST_CENTER;
 
 const getCostCenterHub = (costCenter, fallbackHub) => (
   COST_CENTER_LOOKUP.get(costCenter)?.hub || fallbackHub || "Other"
@@ -108,16 +115,6 @@ const createAllocatedSpentRow = (entry, costCenter, amount, hub) => ({
   amount,
   allocationSourceCostCenter: entry.costCenter,
   isAllocatedGeneralCost: true,
-});
-
-const createAllocatedGeneralCreditNoteRow = (entry, costCenter, amount, hub) => ({
-  ...entry,
-  costCenter,
-  sourceCostCenter: entry.sourceCostCenter || entry.costCenter,
-  hub,
-  amount,
-  allocationSourceCostCenter: entry.costCenter,
-  isAllocatedGeneralCreditNote: true,
 });
 
 const createAllocatedManagementRow = (entry, costCenter, amount, hub) => ({
@@ -145,7 +142,6 @@ const allocateGeneralSpentCosts = (entries, year) => {
     if (!recipients.length) continue;
 
     const poolRows = periodRows.filter((entry) => entry.type === "spent" && entry.costCenter === rule.poolCostCenter);
-    const poolCreditNoteRows = periodRows.filter((entry) => entry.type === "creditNotes" && entry.costCenter === rule.poolCostCenter);
     const recipientRows = periodRows.filter((entry) => (
       entry.type === "spent"
       && recipients.includes(entry.costCenter)
@@ -173,21 +169,6 @@ const allocateGeneralSpentCosts = (entries, year) => {
       }
     }
 
-    for (const poolCreditNoteRow of poolCreditNoteRows) {
-      const periodRecipientTotals = recipients.map((costCenter) => ({
-        costCenter,
-        amount: sumRows(recipientRows, (entry) => entry.period === poolCreditNoteRow.period && entry.costCenter === costCenter),
-      })).filter((row) => row.amount > 0);
-      const periodTotal = periodRecipientTotals.reduce((total, row) => total + row.amount, 0);
-      const basisRows = periodTotal > 0 ? periodRecipientTotals : fallbackTotals;
-      const basisTotal = periodTotal > 0 ? periodTotal : fallbackTotal;
-      if (!basisTotal) continue;
-
-      allocatedEntryIds.add(poolCreditNoteRow);
-      for (const basis of basisRows) {
-        allocatedRows.push(createAllocatedGeneralCreditNoteRow(poolCreditNoteRow, basis.costCenter, (poolCreditNoteRow.amount || 0) * (basis.amount / basisTotal), rule.hub));
-      }
-    }
   }
 
   const managementRecipients = getAllOperationalCostCenters();
@@ -236,48 +217,56 @@ const allocateGeneralSpentCosts = (entries, year) => {
 };
 
 const buildHomeIgccSummary = (entries, year = DEFAULT_YEAR) => {
-  const quarters = buildQuarters(year);
-  const yearRows = allocateGeneralSpentCosts(entries, year);
-  const byQuarter = {};
+  const yearRows = allocateGeneralSpentCosts(entries, year)
+    .filter((entry) => entry.type !== "creditNotes");
+  const months = MONTHS.map((month) => ({
+    ...month,
+    period: `${year}-${month.key}`,
+  }));
+  const byMonth = {};
 
-  for (const quarter of quarters) {
-    const rows = yearRows.filter((entry) => quarter.periods.includes(entry.period));
-    const revenue = sumRows(rows, (entry) => entry.type === "approved");
-    const directCost = sumRows(rows, (entry) => entry.type === "spent" && !isHeadOffice(entry));
-    const overhead = sumRows(rows, (entry) => entry.type === "spent" && isHeadOffice(entry));
-    const totalCost = directCost + overhead;
-    byQuarter[quarter.key] = {
-      revenue,
-      directCost,
-      overhead,
-      grossProfit: revenue - directCost,
+  for (const month of months) {
+    const rows = yearRows.filter((entry) => entry.period === month.period);
+    const totalCost = sumRows(rows, (entry) => entry.type === "spent");
+    const approvedAfp = sumRows(rows, (entry) => entry.type === "approved");
+    const submittedAfp = sumRows(rows, (entry) => entry.type === "submitted");
+    const approvedProfit = approvedAfp - totalCost;
+    const submittedProfit = submittedAfp - totalCost;
+    byMonth[month.key] = {
       totalCost,
-      netProfit: revenue - totalCost,
+      approvedAfp,
+      submittedAfp,
+      approvedProfit,
+      submittedProfit,
+      approvedMargin: getShare(approvedProfit, approvedAfp),
+      submittedMargin: getShare(submittedProfit, submittedAfp),
     };
   }
 
-  const yearTotal = quarters.reduce((total, quarter) => {
-    const summary = byQuarter[quarter.key] || createEmptyIgccSummary();
+  const yearTotal = months.reduce((total, month) => {
+    const summary = byMonth[month.key] || createEmptyIgccSummary();
     return {
-      revenue: total.revenue + summary.revenue,
-      directCost: total.directCost + summary.directCost,
-      overhead: total.overhead + summary.overhead,
-      grossProfit: total.grossProfit + summary.grossProfit,
       totalCost: total.totalCost + summary.totalCost,
-      netProfit: total.netProfit + summary.netProfit,
+      approvedAfp: total.approvedAfp + summary.approvedAfp,
+      submittedAfp: total.submittedAfp + summary.submittedAfp,
+      approvedProfit: total.approvedProfit + summary.approvedProfit,
+      submittedProfit: total.submittedProfit + summary.submittedProfit,
     };
   }, createEmptyIgccSummary());
+  yearTotal.approvedMargin = getShare(yearTotal.approvedProfit, yearTotal.approvedAfp);
+  yearTotal.submittedMargin = getShare(yearTotal.submittedProfit, yearTotal.submittedAfp);
 
-  return { quarters, byQuarter, yearTotal };
+  return { months, byMonth, yearTotal };
 };
 
 const igccSummaryRows = [
-  { label: "Total Revenue (Approved AFP)", key: "revenue", highlight: true },
-  { label: "Direct Cost", key: "directCost" },
-  { label: "Gross Profit", key: "grossProfit", highlight: true },
-  { label: "Indirect Cost (Head Office)", key: "overhead" },
-  { label: "Total Cost", key: "totalCost" },
-  { label: "Net Profit", key: "netProfit", highlight: true },
+  { label: "Total Spent + Not Recorded", key: "totalCost" },
+  { label: "Approved AFP", key: "approvedAfp", highlight: true },
+  { label: "Submitted AFP", key: "submittedAfp", highlight: true },
+  { label: "Profit / Loss (Approved AFP)", key: "approvedProfit", highlight: true },
+  { label: "Profit / Loss (Submitted AFP)", key: "submittedProfit", highlight: true },
+  { label: "Margin (Approved AFP)", key: "approvedMargin", isPercent: true },
+  { label: "Margin (Submitted AFP)", key: "submittedMargin", isPercent: true },
 ];
 
 const getDeviationTone = (value) => {
@@ -382,11 +371,10 @@ export function HomePage({ onNavigate, accessProfile }) {
     entries,
     isLoadingAfpMaster,
     isLoadingSpentReport,
-    isLoadingCreditNotes,
   } = useAfpFinancialInputs();
-  const isLoading = isLoadingAfpMaster || isLoadingSpentReport || isLoadingCreditNotes;
+  const isLoading = isLoadingAfpMaster || isLoadingSpentReport;
   const { totals, deviations, yearRows } = useMemo(() => buildHomeSummary(entries), [entries]);
-  const { quarters, byQuarter, yearTotal } = useMemo(() => buildHomeIgccSummary(entries, DEFAULT_YEAR), [entries]);
+  const { months, byMonth, yearTotal } = useMemo(() => buildHomeIgccSummary(entries, DEFAULT_YEAR), [entries]);
 
   return (
     <section className="home-dashboard-frame">
@@ -437,34 +425,38 @@ export function HomePage({ onNavigate, accessProfile }) {
 
         <article className="surface-card executive-summary-card home-igcc-summary-card">
           <div className="executive-table-title">
-            <h3>1- IGCC-Level Summary</h3>
-            <span>Year {DEFAULT_YEAR}</span>
+            <h3>1- IGCC Monthly Profit & Loss</h3>
+            <span>Year {DEFAULT_YEAR} | CN excluded</span>
           </div>
           <div className="executive-table-wrap home-igcc-table-wrap">
             <table className="executive-summary-table home-igcc-summary-table">
               <thead>
                 <tr>
                   <th>Item</th>
-                  {quarters.map((quarter) => <th key={quarter.key}>{quarter.label}</th>)}
+                  {months.map((month) => <th key={month.key}>{month.label}</th>)}
                   <th>Year {DEFAULT_YEAR}</th>
-                  <th>% of Revenue</th>
                 </tr>
               </thead>
               <tbody>
                 {igccSummaryRows.map((row) => (
                   <tr key={row.key} className={row.highlight ? "is-highlight" : ""}>
                     <td>{row.label}</td>
-                    {quarters.map((quarter) => (
-                      <td className="is-number" key={quarter.key}>{formatWholeNumber(byQuarter[quarter.key]?.[row.key] || 0)}</td>
+                    {months.map((month) => (
+                      <td className="is-number" key={month.key}>
+                        {row.isPercent
+                          ? formatPercent(byMonth[month.key]?.[row.key] || 0)
+                          : formatWholeNumber(byMonth[month.key]?.[row.key] || 0)}
+                      </td>
                     ))}
-                    <td className="is-number">{formatWholeNumber(yearTotal[row.key])}</td>
-                    <td className="is-number">{formatPercent(getShare(yearTotal[row.key], yearTotal.revenue))}</td>
+                    <td className="is-number">
+                      {row.isPercent ? formatPercent(yearTotal[row.key]) : formatWholeNumber(yearTotal[row.key])}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="executive-table-note">Indirect cost is calculated from Head Office only; general BGC and ROO costs are reallocated to their operational cost centers.</p>
+          <p className="executive-table-note">Total Spent + Not Recorded comes from the Google Sheet Spent Report and Not Recorded tabs. Issued and received CN are excluded from this Home P&L.</p>
         </article>
 
         <article className="home-year-panel" aria-label="High level financial summary by year">

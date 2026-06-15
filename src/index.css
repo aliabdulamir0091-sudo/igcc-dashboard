@@ -7391,11 +7391,11 @@ td.profit-matrix-sticky-col span {
 }
 
 .home-igcc-table-wrap {
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 
 .home-igcc-summary-table {
-  min-width: 0;
+  min-width: 1120px;
   table-layout: fixed;
   font-size: 12px;
 }
@@ -7407,7 +7407,7 @@ td.profit-matrix-sticky-col span {
 
 .home-igcc-summary-table th:first-child,
 .home-igcc-summary-table td:first-child {
-  width: 37%;
+  width: 210px;
   min-width: 0;
 }
 
