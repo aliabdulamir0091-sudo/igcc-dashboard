@@ -61,11 +61,40 @@ const getDeviationTone = (value) => {
 };
 
 const buildHomeSummary = (entries) => {
+  const yearlyMap = new Map();
   const totals = entries.reduce((summary, entry) => {
     const amount = Number(entry.amount) || 0;
+    const year = String(entry.year || entry.period?.slice(0, 4) || "Unassigned");
+    const yearRow = yearlyMap.get(year) || {
+      year,
+      spent: 0,
+      submitted: 0,
+      approved: 0,
+      costCenters: new Map(),
+    };
+
     if (entry.type === "spent") summary.spent += amount;
     if (entry.type === "submitted") summary.submitted += amount;
     if (entry.type === "approved") summary.approved += amount;
+
+    if (entry.type === "spent") yearRow.spent += amount;
+    if (entry.type === "submitted") yearRow.submitted += amount;
+    if (entry.type === "approved") yearRow.approved += amount;
+
+    if (entry.type === "submitted" || entry.type === "approved") {
+      const costCenter = entry.costCenter || "Unassigned";
+      const current = yearRow.costCenters.get(costCenter) || {
+        costCenter,
+        hub: entry.hub || "Unassigned",
+        submitted: 0,
+        approved: 0,
+      };
+      current[entry.type] += amount;
+      if (entry.hub && current.hub === "Unassigned") current.hub = entry.hub;
+      yearRow.costCenters.set(costCenter, current);
+    }
+
+    yearlyMap.set(year, yearRow);
     return summary;
   }, { spent: 0, submitted: 0, approved: 0 });
 
@@ -97,6 +126,27 @@ const buildHomeSummary = (entries) => {
     totals,
     topDeviation: deviations[0] || null,
     deviations: deviations.slice(0, 6),
+    yearRows: [...yearlyMap.values()]
+      .map((row) => {
+        const topYearDeviation = [...row.costCenters.values()]
+          .map((item) => ({
+            ...item,
+            deviation: item.approved - item.submitted,
+            absoluteDeviation: Math.abs(item.approved - item.submitted),
+          }))
+          .filter((item) => item.absoluteDeviation > 0)
+          .sort((a, b) => b.absoluteDeviation - a.absoluteDeviation)[0] || null;
+
+        return {
+          year: row.year,
+          spent: row.spent,
+          submitted: row.submitted,
+          approved: row.approved,
+          deviation: row.approved - row.submitted,
+          topDeviation: topYearDeviation,
+        };
+      })
+      .sort((a, b) => b.year.localeCompare(a.year)),
   };
 };
 
@@ -109,7 +159,7 @@ export function HomePage({ onNavigate, accessProfile }) {
     isLoadingCreditNotes,
   } = useAfpFinancialInputs();
   const isLoading = isLoadingAfpMaster || isLoadingSpentReport || isLoadingCreditNotes;
-  const { totals, topDeviation, deviations } = useMemo(() => buildHomeSummary(entries), [entries]);
+  const { totals, deviations, yearRows } = useMemo(() => buildHomeSummary(entries), [entries]);
 
   return (
     <section className="home-dashboard-frame">
@@ -158,47 +208,54 @@ export function HomePage({ onNavigate, accessProfile }) {
           </div>
         </header>
 
-        <section className="home-executive-grid" aria-label="High level financial summary">
-          <article className="home-executive-card tone-spent">
+        <article className="home-year-panel" aria-label="High level financial summary by year">
+          <div className="home-panel-title">
+            <span><Icon name="executive" /></span>
             <div>
-              <span><Icon name="spending" /></span>
-              <p>Total Value of Spent Report</p>
+              <h2>Yearly Financial Summary</h2>
+              <p>Spent report, submitted AFP, approved AFP, and highest cost-center deviation</p>
             </div>
-            <strong>{isLoading ? "Loading" : formatCurrency(totals.spent)}</strong>
-            <small>All loaded spent report entries</small>
-          </article>
+            <button type="button" onClick={() => onNavigate("executive")}>Open analysis <i aria-hidden="true">&gt;</i></button>
+          </div>
 
-          <article className="home-executive-card tone-submitted">
-            <div>
-              <span><Icon name="submit" /></span>
-              <p>Total Submitted AFP</p>
+          <div className="home-year-table">
+            <div className="home-year-table-head">
+              <span>Year</span>
+              <span>Total Spent Report</span>
+              <span>Submitted AFP</span>
+              <span>Approved AFP</span>
+              <span>Highest Deviation</span>
+              <span>Gap</span>
             </div>
-            <strong>{isLoading ? "Loading" : formatCurrency(totals.submitted)}</strong>
-            <small>AFP submitted value</small>
-          </article>
-
-          <article className="home-executive-card tone-approved">
-            <div>
-              <span><Icon name="approve" /></span>
-              <p>Total Approved AFP</p>
+            {isLoading ? (
+              <div className="home-year-empty">Loading yearly financial summary...</div>
+            ) : yearRows.length ? yearRows.map((row) => (
+              <button key={row.year} type="button" onClick={() => onNavigate("executive")}>
+                <strong>{row.year}</strong>
+                <span>{formatCurrency(row.spent)}</span>
+                <span>{formatCurrency(row.submitted)}</span>
+                <span>{formatCurrency(row.approved)}</span>
+                <span>
+                  {row.topDeviation ? row.topDeviation.costCenter : "No deviation"}
+                  {row.topDeviation ? <small>{row.topDeviation.hub}</small> : null}
+                </span>
+                <span className={getDeviationTone(row.topDeviation?.deviation || 0)}>
+                  {row.topDeviation ? formatCurrency(row.topDeviation.deviation) : formatCurrency(0)}
+                </span>
+              </button>
+            )) : (
+              <div className="home-year-empty">No financial entries loaded.</div>
+            )}
+            <div className="home-year-total">
+              <strong>Total</strong>
+              <span>{formatCurrency(totals.spent)}</span>
+              <span>{formatCurrency(totals.submitted)}</span>
+              <span>{formatCurrency(totals.approved)}</span>
+              <span>All years</span>
+              <span className={getDeviationTone(totals.approved - totals.submitted)}>{formatCurrency(totals.approved - totals.submitted)}</span>
             </div>
-            <strong>{isLoading ? "Loading" : formatCurrency(totals.approved)}</strong>
-            <small>AFP approved value</small>
-          </article>
-
-          <article className="home-executive-card tone-deviation is-wide">
-            <div>
-              <span><Icon name="net" /></span>
-              <p>Highest AFP Deviation</p>
-            </div>
-            <strong>{isLoading ? "Loading" : topDeviation ? topDeviation.costCenter : "No deviation"}</strong>
-            <small>
-              {topDeviation
-                ? `${formatCurrency(topDeviation.deviation)} approved vs submitted gap`
-                : "Submitted and approved AFP are aligned"}
-            </small>
-          </article>
-        </section>
+          </div>
+        </article>
 
         <section className="home-command-grid-v2">
           <article className="home-deviation-panel">

@@ -7260,6 +7260,105 @@ td.profit-matrix-sticky-col span {
   line-height: 1.35;
 }
 
+.home-year-panel {
+  overflow: hidden;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 20px 55px rgba(15, 23, 42, 0.08);
+  padding: 26px;
+}
+
+.home-year-table {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+  overflow-x: auto;
+}
+
+.home-year-table-head,
+.home-year-table button,
+.home-year-total,
+.home-year-empty {
+  display: grid;
+  grid-template-columns: minmax(78px, 0.5fr) repeat(3, minmax(145px, 1fr)) minmax(170px, 1.1fr) minmax(120px, 0.8fr);
+  gap: 14px;
+  align-items: center;
+  min-width: 920px;
+}
+
+.home-year-table-head {
+  padding: 0 16px 8px;
+  color: #66758b;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.home-year-table button,
+.home-year-total {
+  min-height: 78px;
+  border: 1px solid #e1e8f2;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  padding: 14px 16px;
+  color: #17233b;
+  text-align: left;
+}
+
+.home-year-table button {
+  cursor: pointer;
+}
+
+.home-year-table button:hover {
+  border-color: #a9bafe;
+  box-shadow: 0 16px 36px rgba(37, 99, 235, 0.08);
+}
+
+.home-year-table strong {
+  color: #102033;
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.home-year-table span {
+  font-size: 15px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.home-year-table button span:nth-child(5),
+.home-year-total span:nth-child(5) {
+  text-align: left;
+}
+
+.home-year-table small {
+  display: block;
+  margin-top: 4px;
+  color: #697891;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.home-year-total {
+  background: #102033;
+  border-color: #102033;
+  color: #ffffff;
+}
+
+.home-year-total strong,
+.home-year-total span {
+  color: #ffffff;
+}
+
+.home-year-empty {
+  min-height: 96px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  color: #697891;
+  font-weight: 900;
+  place-items: center;
+}
+
 .home-command-grid-v2 {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.85fr);
@@ -7861,6 +7960,13 @@ td.profit-matrix-sticky-col span {
     overflow-x: auto;
   }
 
+  .home-year-table-head,
+  .home-year-table button,
+  .home-year-total,
+  .home-year-empty {
+    min-width: 880px;
+  }
+
   .home-deviation-head,
   .home-deviation-table button {
     min-width: 680px;
@@ -8074,6 +8180,10 @@ td.profit-matrix-sticky-col span {
   }
 
   .home-deviation-panel {
+    padding: 18px;
+  }
+
+  .home-year-panel {
     padding: 18px;
   }
 
