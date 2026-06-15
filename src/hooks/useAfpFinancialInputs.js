@@ -37,6 +37,17 @@ const isLiveSpentReportCompleteEnough = (liveEntries, baselineEntries) => {
   return liveEntries.length >= baselineEntries.length * MIN_LIVE_SPENT_ROW_COVERAGE;
 };
 
+const getSpentPeriodKey = (entry) => String(entry.period || `${entry.year || ""}-${entry.month || ""}`).trim();
+
+const mergeSpentEntriesByLivePeriods = (baselineEntries, liveEntries) => {
+  if (!liveEntries.length) return baselineEntries;
+  const livePeriods = new Set(liveEntries.map(getSpentPeriodKey).filter(Boolean));
+  return [
+    ...baselineEntries.filter((entry) => !livePeriods.has(getSpentPeriodKey(entry))),
+    ...liveEntries,
+  ];
+};
+
 const normalizeFinancialEntry = (entry) => ({
   ...entry,
   sourceCostCenter: entry.sourceCostCenter || entry.costCenter,
@@ -125,14 +136,21 @@ export function useAfpFinancialInputs() {
 
   const entries = useMemo(() => {
     const baselineSpentEntries = getSpentEntries(merged.entries);
-    const shouldUseLiveSpent = (
+    const shouldReplaceAllSpent = (
       !isLoadingSpentReport
       && !spentReportError
       && isLiveSpentReportCompleteEnough(spentEntries, baselineSpentEntries)
     );
-    const entriesWithSpent = shouldUseLiveSpent ? [
+    const shouldUseLiveSpentPeriods = !isLoadingSpentReport && !spentReportError && spentEntries.length > 0;
+    const liveMergedSpentEntries = shouldUseLiveSpentPeriods
+      ? mergeSpentEntriesByLivePeriods(baselineSpentEntries, spentEntries)
+      : baselineSpentEntries;
+    const entriesWithSpent = shouldReplaceAllSpent ? [
       ...merged.entries.filter((entry) => entry.type !== "spent"),
       ...spentEntries,
+    ] : shouldUseLiveSpentPeriods ? [
+      ...merged.entries.filter((entry) => entry.type !== "spent"),
+      ...liveMergedSpentEntries,
     ] : merged.entries;
 
     const combinedEntries = isLoadingCreditNotes || creditNoteError ? entriesWithSpent : [
