@@ -1,23 +1,11 @@
 import { useMemo } from "react";
 
 import { Icon } from "../components/Icons";
-import { COST_CENTER_HIERARCHY } from "../data/costCenterHierarchy";
 import { NAV_ITEMS } from "../data/navigation";
 import { useAfpFinancialInputs } from "../hooks/useAfpFinancialInputs";
 import igccLogo from "../assets/igcc-logo.svg";
 
 const DEFAULT_YEAR = "2026";
-const GENERAL_COST_ALLOCATIONS = [
-  { poolCostCenter: "GRLBG_23", hub: "BGC Hub" },
-  { poolCostCenter: "GRLRO_23", hub: "ROO Hub" },
-];
-const MANAGEMENT_SOURCE_COST_CENTER = "Management";
-const GENERAL_POOL_COST_CENTERS = new Set(GENERAL_COST_ALLOCATIONS.map((rule) => rule.poolCostCenter));
-const HEAD_OFFICE_COST_CENTER = "HO_SB_23";
-const HIDDEN_COST_CENTER_ROWS = new Set(["Camp"]);
-const COST_CENTER_LOOKUP = new Map(COST_CENTER_HIERARCHY.flatMap((group) => (
-  group.costCenters.map((costCenter) => [costCenter, { hub: group.hub, region: group.region }])
-)));
 
 const pageCards = [
   {
@@ -99,126 +87,11 @@ const createEmptyIgccSummary = () => ({
   submittedMargin: 0,
 });
 
-const getCostCenterHub = (costCenter, fallbackHub) => (
-  COST_CENTER_LOOKUP.get(costCenter)?.hub || fallbackHub || "Other"
-);
-
-const getHubCostCenters = (hub, poolCostCenter) => (
-  COST_CENTER_HIERARCHY.find((group) => group.hub === hub)?.costCenters || []
-).filter((costCenter) => costCenter !== poolCostCenter);
-
-const createAllocatedSpentRow = (entry, costCenter, amount, hub) => ({
-  ...entry,
-  costCenter,
-  sourceCostCenter: entry.sourceCostCenter || entry.costCenter,
-  hub,
-  amount,
-  allocationSourceCostCenter: entry.costCenter,
-  isAllocatedGeneralCost: true,
-});
-
-const createAllocatedManagementRow = (entry, costCenter, amount, hub) => ({
-  ...entry,
-  costCenter,
-  sourceCostCenter: entry.sourceCostCenter || entry.costCenter,
-  hub,
-  amount,
-  allocationSourceCostCenter: MANAGEMENT_SOURCE_COST_CENTER,
-  isAllocatedManagementCost: true,
-});
-
-const getAllOperationalCostCenters = () => COST_CENTER_HIERARCHY
-  .filter((group) => group.hub !== "Head Office")
-  .flatMap((group) => group.costCenters)
-  .filter((costCenter) => !GENERAL_POOL_COST_CENTERS.has(costCenter) && costCenter !== HEAD_OFFICE_COST_CENTER && !HIDDEN_COST_CENTER_ROWS.has(costCenter));
-
-const allocateGeneralSpentCosts = (entries, year) => {
-  const periodRows = entries.filter((entry) => entry.year === year);
-  const allocatedRows = [];
-  const allocatedEntryIds = new Set();
-
-  for (const rule of GENERAL_COST_ALLOCATIONS) {
-    const recipients = getHubCostCenters(rule.hub, rule.poolCostCenter);
-    if (!recipients.length) continue;
-
-    const poolRows = periodRows.filter((entry) => entry.type === "spent" && entry.costCenter === rule.poolCostCenter);
-    const recipientRows = periodRows.filter((entry) => (
-      entry.type === "spent"
-      && recipients.includes(entry.costCenter)
-      && !entry.isAllocatedGeneralCost
-    ));
-    const fallbackTotals = recipients.map((costCenter) => ({
-      costCenter,
-      amount: sumRows(recipientRows, (entry) => entry.costCenter === costCenter),
-    })).filter((row) => row.amount > 0);
-    const fallbackTotal = fallbackTotals.reduce((total, row) => total + row.amount, 0);
-
-    for (const poolRow of poolRows) {
-      const periodRecipientTotals = recipients.map((costCenter) => ({
-        costCenter,
-        amount: sumRows(recipientRows, (entry) => entry.period === poolRow.period && entry.costCenter === costCenter),
-      })).filter((row) => row.amount > 0);
-      const periodTotal = periodRecipientTotals.reduce((total, row) => total + row.amount, 0);
-      const basisRows = periodTotal > 0 ? periodRecipientTotals : fallbackTotals;
-      const basisTotal = periodTotal > 0 ? periodTotal : fallbackTotal;
-      if (!basisTotal) continue;
-
-      allocatedEntryIds.add(poolRow);
-      for (const basis of basisRows) {
-        allocatedRows.push(createAllocatedSpentRow(poolRow, basis.costCenter, (poolRow.amount || 0) * (basis.amount / basisTotal), rule.hub));
-      }
-    }
-
-  }
-
-  const managementRecipients = getAllOperationalCostCenters();
-  const managementRows = periodRows.filter((entry) => (
-    entry.type === "spent"
-    && entry.sourceCostCenter === MANAGEMENT_SOURCE_COST_CENTER
-  ));
-  const managementBasisRows = periodRows.filter((entry) => (
-    entry.type === "spent"
-    && managementRecipients.includes(entry.costCenter)
-    && entry.sourceCostCenter !== MANAGEMENT_SOURCE_COST_CENTER
-    && !entry.isAllocatedGeneralCost
-    && !entry.isAllocatedManagementCost
-  ));
-  const fallbackManagementTotals = managementRecipients.map((costCenter) => ({
-    costCenter,
-    amount: sumRows(managementBasisRows, (entry) => entry.costCenter === costCenter),
-  })).filter((row) => row.amount > 0);
-  const fallbackManagementTotal = fallbackManagementTotals.reduce((total, row) => total + row.amount, 0);
-
-  for (const managementRow of managementRows) {
-    const periodRecipientTotals = managementRecipients.map((costCenter) => ({
-      costCenter,
-      amount: sumRows(managementBasisRows, (entry) => entry.period === managementRow.period && entry.costCenter === costCenter),
-    })).filter((row) => row.amount > 0);
-    const periodTotal = periodRecipientTotals.reduce((total, row) => total + row.amount, 0);
-    const basisRows = periodTotal > 0 ? periodRecipientTotals : fallbackManagementTotals;
-    const basisTotal = periodTotal > 0 ? periodTotal : fallbackManagementTotal;
-    if (!basisTotal) continue;
-
-    allocatedEntryIds.add(managementRow);
-    for (const basis of basisRows) {
-      allocatedRows.push(createAllocatedManagementRow(
-        managementRow,
-        basis.costCenter,
-        (managementRow.amount || 0) * (basis.amount / basisTotal),
-        getCostCenterHub(basis.costCenter, managementRow.hub),
-      ));
-    }
-  }
-
-  return [
-    ...periodRows.filter((entry) => !allocatedEntryIds.has(entry)),
-    ...allocatedRows,
-  ];
-};
-
-const buildHomeIgccSummary = (entries, year = DEFAULT_YEAR) => {
-  const yearRows = allocateGeneralSpentCosts(entries, year)
+const buildHomeIgccSummary = ({ entries, spentEntries, year = DEFAULT_YEAR }) => {
+  const afpRows = entries
+    .filter((entry) => entry.year === year)
     .filter((entry) => entry.type !== "creditNotes");
+  const spentRows = spentEntries.filter((entry) => entry.year === year);
   const months = MONTHS.map((month) => ({
     ...month,
     period: `${year}-${month.key}`,
@@ -226,10 +99,11 @@ const buildHomeIgccSummary = (entries, year = DEFAULT_YEAR) => {
   const byMonth = {};
 
   for (const month of months) {
-    const rows = yearRows.filter((entry) => entry.period === month.period);
-    const totalCost = sumRows(rows, (entry) => entry.type === "spent");
-    const approvedAfp = sumRows(rows, (entry) => entry.type === "approved");
-    const submittedAfp = sumRows(rows, (entry) => entry.type === "submitted");
+    const monthAfpRows = afpRows.filter((entry) => entry.period === month.period);
+    const monthSpentRows = spentRows.filter((entry) => entry.period === month.period);
+    const totalCost = sumRows(monthSpentRows, (entry) => entry.type === "spent");
+    const approvedAfp = sumRows(monthAfpRows, (entry) => entry.type === "approved");
+    const submittedAfp = sumRows(monthAfpRows, (entry) => entry.type === "submitted");
     const approvedProfit = approvedAfp - totalCost;
     const submittedProfit = submittedAfp - totalCost;
     byMonth[month.key] = {
@@ -369,12 +243,16 @@ export function HomePage({ onNavigate, accessProfile }) {
   const today = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date());
   const {
     entries,
+    spentEntries,
     isLoadingAfpMaster,
     isLoadingSpentReport,
   } = useAfpFinancialInputs();
   const isLoading = isLoadingAfpMaster || isLoadingSpentReport;
   const { totals, deviations, yearRows } = useMemo(() => buildHomeSummary(entries), [entries]);
-  const { months, byMonth, yearTotal } = useMemo(() => buildHomeIgccSummary(entries, DEFAULT_YEAR), [entries]);
+  const { months, byMonth, yearTotal } = useMemo(
+    () => buildHomeIgccSummary({ entries, spentEntries, year: DEFAULT_YEAR }),
+    [entries, spentEntries],
+  );
 
   return (
     <section className="home-dashboard-frame">
