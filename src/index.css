@@ -4824,6 +4824,14 @@ td.profit-matrix-sticky-col span {
   white-space: nowrap;
 }
 
+.analysis-table .analysis-empty-row {
+  height: 96px;
+  border-radius: 12px;
+  color: #64748b;
+  text-align: center;
+  font-weight: 900;
+}
+
 .analysis-dimension-heading {
   width: 260px;
   z-index: 8 !important;

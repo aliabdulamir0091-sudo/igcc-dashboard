@@ -680,7 +680,10 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
   const [searchTerm, setSearchTerm] = useState("");
 
   const glOptions = byGlName.map((row) => row.glName);
-  const costCenterOptions = byCostCenter.map((row) => row.costCenter).sort((a, b) => a.localeCompare(b));
+  const costCenterOptions = byCostCenter
+    .filter((row) => Math.abs(row.spent || 0) > 0)
+    .map((row) => row.costCenter)
+    .sort((a, b) => a.localeCompare(b));
   const costCenterLookup = new Map(byCostCenter.map((row) => [row.costCenter, row]));
   const glLookup = new Map(byGlName.map((row) => [row.glName, row]));
   const activeGlSet = new Set(selectedGlNames);
@@ -710,9 +713,11 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
       sparkline: costCenterSparklineByName[row.costCenter] || [],
     };
   })
+    .filter((row) => Math.abs(row.displayAmount || 0) > 0)
     .filter((row) => !isSelectedCostCenter || row.costCenter === selectedCostCenter)
     .sort(compareRows);
   const overallCostCenterRows = byCostCenter
+    .filter((row) => Math.abs(row.spent || 0) > 0)
     .filter((row) => !isSelectedCostCenter || row.costCenter === selectedCostCenter)
     .map((row) => ({
       ...row,
@@ -726,13 +731,14 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
     const rows = isSelectedCostCenter
       ? byGlCostCenter
         .filter((row) => row.costCenter === selectedCostCenter)
+        .filter((row) => Math.abs(row.amount || 0) > 0)
         .map((row) => ({
           ...row,
           displayAmount: row.amount,
           shareBase: selectedCostCenterTotal,
           sparkline: glLookup.get(row.glName)?.sparkline || [],
         }))
-      : byGlName.map((row) => ({
+      : byGlName.filter((row) => Math.abs(row.amount || 0) > 0).map((row) => ({
         ...row,
         displayAmount: row.amount,
         shareBase: totals.spent,
@@ -740,6 +746,9 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
     return rows.sort(compareRows).slice(0, 14);
   })();
   const tableRows = activeGlNames.length ? costCenterRows : analysisMode === "cost-center" ? overallCostCenterRows : glRows;
+  const emptyMessage = isSelectedCostCenter
+    ? `No spent report entries found for ${selectedCostCenter} under the selected filters.`
+    : "No spent report entries found under the selected filters.";
   const exportRows = tableRows.map((row) => {
     if (isCostCenterMode) {
       return {
@@ -888,7 +897,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
             </tr>
           </thead>
           <tbody>
-            {tableRows.map((row) => {
+            {tableRows.length ? tableRows.map((row) => {
               const key = isCostCenterMode ? row.costCenter : row.glName;
               const amount = row.displayAmount ?? (isCostCenterMode ? row.total : row.amount);
               const shareBase = row.shareBase ?? (isCostCenterMode ? row.spent : totals.spent);
@@ -931,7 +940,11 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
                   </td>
                 </tr>
               );
-            })}
+            }) : (
+              <tr>
+                <td className="analysis-empty-row" colSpan={4}>{emptyMessage}</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
