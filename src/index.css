@@ -5311,6 +5311,36 @@ td.profit-matrix-sticky-col span {
   font-weight: 950;
 }
 
+.executive-cost-center-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.92)),
+    #ffffff;
+  box-shadow: 0 20px 52px rgba(15, 23, 42, 0.08);
+}
+
+.executive-cost-center-card .executive-table-title {
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.executive-cost-center-card .executive-table-title h3 {
+  color: #10233f;
+  font-size: 20px;
+}
+
+.executive-cost-center-card .executive-table-title span {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 0 12px;
+}
+
 .executive-table-wrap {
   overflow-x: auto;
   border: 1px solid #cbd5e1;
@@ -5361,19 +5391,45 @@ td.profit-matrix-sticky-col span {
 
 .executive-cost-center-wrap {
   overflow-x: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .executive-cost-center-table {
   min-width: 0;
+  border-collapse: separate;
+  border-spacing: 0;
   table-layout: fixed;
-  font-size: 10px;
+  color: #152238;
+  font-size: 10.5px;
 }
 
 .executive-cost-center-table th,
 .executive-cost-center-table td {
-  padding: 5px 4px;
+  border: 0;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 7px 6px;
   overflow-wrap: anywhere;
   word-break: normal;
+}
+
+.executive-cost-center-table th:last-child,
+.executive-cost-center-table td:last-child {
+  border-right: 0;
+}
+
+.executive-cost-center-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.executive-cost-center-table thead th {
+  background: #f8fafc;
+  color: #34445c;
+  font-size: 10px;
+  line-height: 1.15;
 }
 
 .executive-cost-center-table th:first-child,
@@ -5387,7 +5443,7 @@ td.profit-matrix-sticky-col span {
 }
 
 .executive-cost-center-table .executive-table-section {
-  color: #ffffff;
+  color: #123047;
   font-size: 11px;
   letter-spacing: 0;
   text-align: center;
@@ -5395,15 +5451,18 @@ td.profit-matrix-sticky-col span {
 }
 
 .executive-cost-center-table .is-cost-section {
-  background: #0f766e;
+  background: #dff7f1;
+  color: #0f5f56;
 }
 
 .executive-cost-center-table .is-revenue-section {
-  background: #2563eb;
+  background: #e6efff;
+  color: #1d4ed8;
 }
 
 .executive-cost-center-table .is-profit-section {
-  background: #7c2d12;
+  background: #fff2df;
+  color: #9a3412;
 }
 
 .executive-cost-center-table td:first-child span {
@@ -5417,8 +5476,8 @@ td.profit-matrix-sticky-col span {
 }
 
 .executive-cost-center-table .is-clickable-row:hover td {
-  filter: brightness(0.98);
-  box-shadow: inset 0 0 0 999px rgba(20, 184, 166, 0.08);
+  filter: none;
+  box-shadow: inset 0 0 0 999px rgba(37, 99, 235, 0.045);
 }
 
 .executive-cost-center-table .is-clickable-row:focus-visible td {
@@ -5427,43 +5486,43 @@ td.profit-matrix-sticky-col span {
 }
 
 .executive-cost-center-table .is-hub-total td {
-  background: #16a34a !important;
-  color: #ffffff !important;
+  background: #eafaf3 !important;
+  color: #14532d !important;
   font-weight: 950;
-  border-color: #0f7a35;
+  border-color: #bbf7d0;
 }
 
 .executive-cost-center-table .is-igcc-total td {
-  background: #0b2b52 !important;
+  background: #10233f !important;
   color: #ffffff !important;
   font-weight: 950;
-  border-color: #071936;
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .executive-cost-center-table .is-igcc-total td:first-child {
   text-transform: uppercase;
-  border-left: 8px solid #14b8a6;
+  border-left: 6px solid #14b8a6;
 }
 
 .executive-cost-center-table .is-hub-total td:first-child {
   text-transform: uppercase;
-  border-left: 8px solid #064e3b;
+  border-left: 6px solid #22c55e;
 }
 
 .executive-cost-center-table .is-subgroup-total td {
-  background: #facc15 !important;
-  color: #1f2937 !important;
+  background: #fff7d6 !important;
+  color: #713f12 !important;
   font-weight: 950;
-  border-color: #b77905;
+  border-color: #fde68a;
 }
 
 .executive-cost-center-table .is-subgroup-total td:first-child {
-  padding-left: 18px;
-  border-left: 8px solid #92400e;
+  padding-left: 14px;
+  border-left: 6px solid #f59e0b;
 }
 
 .executive-cost-center-table .has-loss td:first-child {
-  color: #dc2626;
+  color: #b91c1c;
 }
 
 .executive-cost-center-table .is-hub-total.has-loss td:first-child {

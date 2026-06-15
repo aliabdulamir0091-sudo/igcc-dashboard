@@ -1029,9 +1029,9 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
         </time>
       </section>
 
-      <article className="surface-card executive-summary-card">
+      <article className="surface-card executive-summary-card executive-cost-center-card">
         <div className="executive-table-title">
-          <h3>2- Cost Center Profitability Summary</h3>
+          <h3>Cost Center Profitability Summary</h3>
           <span>{costCenterYearLabel} - {costCenterRows.length} cost centers</span>
         </div>
         <div className="executive-table-wrap executive-cost-center-wrap">
