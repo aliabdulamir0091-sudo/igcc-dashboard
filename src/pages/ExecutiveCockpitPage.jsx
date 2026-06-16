@@ -293,6 +293,10 @@ const getCostCenterRow = (rowsByCostCenter, costCenter, hub) => {
       totalRevenue: 0,
       profit: 0,
       margin: 0,
+      headOfficeCostShare: 0,
+      totalCostAfterHeadOffice: 0,
+      profitAfterHeadOffice: 0,
+      marginAfterHeadOffice: 0,
     });
   }
   return rowsByCostCenter.get(costCenter);
@@ -339,7 +343,7 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
     getCostCenterRow(rowsByCostCenter, issuedBy, getCostCenterHub(issuedBy, entry.hub)).issuedCn += Number(entry.amount) || 0;
   }
 
-  return [...rowsByCostCenter.values()]
+  const summaryRows = [...rowsByCostCenter.values()]
     .map((row) => {
       const totalCost = row.spentCost + row.allocatedGeneralCost + row.allocatedManagementCost + row.receivedCn + row.allocatedGeneralCn;
       const submittedRevenue = row.submittedAfp + row.issuedCn;
@@ -352,6 +356,9 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
         totalRevenue,
         profit,
         margin: getShare(profit, totalRevenue),
+        totalCostAfterHeadOffice: totalCost,
+        profitAfterHeadOffice: profit,
+        marginAfterHeadOffice: getShare(profit, totalRevenue),
       };
     })
     .filter((row) => row.spentCost || row.allocatedGeneralCost || row.receivedCn || row.allocatedGeneralCn || row.submittedAfp || row.approvedAfp || row.issuedCn)
@@ -360,6 +367,30 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
         - COST_CENTER_HIERARCHY.findIndex((group) => group.hub === b.hub);
       return hubOrder || a.costCenter.localeCompare(b.costCenter);
     });
+
+  const headOfficeCost = summaryRows.find((row) => row.costCenter === HEAD_OFFICE_COST_CENTER)?.totalCost || 0;
+  const allocationBasisRows = summaryRows.filter((row) => row.costCenter !== HEAD_OFFICE_COST_CENTER && row.totalCost > 0);
+  const allocationBasisTotal = allocationBasisRows.reduce((total, row) => total + row.totalCost, 0);
+
+  if (!headOfficeCost || !allocationBasisTotal) return summaryRows;
+
+  return summaryRows.map((row) => {
+    const headOfficeCostShare = row.costCenter === HEAD_OFFICE_COST_CENTER
+      ? -headOfficeCost
+      : row.totalCost > 0
+        ? headOfficeCost * (row.totalCost / allocationBasisTotal)
+        : 0;
+    const totalCostAfterHeadOffice = row.totalCost + headOfficeCostShare;
+    const profitAfterHeadOffice = row.totalRevenue - totalCostAfterHeadOffice;
+
+    return {
+      ...row,
+      headOfficeCostShare,
+      totalCostAfterHeadOffice,
+      profitAfterHeadOffice,
+      marginAfterHeadOffice: getShare(profitAfterHeadOffice, row.totalRevenue),
+    };
+  });
 };
 
 const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub)) => {
@@ -376,6 +407,9 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
     submittedRevenue: sum.submittedRevenue + row.submittedRevenue,
     totalRevenue: sum.totalRevenue + row.totalRevenue,
     profit: sum.profit + row.profit,
+    headOfficeCostShare: sum.headOfficeCostShare + row.headOfficeCostShare,
+    totalCostAfterHeadOffice: sum.totalCostAfterHeadOffice + row.totalCostAfterHeadOffice,
+    profitAfterHeadOffice: sum.profitAfterHeadOffice + row.profitAfterHeadOffice,
   }), {
     spentCost: 0,
     allocatedGeneralCost: 0,
@@ -389,6 +423,9 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
     submittedRevenue: 0,
     totalRevenue: 0,
     profit: 0,
+    headOfficeCostShare: 0,
+    totalCostAfterHeadOffice: 0,
+    profitAfterHeadOffice: 0,
   });
 
   return {
@@ -397,6 +434,7 @@ const sumCostCenterRows = (rows, hub, type = "hub", label = formatHubLabel(hub))
     hub,
     ...total,
     margin: getShare(total.profit, total.totalRevenue),
+    marginAfterHeadOffice: getShare(total.profitAfterHeadOffice, total.totalRevenue),
   };
 };
 
@@ -1083,7 +1121,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 <th rowSpan={2}>Cost Center</th>
                 <th className="executive-table-section is-cost-section" colSpan={6}>Cost / Expenses</th>
                 <th className="executive-table-section is-revenue-section" colSpan={4}>Revenue</th>
-                <th className="executive-table-section is-profit-section" colSpan={3}>Profitability</th>
+                <th className="executive-table-section is-profit-section" colSpan={6}>Profitability</th>
               </tr>
               <tr>
                 <th>Cost from Spent Report</th>
@@ -1099,6 +1137,9 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 <th>Profit</th>
                 <th>Margin %</th>
                 <th>Submitted Margin %</th>
+                <th>Share of Head Office Cost</th>
+                <th>Total Cost After HO</th>
+                <th>Margin After HO %</th>
               </tr>
             </thead>
             <tbody>
@@ -1137,10 +1178,13 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                   <SummaryValue value={row.profit} />
                   <SummaryValue value={row.margin} isPercent />
                   <SummaryValue value={getShare(row.submittedRevenue - row.totalCost, row.submittedRevenue)} isPercent />
+                  <SummaryValue value={row.headOfficeCostShare} />
+                  <SummaryValue value={row.totalCostAfterHeadOffice} />
+                  <SummaryValue value={row.marginAfterHeadOffice} isPercent />
                 </tr>
               )) : (
                 <tr>
-                  <td className="executive-empty-row" colSpan={14}>No cost center data for the selected filters.</td>
+                  <td className="executive-empty-row" colSpan={17}>No cost center data for the selected filters.</td>
                 </tr>
               )}
             </tbody>
