@@ -1068,6 +1068,8 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
   const hubCostCenterRows = buildHubCostCenterRows(costCenterRows);
   const selectedReport = buildSimpleReport(reportRow, costCenterRows, costCenterEntries, rawEntries, costCenterFilters);
   const costCenterYearLabel = isYearFiltered ? `Year ${year}` : "Years 2025 & 2026";
+  const titleSpentReportValue = costCenterRows.reduce((total, row) => total + row.spentCost, 0);
+  const titleHeadOfficeCost = costCenterRows.find((row) => row.costCenter === HEAD_OFFICE_COST_CENTER)?.totalCost || 0;
   const openDetailRow = (row) => {
     setReportRow(row);
   };
@@ -1099,6 +1101,16 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
             <p className="eyebrow">Operations Performance</p>
             <h3>Cost Center Profitability Summary</h3>
             <small>Hub, cost center, AFP, cost, CN, profit, and head office allocation view.</small>
+          </div>
+          <div className="executive-title-metrics" aria-label="Filtered operations totals">
+            <span>
+              <small>Spent Report</small>
+              <strong>{formatWholeNumber(titleSpentReportValue)}</strong>
+            </span>
+            <span>
+              <small>Head Office Cost</small>
+              <strong>{formatWholeNumber(titleHeadOfficeCost)}</strong>
+            </span>
           </div>
           <div className={`executive-title-meta ${afpMasterError ? "has-error" : ""}`}>
             <span>{costCenterYearLabel} - {costCenterRows.length} cost centers</span>

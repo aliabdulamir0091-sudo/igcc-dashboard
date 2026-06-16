@@ -5363,6 +5363,41 @@ td.profit-matrix-sticky-col span {
   line-height: 1.45;
 }
 
+.executive-title-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.executive-title-metrics span {
+  display: grid;
+  gap: 2px;
+  min-width: 138px;
+  padding: 8px 10px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #f8fbff;
+  text-align: right;
+}
+
+.executive-title-metrics small {
+  margin: 0;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 950;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.executive-title-metrics strong {
+  color: #10233f;
+  font-size: 15px;
+  font-weight: 950;
+  line-height: 1.1;
+}
+
 .executive-title-meta {
   display: flex;
   flex-wrap: wrap;
