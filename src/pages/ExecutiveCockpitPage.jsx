@@ -1093,26 +1093,22 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
 
   return (
     <section className="page-stack executive-cockpit-page">
-      <div className="page-heading executive-heading">
-        <p className="eyebrow">Operations control view</p>
-        <h2>IGCC Operations Performance</h2>
-        <p>Hub, cost center, AFP, cost, CN, and profit view. AFP values from Jan 2026 onward are sourced from AFP_MASTER.</p>
-      </div>
-
-      <section className={`afp-source-strip executive-afp-source ${afpMasterError ? "has-error" : ""}`} aria-label="AFP master source status">
-        <span>AFP source</span>
-        <strong>{isLoadingAfpMaster ? "Loading AFP_MASTER" : afpMasterError ? "AFP_MASTER unavailable" : `AFP_MASTER from ${afpMasterComparison.startYear}`}</strong>
-        <time>
-          Submitted diff {formatSignedWholeNumber(afpMasterComparison.submittedDifference)}
-          {" | "}
-          Approved diff {formatSignedWholeNumber(afpMasterComparison.approvedDifference)}
-        </time>
-      </section>
-
       <article className="surface-card executive-summary-card executive-cost-center-card">
         <div className="executive-table-title">
-          <h3>Cost Center Profitability Summary</h3>
-          <span>{costCenterYearLabel} - {costCenterRows.length} cost centers</span>
+          <div>
+            <p className="eyebrow">Operations Performance</p>
+            <h3>Cost Center Profitability Summary</h3>
+            <small>Hub, cost center, AFP, cost, CN, profit, and head office allocation view.</small>
+          </div>
+          <div className={`executive-title-meta ${afpMasterError ? "has-error" : ""}`}>
+            <span>{costCenterYearLabel} - {costCenterRows.length} cost centers</span>
+            <span>{isLoadingAfpMaster ? "Loading AFP_MASTER" : afpMasterError ? "AFP_MASTER unavailable" : `AFP_MASTER ${afpMasterComparison.startYear}`}</span>
+            <span>
+              Submitted diff {formatSignedWholeNumber(afpMasterComparison.submittedDifference)}
+              {" | "}
+              Approved diff {formatSignedWholeNumber(afpMasterComparison.approvedDifference)}
+            </span>
+          </div>
         </div>
         <div className="executive-table-wrap executive-cost-center-wrap">
           <table className="executive-summary-table executive-cost-center-table">

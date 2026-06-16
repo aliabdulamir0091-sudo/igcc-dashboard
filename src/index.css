@@ -5339,8 +5339,9 @@ td.profit-matrix-sticky-col span {
 }
 
 .executive-cost-center-card .executive-table-title {
-  align-items: center;
-  margin-bottom: 16px;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
 }
 
 .executive-cost-center-card .executive-table-title h3 {
@@ -5348,15 +5349,40 @@ td.profit-matrix-sticky-col span {
   font-size: 20px;
 }
 
-.executive-cost-center-card .executive-table-title span {
-  min-height: 30px;
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid #dbeafe;
-  border-radius: 999px;
-  background: #eff6ff;
+.executive-cost-center-card .executive-table-title small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.executive-title-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 14px;
+  max-width: 680px;
+  color: #315083;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.executive-title-meta span {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.executive-title-meta span:first-child {
   color: #1d4ed8;
-  padding: 0 12px;
+}
+
+.executive-title-meta.has-error span {
+  color: #b91c1c;
 }
 
 .executive-table-wrap {
