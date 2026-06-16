@@ -1102,24 +1102,26 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
             <h3>Cost Center Profitability Summary</h3>
             <small>Hub, cost center, AFP, cost, CN, profit, and head office allocation view.</small>
           </div>
-          <div className="executive-title-metrics" aria-label="Filtered operations totals">
-            <span>
-              <small>Spent Report</small>
-              <strong>{formatWholeNumber(titleSpentReportValue)}</strong>
-            </span>
-            <span>
-              <small>Head Office Cost</small>
-              <strong>{formatWholeNumber(titleHeadOfficeCost)}</strong>
-            </span>
-          </div>
-          <div className={`executive-title-meta ${afpMasterError ? "has-error" : ""}`}>
-            <span>{costCenterYearLabel} - {costCenterRows.length} cost centers</span>
-            <span>{isLoadingAfpMaster ? "Loading AFP_MASTER" : afpMasterError ? "AFP_MASTER unavailable" : `AFP_MASTER ${afpMasterComparison.startYear}`}</span>
-            <span>
-              Submitted diff {formatSignedWholeNumber(afpMasterComparison.submittedDifference)}
-              {" | "}
-              Approved diff {formatSignedWholeNumber(afpMasterComparison.approvedDifference)}
-            </span>
+          <div className="executive-title-side">
+            <div className={`executive-title-meta ${afpMasterError ? "has-error" : ""}`}>
+              <span>{costCenterYearLabel} - {costCenterRows.length} cost centers</span>
+              <span>{isLoadingAfpMaster ? "Loading AFP_MASTER" : afpMasterError ? "AFP_MASTER unavailable" : `AFP_MASTER ${afpMasterComparison.startYear}`}</span>
+              <span>
+                Submitted diff {formatSignedWholeNumber(afpMasterComparison.submittedDifference)}
+                {" | "}
+                Approved diff {formatSignedWholeNumber(afpMasterComparison.approvedDifference)}
+              </span>
+            </div>
+            <div className="executive-title-metrics" aria-label="Filtered operations totals">
+              <span>
+                <small>Spent Report</small>
+                <strong>{formatWholeNumber(titleSpentReportValue)}</strong>
+              </span>
+              <span>
+                <small>Head Office Cost</small>
+                <strong>{formatWholeNumber(titleHeadOfficeCost)}</strong>
+              </span>
+            </div>
           </div>
         </div>
         <div className="executive-table-wrap executive-cost-center-wrap">
