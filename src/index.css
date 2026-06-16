@@ -5338,6 +5338,11 @@ td.profit-matrix-sticky-col span {
   box-shadow: 0 20px 52px rgba(15, 23, 42, 0.08);
 }
 
+.executive-cockpit-page > .executive-heading,
+.executive-cockpit-page > .executive-afp-source {
+  display: none;
+}
+
 .executive-cost-center-card .executive-table-title {
   align-items: flex-start;
   gap: 16px;
