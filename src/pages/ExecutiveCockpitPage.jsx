@@ -272,6 +272,19 @@ const getCostCenterHub = (costCenter, fallbackHub) => (
 
 const normalizeCostCenter = (costCenter) => normalizeCostCenterAlias(costCenter);
 
+const normalizeOperationalSpentEntry = (entry) => {
+  const costCenter = normalizeCostCenter(entry.costCenter);
+  const sourceCostCenter = normalizeCostCenter(entry.sourceCostCenter || entry.costCenter);
+  const hub = getCostCenterHub(costCenter, entry.hub);
+  return {
+    ...entry,
+    sourceCostCenter,
+    costCenter,
+    hub,
+    region: COST_CENTER_LOOKUP.get(costCenter)?.region || entry.region || "Basra",
+  };
+};
+
 const formatHubLabel = (hub) => hub.replace(/\s+Hub$/, "");
 
 const getCostCenterRow = (rowsByCostCenter, costCenter, hub) => {
@@ -1055,13 +1068,20 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
   const [reportRow, setReportRow] = useState(null);
   const {
     entries,
+    spentEntries,
     afpMasterComparison,
     isLoadingAfpMaster,
+    isLoadingSpentReport,
     afpMasterError,
+    spentReportError,
   } = useAfpFinancialInputs();
   const isYearFiltered = hasSelectedYear(filters);
   const year = getSelectedYear(filters);
-  const rawEntries = entries;
+  const hasLiveSpentEntries = !isLoadingSpentReport && !spentReportError && spentEntries.length > 0;
+  const rawEntries = hasLiveSpentEntries ? [
+    ...entries.filter((entry) => entry.type !== "spent"),
+    ...spentEntries.map(normalizeOperationalSpentEntry),
+  ] : entries;
   const costCenterFilters = isYearFiltered ? { ...filters, year } : { ...filters, year: ALL_FILTER_VALUE };
   const costCenterEntries = allocateGeneralSpentCosts(rawEntries, costCenterFilters);
   const costCenterRows = buildCostCenterSummary(costCenterEntries, rawEntries, costCenterFilters);
