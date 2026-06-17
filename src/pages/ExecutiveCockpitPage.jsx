@@ -1088,8 +1088,20 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
   const hubCostCenterRows = buildHubCostCenterRows(costCenterRows);
   const selectedReport = buildSimpleReport(reportRow, costCenterRows, costCenterEntries, rawEntries, costCenterFilters);
   const costCenterYearLabel = isYearFiltered ? `Year ${year}` : "Years 2025 & 2026";
-  const titleSpentReportValue = costCenterRows.reduce((total, row) => total + row.spentCost, 0);
-  const titleHeadOfficeCost = costCenterRows.find((row) => row.costCenter === HEAD_OFFICE_COST_CENTER)?.totalCost || 0;
+  const titleSpentRows = rawEntries.filter((entry) => entry.type === "spent" && matchesFilters(entry, costCenterFilters));
+  const titleHeadOfficeFilters = {
+    ...costCenterFilters,
+    hub: ALL_FILTER_VALUE,
+    costCenter: ALL_FILTER_VALUE,
+  };
+  const titleSpentReportValue = titleSpentRows.reduce((total, entry) => total + (Number(entry.amount) || 0), 0);
+  const titleHeadOfficeCost = rawEntries
+    .filter((entry) => (
+      entry.type === "spent"
+      && entry.costCenter === HEAD_OFFICE_COST_CENTER
+      && matchesFilters(entry, titleHeadOfficeFilters)
+    ))
+    .reduce((total, entry) => total + (Number(entry.amount) || 0), 0);
   const openDetailRow = (row) => {
     setReportRow(row);
   };
@@ -1134,7 +1146,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
             </div>
             <div className="executive-title-metrics" aria-label="Filtered operations totals">
               <span>
-                <small>Spent Report</small>
+                <small>Spent + Not Recorded</small>
                 <strong>{formatWholeNumber(titleSpentReportValue)}</strong>
               </span>
               <span>
