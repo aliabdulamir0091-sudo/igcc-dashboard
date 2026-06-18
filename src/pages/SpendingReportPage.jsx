@@ -676,7 +676,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
   const [analysisMode, setAnalysisMode] = useState("gl");
   const [selectedCostCenter, setSelectedCostCenter] = useState("all");
   const [sortMode, setSortMode] = useState("spent-desc");
-  const [isDrilldownOpen, setIsDrilldownOpen] = useState(false);
+  const [drilldownAnchor, setDrilldownAnchor] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
   const glOptions = byGlName.map((row) => row.glName);
@@ -746,6 +746,10 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
     return rows.sort(compareRows).slice(0, 14);
   })();
   const tableRows = activeGlNames.length ? costCenterRows : analysisMode === "cost-center" ? overallCostCenterRows : glRows;
+  const selectedGlTotal = activeGlNames.length
+    ? tableRows.reduce((total, row) => total + (Number(row.displayAmount ?? row.total ?? row.amount) || 0), 0)
+    : 0;
+  const selectedGlShareBase = isSelectedCostCenter ? selectedCostCenterTotal : totals.spent;
   const selectedPeriodLabel = filters?.period === "monthly" && filters?.year !== "all" && filters?.month !== "all"
     ? `${filters.month} ${filters.year}`
     : filters?.period === "quarterly" && filters?.year !== "all" && filters?.quarter !== "all"
@@ -774,7 +778,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
     };
   });
   const subtitle = activeGlNames.length
-    ? `${activeGlNames.join(", ")} selected. Rows now compare cost centers for the selected GL spend.`
+    ? `${activeGlNames.join(", ")} selected. Total ${formatCurrency(selectedGlTotal)} (${formatPercent(getShare(selectedGlTotal, selectedGlShareBase))} of ${isSelectedCostCenter ? selectedCostCenter : "filtered spent"}).`
     : analysisMode === "cost-center"
       ? "Rank cost centers by total spent and view each cost center's share of filtered spend."
       : isSelectedCostCenter
@@ -795,21 +799,53 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
     ));
   };
 
-  const openDrilldown = () => {
+  const renderGlSelectorPopover = () => (
+    <div className="dimension-popover">
+      <div className="dimension-popover-head">
+        <strong>Compare GL names</strong>
+        <span>Select one or more GL names to compare their spend across cost centers.</span>
+      </div>
+      <input
+        type="search"
+        value={searchTerm}
+        onChange={(event) => setSearchTerm(event.target.value)}
+        placeholder="Search GL names"
+      />
+      <div className="dimension-option-list">
+        {filteredGlOptions.map((glName) => (
+          <label key={glName}>
+            <input
+              type="checkbox"
+              checked={pendingGlSet.has(glName)}
+              onChange={() => togglePending(glName)}
+            />
+            <span>{glName}</span>
+          </label>
+        ))}
+      </div>
+      <div className="dimension-popover-actions">
+        <span>{pendingGlNames.length} selected</span>
+        <button type="button" className="ghost-button" onClick={clearDrilldown}>Clear</button>
+        <button type="button" onClick={applyDrilldown}>Apply</button>
+      </div>
+    </div>
+  );
+
+  const openDrilldown = (anchor) => {
     setPendingGlNames(selectedGlNames);
-    setIsDrilldownOpen((current) => !current);
+    setDrilldownAnchor((current) => (current === anchor ? "" : anchor));
   };
 
   const applyDrilldown = () => {
     setSelectedGlNames(pendingGlNames);
-    setIsDrilldownOpen(false);
+    setDrilldownAnchor("");
   };
 
   const clearDrilldown = () => {
     setPendingGlNames([]);
     setSelectedGlNames([]);
     setSearchTerm("");
-    setIsDrilldownOpen(false);
+    setDrilldownAnchor("");
   };
 
   return (
@@ -828,7 +864,7 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
               setAnalysisMode(event.target.value);
               setSelectedGlNames([]);
               setPendingGlNames([]);
-              setIsDrilldownOpen(false);
+              setDrilldownAnchor("");
             }}
           >
             <option value="gl">GL Name</option>
@@ -844,6 +880,13 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
             ))}
           </select>
         </label>
+        <label className="analysis-sort-control gl-name-control">
+          <span>GL Names</span>
+          <button type="button" onClick={() => openDrilldown("toolbar")} aria-expanded={drilldownAnchor === "toolbar"}>
+            {activeGlNames.length ? `${activeGlNames.length} selected` : "All GL names"}
+          </button>
+          {drilldownAnchor === "toolbar" ? renderGlSelectorPopover() : null}
+        </label>
         <label className="analysis-sort-control">
           <span>Sort</span>
           <select value={sortMode} onChange={(event) => setSortMode(event.target.value)}>
@@ -856,54 +899,57 @@ function SpendAnalysisTable({ byCostCenter, byGlCostCenter, byGlName, costCenter
         <button type="button" className="analysis-export-button" onClick={() => downloadCsv("spend-analysis.csv", exportRows)}>Export CSV</button>
       </div>
 
+      {activeGlNames.length ? (
+        <div className="selected-gl-summary" aria-label="Selected GL total">
+          <div>
+            <span>Selected GL Total</span>
+            <strong>{formatCurrency(selectedGlTotal)}</strong>
+          </div>
+          <p>
+            {activeGlNames.join(", ")}
+            {" | "}
+            {formatPercent(getShare(selectedGlTotal, selectedGlShareBase))} of {isSelectedCostCenter ? selectedCostCenter : "filtered spent"}
+          </p>
+        </div>
+      ) : null}
+
       <div className="analysis-table-wrap">
         <table className="analysis-table">
           <thead>
             <tr>
               <th className="analysis-dimension-heading">
-                <button type="button" onClick={openDrilldown} aria-expanded={isDrilldownOpen}>
+                <button type="button" onClick={() => openDrilldown("table")} aria-expanded={drilldownAnchor === "table"}>
                   {firstColumnLabel}
                   <span>{activeGlNames.length ? `${activeGlNames.length} selected` : "Drill down"}</span>
                   <i aria-hidden="true">v</i>
                 </button>
-                {isDrilldownOpen ? (
-                  <div className="dimension-popover">
-                    <div className="dimension-popover-head">
-                      <strong>Drill down by GL</strong>
-                      <span>Select GL names to compare cost centers.</span>
-                    </div>
-                    <input
-                      type="search"
-                      value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
-                      placeholder="Search GL names"
-                    />
-                    <div className="dimension-option-list">
-                      {filteredGlOptions.map((glName) => (
-                        <label key={glName}>
-                          <input
-                            type="checkbox"
-                            checked={pendingGlSet.has(glName)}
-                            onChange={() => togglePending(glName)}
-                          />
-                          <span>{glName}</span>
-                        </label>
-                      ))}
-                    </div>
-                    <div className="dimension-popover-actions">
-                      <span>{pendingGlNames.length} selected</span>
-                      <button type="button" className="ghost-button" onClick={clearDrilldown}>Clear</button>
-                      <button type="button" onClick={applyDrilldown}>Apply</button>
-                    </div>
-                  </div>
-                ) : null}
+                {drilldownAnchor === "table" ? renderGlSelectorPopover() : null}
               </th>
               <th>Spend Profile</th>
               <th>Trend</th>
-              <th>{isCostCenterMode ? "Selected Spent" : "Spent"}</th>
+              <th>
+                {isCostCenterMode ? "Selected Spent" : "Spent"}
+                {activeGlNames.length ? <span className="analysis-total-heading">{formatCurrency(selectedGlTotal)}</span> : null}
+              </th>
             </tr>
           </thead>
           <tbody>
+            {activeGlNames.length ? (
+              <tr className="analysis-total-row">
+                <td>
+                  <strong>Total Selected GL</strong>
+                  <span>{activeGlNames.join(", ")}</span>
+                </td>
+                <td>
+                  <SpendShareBar percent={getShare(selectedGlTotal, selectedGlShareBase)} />
+                </td>
+                <td />
+                <td className="is-number">
+                  <strong>{formatCurrency(selectedGlTotal)}</strong>
+                  <span>{formatPercent(getShare(selectedGlTotal, selectedGlShareBase))} of {isSelectedCostCenter ? selectedCostCenter : "filtered spent"}</span>
+                </td>
+              </tr>
+            ) : null}
             {tableRows.length ? tableRows.map((row) => {
               const key = isCostCenterMode ? row.costCenter : row.glName;
               const amount = row.displayAmount ?? (isCostCenterMode ? row.total : row.amount);

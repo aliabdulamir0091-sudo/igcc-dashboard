@@ -11,7 +11,6 @@ import {
 import { DATA_SCHEMAS } from "./data/firestoreCollections";
 import { AppLayout } from "./layouts/AppLayout";
 import { AfpDashboardPage } from "./pages/AfpDashboardPage";
-import { CostCenterEfficiencyPage } from "./pages/CostCenterEfficiencyPage";
 import { ExecutiveCockpitPage } from "./pages/ExecutiveCockpitPage";
 import { HomePage } from "./pages/HomePage";
 import { ProfitMatrixPage } from "./pages/ProfitMatrixPage";
@@ -32,7 +31,6 @@ const DEFAULT_DASHBOARD_FILTERS = {
 const PAGE_COMPONENTS = {
   home: HomePage,
   executive: ExecutiveCockpitPage,
-  efficiency: CostCenterEfficiencyPage,
   profitMatrix: ProfitMatrixPage,
   afp: AfpDashboardPage,
   detail: ProfitabilityPage,

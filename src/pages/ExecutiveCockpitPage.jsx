@@ -1068,7 +1068,6 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
   const [reportRow, setReportRow] = useState(null);
   const {
     entries,
-    spentEntries,
     afpMasterComparison,
     isLoadingAfpMaster,
     isLoadingSpentReport,
@@ -1077,11 +1076,9 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
   } = useAfpFinancialInputs();
   const isYearFiltered = hasSelectedYear(filters);
   const year = getSelectedYear(filters);
-  const hasLiveSpentEntries = !isLoadingSpentReport && !spentReportError && spentEntries.length > 0;
-  const rawEntries = hasLiveSpentEntries ? [
-    ...entries.filter((entry) => entry.type !== "spent"),
-    ...spentEntries.map(normalizeOperationalSpentEntry),
-  ] : entries;
+  const rawEntries = entries.map((entry) => (
+    entry.type === "spent" ? normalizeOperationalSpentEntry(entry) : entry
+  ));
   const costCenterFilters = isYearFiltered ? { ...filters, year } : { ...filters, year: ALL_FILTER_VALUE };
   const costCenterEntries = allocateGeneralSpentCosts(rawEntries, costCenterFilters);
   const costCenterRows = buildCostCenterSummary(costCenterEntries, rawEntries, costCenterFilters);

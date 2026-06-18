@@ -18,13 +18,6 @@ const pageCards = [
     action: "Open",
   },
   {
-    id: "efficiency",
-    icon: "costCenter",
-    title: "Cost Center Efficiency Dashboard",
-    detail: "Revenue, staff salary, external labor, and margin analysis",
-    action: "Open",
-  },
-  {
     id: "spending",
     icon: "spending",
     title: "Financial Input",
@@ -50,7 +43,6 @@ const pageCards = [
 const sideItems = [
   { id: "home", icon: "home", label: "Home" },
   { id: "executive", icon: "executive", label: "Operations Performance" },
-  { id: "efficiency", icon: "costCenter", label: "Efficiency Dashboard" },
   { id: "profitMatrix", icon: "pnl", label: "Profit Matrix" },
   { id: "afp", icon: "approve", label: "AFP Master" },
   { id: "spending", icon: "spending", label: "Financial Input" },

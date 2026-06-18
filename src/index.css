@@ -4714,7 +4714,7 @@ td.profit-matrix-sticky-col span {
 
 .spend-analysis-card .chart-header {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(150px, 0.28fr) minmax(220px, 0.42fr) minmax(150px, 0.28fr) auto;
+  grid-template-columns: minmax(320px, 1fr) minmax(150px, 0.25fr) minmax(210px, 0.35fr) minmax(190px, 0.32fr) minmax(150px, 0.25fr) auto;
   align-items: end;
 }
 
@@ -4739,6 +4739,32 @@ td.profit-matrix-sticky-col span {
   font-weight: 850;
 }
 
+.gl-name-control {
+  position: relative;
+}
+
+.gl-name-control > button {
+  min-height: 42px;
+  border: 1px solid #dbe4ef;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #102033;
+  padding: 0 12px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.gl-name-control > button[aria-expanded="true"] {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.14);
+}
+
+.gl-name-control .dimension-popover {
+  top: 68px;
+  left: 0;
+}
+
 .analysis-export-button {
   align-self: end;
   min-height: 42px;
@@ -4749,6 +4775,42 @@ td.profit-matrix-sticky-col span {
   padding: 0 14px;
   font-size: 13px;
   font-weight: 950;
+}
+
+.selected-gl-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(37, 99, 235, 0.24);
+  border-radius: 12px;
+  background: #eff6ff;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.08);
+}
+
+.selected-gl-summary span,
+.selected-gl-summary p {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.selected-gl-summary span,
+.selected-gl-summary strong {
+  display: block;
+}
+
+.selected-gl-summary strong {
+  margin-top: 3px;
+  color: #102033;
+  font-size: 24px;
+  font-weight: 950;
+}
+
+.selected-gl-summary p {
+  margin: 0;
+  text-align: right;
 }
 
 .analysis-table-wrap {
@@ -4779,6 +4841,14 @@ td.profit-matrix-sticky-col span {
   text-transform: uppercase;
 }
 
+.analysis-total-heading {
+  display: block;
+  margin-top: 3px;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 950;
+}
+
 .analysis-table td {
   padding: 14px 12px;
   background: #f8fafc;
@@ -4801,6 +4871,27 @@ td.profit-matrix-sticky-col span {
 
 .analysis-table tr.is-clickable-row:hover td {
   background: #eef6ff;
+}
+
+.analysis-table tr.analysis-total-row td {
+  position: sticky;
+  top: 31px;
+  z-index: 3;
+  background: #eff6ff;
+  border-top: 1px solid rgba(37, 99, 235, 0.18);
+  border-bottom: 1px solid rgba(37, 99, 235, 0.18);
+}
+
+.analysis-table tr.analysis-total-row td:first-child {
+  border-left: 1px solid rgba(37, 99, 235, 0.18);
+}
+
+.analysis-table tr.analysis-total-row td:last-child {
+  border-right: 1px solid rgba(37, 99, 235, 0.18);
+}
+
+.analysis-table tr.analysis-total-row strong {
+  color: #1d4ed8;
 }
 
 .analysis-table td > strong,
