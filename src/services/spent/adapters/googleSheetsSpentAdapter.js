@@ -3,6 +3,8 @@ import { parseSpentRows } from "../spentParser";
 
 const SPENT_REPORT_SHEET_NAME = "Spent Report";
 const EXPECTED_SPENT_HEADERS = [
+  "Month",
+  "Year",
   "Level 1",
   "Level 2",
   "Invoice Amount USD",

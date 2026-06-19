@@ -5524,6 +5524,49 @@ td.profit-matrix-sticky-col span {
   color: #b91c1c;
 }
 
+.executive-data-status {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  background: #f0f9ff;
+  color: #075985;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.executive-data-status strong {
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.executive-data-status span {
+  color: #0c4a6e;
+  font-weight: 750;
+}
+
+.executive-data-status.is-ok {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.executive-data-status.is-ok span {
+  color: #14532d;
+}
+
+.executive-data-status.has-error {
+  border-color: #fecaca;
+  background: #fff7f7;
+  color: #991b1b;
+}
+
+.executive-data-status.has-error span {
+  color: #7f1d1d;
+}
+
 @media (max-width: 980px) {
   .executive-cost-center-card .executive-table-title {
     grid-template-columns: 1fr;

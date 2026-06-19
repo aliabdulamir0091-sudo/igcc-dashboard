@@ -1068,6 +1068,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
   const [reportRow, setReportRow] = useState(null);
   const {
     entries,
+    spentEntries,
     afpMasterComparison,
     isLoadingAfpMaster,
     isLoadingSpentReport,
@@ -1152,6 +1153,16 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
               </span>
             </div>
           </div>
+        </div>
+        <div className={`executive-data-status ${spentReportError ? "has-error" : isLoadingSpentReport ? "is-loading" : "is-ok"}`} role={spentReportError ? "alert" : "status"}>
+          <strong>{spentReportError ? "Spent Report data issue" : isLoadingSpentReport ? "Checking Spent Report data" : "Spent Report data ready"}</strong>
+          <span>
+            {spentReportError
+              ? spentReportError
+              : isLoadingSpentReport
+                ? "Reading Spent Report and Not Recorded from Google Sheets."
+                : `${spentEntries.length.toLocaleString("en-US")} valid rows loaded from Spent Report and Not Recorded.`}
+          </span>
         </div>
         <div className="executive-table-wrap executive-cost-center-wrap">
           <table className="executive-summary-table executive-cost-center-table">
