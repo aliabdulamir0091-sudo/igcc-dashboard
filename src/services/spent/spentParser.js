@@ -19,6 +19,7 @@ const MONTH_NUMBER_BY_NAME = {
 const COST_CENTER_LOOKUP = new Map(COST_CENTER_HIERARCHY.flatMap((group) => (
   group.costCenters.map((costCenter) => [costCenter, { hub: group.hub, region: group.region }])
 )));
+const VALID_COST_CENTERS = new Set(COST_CENTER_LOOKUP.keys());
 
 const cleanText = (value) => String(value ?? "").trim();
 
@@ -97,6 +98,9 @@ export function parseSpentRows(rows, options = {}) {
       if (amount && !month) failures.push(`row ${rowNumber}: invalid Month "${cleanText(row.Month)}"`);
       if (amount && !year) failures.push(`row ${rowNumber}: invalid Year "${cleanText(row.Year)}"`);
       if (amount && !rawCostCenter) failures.push(`row ${rowNumber}: Level 2 is required for counted spent rows`);
+      if (amount && rawCostCenter && !VALID_COST_CENTERS.has(costCenter)) {
+        failures.push(`row ${rowNumber}: Level 2 "${rawCostCenter}" is not an approved cost center`);
+      }
 
       return {
         type: "spent",
