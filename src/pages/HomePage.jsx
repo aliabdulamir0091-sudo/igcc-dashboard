@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Icon } from "../components/Icons";
 import { NAV_ITEMS } from "../data/navigation";
@@ -58,6 +58,12 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 
 const formatCurrency = (value) => currencyFormatter.format(value || 0);
 const formatPercent = (value) => `${Math.round(value || 0)}%`;
+const formatSignedCurrency = (value) => {
+  const formatted = formatCurrency(Math.abs(value || 0));
+  if (value > 0) return `+${formatted}`;
+  if (value < 0) return `-${formatted}`;
+  return formatted;
+};
 const getShare = (value, revenue) => (revenue ? (value / revenue) * 100 : 0);
 const sumRows = (rows, predicate) => rows.reduce((total, row) => (
   predicate(row) ? total + (Number(row.amount) || 0) : total
@@ -140,7 +146,40 @@ const getDeviationTone = (value) => {
   return "";
 };
 
+const getMonthMovementReason = (current = createEmptyIgccSummary(), previous = createEmptyIgccSummary(), mode = "approved") => {
+  const revenueKey = mode === "submitted" ? "submittedAfp" : "approvedAfp";
+  const profitKey = mode === "submitted" ? "submittedProfit" : "approvedProfit";
+  const revenueLabel = mode === "submitted" ? "submitted AFP" : "approved AFP";
+  const profitChange = current[profitKey] - previous[profitKey];
+  const revenueChange = current[revenueKey] - previous[revenueKey];
+  const costChange = current.totalCost - previous.totalCost;
+
+  if (!previous.totalCost && !previous[revenueKey]) {
+    return "No previous month with comparable data.";
+  }
+
+  if (!profitChange) {
+    return `Profit was flat because ${revenueLabel} and spent moved by the same net amount.`;
+  }
+
+  const revenueImpact = revenueChange;
+  const costImpact = -costChange;
+  const mainDriver = Math.abs(costImpact) > Math.abs(revenueImpact)
+    ? costChange > 0
+      ? `spent increased by ${formatSignedCurrency(costChange)}`
+      : `spent decreased by ${formatCurrency(Math.abs(costChange))}`
+    : revenueChange < 0
+      ? `${revenueLabel} decreased by ${formatSignedCurrency(revenueChange)}`
+      : `${revenueLabel} increased by ${formatSignedCurrency(revenueChange)}`;
+
+  return `${profitChange < 0 ? "Profit is lower" : "Profit is higher"} mainly because ${mainDriver}.`;
+};
+
 export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters }) {
+  const [selectedHomeMonth, setSelectedHomeMonth] = useState(() => {
+    const month = String(new Date().getMonth() + 1).padStart(2, "0");
+    return month;
+  });
   const today = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date());
   const {
     entries,
@@ -182,6 +221,30 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
     ...month,
     summary: byMonth[month.key] || createEmptyIgccSummary(),
   }));
+  const selectedMonth = chartMonths.find((month) => month.key === selectedHomeMonth) || chartMonths.find((month) => (
+    month.summary.totalCost || month.summary.approvedAfp || month.summary.submittedAfp
+  )) || chartMonths[0];
+  const previousMonth = selectedMonth ? chartMonths[Math.max(chartMonths.findIndex((month) => month.key === selectedMonth.key) - 1, 0)] : null;
+  const selectedSummary = selectedMonth?.summary || createEmptyIgccSummary();
+  const previousSummary = previousMonth && previousMonth.key !== selectedMonth?.key ? previousMonth.summary : createEmptyIgccSummary();
+  const approvedProfitChange = selectedSummary.approvedProfit - previousSummary.approvedProfit;
+  const submittedProfitChange = selectedSummary.submittedProfit - previousSummary.submittedProfit;
+  const monthMovementCards = [
+    {
+      label: "Approved Profit",
+      value: selectedSummary.approvedProfit,
+      change: approvedProfitChange,
+      reason: getMonthMovementReason(selectedSummary, previousSummary, "approved"),
+      tone: getDeviationTone(selectedSummary.approvedProfit),
+    },
+    {
+      label: "Submitted Profit",
+      value: selectedSummary.submittedProfit,
+      change: submittedProfitChange,
+      reason: getMonthMovementReason(selectedSummary, previousSummary, "submitted"),
+      tone: getDeviationTone(selectedSummary.submittedProfit),
+    },
+  ];
   const activeMonths = chartMonths
     .filter((month) => month.summary.totalCost || month.summary.approvedAfp || month.summary.submittedAfp);
   const latestActiveMonth = activeMonths.at(-1);
@@ -324,6 +387,44 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
               );
             })}
           </div>
+
+          <section className="home-month-analysis" aria-label="Selected month profit analysis">
+            <div className="home-month-analysis-head">
+              <div>
+                <span className="home-kicker">Monthly position</span>
+                <h4>{selectedMonth?.label} {selectedYear} Profit Movement</h4>
+                <p>Compared with {previousMonth && previousMonth.key !== selectedMonth?.key ? `${previousMonth.label} ${selectedYear}` : "the previous month"}.</p>
+              </div>
+              <div className="home-month-switch" aria-label="Select month for profit movement">
+                {chartMonths.map((month) => (
+                  <button
+                    key={month.key}
+                    type="button"
+                    className={month.key === selectedMonth?.key ? "is-active" : ""}
+                    onClick={() => setSelectedHomeMonth(month.key)}
+                  >
+                    {month.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="home-month-analysis-grid">
+              {monthMovementCards.map((item) => (
+                <article className={`home-month-analysis-card ${item.tone}`} key={item.label}>
+                  <span>{item.label}</span>
+                  <strong>{formatCurrency(item.value)}</strong>
+                  <small>{formatSignedCurrency(item.change)} vs previous month</small>
+                  <p>{item.reason}</p>
+                </article>
+              ))}
+              <article className="home-month-analysis-card is-neutral">
+                <span>Cost Position</span>
+                <strong>{formatCurrency(selectedSummary.totalCost)}</strong>
+                <small>{formatSignedCurrency(selectedSummary.totalCost - previousSummary.totalCost)} vs previous month</small>
+                <p>Spent is compared against approved and submitted AFP to explain the monthly profit position.</p>
+              </article>
+            </div>
+          </section>
 
           <div className="home-insight-strip">
             {insightCards.map((item) => (

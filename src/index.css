@@ -8462,6 +8462,114 @@ td.profit-matrix-sticky-col span {
   color: #0f766e;
 }
 
+.home-month-analysis {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.home-month-analysis-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.home-month-analysis-head h4 {
+  margin: 3px 0 0;
+  color: #0f172a;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.home-month-analysis-head p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.home-month-switch {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: 560px;
+}
+
+.home-month-switch button {
+  min-width: 44px;
+  min-height: 30px;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: #f8fbff;
+  color: #334155;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.home-month-switch button.is-active {
+  border-color: #071936;
+  background: #071936;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+}
+
+.home-month-analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.home-month-analysis-card {
+  display: grid;
+  gap: 7px;
+  min-height: 150px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.home-month-analysis-card > span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.home-month-analysis-card > strong {
+  color: #0f172a;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.home-month-analysis-card > small {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.home-month-analysis-card > p {
+  margin: 0;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.home-month-analysis-card.is-positive > strong {
+  color: #15803d;
+}
+
+.home-month-analysis-card.is-negative > strong {
+  color: #dc2626;
+}
+
 .home-insight-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -8775,7 +8883,8 @@ td.profit-matrix-sticky-col span {
   }
 
   .home-command-metrics,
-  .home-insight-strip {
+  .home-insight-strip,
+  .home-month-analysis-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -8795,8 +8904,17 @@ td.profit-matrix-sticky-col span {
   }
 
   .home-command-metrics,
-  .home-insight-strip {
+  .home-insight-strip,
+  .home-month-analysis-grid {
     grid-template-columns: 1fr;
+  }
+
+  .home-month-analysis-head {
+    display: grid;
+  }
+
+  .home-month-switch {
+    justify-content: flex-start;
   }
 
   .home-month-chart {
