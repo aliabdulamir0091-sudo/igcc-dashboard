@@ -8570,6 +8570,74 @@ td.profit-matrix-sticky-col span {
   color: #dc2626;
 }
 
+.home-month-cost-drivers {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 14px;
+}
+
+.home-month-cost-drivers h5 {
+  margin: 3px 0 0;
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.home-month-driver-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.home-month-driver-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 10px;
+  align-items: center;
+  min-height: 72px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 10px 12px;
+}
+
+.home-month-driver-list strong {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 950;
+  overflow-wrap: anywhere;
+}
+
+.home-month-driver-list span {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 950;
+  text-align: right;
+}
+
+.home-month-driver-list small {
+  grid-column: 1 / -1;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.home-month-driver-list article.is-increase span {
+  color: #dc2626;
+}
+
+.home-month-driver-list article.is-decrease span {
+  color: #15803d;
+}
+
+.home-month-driver-list > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 850;
+}
+
 .home-insight-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -8884,7 +8952,8 @@ td.profit-matrix-sticky-col span {
 
   .home-command-metrics,
   .home-insight-strip,
-  .home-month-analysis-grid {
+  .home-month-analysis-grid,
+  .home-month-driver-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -8905,7 +8974,8 @@ td.profit-matrix-sticky-col span {
 
   .home-command-metrics,
   .home-insight-strip,
-  .home-month-analysis-grid {
+  .home-month-analysis-grid,
+  .home-month-driver-list {
     grid-template-columns: 1fr;
   }
 

@@ -175,6 +175,36 @@ const getMonthMovementReason = (current = createEmptyIgccSummary(), previous = c
   return `${profitChange < 0 ? "Profit is lower" : "Profit is higher"} mainly because ${mainDriver}.`;
 };
 
+const buildCostCenterCostMovement = ({ spentEntries, year, selectedPeriod, previousPeriod }) => {
+  if (!selectedPeriod || !previousPeriod || selectedPeriod === previousPeriod) return [];
+
+  const movement = new Map();
+  const addAmount = (costCenter, field, amount) => {
+    const key = costCenter || "Unassigned";
+    const current = movement.get(key) || { costCenter: key, selectedCost: 0, previousCost: 0, change: 0 };
+    current[field] += Number(amount) || 0;
+    movement.set(key, current);
+  };
+
+  for (const entry of spentEntries) {
+    if (entry.type !== "spent" || entry.year !== year) continue;
+    if (entry.period === selectedPeriod) {
+      addAmount(entry.costCenter, "selectedCost", entry.amount);
+    } else if (entry.period === previousPeriod) {
+      addAmount(entry.costCenter, "previousCost", entry.amount);
+    }
+  }
+
+  return [...movement.values()]
+    .map((item) => ({
+      ...item,
+      change: item.selectedCost - item.previousCost,
+    }))
+    .filter((item) => item.selectedCost || item.previousCost || item.change)
+    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))
+    .slice(0, 6);
+};
+
 export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters }) {
   const [selectedHomeMonth, setSelectedHomeMonth] = useState(() => {
     const month = String(new Date().getMonth() + 1).padStart(2, "0");
@@ -245,6 +275,12 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
       tone: getDeviationTone(selectedSummary.submittedProfit),
     },
   ];
+  const costCenterMovements = buildCostCenterCostMovement({
+    spentEntries,
+    year: selectedYear,
+    selectedPeriod: selectedMonth?.period,
+    previousPeriod: previousMonth?.period,
+  });
   const activeMonths = chartMonths
     .filter((month) => month.summary.totalCost || month.summary.approvedAfp || month.summary.submittedAfp);
   const latestActiveMonth = activeMonths.at(-1);
@@ -423,6 +459,27 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
                 <small>{formatSignedCurrency(selectedSummary.totalCost - previousSummary.totalCost)} vs previous month</small>
                 <p>Spent is compared against approved and submitted AFP to explain the monthly profit position.</p>
               </article>
+            </div>
+            <div className="home-month-cost-drivers">
+              <div>
+                <span className="home-kicker">Cost center drivers</span>
+                <h5>Cost movement by cost center</h5>
+              </div>
+              <div className="home-month-driver-list">
+                {costCenterMovements.length ? costCenterMovements.map((item) => (
+                  <article className={item.change > 0 ? "is-increase" : item.change < 0 ? "is-decrease" : ""} key={item.costCenter}>
+                    <strong>{item.costCenter}</strong>
+                    <span>{formatSignedCurrency(item.change)}</span>
+                    <small>
+                      {previousMonth?.label || "Previous"} {formatCurrency(item.previousCost)}
+                      {" -> "}
+                      {selectedMonth?.label || "Selected"} {formatCurrency(item.selectedCost)}
+                    </small>
+                  </article>
+                )) : (
+                  <p>No cost center movement to compare for this period.</p>
+                )}
+              </div>
             </div>
           </section>
 
