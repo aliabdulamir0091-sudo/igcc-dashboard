@@ -8378,7 +8378,7 @@ td.profit-matrix-sticky-col span {
   min-height: 260px;
   display: grid;
   grid-template-rows: 1fr auto auto;
-  gap: 10px;
+  gap: 8px;
   align-items: end;
 }
 
@@ -8421,18 +8421,45 @@ td.profit-matrix-sticky-col span {
   text-align: center;
 }
 
-.home-month-column > small {
+.home-month-profit-values {
+  display: grid;
+  gap: 4px;
+  min-height: 54px;
+}
+
+.home-month-profit-values small {
+  display: grid;
+  gap: 1px;
   color: #15803d;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 950;
-  line-height: 1.2;
-  min-height: 28px;
+  line-height: 1.1;
   text-align: center;
   overflow-wrap: anywhere;
 }
 
-.home-month-column > small.is-negative {
+.home-month-profit-values small > span {
+  color: #64748b;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.home-month-profit-values small > strong {
+  color: inherit;
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.home-month-profit-values small.is-negative {
   color: #dc2626;
+}
+
+.home-month-profit-values small.is-approved:not(.is-negative) {
+  color: #2563eb;
+}
+
+.home-month-profit-values small.is-submitted:not(.is-negative) {
+  color: #0f766e;
 }
 
 .home-insight-strip {

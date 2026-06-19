@@ -310,9 +310,16 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
                     <span className="is-submitted" style={{ height: `${Math.max(3, (summary.submittedAfp / maxMonthlyScale) * 100)}%` }} />
                   </div>
                   <strong>{month.label}</strong>
-                  <small className={getDeviationTone(summary.approvedProfit)}>
-                    {formatCurrency(summary.approvedProfit)}
-                  </small>
+                  <div className="home-month-profit-values">
+                    <small className={`is-approved ${getDeviationTone(summary.approvedProfit)}`}>
+                      <span>Approved</span>
+                      <strong>{formatCurrency(summary.approvedProfit)}</strong>
+                    </small>
+                    <small className={`is-submitted ${getDeviationTone(summary.submittedProfit)}`}>
+                      <span>Submitted</span>
+                      <strong>{formatCurrency(summary.submittedProfit)}</strong>
+                    </small>
+                  </div>
                 </article>
               );
             })}
