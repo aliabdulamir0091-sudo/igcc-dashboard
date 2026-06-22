@@ -381,27 +381,13 @@ const buildCostCenterSummary = (allocatedEntries, rawEntries, filters) => {
       return hubOrder || a.costCenter.localeCompare(b.costCenter);
     });
 
-  const headOfficeCost = summaryRows.find((row) => row.costCenter === HEAD_OFFICE_COST_CENTER)?.totalCost || 0;
-  const allocationBasisRows = summaryRows.filter((row) => row.costCenter !== HEAD_OFFICE_COST_CENTER && row.totalCost > 0);
-  const allocationBasisTotal = allocationBasisRows.reduce((total, row) => total + row.totalCost, 0);
-
-  if (!headOfficeCost || !allocationBasisTotal) return summaryRows;
-
   return summaryRows.map((row) => {
-    const headOfficeCostShare = row.costCenter === HEAD_OFFICE_COST_CENTER
-      ? -headOfficeCost
-      : row.totalCost > 0
-        ? headOfficeCost * (row.totalCost / allocationBasisTotal)
-        : 0;
-    const totalCostAfterHeadOffice = row.totalCost + headOfficeCostShare;
-    const profitAfterHeadOffice = row.totalRevenue - totalCostAfterHeadOffice;
-
     return {
       ...row,
-      headOfficeCostShare,
-      totalCostAfterHeadOffice,
-      profitAfterHeadOffice,
-      marginAfterHeadOffice: getShare(profitAfterHeadOffice, row.totalRevenue),
+      headOfficeCostShare: row.costCenter === HEAD_OFFICE_COST_CENTER ? row.totalCost : 0,
+      totalCostAfterHeadOffice: row.totalCost,
+      profitAfterHeadOffice: row.profit,
+      marginAfterHeadOffice: row.margin,
     };
   });
 };
@@ -1123,7 +1109,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
           <div>
             <p className="eyebrow">Operations Performance</p>
             <h3>Cost Center Profitability Summary</h3>
-            <small>Hub, cost center, AFP, cost, CN, profit, and head office allocation view.</small>
+            <small>Hub, cost center, AFP, cost, CN, profit, and included head office cost view.</small>
           </div>
           <div className="executive-title-side">
             <div className={`executive-title-meta ${afpMasterError ? "has-error" : ""}`}>
@@ -1164,7 +1150,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 <th rowSpan={2}>Cost Center</th>
                 <th className="executive-table-section is-cost-section" colSpan={5}>Cost / Expenses</th>
                 <th className="executive-table-section is-revenue-section" colSpan={4}>Revenue</th>
-                <th className="executive-table-section is-profit-section" colSpan={6}>Profitability</th>
+                <th className="executive-table-section is-profit-section" colSpan={4}>Profitability</th>
               </tr>
               <tr>
                 <th>Cost from Spent Report</th>
@@ -1179,9 +1165,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 <th>Profit</th>
                 <th>Margin %</th>
                 <th>Submitted Margin %</th>
-                <th>Share of Head Office Cost</th>
-                <th>Total Cost After HO</th>
-                <th>Margin After HO %</th>
+                <th>Head Office Cost Included</th>
               </tr>
             </thead>
             <tbody>
@@ -1220,12 +1204,10 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                   <SummaryValue value={row.margin} isPercent />
                   <SummaryValue value={getShare(row.submittedRevenue - row.totalCost, row.submittedRevenue)} isPercent />
                   <SummaryValue value={row.headOfficeCostShare} />
-                  <SummaryValue value={row.totalCostAfterHeadOffice} />
-                  <SummaryValue value={row.marginAfterHeadOffice} isPercent />
                 </tr>
               )) : (
                 <tr>
-                  <td className="executive-empty-row" colSpan={16}>No cost center data for the selected filters.</td>
+                  <td className="executive-empty-row" colSpan={14}>No cost center data for the selected filters.</td>
                 </tr>
               )}
             </tbody>
