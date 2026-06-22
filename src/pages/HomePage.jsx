@@ -275,6 +275,20 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
       tone: getDeviationTone(selectedSummary.submittedProfit),
     },
   ];
+  const marginPositionCards = [
+    {
+      label: "Approved Margin",
+      value: selectedSummary.approvedMargin,
+      previousValue: previousSummary.approvedMargin,
+      tone: getDeviationTone(selectedSummary.approvedMargin),
+    },
+    {
+      label: "Submitted Margin",
+      value: selectedSummary.submittedMargin,
+      previousValue: previousSummary.submittedMargin,
+      tone: getDeviationTone(selectedSummary.submittedMargin),
+    },
+  ];
   const costCenterMovements = buildCostCenterCostMovement({
     spentEntries,
     year: selectedYear,
@@ -413,10 +427,12 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
                     <small className={`is-approved ${getDeviationTone(summary.approvedProfit)}`}>
                       <span>Approved</span>
                       <strong>{formatCurrency(summary.approvedProfit)}</strong>
+                      <em>{formatPercent(summary.approvedMargin)} margin</em>
                     </small>
                     <small className={`is-submitted ${getDeviationTone(summary.submittedProfit)}`}>
                       <span>Submitted</span>
                       <strong>{formatCurrency(summary.submittedProfit)}</strong>
+                      <em>{formatPercent(summary.submittedMargin)} margin</em>
                     </small>
                   </div>
                 </article>
@@ -459,6 +475,16 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
                 <small>{formatSignedCurrency(selectedSummary.totalCost - previousSummary.totalCost)} vs previous month</small>
                 <p>Spent is compared against approved and submitted AFP to explain the monthly profit position.</p>
               </article>
+              {marginPositionCards.map((item) => (
+                <article className={`home-month-analysis-card home-margin-card ${item.tone}`} key={item.label}>
+                  <span>{item.label}</span>
+                  <strong>{formatPercent(item.value)}</strong>
+                  <small>{Math.round(item.value - item.previousValue)} pp vs previous month</small>
+                  <p>
+                    {item.label === "Approved Margin" ? "Approved profit divided by approved AFP." : "Submitted profit divided by submitted AFP."}
+                  </p>
+                </article>
+              ))}
             </div>
             <div className="home-month-cost-drivers">
               <div>
