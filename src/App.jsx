@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { AccessDeniedPage } from "./components/AccessDeniedPage";
-import { AuthPage } from "./components/AuthPage";
 import {
   ALL_FILTER_VALUE,
   COST_CENTER_GROUPS,
@@ -8,6 +6,7 @@ import {
   getCostCenterGroupByValue,
   getCostCenterGroupValue,
 } from "./data/costCenterHierarchy";
+import { getRolePermissions } from "./data/accessControl";
 import { DATA_SCHEMAS } from "./data/firestoreCollections";
 import { AppLayout } from "./layouts/AppLayout";
 import { AfpDashboardPage } from "./pages/AfpDashboardPage";
@@ -16,7 +15,6 @@ import { HomePage } from "./pages/HomePage";
 import { ProfitMatrixPage } from "./pages/ProfitMatrixPage";
 import { ProfitabilityPage } from "./pages/ProfitabilityPage";
 import { SpendingReportPage } from "./pages/SpendingReportPage";
-import { useAuthorizedUser } from "./hooks/useAuthorizedUser";
 
 const DEFAULT_DASHBOARD_FILTERS = {
   portfolio: "all",
@@ -35,6 +33,21 @@ const PAGE_COMPONENTS = {
   afp: AfpDashboardPage,
   detail: ProfitabilityPage,
   spending: SpendingReportPage,
+};
+
+const PUBLIC_USER = {
+  displayName: "IGCC Executive",
+  email: "executive@igccgroup.com",
+};
+
+const PUBLIC_ACCESS_PROFILE = {
+  active: true,
+  displayName: "IGCC Executive",
+  email: PUBLIC_USER.email,
+  id: "public-executive",
+  role: "Admin",
+  source: "public-dashboard",
+  permissions: getRolePermissions("Admin"),
 };
 
 const matchesPortfolio = (row, portfolio) => (
@@ -96,18 +109,8 @@ export default function App() {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem("igcc-theme") || "light");
   const [dashboardFilters, setDashboardFilters] = useState(DEFAULT_DASHBOARD_FILTERS);
-  const {
-    user,
-    accessProfile,
-    accessDenied,
-    authError,
-    isCheckingUser,
-    resetAccessDenied,
-    signOutUser,
-  } = useAuthorizedUser();
-  const handleLogout = async () => {
+  const handleLogout = () => {
     setIsPanelOpen(false);
-    await signOutUser();
   };
   const toggleTheme = () => {
     setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
@@ -117,22 +120,6 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("igcc-theme", theme);
   }, [theme]);
-
-  if (accessDenied) {
-    return (
-      <AccessDeniedPage
-        detail={accessDenied.detail}
-        deniedEmail={accessDenied.email}
-        projectId={accessDenied.projectId}
-        reason={accessDenied.reason}
-        onBackToLogin={resetAccessDenied}
-      />
-    );
-  }
-
-  if (!user) {
-    return <AuthPage authError={authError} isCheckingUser={isCheckingUser} />;
-  }
 
   const Page = PAGE_COMPONENTS[activePage] ?? ExecutiveCockpitPage;
   const sanitizedDashboardFilters = sanitizeDashboardFilters(dashboardFilters);
@@ -146,9 +133,9 @@ export default function App() {
       onNavigate={setActivePage}
       isPanelOpen={isPanelOpen}
       setIsPanelOpen={setIsPanelOpen}
-      user={user}
-      userProfile={accessProfile}
-      accessProfile={accessProfile}
+      user={PUBLIC_USER}
+      userProfile={PUBLIC_ACCESS_PROFILE}
+      accessProfile={PUBLIC_ACCESS_PROFILE}
       onLogout={handleLogout}
       theme={theme}
       onToggleTheme={toggleTheme}
@@ -159,7 +146,7 @@ export default function App() {
       <Page
         activePage={activePage}
         dataSchemas={DATA_SCHEMAS}
-        accessProfile={accessProfile}
+        accessProfile={PUBLIC_ACCESS_PROFILE}
         onNavigate={setActivePage}
         filters={sanitizedDashboardFilters}
         onApplyFilters={applyDashboardFilters}
