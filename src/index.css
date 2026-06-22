@@ -5995,8 +5995,8 @@ td.profit-matrix-sticky-col span {
 }
 
 .executive-cost-center-table {
-  width: max-content;
-  min-width: 1680px;
+  width: 100%;
+  min-width: var(--shell-max);
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
