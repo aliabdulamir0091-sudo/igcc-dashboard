@@ -4,6 +4,7 @@ import { Icon } from "../components/Icons";
 import { NAV_ITEMS } from "../data/navigation";
 import { ALL_FILTER_VALUE } from "../data/costCenterHierarchy";
 import { useAfpFinancialInputs } from "../hooks/useAfpFinancialInputs";
+import { getAfpRecordPeriodKey } from "../services/afp/afpPeriods";
 import igccLogo from "../assets/igcc-logo.svg";
 
 const DEFAULT_YEAR = "2026";
@@ -174,6 +175,81 @@ const buildCostCenterCostMovement = ({ spentEntries, year, selectedPeriod, previ
     .slice(0, 6);
 };
 
+const getAfpVarianceStatus = (status) => {
+  const text = String(status || "").toLowerCase();
+  if (/(reject|declin|cancel|void|not\s*approved)/.test(text)) return "Rejected";
+  if (/(pending|review|hold|progress|submitted|open)/.test(text)) return "Under Review";
+  return "Under Review";
+};
+
+const buildAfpApprovalVariance = ({ afpRecords, selectedPeriod }) => {
+  if (!selectedPeriod) {
+    return {
+      submitted: 0,
+      approved: 0,
+      variance: 0,
+      underReview: 0,
+      rejected: 0,
+      rows: [],
+    };
+  }
+
+  const groups = new Map();
+
+  for (const record of afpRecords || []) {
+    if (getAfpRecordPeriodKey(record) !== selectedPeriod) continue;
+
+    const submitted = Number(record.submitted_value) || 0;
+    const approved = Number(record.approved_value) || 0;
+    const variance = Math.max(0, submitted - approved);
+    if (!submitted && !approved) continue;
+
+    const status = getAfpVarianceStatus(record.status);
+    const costCenter = record.cost_center || record.source_cost_center || record.hub_unit || "Unassigned";
+    const current = groups.get(costCenter) || {
+      costCenter,
+      submitted: 0,
+      approved: 0,
+      variance: 0,
+      underReview: 0,
+      rejected: 0,
+      count: 0,
+    };
+
+    current.submitted += submitted;
+    current.approved += approved;
+    current.variance += variance;
+    current.count += variance > 0 ? 1 : 0;
+    if (status === "Rejected") current.rejected += variance;
+    else current.underReview += variance;
+
+    groups.set(costCenter, current);
+  }
+
+  const rows = [...groups.values()]
+    .filter((item) => item.variance > 0)
+    .sort((a, b) => b.variance - a.variance);
+
+  const total = rows.reduce((summary, item) => ({
+    submitted: summary.submitted + item.submitted,
+    approved: summary.approved + item.approved,
+    variance: summary.variance + item.variance,
+    underReview: summary.underReview + item.underReview,
+    rejected: summary.rejected + item.rejected,
+  }), {
+    submitted: 0,
+    approved: 0,
+    variance: 0,
+    underReview: 0,
+    rejected: 0,
+  });
+
+  return {
+    ...total,
+    rows: rows.slice(0, 8),
+  };
+};
+
 export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters }) {
   const [selectedHomeMonth, setSelectedHomeMonth] = useState(() => {
     const month = String(new Date().getMonth() + 1).padStart(2, "0");
@@ -183,6 +259,7 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
   const {
     entries,
     spentEntries,
+    afpRecords,
   } = useAfpFinancialInputs();
   const selectedYear = filters?.year && filters.year !== ALL_FILTER_VALUE ? filters.year : DEFAULT_YEAR;
   const handleHomeYearChange = (year) => {
@@ -261,6 +338,10 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
     selectedPeriod: selectedMonth?.period,
     previousPeriod: previousMonth?.period,
   });
+  const afpApprovalVariance = useMemo(() => buildAfpApprovalVariance({
+    afpRecords,
+    selectedPeriod: selectedMonth?.period,
+  }), [afpRecords, selectedMonth?.period]);
   const activeMonths = chartMonths
     .filter((month) => month.summary.totalCost || month.summary.approvedAfp || month.summary.submittedAfp);
   const latestActiveMonth = activeMonths.at(-1);
@@ -461,6 +542,40 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
                   </p>
                 </article>
               ))}
+            </div>
+            <div className="home-afp-variance-panel">
+              <div className="home-afp-variance-head">
+                <div>
+                  <span className="home-kicker">AFP approval variance</span>
+                  <h5>{selectedMonth?.label} {selectedYear} submitted vs approved AFP</h5>
+                  <p>Submitted AFP not yet approved, grouped by cost center.</p>
+                </div>
+                <strong>{formatCurrency(afpApprovalVariance.variance)}</strong>
+              </div>
+              <div className="home-afp-variance-summary" aria-label="AFP variance summary">
+                <span>Submitted <strong>{formatCurrency(afpApprovalVariance.submitted)}</strong></span>
+                <span>Approved <strong>{formatCurrency(afpApprovalVariance.approved)}</strong></span>
+                <span>Under review <strong>{formatCurrency(afpApprovalVariance.underReview)}</strong></span>
+                <span>Rejected <strong>{formatCurrency(afpApprovalVariance.rejected)}</strong></span>
+              </div>
+              <div className="home-afp-variance-list">
+                {afpApprovalVariance.rows.length ? afpApprovalVariance.rows.map((item) => (
+                  <article key={item.costCenter}>
+                    <div>
+                      <strong>{item.costCenter}</strong>
+                      <small>{item.count} AFP item{item.count === 1 ? "" : "s"} with approval gap</small>
+                    </div>
+                    <div className="home-afp-variance-values">
+                      <span>Total variance <strong>{formatCurrency(item.variance)}</strong></span>
+                      <span>Under review <strong>{formatCurrency(item.underReview)}</strong></span>
+                      <span>Rejected <strong>{formatCurrency(item.rejected)}</strong></span>
+                      <small>{formatCurrency(item.submitted)} submitted / {formatCurrency(item.approved)} approved</small>
+                    </div>
+                  </article>
+                )) : (
+                  <p>No AFP approval variance for this month.</p>
+                )}
+              </div>
             </div>
             <div className="home-month-cost-drivers">
               <div>
