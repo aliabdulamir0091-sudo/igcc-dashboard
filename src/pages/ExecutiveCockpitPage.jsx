@@ -596,7 +596,7 @@ const buildSimpleReport = (row, costCenterRows, allocatedEntries, rawEntries, fi
     submittedMarginPercent: getShare(submittedMargin, submittedRevenue),
     spendBreakdown: groupAmounts(rawSpentRows, (entry) => entry.glName || "Unclassified"),
     cnBreakdown: groupAmounts(cnRows.filter((entry) => !entry.isAllocatedGeneralCreditNote), (entry) => entry.category || entry.issuedBy || "Credit Note"),
-    generalCnBreakdown: groupAmounts(cnRows.filter((entry) => entry.isAllocatedGeneralCreditNote), (entry) => entry.allocationSourceCostCenter || "General CN Reallocated"),
+    generalCnBreakdown: groupAmounts(cnRows.filter((entry) => entry.isAllocatedGeneralCreditNote), (entry) => entry.allocationSourceCostCenter || "CN"),
     issuedCnBreakdown: groupAmounts(issuedCnRows, (entry) => entry.category || entry.costCenter || "Issued Credit Note"),
     history,
     memberDetails,
@@ -635,7 +635,7 @@ const buildGroupedReportDetails = (memberList, costCenterRows, allocatedEntries,
       ...summary,
       spentBreakdown: groupAmounts(spentRows, (entry) => entry.glName || "Unclassified"),
       cnBreakdown: groupAmounts(cnRows.filter((entry) => !entry.isAllocatedGeneralCreditNote), (entry) => entry.category || entry.issuedBy || "Credit Note"),
-      generalCnBreakdown: groupAmounts(cnRows.filter((entry) => entry.isAllocatedGeneralCreditNote), (entry) => entry.allocationSourceCostCenter || "General CN Reallocated"),
+      generalCnBreakdown: groupAmounts(cnRows.filter((entry) => entry.isAllocatedGeneralCreditNote), (entry) => entry.allocationSourceCostCenter || "CN"),
     };
   })
   .filter(Boolean);
@@ -818,8 +818,7 @@ function SimpleReportModal({ report, onClose }) {
     { label: "Direct Cost from Spent report", value: report.directCost },
     { label: "General Hub Cost", value: report.generalHubCost },
     { label: "Management Cost", value: report.managementCost },
-    { label: "CN", value: report.receivedCn },
-    { label: "General CN Reallocated", value: report.allocatedGeneralCn },
+    { label: "CN", value: report.receivedCn + report.allocatedGeneralCn },
   ];
   const kpis = [
     { label: "Approved Revenue", value: report.approvedRevenue, metric: approvedRevenueMetric, tone: "blue", color: "#2563eb" },
@@ -836,10 +835,7 @@ function SimpleReportModal({ report, onClose }) {
     { label: "Received CN", value: report.receivedCn + report.allocatedGeneralCn, tone: "green" },
   ];
   const maxVisualValue = Math.max(...visualRows.map((item) => Math.abs(item.value)), 1);
-  const cnLegend = [
-    ...report.cnBreakdown,
-    ...report.generalCnBreakdown.map((item) => ({ ...item, label: "General CN Reallocated" })),
-  ].filter((item) => item.amount);
+  const cnLegend = report.cnBreakdown.filter((item) => item.amount);
   const issuedCnLegend = report.issuedCnBreakdown.filter((item) => item.amount);
   const topSpendRows = report.spendBreakdown.slice(0, 8);
   const maxSpendAmount = Math.max(...topSpendRows.map((item) => Math.abs(item.amount)), 1);
@@ -1008,10 +1004,7 @@ function SimpleReportModal({ report, onClose }) {
               {report.memberDetails.map((item) => {
                 const cnTotal = item.receivedCn + item.allocatedGeneralCn;
                 const spentRows = item.spentBreakdown.slice(0, 5);
-                const cnRows = [
-                  ...item.cnBreakdown,
-                  ...item.generalCnBreakdown.map((row) => ({ ...row, label: `General CN - ${row.label}` })),
-                ].slice(0, 5);
+                const cnRows = item.cnBreakdown.slice(0, 5);
                 return (
                   <article className="cost-center-audit-card" key={item.costCenter}>
                     <header>
@@ -1169,7 +1162,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
             <thead>
               <tr>
                 <th rowSpan={2}>Cost Center</th>
-                <th className="executive-table-section is-cost-section" colSpan={6}>Cost / Expenses</th>
+                <th className="executive-table-section is-cost-section" colSpan={5}>Cost / Expenses</th>
                 <th className="executive-table-section is-revenue-section" colSpan={4}>Revenue</th>
                 <th className="executive-table-section is-profit-section" colSpan={6}>Profitability</th>
               </tr>
@@ -1178,7 +1171,6 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 <th>General Cost Reallocate</th>
                 <th>Management Cost</th>
                 <th>Received CN</th>
-                <th>General CN Reallocate</th>
                 <th>Total Cost</th>
                 <th>Submitted AFP</th>
                 <th>Approved AFP</th>
@@ -1219,7 +1211,6 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                   <SummaryValue value={row.allocatedGeneralCost} />
                   <SummaryValue value={row.allocatedManagementCost} />
                   <SummaryValue value={row.receivedCn} />
-                  <SummaryValue value={row.allocatedGeneralCn} />
                   <SummaryValue value={row.totalCost} />
                   <SummaryValue value={row.submittedAfp} />
                   <SummaryValue value={row.approvedAfp} />
@@ -1234,7 +1225,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 </tr>
               )) : (
                 <tr>
-                  <td className="executive-empty-row" colSpan={17}>No cost center data for the selected filters.</td>
+                  <td className="executive-empty-row" colSpan={16}>No cost center data for the selected filters.</td>
                 </tr>
               )}
             </tbody>

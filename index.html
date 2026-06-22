@@ -2,11 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta id="app-viewport" name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>Profitability Analysis</title>
+    <script>
+      (function () {
+        var desktopLayoutWidth = 1400;
+        var viewport = document.getElementById("app-viewport");
+
+        function useDesktopViewportOnPhone() {
+          if (!viewport || !window.screen) return;
+
+          var narrowScreen = Math.min(window.screen.width, window.screen.height) < 760;
+          if (!narrowScreen) {
+            viewport.setAttribute("content", "width=device-width, initial-scale=1.0");
+            return;
+          }
+
+          var currentScreenWidth = Math.min(
+            Math.min(window.screen.width, window.screen.height),
+            desktopLayoutWidth
+          );
+          var initialScale = Math.max(currentScreenWidth / desktopLayoutWidth, 0.25).toFixed(3);
+          viewport.setAttribute(
+            "content",
+            "width=" + desktopLayoutWidth + ", initial-scale=" + initialScale
+          );
+        }
+
+        useDesktopViewportOnPhone();
+        window.addEventListener("orientationchange", useDesktopViewportOnPhone);
+      })();
+    </script>
   </head>
   <body>
     <div id="root">
