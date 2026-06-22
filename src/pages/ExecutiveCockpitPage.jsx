@@ -1150,7 +1150,7 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 <th rowSpan={2}>Cost Center</th>
                 <th className="executive-table-section is-cost-section" colSpan={5}>Cost / Expenses</th>
                 <th className="executive-table-section is-revenue-section" colSpan={4}>Revenue</th>
-                <th className="executive-table-section is-profit-section" colSpan={4}>Profitability</th>
+                <th className="executive-table-section is-profit-section" colSpan={3}>Profitability</th>
               </tr>
               <tr>
                 <th>Cost from Spent Report</th>
@@ -1165,7 +1165,6 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 <th>Profit</th>
                 <th>Margin %</th>
                 <th>Submitted Margin %</th>
-                <th>Head Office Cost Included</th>
               </tr>
             </thead>
             <tbody>
@@ -1203,11 +1202,10 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                   <SummaryValue value={row.profit} />
                   <SummaryValue value={row.margin} isPercent />
                   <SummaryValue value={getShare(row.submittedRevenue - row.totalCost, row.submittedRevenue)} isPercent />
-                  <SummaryValue value={row.headOfficeCostShare} />
                 </tr>
               )) : (
                 <tr>
-                  <td className="executive-empty-row" colSpan={14}>No cost center data for the selected filters.</td>
+                  <td className="executive-empty-row" colSpan={13}>No cost center data for the selected filters.</td>
                 </tr>
               )}
             </tbody>
