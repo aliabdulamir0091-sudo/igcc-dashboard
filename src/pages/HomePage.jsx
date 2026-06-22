@@ -553,8 +553,8 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
                 <strong>{formatCurrency(afpApprovalVariance.variance)}</strong>
               </div>
               <div className="home-afp-variance-summary" aria-label="AFP variance summary">
-                <span>Submitted <strong>{formatCurrency(afpApprovalVariance.submitted)}</strong></span>
-                <span>Approved <strong>{formatCurrency(afpApprovalVariance.approved)}</strong></span>
+                <span>Submitted <strong>{formatCurrency(selectedSummary.submittedAfp)}</strong></span>
+                <span>Approved <strong>{formatCurrency(selectedSummary.approvedAfp)}</strong></span>
                 <span>Under review <strong>{formatCurrency(afpApprovalVariance.underReview)}</strong></span>
                 <span>Rejected <strong>{formatCurrency(afpApprovalVariance.rejected)}</strong></span>
               </div>
