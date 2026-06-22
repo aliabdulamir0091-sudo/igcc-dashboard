@@ -9,37 +9,6 @@ import igccLogo from "../assets/igcc-logo.svg";
 const DEFAULT_YEAR = "2026";
 const HOME_YEAR_OPTIONS = ["2026", "2025"];
 
-const pageCards = [
-  {
-    id: "executive",
-    icon: "executive",
-    title: "IGCC Operations Performance",
-    detail: "Hub, cost center, AFP, cost, CN, and profit view",
-    action: "Open",
-  },
-  {
-    id: "spending",
-    icon: "spending",
-    title: "Financial Input",
-    detail: "Spend, AFP, GL drilldown, CN allocation detail",
-    action: "Open",
-  },
-  {
-    id: "profitMatrix",
-    icon: "pnl",
-    title: "Profit Matrix",
-    detail: "Monthly approved and submitted AFP profit by cost center",
-    action: "Open",
-  },
-  {
-    id: "afp",
-    icon: "approve",
-    title: "AFP Master",
-    detail: "Live AFP submissions and approvals from Google Sheets",
-    action: "Open",
-  },
-];
-
 const sideItems = [
   { id: "home", icon: "home", label: "Home" },
   { id: "executive", icon: "executive", label: "Operations Performance" },
@@ -214,10 +183,7 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
   const {
     entries,
     spentEntries,
-    isLoadingAfpMaster,
-    isLoadingSpentReport,
   } = useAfpFinancialInputs();
-  const isLoading = isLoadingAfpMaster || isLoadingSpentReport;
   const selectedYear = filters?.year && filters.year !== ALL_FILTER_VALUE ? filters.year : DEFAULT_YEAR;
   const handleHomeYearChange = (year) => {
     onApplyFilters?.({ ...filters, year });
@@ -529,26 +495,6 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
             ))}
           </div>
         </article>
-
-        <section className="home-actions-clean home-actions-modern" aria-label="Dashboard destinations">
-          <div className="home-actions-clean-title">
-            <span className="home-kicker">Work areas</span>
-            <h2>Open the detail view you need</h2>
-          </div>
-          <div className="home-actions-clean-grid">
-            {pageCards.map((card) => (
-              <article key={card.id} className="home-action-card-clean">
-                <span className="home-page-card-icon"><Icon name={card.icon} /></span>
-                <div>
-                  <h2>{card.title}</h2>
-                  <p>{card.detail}</p>
-                </div>
-                <button type="button" onClick={() => onNavigate(card.id)}>{card.action}</button>
-              </article>
-            ))}
-          </div>
-          {isLoading ? <p className="home-loading-note">Loading latest Google Sheet financial inputs...</p> : null}
-        </section>
       </div>
     </section>
   );
