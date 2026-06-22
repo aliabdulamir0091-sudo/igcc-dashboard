@@ -8376,7 +8376,7 @@ td.profit-matrix-sticky-col span {
 
 .home-month-chart {
   display: grid;
-  grid-template-columns: repeat(12, minmax(84px, 1fr));
+  grid-template-columns: repeat(12, minmax(112px, 1fr));
   gap: 8px;
   overflow-x: auto;
   border: 1px solid #e2e8f0;
@@ -8386,7 +8386,7 @@ td.profit-matrix-sticky-col span {
 }
 
 .home-month-column {
-  min-height: 260px;
+  min-height: 316px;
   display: grid;
   grid-template-rows: 1fr auto auto;
   gap: 8px;
@@ -8434,8 +8434,8 @@ td.profit-matrix-sticky-col span {
 
 .home-month-profit-values {
   display: grid;
-  gap: 4px;
-  min-height: 54px;
+  gap: 5px;
+  min-height: 118px;
 }
 
 .home-month-profit-values small {
@@ -8457,7 +8457,7 @@ td.profit-matrix-sticky-col span {
 
 .home-month-profit-values small > strong {
   color: inherit;
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.1;
 }
 
@@ -8470,6 +8470,10 @@ td.profit-matrix-sticky-col span {
 
 .home-month-profit-values small.is-negative {
   color: #dc2626;
+}
+
+.home-month-profit-values small.is-cost {
+  color: #f97316;
 }
 
 .home-month-profit-values small.is-approved:not(.is-negative) {

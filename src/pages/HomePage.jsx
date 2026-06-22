@@ -424,15 +424,25 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
                   </div>
                   <strong>{month.label}</strong>
                   <div className="home-month-profit-values">
-                    <small className={`is-approved ${getDeviationTone(summary.approvedProfit)}`}>
-                      <span>Approved</span>
-                      <strong>{formatCurrency(summary.approvedProfit)}</strong>
-                      <em>{formatPercent(summary.approvedMargin)} margin</em>
+                    <small className="is-cost">
+                      <span>Spent</span>
+                      <strong>{formatCurrency(summary.totalCost)}</strong>
                     </small>
-                    <small className={`is-submitted ${getDeviationTone(summary.submittedProfit)}`}>
-                      <span>Submitted</span>
-                      <strong>{formatCurrency(summary.submittedProfit)}</strong>
-                      <em>{formatPercent(summary.submittedMargin)} margin</em>
+                    <small className="is-approved">
+                      <span>Approved AFP</span>
+                      <strong>{formatCurrency(summary.approvedAfp)}</strong>
+                    </small>
+                    <small className="is-submitted">
+                      <span>Submitted AFP</span>
+                      <strong>{formatCurrency(summary.submittedAfp)}</strong>
+                    </small>
+                    <small className={`is-approved ${getDeviationTone(summary.approvedMargin)}`}>
+                      <span>Approved Margin</span>
+                      <strong>{formatPercent(summary.approvedMargin)}</strong>
+                    </small>
+                    <small className={`is-submitted ${getDeviationTone(summary.submittedMargin)}`}>
+                      <span>Submitted Margin</span>
+                      <strong>{formatPercent(summary.submittedMargin)}</strong>
                     </small>
                   </div>
                 </article>
