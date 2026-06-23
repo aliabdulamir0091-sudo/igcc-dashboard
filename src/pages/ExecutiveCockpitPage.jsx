@@ -1098,8 +1098,8 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
       nextFilters.hub = row.hub;
       nextFilters.costCenter = row.costCenter;
     }
-    onApplyFilters(nextFilters);
-    onNavigate("detail");
+    onApplyFilters(nextFilters, "detail");
+    onNavigate("detail", { preserveFilters: true });
   };
 
   return (

@@ -263,7 +263,7 @@ export function HomePage({ onNavigate, accessProfile, filters, onApplyFilters })
   } = useAfpFinancialInputs();
   const selectedYear = filters?.year && filters.year !== ALL_FILTER_VALUE ? filters.year : DEFAULT_YEAR;
   const handleHomeYearChange = (year) => {
-    onApplyFilters?.({ ...filters, year });
+    onApplyFilters?.({ ...filters, year }, "home");
   };
   const yearOptions = useMemo(() => {
     const dataYears = new Set([

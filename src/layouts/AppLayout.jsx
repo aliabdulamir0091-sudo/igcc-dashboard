@@ -44,6 +44,7 @@ export function AppLayout({
       <div className={`app-shell ${isHomePage ? "home-shell" : ""}`}>
         {!isHomePage ? (
           <AppHeader
+            key={activePage}
             activePage={activePage}
             onNavigate={onNavigate}
             onMenuOpen={() => setIsPanelOpen(true)}

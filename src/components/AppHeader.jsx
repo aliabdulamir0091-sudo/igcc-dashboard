@@ -75,7 +75,7 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
       quarter: selectedQuarter,
       ...updates,
     };
-    onApplyFilters?.(nextFilters);
+    onApplyFilters?.(nextFilters, activePage);
   };
 
   const hubOptions = useMemo(() => {
@@ -133,7 +133,7 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
   };
 
   const clearFilters = () => {
-    onClearFilters?.();
+    onClearFilters?.(activePage);
   };
 
   const handlePeriodChange = (event) => {
@@ -201,7 +201,13 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
         <div className="header-filter-row" aria-label="Dashboard filters">
           <label>
             <span><Icon name="folder" /> Portfolio</span>
-            <select value={selectedPortfolio} onChange={handlePortfolioChange}>
+            <select
+              key={`${activePage}-portfolio`}
+              name={`${activePage}-portfolio`}
+              autoComplete="off"
+              value={selectedPortfolio}
+              onChange={handlePortfolioChange}
+            >
               {PORTFOLIOS.map((portfolio) => (
                 <option key={portfolio.id} value={portfolio.id}>{portfolio.label}</option>
               ))}
@@ -209,7 +215,13 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           </label>
           <label>
             <span><Icon name="hub" /> Hub</span>
-            <select value={selectedHub} onChange={handleHubChange}>
+            <select
+              key={`${activePage}-hub`}
+              name={`${activePage}-hub`}
+              autoComplete="off"
+              value={selectedHub}
+              onChange={handleHubChange}
+            >
               <option value={ALL_FILTER_VALUE}>All hubs</option>
               {hubOptions.map((hub) => (
                 <option key={hub} value={hub}>{hub}</option>
@@ -218,7 +230,13 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           </label>
           <label>
             <span><Icon name="costCenter" /> {costCenterFilterLabel}</span>
-            <select value={selectedCostCenter} onChange={handleCostCenterChange}>
+            <select
+              key={`${activePage}-cost-center`}
+              name={`${activePage}-cost-center`}
+              autoComplete="off"
+              value={selectedCostCenter}
+              onChange={handleCostCenterChange}
+            >
               <option value={ALL_FILTER_VALUE}>{allCostCentersLabel}</option>
               {hasSubHubOptions ? (
                 <>
@@ -240,7 +258,13 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           </label>
           <label>
             <span><Icon name="calendar" /> Period</span>
-            <select value={selectedPeriod} onChange={handlePeriodChange}>
+            <select
+              key={`${activePage}-period`}
+              name={`${activePage}-period`}
+              autoComplete="off"
+              value={selectedPeriod}
+              onChange={handlePeriodChange}
+            >
               <option value="monthly">Monthly</option>
               <option value="quarterly">Quarterly</option>
               <option value="yearly">Yearly</option>
@@ -248,9 +272,15 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           </label>
           <label>
             <span><Icon name="calendar" /> Year</span>
-            <select value={selectedYear} onChange={(event) => {
-              commitFilters({ year: event.target.value });
-            }}>
+            <select
+              key={`${activePage}-year`}
+              name={`${activePage}-year`}
+              autoComplete="off"
+              value={selectedYear}
+              onChange={(event) => {
+                commitFilters({ year: event.target.value });
+              }}
+            >
               <option value={ALL_FILTER_VALUE}>All years</option>
               {YEAR_OPTIONS.map((year) => (
                 <option key={year} value={year}>{year}</option>
@@ -260,6 +290,9 @@ export function AppHeader({ activePage, onNavigate, onMenuOpen, theme, onToggleT
           <label>
             <span><Icon name="calendar" /> {timeDetailLabel}</span>
             <select
+              key={`${activePage}-${selectedPeriod}-time-detail`}
+              name={`${activePage}-${selectedPeriod}-time-detail`}
+              autoComplete="off"
               value={isYearly ? ALL_FILTER_VALUE : timeDetailValue}
               disabled={isYearly}
               onChange={(event) => {

@@ -35,6 +35,13 @@ const PAGE_COMPONENTS = {
   spending: SpendingReportPage,
 };
 
+const createDefaultFilters = () => ({ ...DEFAULT_DASHBOARD_FILTERS });
+
+const createPageFilters = () => Object.keys(PAGE_COMPONENTS).reduce((pageFilters, pageId) => {
+  pageFilters[pageId] = createDefaultFilters();
+  return pageFilters;
+}, {});
+
 const PUBLIC_USER = {
   displayName: "IGCC Executive",
   email: "executive@igccgroup.com",
@@ -108,7 +115,7 @@ export default function App() {
   const [activePage, setActivePage] = useState("home");
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem("igcc-theme") || "light");
-  const [dashboardFilters, setDashboardFilters] = useState(DEFAULT_DASHBOARD_FILTERS);
+  const [dashboardFiltersByPage, setDashboardFiltersByPage] = useState(createPageFilters);
   const handleLogout = () => {
     setIsPanelOpen(false);
   };
@@ -121,16 +128,44 @@ export default function App() {
     localStorage.setItem("igcc-theme", theme);
   }, [theme]);
 
+  useEffect(() => {
+    if (activePage === "detail") return;
+
+    setDashboardFiltersByPage((currentFiltersByPage) => ({
+      ...currentFiltersByPage,
+      [activePage]: createDefaultFilters(),
+    }));
+  }, [activePage]);
+
   const Page = PAGE_COMPONENTS[activePage] ?? ExecutiveCockpitPage;
-  const sanitizedDashboardFilters = sanitizeDashboardFilters(dashboardFilters);
-  const applyDashboardFilters = (filters) => {
-    setDashboardFilters(sanitizeDashboardFilters(filters));
+  const currentPageFilters = dashboardFiltersByPage[activePage] ?? DEFAULT_DASHBOARD_FILTERS;
+  const sanitizedDashboardFilters = sanitizeDashboardFilters(currentPageFilters);
+  const applyDashboardFilters = (filters, targetPage = activePage) => {
+    setDashboardFiltersByPage((currentFiltersByPage) => ({
+      ...currentFiltersByPage,
+      [targetPage]: sanitizeDashboardFilters(filters),
+    }));
+  };
+  const navigatePage = (targetPage, options = {}) => {
+    if (!options.preserveFilters) {
+      setDashboardFiltersByPage((currentFiltersByPage) => ({
+        ...currentFiltersByPage,
+        [targetPage]: createDefaultFilters(),
+      }));
+    }
+    setActivePage(targetPage);
+  };
+  const clearDashboardFilters = (targetPage = activePage) => {
+    setDashboardFiltersByPage((currentFiltersByPage) => ({
+      ...currentFiltersByPage,
+      [targetPage]: createDefaultFilters(),
+    }));
   };
 
   return (
     <AppLayout
       activePage={activePage}
-      onNavigate={setActivePage}
+      onNavigate={navigatePage}
       isPanelOpen={isPanelOpen}
       setIsPanelOpen={setIsPanelOpen}
       user={PUBLIC_USER}
@@ -141,13 +176,14 @@ export default function App() {
       onToggleTheme={toggleTheme}
       filters={sanitizedDashboardFilters}
       onApplyFilters={applyDashboardFilters}
-      onClearFilters={() => setDashboardFilters(DEFAULT_DASHBOARD_FILTERS)}
+      onClearFilters={clearDashboardFilters}
     >
       <Page
+        key={activePage}
         activePage={activePage}
         dataSchemas={DATA_SCHEMAS}
         accessProfile={PUBLIC_ACCESS_PROFILE}
-        onNavigate={setActivePage}
+        onNavigate={navigatePage}
         filters={sanitizedDashboardFilters}
         onApplyFilters={applyDashboardFilters}
       />
