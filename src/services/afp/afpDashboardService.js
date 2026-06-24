@@ -1,10 +1,8 @@
 import { fetchAfpRecords } from "./afpRepository";
 import { calculateAfpKpis } from "./afpKpis";
-import { isAfpRecordInMasterCoverage } from "./afpPeriods";
 
 export async function getAfpDashboardData() {
-  const records = (await fetchAfpRecords())
-    .filter(isAfpRecordInMasterCoverage);
+  const records = await fetchAfpRecords();
   return {
     records,
     ...calculateAfpKpis(records),

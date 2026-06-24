@@ -1116,9 +1116,9 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
               <span>{costCenterYearLabel} - {costCenterRows.length} cost centers</span>
               <span>{isLoadingAfpMaster ? "Loading AFP_MASTER" : afpMasterError ? "AFP_MASTER unavailable" : `AFP_MASTER ${afpMasterComparison.startYear}`}</span>
               <span>
-                Submitted diff {formatSignedWholeNumber(afpMasterComparison.submittedDifference)}
+                Submitted AFP {formatWholeNumber(afpMasterComparison.masterSubmitted)}
                 {" | "}
-                Approved diff {formatSignedWholeNumber(afpMasterComparison.approvedDifference)}
+                Approved AFP {formatWholeNumber(afpMasterComparison.masterApproved)}
               </span>
             </div>
             <div className="executive-title-metrics" aria-label="Filtered operations totals">

@@ -1,6 +1,6 @@
 import { COST_CENTER_HIERARCHY } from "../../data/costCenterHierarchy";
 import { normalizeCostCenterAlias } from "../../data/costCenterAliases";
-import { getAfpRecordPeriodKey, isAfpRecordInMasterCoverage } from "./afpPeriods";
+import { getAfpRecordPeriodKey } from "./afpPeriods";
 
 const AFP_MASTER_START_YEAR = import.meta.env.VITE_AFP_MASTER_START_YEAR || "2026";
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -66,7 +66,7 @@ const createAfpEntry = ({ record, type, amount, period }) => {
 };
 
 export function buildAfpFinancialEntries(records) {
-  return records.filter(isAfpRecordInMasterCoverage).flatMap((record) => {
+  return records.flatMap((record) => {
     const entries = [];
     if (record.submitted_value) {
       entries.push(createAfpEntry({
@@ -104,13 +104,13 @@ export function compareLegacyAndMasterAfp(legacyEntries, masterEntries) {
   const masterApproved = roundCurrency(sumByType(masterEntries, "approved"));
 
   return {
-    startYear: `BGC ${AFP_MASTER_START_YEAR}, ROO 2022`,
+    startYear: "Google Sheets only",
     legacySubmitted,
     legacyApproved,
     masterSubmitted,
     masterApproved,
-    submittedDifference: roundCurrency(masterSubmitted - legacySubmitted),
-    approvedDifference: roundCurrency(masterApproved - legacyApproved),
+    submittedDifference: 0,
+    approvedDifference: 0,
     replacedLegacyRows: legacyAfpEntries.length,
     masterRows: masterEntries.length,
   };
