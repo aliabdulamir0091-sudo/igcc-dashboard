@@ -9,13 +9,8 @@ import { fetchSpentEntries } from "../services/spent/spentRepository";
 
 const DEFAULT_COMPARISON = {
   startYear: "Google Sheets only",
-  legacySubmitted: 0,
-  legacyApproved: 0,
   masterSubmitted: 0,
   masterApproved: 0,
-  submittedDifference: 0,
-  approvedDifference: 0,
-  replacedLegacyRows: 0,
   masterRows: 0,
 };
 const CREDIT_NOTE_START_YEAR = import.meta.env.VITE_CREDIT_NOTE_START_YEAR || "2026";
@@ -23,9 +18,9 @@ const MIN_LIVE_SPENT_ROW_COVERAGE = 0.8;
 
 const getSpentEntries = (entries) => entries.filter((entry) => entry.type === "spent");
 
-const isLegacyAfpEntry = (entry) => entry.type === "submitted" || entry.type === "approved";
+const isAfpEntry = (entry) => entry.type === "submitted" || entry.type === "approved";
 
-const removeLegacyAfpEntries = (entries) => entries.filter((entry) => !isLegacyAfpEntry(entry));
+const removeAfpEntries = (entries) => entries.filter((entry) => !isAfpEntry(entry));
 
 const getEntryYears = (entries) => new Set(entries.map((entry) => String(entry.year || "").trim()).filter(Boolean));
 
@@ -136,7 +131,7 @@ export function useAfpFinancialInputs() {
   const merged = useMemo(() => (
     !isLoadingAfpMaster && !afpMasterError
       ? mergeFinancialInputsWithAfpMaster(financialInputsData.entries || [], afpRecords)
-      : { entries: removeLegacyAfpEntries(financialInputsData.entries || []), comparison: DEFAULT_COMPARISON }
+      : { entries: removeAfpEntries(financialInputsData.entries || []), comparison: DEFAULT_COMPARISON }
   ), [afpMasterError, afpRecords, isLoadingAfpMaster]);
 
   const entries = useMemo(() => {

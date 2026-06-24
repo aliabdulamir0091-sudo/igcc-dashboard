@@ -88,7 +88,7 @@ export function buildAfpFinancialEntries(records) {
   });
 }
 
-const isReplacedLegacyAfpEntry = (entry) => (
+const isAfpEntry = (entry) => (
   entry.type === "submitted" || entry.type === "approved"
 );
 
@@ -96,32 +96,24 @@ const sumByType = (entries, type) => entries.reduce((total, entry) => (
   entry.type === type ? total + (entry.amount || 0) : total
 ), 0);
 
-export function compareLegacyAndMasterAfp(legacyEntries, masterEntries) {
-  const legacyAfpEntries = legacyEntries.filter(isReplacedLegacyAfpEntry);
-  const legacySubmitted = roundCurrency(sumByType(legacyAfpEntries, "submitted"));
-  const legacyApproved = roundCurrency(sumByType(legacyAfpEntries, "approved"));
+export function summarizeMasterAfp(masterEntries) {
   const masterSubmitted = roundCurrency(sumByType(masterEntries, "submitted"));
   const masterApproved = roundCurrency(sumByType(masterEntries, "approved"));
 
   return {
     startYear: "Google Sheets only",
-    legacySubmitted,
-    legacyApproved,
     masterSubmitted,
     masterApproved,
-    submittedDifference: 0,
-    approvedDifference: 0,
-    replacedLegacyRows: legacyAfpEntries.length,
     masterRows: masterEntries.length,
   };
 }
 
-export function mergeFinancialInputsWithAfpMaster(legacyEntries, afpRecords) {
+export function mergeFinancialInputsWithAfpMaster(baselineEntries, afpRecords) {
   const masterEntries = buildAfpFinancialEntries(afpRecords);
-  const retainedLegacyEntries = legacyEntries.filter((entry) => !isReplacedLegacyAfpEntry(entry));
+  const retainedEntries = baselineEntries.filter((entry) => !isAfpEntry(entry));
 
   return {
-    entries: [...retainedLegacyEntries, ...masterEntries],
-    comparison: compareLegacyAndMasterAfp(legacyEntries, masterEntries),
+    entries: [...retainedEntries, ...masterEntries],
+    comparison: summarizeMasterAfp(masterEntries),
   };
 }
