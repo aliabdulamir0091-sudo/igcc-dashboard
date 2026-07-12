@@ -1106,7 +1106,8 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
     if (!hubCostCenterRows.length || isExporting) return;
     setIsExporting(true);
     try {
-      const XLSX = await import("xlsx");
+      const ExcelJSImport = await import("exceljs");
+      const ExcelJS = ExcelJSImport.default || ExcelJSImport;
       const headers = [
         "Cost Center",
         "Cost from Spent Report",
@@ -1137,40 +1138,113 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
         row.margin,
         getShare(row.submittedRevenue - row.totalCost, row.submittedRevenue),
       ]);
-      const worksheet = XLSX.utils.aoa_to_sheet([
-        ["Cost Center", "COST / EXPENSES", "", "", "", "", "REVENUE", "", "", "", "PROFITABILITY", "", ""],
-        headers,
-        ...dataRows,
-      ]);
-      worksheet["!merges"] = [
-        XLSX.utils.decode_range("A1:A2"),
-        XLSX.utils.decode_range("B1:F1"),
-        XLSX.utils.decode_range("G1:J1"),
-        XLSX.utils.decode_range("K1:M1"),
-      ];
-      worksheet["!cols"] = [
-        { wch: 32 },
-        ...Array.from({ length: 12 }, () => ({ wch: 20 })),
-      ];
-      worksheet["!autofilter"] = { ref: `A2:M${dataRows.length + 2}` };
-      for (let rowIndex = 2; rowIndex < dataRows.length + 2; rowIndex += 1) {
-        for (let columnIndex = 1; columnIndex <= 10; columnIndex += 1) {
-          const cell = worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex })];
-          if (cell) cell.z = "#,##0;[Red]-#,##0";
-        }
-        for (let columnIndex = 11; columnIndex <= 12; columnIndex += 1) {
-          const cell = worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex })];
-          if (cell) cell.z = '0"%";[Red]-0"%"';
-        }
-      }
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Operations Performance");
       const periodLabel = [
         isYearFiltered ? year : "all-years",
         filters.period === "monthly" && filters.month && filters.month !== ALL_FILTER_VALUE ? filters.month : "",
         filters.period === "quarterly" && filters.quarter && filters.quarter !== ALL_FILTER_VALUE ? filters.quarter : "",
       ].filter(Boolean).join("-");
-      XLSX.writeFile(workbook, `operations-performance-${periodLabel || "filtered"}.xlsx`);
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = "IGCC Cost Dashboard";
+      workbook.created = new Date();
+      const worksheet = workbook.addWorksheet("Operations Performance", {
+        views: [{ state: "frozen", xSplit: 1, ySplit: 5, activeCell: "B6" }],
+        pageSetup: {
+          orientation: "landscape",
+          paperSize: 9,
+          fitToPage: true,
+          fitToWidth: 1,
+          fitToHeight: 0,
+          margins: { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 },
+        },
+      });
+      worksheet.properties.defaultRowHeight = 20;
+      worksheet.headerFooter.oddFooter = "&LIGCC Operations Performance&CPage &P of &N&R&D";
+      worksheet.mergeCells("A1:M1");
+      worksheet.getCell("A1").value = "IGCC OPERATIONS PERFORMANCE";
+      worksheet.getCell("A1").font = { name: "Arial", size: 20, bold: true, color: { argb: "FFFFFFFF" } };
+      worksheet.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF071936" } };
+      worksheet.getCell("A1").alignment = { vertical: "middle", horizontal: "left" };
+      worksheet.getRow(1).height = 38;
+      worksheet.mergeCells("A2:M2");
+      worksheet.getCell("A2").value = `Filtered report | ${costCenterYearLabel} | ${hubCostCenterRows.length} displayed rows`;
+      worksheet.getCell("A2").font = { name: "Arial", size: 11, bold: true, color: { argb: "FF0F766E" } };
+      worksheet.getCell("A2").fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEFFCF8" } };
+      worksheet.getCell("A2").alignment = { vertical: "middle", horizontal: "left" };
+      worksheet.getRow(2).height = 25;
+      worksheet.getRow(3).height = 8;
+      worksheet.addRow(["Cost Center", "COST / EXPENSES", "", "", "", "", "REVENUE", "", "", "", "PROFITABILITY", "", ""]);
+      worksheet.addRow(headers);
+      worksheet.mergeCells("A4:A5");
+      worksheet.mergeCells("B4:F4");
+      worksheet.mergeCells("G4:J4");
+      worksheet.mergeCells("K4:M4");
+      const sectionStyles = [
+        ["A4", "FF10233F", "FFFFFFFF"],
+        ["B4", "FFD9F3EC", "FF0F766E"],
+        ["G4", "FFDCE8FA", "FF1D4ED8"],
+        ["K4", "FFFFEDD5", "FF9A3412"],
+      ];
+      sectionStyles.forEach(([address, fill, color]) => {
+        const cell = worksheet.getCell(address);
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fill } };
+        cell.font = { name: "Arial", size: 11, bold: true, color: { argb: color } };
+        cell.alignment = { vertical: "middle", horizontal: "center" };
+      });
+      worksheet.getRow(4).height = 25;
+      worksheet.getRow(5).height = 38;
+      worksheet.getRow(5).eachCell((cell) => {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF3F6FA" } };
+        cell.font = { name: "Arial", size: 9, bold: true, color: { argb: "FF10233F" } };
+        cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+        cell.border = { bottom: { style: "medium", color: { argb: "FF94A3B8" } } };
+      });
+      hubCostCenterRows.forEach((sourceRow, index) => {
+        const row = worksheet.addRow(dataRows[index]);
+        const palette = sourceRow.type === "igcc"
+          ? { fill: "FF102B4E", text: "FFFFFFFF" }
+          : sourceRow.type === "hub"
+            ? { fill: "FFE4F7F0", text: "FF075E54" }
+            : sourceRow.type === "subgroup"
+              ? { fill: "FFFFF4CE", text: "FF854D0E" }
+              : { fill: index % 2 ? "FFF8FAFC" : "FFFFFFFF", text: "FF10233F" };
+        row.height = sourceRow.type === "costCenter" ? 20 : 23;
+        row.eachCell((cell, columnNumber) => {
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: palette.fill } };
+          cell.font = {
+            name: "Arial",
+            size: 9,
+            bold: sourceRow.type !== "costCenter" || columnNumber === 1,
+            color: { argb: palette.text },
+          };
+          cell.alignment = { vertical: "middle", horizontal: columnNumber === 1 ? "left" : "right" };
+          cell.border = {
+            bottom: { style: "thin", color: { argb: "FFD8E1EC" } },
+            right: { style: "thin", color: { argb: "FFE5EAF0" } },
+          };
+          if (columnNumber >= 2 && columnNumber <= 11) cell.numFmt = "#,##0;[Red]-#,##0;-";
+          if (columnNumber >= 12) cell.numFmt = '0"%";[Red]-0"%";-';
+          if (sourceRow.type === "costCenter" && columnNumber > 1 && Number(cell.value) < 0) {
+            cell.font = { ...cell.font, bold: true, color: { argb: "FFDC2626" } };
+          }
+        });
+      });
+      worksheet.columns = [
+        { width: 29 },
+        ...Array.from({ length: 12 }, () => ({ width: 17 })),
+      ];
+      worksheet.autoFilter = { from: "A5", to: `M${dataRows.length + 5}` };
+      worksheet.pageSetup.printTitlesRow = "1:5";
+      worksheet.pageSetup.printArea = `A1:M${dataRows.length + 5}`;
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const downloadUrl = URL.createObjectURL(blob);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = downloadUrl;
+      downloadLink.download = `operations-performance-${periodLabel || "filtered"}.xlsx`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+      URL.revokeObjectURL(downloadUrl);
     } finally {
       setIsExporting(false);
     }
