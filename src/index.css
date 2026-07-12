@@ -5462,6 +5462,28 @@ td.profit-matrix-sticky-col span {
   gap: 10px;
 }
 
+.executive-excel-button {
+  min-height: 38px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 8px;
+  background: #15803d;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(21, 128, 61, 0.2);
+}
+
+.executive-excel-button:hover:not(:disabled) {
+  background: #166534;
+}
+
+.executive-excel-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .executive-title-metrics {
   display: flex;
   flex-wrap: nowrap;

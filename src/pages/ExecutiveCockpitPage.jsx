@@ -1045,6 +1045,7 @@ function SimpleReportModal({ report, onClose }) {
 
 export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters }) {
   const [reportRow, setReportRow] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
   const {
     entries,
     spentEntries,
@@ -1101,6 +1102,79 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
     onApplyFilters(nextFilters, "detail");
     onNavigate("detail", { preserveFilters: true });
   };
+  const exportOperationsPerformance = async () => {
+    if (!hubCostCenterRows.length || isExporting) return;
+    setIsExporting(true);
+    try {
+      const XLSX = await import("xlsx");
+      const headers = [
+        "Cost Center",
+        "Cost from Spent Report",
+        "General Cost Reallocate",
+        "Management Cost",
+        "Received CN",
+        "Total Cost",
+        "Submitted AFP",
+        "Approved AFP",
+        "Issued CN",
+        "Total Revenue",
+        "Profit",
+        "Margin %",
+        "Submitted Margin %",
+      ];
+      const dataRows = hubCostCenterRows.map((row) => [
+        row.costCenter,
+        row.spentCost,
+        row.allocatedGeneralCost,
+        row.allocatedManagementCost,
+        row.receivedCn,
+        row.totalCost,
+        row.submittedAfp,
+        row.approvedAfp,
+        row.issuedCn,
+        row.totalRevenue,
+        row.profit,
+        row.margin,
+        getShare(row.submittedRevenue - row.totalCost, row.submittedRevenue),
+      ]);
+      const worksheet = XLSX.utils.aoa_to_sheet([
+        ["Cost Center", "COST / EXPENSES", "", "", "", "", "REVENUE", "", "", "", "PROFITABILITY", "", ""],
+        headers,
+        ...dataRows,
+      ]);
+      worksheet["!merges"] = [
+        XLSX.utils.decode_range("A1:A2"),
+        XLSX.utils.decode_range("B1:F1"),
+        XLSX.utils.decode_range("G1:J1"),
+        XLSX.utils.decode_range("K1:M1"),
+      ];
+      worksheet["!cols"] = [
+        { wch: 32 },
+        ...Array.from({ length: 12 }, () => ({ wch: 20 })),
+      ];
+      worksheet["!autofilter"] = { ref: `A2:M${dataRows.length + 2}` };
+      for (let rowIndex = 2; rowIndex < dataRows.length + 2; rowIndex += 1) {
+        for (let columnIndex = 1; columnIndex <= 10; columnIndex += 1) {
+          const cell = worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex })];
+          if (cell) cell.z = "#,##0;[Red]-#,##0";
+        }
+        for (let columnIndex = 11; columnIndex <= 12; columnIndex += 1) {
+          const cell = worksheet[XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex })];
+          if (cell) cell.z = '0"%";[Red]-0"%"';
+        }
+      }
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Operations Performance");
+      const periodLabel = [
+        isYearFiltered ? year : "all-years",
+        filters.period === "monthly" && filters.month && filters.month !== ALL_FILTER_VALUE ? filters.month : "",
+        filters.period === "quarterly" && filters.quarter && filters.quarter !== ALL_FILTER_VALUE ? filters.quarter : "",
+      ].filter(Boolean).join("-");
+      XLSX.writeFile(workbook, `operations-performance-${periodLabel || "filtered"}.xlsx`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <section className="page-stack executive-cockpit-page">
@@ -1131,6 +1205,14 @@ export function ExecutiveCockpitPage({ filters = {}, onNavigate, onApplyFilters 
                 <strong>{formatWholeNumber(titleHeadOfficeCost)}</strong>
               </span>
             </div>
+            <button
+              type="button"
+              className="executive-excel-button"
+              onClick={exportOperationsPerformance}
+              disabled={!hubCostCenterRows.length || isExporting}
+            >
+              {isExporting ? "Preparing Excel..." : "Export Entire Table to Excel"}
+            </button>
           </div>
         </div>
         <div className={`executive-data-status ${spentReportError ? "has-error" : isLoadingSpentReport ? "is-loading" : "is-ok"}`} role={spentReportError ? "alert" : "status"}>
