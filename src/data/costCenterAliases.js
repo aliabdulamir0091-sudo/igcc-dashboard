@@ -9,6 +9,8 @@ export const COST_CENTER_ALIASES = {
   "PWT PWRI1_23": "PWRI-PWT",
   "E&I-MAJ": "E&I-MAJ_24",
   GRL_VLV: "GRL-VLV",
+  VLV_26: "GRL-VLV",
+  "KIOSK-25": "Kiosk-25",
   HO_23: "HO_SB_23",
   NR_NGL25: "NR-NGL_2025",
   "NR-NGL_25": "NR-NGL_2025",
