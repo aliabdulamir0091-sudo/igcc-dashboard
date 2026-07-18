@@ -2,6 +2,7 @@ export const COST_CENTER_ALIASES = {
   EIMNT_23: "EIMNT_23",
   GRLTOT: "GRLTOT_25",
   TOTAL_25: "GRLTOT_25",
+  "Total Projects": "GRLTOT_25",
   "OHTL _25": "OHTL_25",
   MITSOHTL: "MITAS",
   MITASOHTL: "MITAS",
